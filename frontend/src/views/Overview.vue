@@ -6,8 +6,13 @@
         <p>High-level insights into your organization's neuro-inclusion maturity.</p>
       </div>
       <div class="header-actions">
-        <button class="btn btn-primary" @click="$router.push('/')">+ New Audit</button>
-        <button class="btn btn-outline">⬇ Download Report</button>
+        <button class="btn btn-outline" @click="copyAuditLink">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          {{ linkCopied ? 'Link Copied!' : 'Copy Audit Link' }}
+        </button>
+        <button class="btn btn-primary" @click="downloadReport" :disabled="downloading">
+          {{ downloading ? 'Preparing…' : '⬇ Download Report' }}
+        </button>
       </div>
     </div>
 
@@ -75,12 +80,59 @@ Chart.register(...registerables);
 
 const trendChart = ref(null);
 const distChart  = ref(null);
-
 const stats = ref({ total: 0, pending: 0, sent: 0, avgScore: 0 });
+const downloading = ref(false);
+const linkCopied = ref(false);
+
+function copyAuditLink() {
+  const url = window.location.origin + "/#/";
+  navigator.clipboard.writeText(url).then(() => {
+    linkCopied.value = true;
+    setTimeout(() => { linkCopied.value = false; }, 2000);
+  });
+}
+
+function downloadReport() {
+  downloading.value = true;
+  try {
+    const subs = allSubmissions.value;
+    if (!subs.length) { downloading.value = false; return; }
+
+    const headers = [
+      "ID","Name","Designation","Organisation","Email","Submitted",
+      "Overall Score","Overall Level","Status",
+      "Leadership","Recruitment","Workplace","Sensory","Talent","Comms","Products","Suppliers"
+    ];
+    const rows = subs.map(s => [
+      s.id, s.name, s.designation, s.company_name, s.email,
+      s.submitted_at ? new Date(s.submitted_at).toLocaleDateString("en-GB") : "",
+      s.overall_avg, s.overall_level, s.status,
+      s.lc_score, s.ro_score, s.we_score, s.be_score,
+      s.tm_score, s.ca_score, s.pc_score, s.sp_score
+    ]);
+
+    const csv = [headers, ...rows]
+      .map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `neurvex-report-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } finally {
+    downloading.value = false;
+  }
+}
+
+const allSubmissions = ref([]);
 
 onMounted(async () => {
   let submissions = [];
   try { submissions = await getSubmissions(); } catch {}
+  allSubmissions.value = submissions;
 
   // Compute stats
   stats.value.total   = submissions.length;

@@ -29,9 +29,10 @@
             <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
           </div>
 
-          <router-link to="/admin/dashboard" class="new-audit-btn">
-            <span>+</span> New Audit
-          </router-link>
+          <button class="share-audit-btn" @click="copyAuditLink" :title="shareCopied ? 'Copied!' : 'Copy audit form link'">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            {{ shareCopied ? 'Copied!' : 'Share Audit' }}
+          </button>
 
           <div class="bell-wrap" ref="bellWrap">
             <button
@@ -144,6 +145,16 @@ const bellToggling = ref(false);
 
 const profileOpen = ref(false);
 const profileWrap = ref(null);
+
+// Share audit link
+const shareCopied = ref(false);
+function copyAuditLink() {
+  const url = window.location.origin + "/#/";
+  navigator.clipboard.writeText(url).then(() => {
+    shareCopied.value = true;
+    setTimeout(() => { shareCopied.value = false; }, 2000);
+  });
+}
 
 async function loadNotificationSettings() {
   if (!isAdmin.value) return;
@@ -365,15 +376,14 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   height: 28px; width: auto; object-fit: contain;
 }
 
-.new-audit-btn {
-  background: var(--c-accent-retro); color: var(--c-primary-dark);
+.share-audit-btn {
+  background: var(--c-white); color: var(--c-primary-dark);
   border: 2px solid var(--c-primary-dark); border-radius: 99px;
-  padding: 0.5rem 1.1rem; font-size: 0.875rem; font-weight: 800;
+  padding: 0.5rem 1.1rem; font-size: 0.875rem; font-weight: 700;
   cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 0.4rem;
   transition: all 0.15s; font-family: 'Playfair Display', serif;
-  box-shadow: 3px 3px 0 var(--c-white);
 }
-.new-audit-btn:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--c-white); }
+.share-audit-btn:hover { background: var(--c-accent-retro); transform: translate(-1px, -1px); }
 
 .icon-btn {
   width: 40px; height: 40px; border-radius: 50%;
