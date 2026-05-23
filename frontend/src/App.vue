@@ -6,17 +6,7 @@
         
         <div class="topbar-left">
           <div class="topbar-brand">
-            <div class="brand-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="3" width="8" height="8" rx="2" fill="white" opacity="0.9"/>
-                <rect x="13" y="3" width="8" height="8" rx="2" fill="white" opacity="0.6"/>
-                <rect x="3" y="13" width="8" height="8" rx="2" fill="white" opacity="0.6"/>
-                <rect x="13" y="13" width="8" height="8" rx="2" fill="white" opacity="0.9"/>
-              </svg>
-            </div>
-            <div>
-              <div class="brand-name">Neurvex</div>
-            </div>
+            <img src="/logo.png" alt="Neurvex" class="brand-logo" />
           </div>
 
           <nav class="topbar-nav">
@@ -33,6 +23,11 @@
         </div>
 
         <div class="topbar-right">
+          <div class="topbar-powered">
+            <span class="powered-label">Powered by</span>
+            <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
+          </div>
+
           <router-link to="/admin/dashboard" class="new-audit-btn">
             <span>+</span> New Audit
           </router-link>
@@ -320,17 +315,11 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   display: flex; align-items: center; gap: 0.65rem;
 }
 
-.brand-icon {
-  width: 32px; height: 32px;
-  background: var(--c-accent);
-  border-radius: 8px; display: grid; place-items: center; flex-shrink: 0;
-  border: 2px solid var(--c-white);
-}
-.brand-icon svg { color: var(--c-primary-dark); width: 16px; height: 16px; }
-
-.brand-name {
-  color: var(--c-white); font-weight: 800; font-size: 1.15rem; line-height: 1.2;
-  font-family: 'Playfair Display', serif; letter-spacing: -0.01em;
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .topbar-nav {
@@ -353,6 +342,22 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 }
 
 .topbar-right { display: flex; align-items: center; gap: 1rem; }
+
+.topbar-powered {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(255,255,255,0.15);
+}
+.powered-label {
+  font-size: 0.68rem; color: rgba(255,255,255,0.5); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.powered-logo {
+  height: 26px; width: auto; object-fit: contain;
+  background: white;
+  border-radius: 5px;
+  padding: 2px 6px;
+}
 
 .new-audit-btn {
   background: var(--c-accent-retro); color: var(--c-primary-dark);

@@ -15,10 +15,9 @@
       <!-- Header -->
       <header class="form-header">
         <div class="form-logo">
-          <span class="form-logo-mark">✦</span>
-          <span>Neurvex Audit</span>
+          <img src="/logo.png" alt="Neurvex" class="form-logo-img" />
+          <span class="form-logo-name">Neurvex Audit</span>
         </div>
-        <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
       </header>
 
       <!-- Step content -->
@@ -181,6 +180,7 @@
       </div>
 
       <div class="form-footer">
+        <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
         <router-link to="/admin" class="admin-link-small">Admin →</router-link>
       </div>
     </div>
@@ -494,7 +494,8 @@ async function submit() {
   flex-shrink: 0; z-index: 10;
 }
 .form-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1rem; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
-.form-logo-mark { font-size: 1.1rem; color: var(--c-accent); background: var(--c-primary-dark); width: 28px; height: 28px; border-radius: 6px; display: grid; place-items: center; }
+.form-logo-img { height: 32px; width: auto; display: block; object-fit: contain; }
+.form-logo-name { font-size: 1rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
 .fill-btn {
   background: var(--c-primary-dark); color: var(--c-accent);
   border: 2px solid var(--c-primary-dark); border-radius: 99px;
@@ -866,10 +867,18 @@ async function submit() {
 /* Footer */
 .form-footer {
   flex-shrink: 0;
-  text-align: center;
-  padding: 0.5rem 0 0.75rem;
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 1rem;
+  padding: 0.6rem 2rem;
+  border-top: 1.5px solid rgba(0,0,0,0.1);
+  background: rgba(245,242,235,0.95);
+  backdrop-filter: blur(8px);
+  z-index: 10;
 }
-.admin-link-small { color: #bbb; font-size: 0.8rem; text-decoration: none; }
+.form-footer-right {
+  display: flex; align-items: center; gap: 1rem;
+}
+.admin-link-small { color: #999; font-size: 0.8rem; text-decoration: none; font-weight: 600; }
 .admin-link-small:hover { color: var(--c-primary-dark); }
 
 /* Success */
