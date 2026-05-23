@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Authenticating...</title>
+  <style>
+    body { font-family: 'Inter', sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #F5F2EB; color: #1A1A1A; }
+    .msg { background: #fff; padding: 2rem; border-radius: 12px; border: 2px solid #1A1A1A; box-shadow: 4px 4px 0 #C8F135; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="msg">Please wait, completing authentication...</div>
+  <script type="module">
+    import { msalInstance } from "./src/authConfig.js";
+    // Initialize MSAL and let it process the redirect hash automatically
+    msalInstance.initialize().then(() => {
+        msalInstance.handleRedirectPromise().catch(console.error);
+    });
+  </script>
+</body>
+</html>

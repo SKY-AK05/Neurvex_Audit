@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ND Audit — Admin Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #1a1a2e; }
+
+    /* Auth gate */
+    #auth-gate { display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; background: #1a1a2e; }
+    .auth-box { background: #fff; padding: 2.5rem 2rem; border-radius: 12px;
+      width: 340px; text-align: center; }
+    .auth-box h2 { margin-bottom: 1.2rem; font-size: 1.2rem; }
+    .auth-box input { width: 100%; padding: 0.65rem 0.9rem; border: 1px solid #d0d4de;
+      border-radius: 6px; font-size: 0.95rem; margin-bottom: 0.9rem; }
+    .auth-box button { width: 100%; padding: 0.7rem; background: #5b6af0; color: #fff;
+      border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
+    .auth-box button:hover { background: #4a58d8; }
+    .auth-error { color: #b71c1c; font-size: 0.85rem; margin-top: 0.5rem; }
+
+    /* App shell */
+    #app { display: none; }
+    header { background: #1a1a2e; color: #fff; padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+    header button { background: transparent; border: 1px solid rgba(255,255,255,0.4);
+      color: #fff; padding: 0.35rem 0.9rem; border-radius: 5px; cursor: pointer; font-size: 0.85rem; }
+
+    .container { max-width: 1100px; margin: 2rem auto; padding: 0 1rem 4rem; }
+
+    /* List view */
+    #list-view {}
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .toolbar h2 { font-size: 1.1rem; font-weight: 600; }
+    .refresh-btn { padding: 0.4rem 1rem; background: #5b6af0; color: #fff; border: none;
+      border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .refresh-btn:hover { background: #4a58d8; }
+
+    table { width: 100%; border-collapse: collapse; background: #fff;
+      border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    thead { background: #1a1a2e; color: #fff; }
+    th, td { padding: 0.75rem 1rem; text-align: left; font-size: 0.88rem; }
+    th { font-weight: 600; }
+    tbody tr { border-bottom: 1px solid #eef0f5; cursor: pointer; transition: background 0.15s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #f0f1ff; }
+
+    .badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 600; }
+    .badge-pending { background: #fff3cd; color: #856404; }
+    .badge-sent    { background: #d1f5e0; color: #1a7a4a; }
+
+    /* Detail view */
+    #detail-view { display: none; }
+    .back-btn { background: none; border: none; color: #5b6af0; cursor: pointer;
+      font-size: 0.9rem; margin-bottom: 1.2rem; padding: 0; }
+    .back-btn:hover { text-decoration: underline; }
+
+    .card { background: #fff; border-radius: 10px; padding: 1.5rem 2rem;
+      margin-bottom: 1.2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem;
+      padding-bottom: 0.5rem; border-bottom: 2px solid #e8eaf0; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem 1.5rem; }
+    .info-item label { font-size: 0.78rem; color: #888; display: block; }
+    .info-item span  { font-size: 0.92rem; font-weight: 500; }
+
+    .scores-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .scores-table th, .scores-table td { padding: 0.55rem 0.75rem; text-align: left; }
+    .scores-table thead { background: #f5f7fa; }
+    .scores-table tbody tr { border-bottom: 1px solid #eef0f5; }
+
+    .overall-row { background: #eef0ff; font-weight: 600; }
+
+    textarea#email-editor { width: 100%; min-height: 420px; padding: 0.9rem;
+      border: 1px solid #d0d4de; border-radius: 6px; font-family: 'Courier New', monospace;
+      font-size: 0.85rem; line-height: 1.6; resize: vertical; }
+    textarea#email-editor:focus { outline: none; border-color: #5b6af0; }
+
+    .action-row { display: flex; gap: 0.75rem; margin-top: 1rem; }
+    .btn { padding: 0.65rem 1.4rem; border: none; border-radius: 7px; font-size: 0.9rem;
+      font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-save { background: #e8eaf0; color: #1a1a2e; }
+    .btn-save:hover { background: #d0d4de; }
+    .btn-send { background: #5b6af0; color: #fff; }
+    .btn-send:hover:not(:disabled) { background: #4a58d8; }
+    .btn-send:disabled { background: #a0a8e8; cursor: not-allowed; }
+
+    #action-msg { margin-top: 0.75rem; font-size: 0.88rem; padding: 0.6rem 0.9rem;
+      border-radius: 6px; display: none; }
+    #action-msg.success { background: #e6f9f0; color: #1a7a4a; }
+    #action-msg.error   { background: #fdecea; color: #b71c1c; }
+
+    .loading { text-align: center; padding: 3rem; color: #888; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+<!-- Auth Gate -->
+<div id="auth-gate">
+  <div class="auth-box">
+    <h2>Admin Login</h2>
+    <input type="password" id="pwd-input" placeholder="Enter password" />
+    <button onclick="checkAuth()">Sign In</button>
+    <p class="auth-error" id="auth-error" style="display:none">Incorrect password.</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <header>
+    <h1>Neurvex Audit — Admin Dashboard</h1>
+    <button onclick="logout()">Sign Out</button>
+  </header>
+
+  <div class="container">
+
+    <!-- List View -->
+    <div id="list-view">
+      <div class="toolbar">
+        <h2>Submissions</h2>
+        <button class="refresh-btn" onclick="loadSubmissions()">Refresh</button>
+      </div>
+      <div id="table-container"><p class="loading">Loading…</p></div>
+    </div>
+
+    <!-- Detail View -->
+    <div id="detail-view">
+      <button class="back-btn" onclick="showList()">← Back to submissions</button>
+      <div id="detail-content"><p class="loading">Loading…</p></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:7071/api";
+  const ADMIN_PASSWORD = "orchvate2026";
+
+  // ---- Mock data (remove once backend is live) ----
+  const MOCK_SUBMISSIONS = [
+    {
+      id: 1, name: "Sarah Mitchell", company_name: "Brightpath Solutions",
+      email: "sarah.mitchell@brightpath.co.uk", contact_number: "+44 7700 123456",
+      submitted_at: "2026-05-10T09:14:00", overall_avg: 15.5, overall_level: "Level 3 — Developing",
+      status: "sent", sent_at: "2026-05-10T11:30:00",
+      lc_score: 16, lc_level: "Level 3 — Developing",
+      ro_score: 14, ro_level: "Level 2 — Early Progress",
+      we_score: 18, we_level: "Level 3 — Developing",
+      be_score: 12, be_level: "Level 2 — Early Progress",
+      tm_score: 16, tm_level: "Level 3 — Developing",
+      ca_score: 14, ca_level: "Level 2 — Early Progress",
+      pc_score: 16, pc_level: "Level 3 — Developing",
+      sp_score: 18, sp_level: "Level 3 — Developing",
+      email_body: `Dear Sarah,\n\nThank you for completing the Neurvex Audit for Brightpath Solutions.\nBelow is your breakdown and interpretation across the 8 key segments:\n\n● Leadership & Culture: Level 3 — Developing (16/20)\n   Your organisation demonstrates a strong and developing commitment to neurodiversity inclusion at a leadership and cultural level.\n\n● Recruitment & Onboarding: Level 2 — Early Progress (14/20)\n   You have made some adjustments to your recruitment and onboarding to be more inclusive, but there is room to go further.\n\n========================================\nOVERALL AUDIT SUMMARY\nAverage Score: 15.5/20\nCurrent Maturity: Level 3 — Developing\n\nSYNOPSIS:\nYour organisation is developing a strong foundation for neurodiversity inclusion.\n========================================\n\nIf helpful, we would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.\n\nBest regards,\nThe Orchvate Team`
+    },
+    {
+      id: 2, name: "James Okafor", company_name: "Nexgen Retail Group",
+      email: "j.okafor@nexgenretail.com", contact_number: "+44 7911 654321",
+      submitted_at: "2026-05-12T14:02:00", overall_avg: 8.25, overall_level: "Level 2 — Early Progress",
+      status: "pending", sent_at: null,
+      lc_score: 8,  lc_level: "Level 2 — Early Progress",
+      ro_score: 10, ro_level: "Level 2 — Early Progress",
+      we_score: 6,  we_level: "Level 1 — Foundational",
+      be_score: 8,  be_level: "Level 2 — Early Progress",
+      tm_score: 10, tm_level: "Level 2 — Early Progress",
+      ca_score: 8,  ca_level: "Level 2 — Early Progress",
+      pc_score: 6,  pc_level: "Level 1 — Foundational",
+      sp_score: 10, sp_level: "Level 2 — Early Progress",
+      email_body: `Dear James,\n\nThank you for completing the Neurvex Audit for Nexgen Retail Group.\nBelow is your breakdown and interpretation across the 8 key segments:\n\n● Leadership & Culture: Level 2 — Early Progress (8/20)\n   Your organisation has begun to acknowledge neurodiversity within its leadership and culture, with some early initiatives in place.\n\n● Work Environment & Adjustments: Level 1 — Foundational (6/20)\n   Your work environment and adjustment processes are at an early stage.\n\n========================================\nOVERALL AUDIT SUMMARY\nAverage Score: 8.25/20\nCurrent Maturity: Level 2 — Early Progress\n\nSYNOPSIS:\nYour organisation has made meaningful early progress on neurodiversity inclusion.\n========================================\n\nIf helpful, we would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.\n\nBest regards,\nThe Orchvate Team`
+    },
+    {
+      id: 3, name: "Priya Sharma", company_name: "Clearview Consulting",
+      email: "priya.sharma@clearview.co.uk", contact_number: null,
+      submitted_at: "2026-05-14T10:45:00", overall_avg: 3.5, overall_level: "Level 1 — Foundational",
+      status: "pending", sent_at: null,
+      lc_score: 4,  lc_level: "Level 1 — Foundational",
+      ro_score: 2,  ro_level: "Level 1 — Foundational",
+      we_score: 4,  we_level: "Level 1 — Foundational",
+      be_score: 6,  be_level: "Level 1 — Foundational",
+      tm_score: 2,  tm_level: "Level 1 — Foundational",
+      ca_score: 4,  ca_level: "Level 1 — Foundational",
+      pc_score: 4,  pc_level: "Level 1 — Foundational",
+      sp_score: 2,  sp_level: "Level 1 — Foundational",
+      email_body: `Dear Priya,\n\nThank you for completing the Neurvex Audit for Clearview Consulting.\nBelow is your breakdown and interpretation across the 8 key segments:\n\n● Leadership & Culture: Level 1 — Foundational (4/20)\n   Your organisation is at the very beginning of its neurodiversity inclusion journey in leadership and culture.\n\n========================================\nOVERALL AUDIT SUMMARY\nAverage Score: 3.5/20\nCurrent Maturity: Level 1 — Foundational\n\nSYNOPSIS:\nYour organisation is at the start of its neurodiversity inclusion journey.\n========================================\n\nIf helpful, we would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.\n\nBest regards,\nThe Orchvate Team`
+    },
+    {
+      id: 4, name: "Tom Whitfield", company_name: "Harlow Manufacturing Ltd",
+      email: "t.whitfield@harlow-mfg.com", contact_number: "+44 7800 987654",
+      submitted_at: "2026-05-16T08:30:00", overall_avg: 11.0, overall_level: "Level 2 — Early Progress",
+      status: "pending", sent_at: null,
+      lc_score: 12, lc_level: "Level 2 — Early Progress",
+      ro_score: 10, ro_level: "Level 2 — Early Progress",
+      we_score: 12, we_level: "Level 2 — Early Progress",
+      be_score: 8,  be_level: "Level 2 — Early Progress",
+      tm_score: 10, tm_level: "Level 2 — Early Progress",
+      ca_score: 12, ca_level: "Level 2 — Early Progress",
+      pc_score: 10, pc_level: "Level 2 — Early Progress",
+      sp_score: 14, sp_level: "Level 2 — Early Progress",
+      email_body: `Dear Tom,\n\nThank you for completing the Neurvex Audit for Harlow Manufacturing Ltd.\nBelow is your breakdown and interpretation across the 8 key segments:\n\n● Leadership & Culture: Level 2 — Early Progress (12/20)\n   Your organisation has begun to acknowledge neurodiversity within its leadership and culture.\n\n========================================\nOVERALL AUDIT SUMMARY\nAverage Score: 11.0/20\nCurrent Maturity: Level 2 — Early Progress\n\nSYNOPSIS:\nYour organisation has made meaningful early progress on neurodiversity inclusion.\n========================================\n\nIf helpful, we would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.\n\nBest regards,\nThe Orchvate Team`
+    }
+  ];
+
+  // ---- Auth ----
+  function checkAuth() {
+    const pwd = document.getElementById("pwd-input").value;
+    if (pwd === ADMIN_PASSWORD) {
+      sessionStorage.setItem("nd_auth", "1");
+      document.getElementById("auth-gate").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      loadSubmissions();
+    } else {
+      document.getElementById("auth-error").style.display = "block";
+    }
+  }
+  document.getElementById("pwd-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") checkAuth();
+  });
+  function logout() {
+    sessionStorage.removeItem("nd_auth");
+    location.reload();
+  }
+  // Auto-login if session active
+  if (sessionStorage.getItem("nd_auth") === "1") {
+    document.getElementById("auth-gate").style.display = "none";
+    document.getElementById("app").style.display = "block";
+  }
+
+  // ---- List View ----
+  async function loadSubmissions() {
+    document.getElementById("table-container").innerHTML = '<p class="loading">Loading…</p>';
+    // Using mock data — swap fetch call back in when backend is live
+    setTimeout(() => renderTable(MOCK_SUBMISSIONS), 300);
+  }
+
+  function renderTable(rows) {
+    if (!rows.length) {
+      document.getElementById("table-container").innerHTML =
+        '<p class="loading">No submissions yet.</p>';
+      return;
+    }
+    const html = `
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Name</th><th>Organisation</th><th>Email</th>
+            <th>Submitted</th><th>Avg Score</th><th>Maturity</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr onclick="openDetail(${r.id})">
+              <td>${r.id}</td>
+              <td>${esc(r.name)}</td>
+              <td>${esc(r.company_name)}</td>
+              <td>${esc(r.email)}</td>
+              <td>${fmtDate(r.submitted_at)}</td>
+              <td>${r.overall_avg}/20</td>
+              <td>${esc(r.overall_level)}</td>
+              <td><span class="badge badge-${r.status}">${cap(r.status)}</span></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+    document.getElementById("table-container").innerHTML = html;
+  }
+
+  // ---- Detail View ----
+  let currentId = null;
+
+  async function openDetail(id) {
+    currentId = id;
+    document.getElementById("list-view").style.display   = "none";
+    document.getElementById("detail-view").style.display = "block";
+    document.getElementById("detail-content").innerHTML  = '<p class="loading">Loading…</p>';
+
+    // Using mock data — swap fetch call back in when backend is live
+    const data = MOCK_SUBMISSIONS.find(s => s.id === id);
+    setTimeout(() => data ? renderDetail(data) :
+      document.getElementById("detail-content").innerHTML = '<p class="loading" style="color:#b71c1c">Not found.</p>'
+    , 200);
+  }
+
+  function renderDetail(d) {
+    const sections = [
+      ["Leadership & Culture",           d.lc_score, d.lc_level],
+      ["Recruitment & Onboarding",       d.ro_score, d.ro_level],
+      ["Work Environment & Adjustments", d.we_score, d.we_level],
+      ["Built Environment & Sensory",    d.be_score, d.be_level],
+      ["Talent Management & Development",d.tm_score, d.tm_level],
+      ["Communication & Accessibility",  d.ca_score, d.ca_level],
+      ["Products & Customer Experience", d.pc_score, d.pc_level],
+      ["Suppliers & Procurement",        d.sp_score, d.sp_level],
+    ];
+
+    const scoreRows = sections.map(([label, score, level]) => `
+      <tr>
+        <td>${label}</td>
+        <td>${score}/20</td>
+        <td>${esc(level)}</td>
+      </tr>`).join("");
+
+    const isSent = d.status === "sent";
+
+    document.getElementById("detail-content").innerHTML = `
+      <!-- Respondent info -->
+      <div class="card">
+        <h3>Respondent</h3>
+        <div class="info-grid">
+          <div class="info-item"><label>Name</label><span>${esc(d.name)}</span></div>
+          <div class="info-item"><label>Organisation</label><span>${esc(d.company_name)}</span></div>
+          <div class="info-item"><label>Email</label><span>${esc(d.email)}</span></div>
+          <div class="info-item"><label>Contact</label><span>${esc(d.contact_number || "—")}</span></div>
+          <div class="info-item"><label>Submitted</label><span>${fmtDate(d.submitted_at)}</span></div>
+          <div class="info-item"><label>Status</label>
+            <span class="badge badge-${d.status}">${cap(d.status)}</span>
+            ${isSent ? `<span style="font-size:0.8rem;color:#888;margin-left:0.5rem">Sent ${fmtDate(d.sent_at)}</span>` : ""}
+          </div>
+        </div>
+      </div>
+
+      <!-- Scores -->
+      <div class="card">
+        <h3>Score Breakdown</h3>
+        <table class="scores-table">
+          <thead><tr><th>Section</th><th>Score</th><th>Maturity Level</th></tr></thead>
+          <tbody>
+            ${scoreRows}
+            <tr class="overall-row">
+              <td>Overall Average</td>
+              <td>${d.overall_avg}/20</td>
+              <td>${esc(d.overall_level)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Email editor -->
+      <div class="card">
+        <h3>Email Draft</h3>
+        <textarea id="email-editor" ${isSent ? "readonly" : ""}>${esc(d.email_body)}</textarea>
+        <div class="action-row">
+          ${!isSent ? `
+            <button class="btn btn-save" onclick="saveEmail()">Save Changes</button>
+            <button class="btn btn-send" id="send-btn" onclick="sendEmail()">Send Email</button>
+          ` : `<p style="color:#1a7a4a;font-weight:600">✓ Email sent on ${fmtDate(d.sent_at)}</p>`}
+        </div>
+        <div id="action-msg"></div>
+      </div>
+    `;
+  }
+
+  function showList() {
+    document.getElementById("detail-view").style.display = "none";
+    document.getElementById("list-view").style.display   = "block";
+    loadSubmissions();
+  }
+
+  // ---- Save email (mock) ----
+  async function saveEmail() {
+    // Update mock data in memory
+    const sub = MOCK_SUBMISSIONS.find(s => s.id === currentId);
+    if (sub) sub.email_body = document.getElementById("email-editor").value;
+    showActionMsg("success", "Changes saved.");
+  }
+
+  // ---- Send email (mock) ----
+  async function sendEmail() {
+    if (!confirm("Send this email to the respondent? This cannot be undone.")) return;
+    const btn = document.getElementById("send-btn");
+    btn.disabled = true;
+    btn.textContent = "Sending…";
+    showActionMsg("", "");
+    // Simulate a short delay then success
+    setTimeout(() => {
+      const sub = MOCK_SUBMISSIONS.find(s => s.id === currentId);
+      if (sub) { sub.status = "sent"; sub.sent_at = new Date().toISOString(); }
+      showActionMsg("success", `Email sent successfully at ${fmtDate(new Date().toISOString())}.`);
+      btn.textContent = "Sent ✓";
+      document.getElementById("email-editor").setAttribute("readonly", true);
+      document.querySelector(".btn-save").style.display = "none";
+    }, 800);
+  }
+
+  // ---- Helpers ----
+  function showActionMsg(type, text) {
+    const el = document.getElementById("action-msg");
+    if (!el) return;
+    el.className = type;
+    el.textContent = text;
+    el.style.display = text ? "block" : "none";
+  }
+  function esc(str) {
+    if (!str) return "";
+    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+  function cap(str) { return str ? str.charAt(0).toUpperCase() + str.slice(1) : ""; }
+  function fmtDate(iso) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
+  }
+
+  // Init
+  if (sessionStorage.getItem("nd_auth") === "1") loadSubmissions();
+</script>
+</body>
+</html>

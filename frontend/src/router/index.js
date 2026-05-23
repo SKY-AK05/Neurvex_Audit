@@ -1,0 +1,38 @@
+import { createRouter, createWebHashHistory } from "vue-router";
+import AuditForm        from "../views/AuditForm.vue";
+import AdminLogin       from "../views/AdminLogin.vue";
+import Overview         from "../views/Overview.vue";
+import Submissions      from "../views/Submissions.vue";
+import SubmissionDetail from "../views/SubmissionDetail.vue";
+import Analytics        from "../views/Analytics.vue";
+import Settings         from "../views/Settings.vue";
+import Support          from "../views/Support.vue";
+import UserManagement   from "../views/UserManagement.vue";
+
+const routes = [
+  { path: "/",                        component: AuditForm },
+  { path: "/admin",                   component: AdminLogin },
+  { path: "/admin/dashboard",         component: Overview,         meta: { requiresAuth: true } },
+  { path: "/admin/submissions",       component: Submissions,      meta: { requiresAuth: true } },
+  { path: "/admin/submissions/:id",   component: SubmissionDetail, meta: { requiresAuth: true } },
+  { path: "/admin/analytics",         component: Analytics,        meta: { requiresAuth: true } },
+  { path: "/admin/settings",          component: Settings,         meta: { requiresAuth: true } },
+  { path: "/admin/support",           component: Support,          meta: { requiresAuth: true } },
+  { path: "/admin/users",             component: UserManagement,   meta: { requiresAuth: true, requiresSuper: true } },
+];
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes,
+});
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !sessionStorage.getItem("nd_auth")) {
+    return "/admin";
+  }
+  if (to.meta.requiresSuper && sessionStorage.getItem("nd_role") !== "super") {
+    return "/admin/dashboard"; // Bounced, not a super admin
+  }
+});
+
+export default router;

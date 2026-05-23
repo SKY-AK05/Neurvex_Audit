@@ -1,0 +1,12 @@
+{
+  "name": "nd-inclusion-audit",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently --kill-others --names \"API,UI\" --prefix-colors \"cyan,green\" \"func start\" \"npm run dev --prefix frontend\"",
+    "api": "func start",
+    "ui": "npm run dev --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
