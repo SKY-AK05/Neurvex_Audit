@@ -53,6 +53,31 @@
       </div>
     </div>
 
+    <!-- This week vs last week -->
+    <div class="card week-card">
+      <div class="card-head">
+        <span class="card-title">This week vs last week</span>
+      </div>
+      <div class="week-grid">
+        <div class="week-stat">
+          <div class="week-label">New submissions this week</div>
+          <div class="week-val">{{ stats.weekNew }}</div>
+        </div>
+        <div class="week-stat">
+          <div class="week-label">New submissions last week</div>
+          <div class="week-val">{{ stats.weekPrev }}</div>
+        </div>
+        <div class="week-stat">
+          <div class="week-label">Emails sent this week</div>
+          <div class="week-val">{{ stats.weekSent }}</div>
+        </div>
+        <div class="week-stat">
+          <div class="week-label">Avg score this week</div>
+          <div class="week-val">{{ stats.weekAvg }}<span class="week-unit">/20</span></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Two column: pending actions + recent -->
     <div class="two-col">
 
@@ -104,31 +129,6 @@
         </div>
       </div>
 
-    </div>
-
-    <!-- This week vs last week -->
-    <div class="card week-card">
-      <div class="card-head">
-        <span class="card-title">This week vs last week</span>
-      </div>
-      <div class="week-grid">
-        <div class="week-stat">
-          <div class="week-label">New submissions this week</div>
-          <div class="week-val">{{ stats.weekNew }}</div>
-        </div>
-        <div class="week-stat">
-          <div class="week-label">New submissions last week</div>
-          <div class="week-val">{{ stats.weekPrev }}</div>
-        </div>
-        <div class="week-stat">
-          <div class="week-label">Emails sent this week</div>
-          <div class="week-val">{{ stats.weekSent }}</div>
-        </div>
-        <div class="week-stat">
-          <div class="week-label">Avg score this week</div>
-          <div class="week-val">{{ stats.weekAvg }}<span class="week-unit">/20</span></div>
-        </div>
-      </div>
     </div>
 
   </div>
