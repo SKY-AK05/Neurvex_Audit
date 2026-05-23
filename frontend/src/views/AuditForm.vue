@@ -15,7 +15,8 @@
       <!-- Header -->
       <header class="form-header">
         <div class="form-logo" @click="onLogoClick">
-          <img src="/logo.png" alt="Neurvex" class="form-logo-img" />
+          <!-- Light header → use dark logo -->
+          <img src="/logo-dark.png" alt="Neurvex" class="form-logo-img" />
           <span class="form-logo-name">Neurvex Audit</span>
         </div>
         <div class="form-header-right">
@@ -155,7 +156,8 @@
         <aside class="step-aside" :key="currentStep">
           <div class="aside-card">
             <div class="aside-icon">
-              <img src="/logo.png" alt="Neurvex" class="aside-logo-img" />
+              <!-- Dark aside panel → use light logo -->
+              <img src="/logo-light.png" alt="Neurvex" class="aside-logo-img" />
             </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
@@ -770,10 +772,9 @@ async function submit() {
 }
 .aside-icon {
   width: 44px; height: 44px; border-radius: 12px;
-  background: var(--c-accent);
+  background: rgba(255,255,255,0.1);
   display: grid; place-items: center;
   margin-bottom: 1rem;
-  border: 2px solid var(--c-white);
   overflow: hidden;
   padding: 4px;
 }

@@ -6,7 +6,8 @@
         
         <div class="topbar-left">
           <div class="topbar-brand">
-            <img src="/logo.png" alt="Neurvex" class="brand-logo" />
+            <!-- Dark navbar → use light logo -->
+            <img src="/logo-light.png" alt="Neurvex" class="brand-logo" />
           </div>
 
           <nav class="topbar-nav">

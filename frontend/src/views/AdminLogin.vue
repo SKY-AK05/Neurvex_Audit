@@ -5,7 +5,8 @@
     
     <div class="login-box">
       <div class="login-logo">
-        <img src="/logo.png" alt="Neurvex" class="login-logo-img" />
+        <!-- Light login card → use dark logo -->
+        <img src="/logo-dark.png" alt="Neurvex" class="login-logo-img" />
       </div>
       <h2>Admin Login</h2>
       <p class="login-sub">Neurvex Dashboard</p>
