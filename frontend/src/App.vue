@@ -349,12 +349,11 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   border-right: 1px solid rgba(255,255,255,0.15);
 }
 .powered-label {
-  font-size: 0.68rem; color: rgba(255,255,255,0.45); font-weight: 600;
+  font-size: 0.68rem; color: rgba(255,255,255,0.55); font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.05em;
 }
 .powered-logo {
-  height: 20px; width: auto; object-fit: contain; opacity: 0.65;
-  filter: brightness(0) invert(1);
+  height: 28px; width: auto; object-fit: contain;
 }
 
 .new-audit-btn {
