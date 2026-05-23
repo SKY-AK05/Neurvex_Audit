@@ -17,10 +17,7 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ACR login
-        run: |
-          docker login orchvateregistry.azurecr.io \
-            --username ${{ secrets.NEURVEXAPP_REGISTRY_USERNAME }} \
-            --password ${{ secrets.NEURVEXAPP_REGISTRY_PASSWORD }}
+        run: az acr login --name orchvateregistry
 
       - name: Build and push Docker image
         run: |
