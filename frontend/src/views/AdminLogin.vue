@@ -5,10 +5,10 @@
     
     <div class="login-box">
       <div class="login-logo">
-        <span class="logo-mark">O</span>
+        <img src="/logo.png" alt="Neurvex" class="login-logo-img" />
       </div>
       <h2>Admin Login</h2>
-      <p class="login-sub">Neurvex Audit Dashboard</p>
+      <p class="login-sub">Neurvex Dashboard</p>
       
       <div v-if="error" class="error-msg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -49,8 +49,14 @@ onMounted(async () => {
 
   try {
     await msalInstance.initialize();
+    // Clear any stale MSAL interaction state that causes interaction_in_progress errors
+    const keys = Object.keys(sessionStorage).filter(k =>
+      k.includes("interaction.status") || k.includes("request.params")
+    );
+    keys.forEach(k => sessionStorage.removeItem(k));
+    await msalInstance.handleRedirectPromise();
   } catch (err) {
-    // ignore if already initialized
+    // ignore
   }
 });
 
@@ -118,20 +124,14 @@ async function login() {
 
 .login-logo {
   margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
 }
 
-.login-logo .logo-mark {
-  width: 64px;
-  height: 64px;
-  background: var(--c-accent);
-  border-radius: 16px;
-  display: inline-grid;
-  place-items: center;
-  font-weight: 900;
-  font-size: 2.2rem;
-  color: var(--c-primary-dark);
-  border: 3px solid var(--c-primary-dark);
-  box-shadow: 4px 4px 0 var(--c-primary-dark);
+.login-logo-img {
+  height: 56px;
+  width: auto;
+  object-fit: contain;
   animation: float 4s ease-in-out infinite;
 }
 
