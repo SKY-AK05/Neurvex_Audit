@@ -215,19 +215,27 @@ async function onBellClick() {
 }
 
 async function logout() {
+  // Clear app session
   sessionStorage.removeItem("nd_auth");
   sessionStorage.removeItem("nd_user_name");
-  
+  sessionStorage.removeItem("nd_role");
+
+  // Clear MSAL cache locally only — do NOT call logoutRedirect/logoutPopup
+  // as that signs the user out of ALL Microsoft apps in the browser
   try {
     await msalInstance.initialize();
     const account = msalInstance.getAllAccounts()[0];
     if (account) {
-      await msalInstance.logoutPopup({ account });
+      msalInstance.getTokenCache().clear();
+      // Remove all MSAL keys from sessionStorage
+      Object.keys(sessionStorage)
+        .filter(k => k.startsWith("msal.") || k.includes("login.windows"))
+        .forEach(k => sessionStorage.removeItem(k));
     }
   } catch (err) {
     console.error("Logout error:", err);
   }
-  
+
   router.push("/portal");
 }
 </script>

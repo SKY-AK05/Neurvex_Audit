@@ -33,7 +33,13 @@ msalInstance.initialize().then(() => {
                 } else {
                     sessionStorage.setItem("nd_auth_error", "Access Denied: Your email is not authorised to access this portal.");
                     // Log out of MSAL to clear their invalid session
-                    msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + "/#/portal" });
+                    // Clear MSAL cache locally, don't sign out of all Microsoft apps
+                    Object.keys(sessionStorage)
+                      .filter(k => k.startsWith("msal.") || k.includes("login.windows"))
+                      .forEach(k => sessionStorage.removeItem(k));
+                    const app = createApp(App).use(router);
+                    app.mount("#app");
+                    router.push("/portal");
                 }
             }).catch(error => {
                 console.error("Backend verification error:", error);
