@@ -33,5 +33,5 @@ jobs:
         run: |
           az containerapp update \
             --name orchvate-audit \
-            --resource-group orchvate-rg \
+            --resource-group Neurvex_Audit \
             --image orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }}
