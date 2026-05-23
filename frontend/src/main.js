@@ -33,7 +33,7 @@ msalInstance.initialize().then(() => {
                 } else {
                     sessionStorage.setItem("nd_auth_error", "Access Denied: Your email is not authorised to access this portal.");
                     // Log out of MSAL to clear their invalid session
-                    msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + "/#/admin" });
+                    msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.origin + "/#/portal" });
                 }
             }).catch(error => {
                 console.error("Backend verification error:", error);

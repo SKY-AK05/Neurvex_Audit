@@ -11,7 +11,8 @@ import UserManagement   from "../views/UserManagement.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
-  { path: "/admin",                   component: AdminLogin },
+  { path: "/portal",                  component: AdminLogin },
+  { path: "/admin",                   redirect: "/portal" },   // keep old link working
   { path: "/admin/dashboard",         component: Overview,         meta: { requiresAuth: true } },
   { path: "/admin/submissions",       component: Submissions,      meta: { requiresAuth: true } },
   { path: "/admin/submissions/:id",   component: SubmissionDetail, meta: { requiresAuth: true } },
@@ -28,10 +29,10 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (to.meta.requiresAuth && !sessionStorage.getItem("nd_auth")) {
-    return "/admin";
+    return "/portal";
   }
   if (to.meta.requiresSuper && sessionStorage.getItem("nd_role") !== "super") {
-    return "/admin/dashboard"; // Bounced, not a super admin
+    return "/admin/dashboard";
   }
 });
 

@@ -7,14 +7,14 @@
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
         <p>Thank you for completing the Neurvex Audit for <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
-        <router-link to="/admin" class="admin-link-small">Admin →</router-link>
+        <router-link to="/portal" class="admin-link-small">Admin →</router-link>
       </div>
     </div>
 
     <div v-else class="form-inner">
       <!-- Header -->
       <header class="form-header">
-        <div class="form-logo">
+        <div class="form-logo" @click="onLogoClick">
           <img src="/logo.png" alt="Neurvex" class="form-logo-img" />
           <span class="form-logo-name">Neurvex Audit</span>
         </div>
@@ -190,7 +190,7 @@
       <div class="form-footer">
         <div class="form-footer-right">
           <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
-          <router-link to="/admin" class="admin-link-small">Admin →</router-link>
+          <router-link to="/portal" class="admin-link-small">Admin →</router-link>
         </div>
       </div>
     </div>
@@ -199,7 +199,24 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import { submitAudit } from "../api";
+
+const router = useRouter();
+
+// ── Secret admin access: click logo 10 times within 4 seconds ──
+const logoClickCount = ref(0);
+let logoClickTimer = null;
+function onLogoClick() {
+  logoClickCount.value++;
+  clearTimeout(logoClickTimer);
+  if (logoClickCount.value >= 10) {
+    logoClickCount.value = 0;
+    router.push("/portal");
+    return;
+  }
+  logoClickTimer = setTimeout(() => { logoClickCount.value = 0; }, 4000);
+}
 
 const submitted       = ref(false);
 const submitting      = ref(false);

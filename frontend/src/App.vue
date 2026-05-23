@@ -228,7 +228,7 @@ async function logout() {
     console.error("Logout error:", err);
   }
   
-  router.push("/admin");
+  router.push("/portal");
 }
 </script>
 
