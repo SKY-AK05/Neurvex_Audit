@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="page-header">
       <div>
-        <h1>Overview</h1>
+        <h1>Dashboard</h1>
         <p>What needs your attention today.</p>
       </div>
       <div class="header-actions">

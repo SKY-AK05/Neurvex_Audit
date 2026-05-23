@@ -12,13 +12,13 @@
 
           <nav class="topbar-nav">
             <router-link to="/admin/dashboard" class="nav-item" :class="{ active: route.path === '/admin/dashboard' }">
-              Overview
-            </router-link>
-            <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }">
-              Submissions
+              Dashboard
             </router-link>
             <router-link to="/admin/analytics" class="nav-item" :class="{ active: route.path === '/admin/analytics' }">
               Analytics
+            </router-link>
+            <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }">
+              Submissions
             </router-link>
           </nav>
         </div>

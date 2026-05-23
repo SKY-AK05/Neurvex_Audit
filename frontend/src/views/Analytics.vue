@@ -106,7 +106,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { Chart, registerables } from "chart.js";
 import { getSubmissions } from "../api";
 
@@ -152,6 +152,10 @@ onMounted(async () => {
     const subs = await getSubmissions();
     submissions.value = subs;
     if (!subs.length) { loading.value = false; return; }
+
+    // Wait for v-else template to render canvas elements
+    loading.value = false;
+    await nextTick();
 
     // Section averages
     const sectionAvgs = SECTIONS.map(s => {
@@ -285,8 +289,8 @@ onMounted(async () => {
 
   } catch (e) {
     console.error(e);
+    loading.value = false;
   }
-  loading.value = false;
 });
 </script>
 
