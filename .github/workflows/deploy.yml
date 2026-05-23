@@ -14,16 +14,25 @@ jobs:
       - name: Azure login
         uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          creds: >-
+            {
+              "clientId": "${{ secrets.NEURVEXAPP_AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.NEURVEXAPP_AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.NEURVEXAPP_AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.NEURVEXAPP_AZURE_TENANT_ID }}"
+            }
 
       - name: ACR login
-        run: az acr login --name orchvateregistry
+        run: |
+          docker login orchvateregistry.azurecr.io \
+            --username ${{ secrets.NEURVEXAPP_REGISTRY_USERNAME }} \
+            --password ${{ secrets.NEURVEXAPP_REGISTRY_PASSWORD }}
 
       - name: Build and push Docker image
         run: |
           docker build \
-            --build-arg VITE_MSAL_CLIENT_ID=${{ secrets.VITE_MSAL_CLIENT_ID }} \
-            --build-arg VITE_MSAL_TENANT_ID=${{ secrets.VITE_MSAL_TENANT_ID }} \
+            --build-arg VITE_MSAL_CLIENT_ID=2f900af5-c166-4fdb-90f1-1eaee09eeff2 \
+            --build-arg VITE_MSAL_TENANT_ID=${{ secrets.NEURVEXAPP_AZURE_TENANT_ID }} \
             -t orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }} \
             -t orchvateregistry.azurecr.io/orchvate-audit:latest .
           docker push orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }}
