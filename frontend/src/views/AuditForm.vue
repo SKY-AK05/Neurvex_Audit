@@ -18,6 +18,12 @@
           <img src="/logo.png" alt="Neurvex" class="form-logo-img" />
           <span class="form-logo-name">Neurvex Audit</span>
         </div>
+        <div class="form-header-right">
+          <div class="header-powered">
+            <span class="header-powered-label">Powered by</span>
+            <img src="/logo_orchvate.png" alt="Orchvate" class="header-powered-logo" />
+          </div>
+        </div>
       </header>
 
       <!-- Step content -->
@@ -148,7 +154,9 @@
         <!-- Section context panel (right) -->
         <aside class="step-aside" :key="currentStep">
           <div class="aside-card">
-            <div class="aside-icon">{{ currentPanel.icon }}</div>
+            <div class="aside-icon">
+              <img src="/logo.png" alt="Neurvex" class="aside-logo-img" />
+            </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
             <p class="aside-summary">{{ currentPanel.summary }}</p>
@@ -180,8 +188,10 @@
       </div>
 
       <div class="form-footer">
-        <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
-        <router-link to="/admin" class="admin-link-small">Admin →</router-link>
+        <div class="form-footer-right">
+          <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
+          <router-link to="/admin" class="admin-link-small">Admin →</router-link>
+        </div>
       </div>
     </div>
   </div>
@@ -496,6 +506,10 @@ async function submit() {
 .form-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1rem; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
 .form-logo-img { height: 32px; width: auto; display: block; object-fit: contain; }
 .form-logo-name { font-size: 1rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
+.form-header-right { display: flex; align-items: center; gap: 1rem; }
+.header-powered { display: flex; align-items: center; gap: 0.4rem; }
+.header-powered-label { font-size: 0.7rem; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.header-powered-logo { height: 22px; width: auto; object-fit: contain; opacity: 0.65; }
 .fill-btn {
   background: var(--c-primary-dark); color: var(--c-accent);
   border: 2px solid var(--c-primary-dark); border-radius: 99px;
@@ -739,10 +753,15 @@ async function submit() {
 }
 .aside-icon {
   width: 44px; height: 44px; border-radius: 12px;
-  background: var(--c-accent); color: var(--c-primary-dark);
+  background: var(--c-accent);
   display: grid; place-items: center;
-  font-size: 1.2rem; font-weight: 800; margin-bottom: 1rem;
+  margin-bottom: 1rem;
   border: 2px solid var(--c-white);
+  overflow: hidden;
+  padding: 4px;
+}
+.aside-logo-img {
+  width: 100%; height: 100%; object-fit: contain; display: block;
 }
 .aside-tag {
   display: inline-block; font-size: 0.68rem; font-weight: 800;
@@ -868,17 +887,11 @@ async function submit() {
 .form-footer {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: flex-end;
+  padding: 0.5rem 2rem 0.75rem;
+  border-top: 1px solid rgba(0,0,0,0.08);
   gap: 1rem;
-  padding: 0.6rem 2rem;
-  border-top: 1.5px solid rgba(0,0,0,0.1);
-  background: rgba(245,242,235,0.95);
-  backdrop-filter: blur(8px);
-  z-index: 10;
 }
-.form-footer-right {
-  display: flex; align-items: center; gap: 1rem;
-}
-.admin-link-small { color: #999; font-size: 0.8rem; text-decoration: none; font-weight: 600; }
+.admin-link-small { color: #bbb; font-size: 0.8rem; text-decoration: none; }
 .admin-link-small:hover { color: var(--c-primary-dark); }
 
 /* Success */

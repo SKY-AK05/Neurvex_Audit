@@ -344,19 +344,17 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .topbar-right { display: flex; align-items: center; gap: 1rem; }
 
 .topbar-powered {
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex; align-items: center; gap: 0.4rem;
   padding-right: 1rem;
   border-right: 1px solid rgba(255,255,255,0.15);
 }
 .powered-label {
-  font-size: 0.68rem; color: rgba(255,255,255,0.5); font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+  font-size: 0.68rem; color: rgba(255,255,255,0.45); font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.05em;
 }
 .powered-logo {
-  height: 26px; width: auto; object-fit: contain;
-  background: white;
-  border-radius: 5px;
-  padding: 2px 6px;
+  height: 20px; width: auto; object-fit: contain; opacity: 0.65;
+  filter: brightness(0) invert(1);
 }
 
 .new-audit-btn {
