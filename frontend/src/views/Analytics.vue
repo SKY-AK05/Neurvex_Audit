@@ -45,7 +45,7 @@
       <div class="card chart-card-full">
         <div class="chart-head">
           <span class="chart-title">Section Scores — Weakest to Strongest</span>
-          <span class="chart-sub">Average score out of 5 per section</span>
+          <span class="chart-sub">Average score out of 20 per section</span>
         </div>
         <canvas ref="barChart" height="100"></canvas>
       </div>
@@ -157,16 +157,15 @@ onMounted(async () => {
     loading.value = false;
     await nextTick();
 
-    // Section averages
+    // Section averages — scores are out of 20 (5 questions × 4 points max)
     const sectionAvgs = SECTIONS.map(s => {
-      const vals = subs.map(sub => parseFloat(sub[s.key] || 0)).filter(v => v > 0);
-      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : 0;
+      const vals = subs.map(sub => parseFloat(sub[s.key] || 0));
+      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : 0;
     });
 
     // Sort sections for bar chart (weakest first)
     const sorted = SECTIONS.map((s, i) => ({ label: s.label, avg: parseFloat(sectionAvgs[i]) }))
       .sort((a, b) => a.avg - b.avg);
-
     // Level counts
     const levelCounts = { "1": 0, "2": 0, "3": 0, "4": 0 };
     subs.forEach(s => {
@@ -212,8 +211,8 @@ onMounted(async () => {
         plugins: { legend: { display: false } },
         scales: {
           r: {
-            min: 0, max: 5,
-            ticks: { stepSize: 1, color: "#aaa", font: { size: 10 } },
+            min: 0, max: 20,
+            ticks: { stepSize: 5, color: "#aaa", font: { size: 10 } },
             grid: { color: "#E2DDD4" },
             pointLabels: { color: "#120050", font: { size: 11, weight: "600" } },
           },
@@ -247,7 +246,7 @@ onMounted(async () => {
         datasets: [{
           data: sorted.map(s => s.avg),
           backgroundColor: sorted.map(s =>
-            s.avg < 2 ? "#FFF0F0" : s.avg < 3.5 ? "#C8F31D" : "#009070"
+            s.avg < 8 ? "#FFF0F0" : s.avg < 14 ? "#C8F31D" : "#009070"
           ),
           borderColor: "#120050",
           borderWidth: 1.5,
@@ -257,7 +256,7 @@ onMounted(async () => {
       options: {
         plugins: { legend: { display: false } },
         scales: {
-          y: { min: 0, max: 5, grid: { color: "#f0f0f0" }, ticks: { color: "#aaa" } },
+          y: { min: 0, max: 20, grid: { color: "#f0f0f0" }, ticks: { color: "#aaa" } },
           x: { grid: { display: false }, ticks: { color: "#555", font: { weight: "600" } } },
         },
       },
