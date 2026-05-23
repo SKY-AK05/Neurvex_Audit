@@ -112,13 +112,14 @@ async function submit() {
   font-size: 1.7rem; font-weight: 700; color: var(--c-primary-dark);
   font-family: 'Playfair Display', serif;
 }
-.page-header p { color: #888; font-size: 0.875rem; margin-top: 0.3rem; max-width: 520px; }
+.page-header p { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
 
 .support-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 1.25rem;
-  max-width: 960px;
+  align-items: start;
+  max-width: 860px;
 }
 
 .support-card h2,
@@ -128,18 +129,16 @@ async function submit() {
 }
 .card-hint {
   font-size: 0.82rem; color: #888; line-height: 1.5;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
-
-
 
 .info-list {
   margin: 0 0 1rem; padding-left: 1.2rem;
-  font-size: 0.85rem; color: #555; line-height: 1.55;
+  font-size: 0.85rem; color: #555; line-height: 1.7;
 }
 .info-email {
   font-size: 0.8rem; color: #888; line-height: 1.5;
-  padding-top: 1rem; border-top: 1px solid #E2DDD4;
+  padding-top: 0.75rem; border-top: 1px solid #E2DDD4;
 }
 
 @media (max-width: 800px) {
