@@ -1,0 +1,30 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Frontend build artifacts (built inside Docker, not needed from host)
+frontend/node_modules/
+frontend/dist/
+
+# Secrets and local config
+.env
+local.settings.json
+
+# Git
+.git/
+.gitignore
+
+# Docs
+docs/
+*.md
+
+# Azure Functions (no longer used)
+function_app.py
+host.json
+local.settings.json
+
+# IDE
+.vscode/

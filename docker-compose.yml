@@ -2,36 +2,25 @@ version: "3.9"
 
 services:
 
-  # ── Python Backend (Azure Functions Runtime) ──────────────────────────────
-  backend:
+  # ── Single app container (nginx + uvicorn) ────────────────────────────────
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: orchvate-audit-api
+      args:
+        # MSAL vars are baked into the Vue build at image build time
+        VITE_MSAL_CLIENT_ID: ${VITE_MSAL_CLIENT_ID}
+        VITE_MSAL_TENANT_ID: ${VITE_MSAL_TENANT_ID}
+    container_name: orchvate-audit
     ports:
-      - "7071:80"
+      - "8080:80"
     env_file:
       - .env
-    environment:
-      - AzureWebJobsStorage=UseDevelopmentStorage=true
-      - FUNCTIONS_WORKER_RUNTIME=python
     depends_on:
       - db
     restart: unless-stopped
 
-  # ── Vue Frontend (nginx) ──────────────────────────────────────────────────
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: orchvate-audit-ui
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
-    restart: unless-stopped
-
-  # ── PostgreSQL (local dev only, use Azure PostgreSQL in production) ────────
+  # ── PostgreSQL (local dev only — use Azure PostgreSQL Flexible Server in prod) ──
   db:
     image: postgres:16-alpine
     container_name: orchvate-audit-db

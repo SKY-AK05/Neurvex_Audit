@@ -5,9 +5,9 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      // Forward all /api/* calls to the Azure Functions local host
+      // Forward all /api/* calls to the FastAPI backend (local dev)
       "/api": {
-        target: "http://localhost:7071",
+        target: "http://localhost:8000",
         changeOrigin: true,
         secure: false,
       },

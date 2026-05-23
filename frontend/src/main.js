@@ -17,7 +17,7 @@ msalInstance.initialize().then(() => {
                 // Guard: if the backend is down or not proxied, res is a 404/HTML page
                 // Calling .json() on it causes "Unexpected end of JSON input"
                 if (!res.ok) {
-                    throw new Error(`Backend returned ${res.status}. Is the Azure Functions host running on port 7071?`);
+                    throw new Error(`Backend returned ${res.status}. Is the FastAPI backend running on port 8000?`);
                 }
                 return res.json();
             }).then(data => {
@@ -37,8 +37,8 @@ msalInstance.initialize().then(() => {
                 }
             }).catch(error => {
                 console.error("Backend verification error:", error);
-                const msg = error.message.includes("7071")
-                    ? "Backend is not running. Start the Azure Functions host and try again."
+                const msg = error.message.includes("8000")
+                    ? "Backend is not running. Start uvicorn on port 8000 and try again."
                     : "Server error during verification. Please try again.";
                 sessionStorage.setItem("nd_auth_error", msg);
                 const app = createApp(App).use(router);

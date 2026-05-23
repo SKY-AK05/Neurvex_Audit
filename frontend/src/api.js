@@ -1,4 +1,6 @@
-const API_BASE = "http://localhost:7071/api";
+// In production (single container), nginx proxies /api/* to the backend.
+// In local dev, set VITE_API_BASE in frontend/.env to http://localhost:7071/api
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 export async function getSubmissions() {
   const res = await fetch(`${API_BASE}/submissions`);

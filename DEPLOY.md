@@ -1,124 +1,122 @@
-# 🚀 Orchvate Audit — Azure Container Apps Deployment Guide
+# Orchvate Audit — Single Container ACA Deployment Guide
 
-> **App Name Suggestion:** `orchvate-audit`
-> Lowercase, hyphenated — perfect for Azure resource naming rules.
-
----
-
-## Architecture Overview
+## Architecture
 
 ```
 Internet
    │
    ▼
-┌─────────────────────────────────────────────────┐
-│  Azure Container Apps Environment                │
-│                                                 │
-│  ┌───────────────────┐  /api/*  ┌────────────┐  │
-│  │   frontend (nginx) │ ──────► │  backend   │  │
-│  │   Vue 3 SPA        │         │  (Python   │  │
-│  │   Port 80          │         │  Az Funcs) │  │
-│  └───────────────────┘         └─────┬──────┘  │
-│                                      │          │
-└──────────────────────────────────────│──────────┘
-                                       │
-                                       ▼
-                          Azure PostgreSQL Flexible Server
-                          (Already exists: generative-ai.postgres...)
+Azure Container Apps (single container, port 80)
+   │
+   ├── nginx (port 80)
+   │     ├── /          → serves Vue SPA from /app/dist
+   │     └── /api/*     → proxy_pass to 127.0.0.1:8000
+   │
+   └── uvicorn (127.0.0.1:8000, internal only)
+         └── FastAPI app
+               ├── Azure PostgreSQL Flexible Server
+               └── Azure Communication Services
 ```
+
+supervisord manages both nginx and uvicorn inside the container.
+MSAL auth runs entirely in the browser — no backend involvement.
 
 ---
 
-## Pre-requisites
+## Environment Variables
 
-Install these tools on your machine if you don't have them:
+### Backend (set as ACA secrets/env vars — never in the image)
+| Variable | Description |
+|---|---|
+| `PGHOST` | Azure PostgreSQL hostname |
+| `PGDATABASE` | Database name |
+| `PGUSER` | DB username |
+| `PGPASSWORD` | DB password (use ACA secret) |
+| `PGPORT` | DB port (default 5432) |
+| `ACS_CONNECTION_STRING` | ACS connection string (use ACA secret) |
+| `ACS_SENDER_ADDRESS` | Sender email address |
+| `ACS_SENDER_NAME` | Sender display name |
+
+### Frontend (baked into the image at build time via Docker build args)
+| Variable | Description |
+|---|---|
+| `VITE_MSAL_CLIENT_ID` | Azure AD app client ID |
+| `VITE_MSAL_TENANT_ID` | Azure AD tenant ID |
+
+These are public values (they appear in the browser bundle) — safe to pass as build args.
+
+---
+
+## Local Development
 
 ```bash
-# 1. Docker Desktop
-https://www.docker.com/products/docker-desktop
+# Test the full single-container build locally
+docker compose up --build
 
-# 2. Azure CLI
-https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+# App available at: http://localhost:8080
+# PostgreSQL at: localhost:5432
+```
 
-# 3. Login to Azure
+For hot-reload frontend dev, run Vite separately:
+```bash
+cd frontend
+npm run dev   # http://localhost:5173
+```
+And run the backend separately:
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+Set `VITE_API_BASE=http://localhost:8000/api` in `frontend/.env` for local dev.
+
+---
+
+## One-Time Azure Setup
+
+```bash
+# Login
 az login
-```
 
----
-
-## Step 1 — Create Azure Container Registry (ACR)
-
-This is like a private Docker Hub but on Azure. You push your images here.
-
-```bash
-# Create a resource group (if you don't have one)
+# Create resource group (if needed)
 az group create --name orchvate-rg --location eastus
 
-# Create the container registry
-az acr create \
-  --resource-group orchvate-rg \
-  --name orchvateregistry \
-  --sku Basic \
-  --admin-enabled true
-
-# Login to the registry
+# Create container registry
+az acr create --resource-group orchvate-rg --name orchvateregistry --sku Basic --admin-enabled true
 az acr login --name orchvateregistry
-```
 
----
-
-## Step 2 — Build & Push Docker Images
-
-Run these from the root of your project folder.
-
-### Backend (Python API)
-```bash
-# Build
-docker build -t orchvateregistry.azurecr.io/orchvate-audit-api:latest .
-
-# Push
-docker push orchvateregistry.azurecr.io/orchvate-audit-api:latest
-```
-
-### Frontend (Vue + nginx)
-```bash
-# Build
-docker build -t orchvateregistry.azurecr.io/orchvate-audit-ui:latest ./frontend
-
-# Push
-docker push orchvateregistry.azurecr.io/orchvate-audit-ui:latest
-```
-
----
-
-## Step 3 — Create Azure Container Apps Environment
-
-```bash
-# Install the extension first
+# Create ACA environment
 az extension add --name containerapp --upgrade
-
-# Create the environment
-az containerapp env create \
-  --name orchvate-audit-env \
-  --resource-group orchvate-rg \
-  --location eastus
+az containerapp env create --name orchvate-audit-env --resource-group orchvate-rg --location eastus
 ```
 
 ---
 
-## Step 4 — Deploy the Backend Container
+## Build & Deploy
 
+```bash
+# Build with MSAL vars baked in (these are public — safe in build args)
+docker build \
+  --build-arg VITE_MSAL_CLIENT_ID=2f900af5-c166-4fdb-90f1-1eaee09eeff2 \
+  --build-arg VITE_MSAL_TENANT_ID=ea77fe37-fd2c-4294-87c3-8746bce6625a \
+  -t orchvateregistry.azurecr.io/orchvate-audit:latest .
+
+docker push orchvateregistry.azurecr.io/orchvate-audit:latest
+```
+
+### First deploy
 ```bash
 az containerapp create \
-  --name orchvate-audit-api \
+  --name orchvate-audit \
   --resource-group orchvate-rg \
   --environment orchvate-audit-env \
-  --image orchvateregistry.azurecr.io/orchvate-audit-api:latest \
+  --image orchvateregistry.azurecr.io/orchvate-audit:latest \
   --registry-server orchvateregistry.azurecr.io \
   --target-port 80 \
-  --ingress internal \
-  --min-replicas 1 \
-  --max-replicas 3 \
+  --ingress external \
+  --min-replicas 0 \
+  --max-replicas 5 \
+  --secrets \
+    pgpassword="Coffee!92" \
+    acsconnstring="endpoint=https://orchvatecommunicationservice..." \
   --env-vars \
     PGHOST=generative-ai.postgres.database.azure.com \
     PGDATABASE=nd_audit \
@@ -127,101 +125,82 @@ az containerapp create \
     PGPORT=5432 \
     ACS_CONNECTION_STRING=secretref:acsconnstring \
     ACS_SENDER_ADDRESS=founders@orchvate.in \
-    "ACS_SENDER_NAME=Geethanjali & Panchali" \
-    FUNCTIONS_WORKER_RUNTIME=python \
-    AzureWebJobsStorage=UseDevelopmentStorage=true
+    "ACS_SENDER_NAME=Geethanjali & Panchali"
 ```
 
-> **⚠️ Note:** `--ingress internal` means the backend is NOT public — only the frontend can call it. This is secure.
+`--min-replicas 0` enables scale-to-zero — the app costs nothing when idle.
 
----
-
-## Step 5 — Deploy the Frontend Container
-
+### Subsequent deploys (after code changes)
 ```bash
-az containerapp create \
-  --name orchvate-audit-ui \
-  --resource-group orchvate-rg \
-  --environment orchvate-audit-env \
-  --image orchvateregistry.azurecr.io/orchvate-audit-ui:latest \
-  --registry-server orchvateregistry.azurecr.io \
-  --target-port 80 \
-  --ingress external \
-  --min-replicas 1 \
-  --max-replicas 3
-```
+docker build \
+  --build-arg VITE_MSAL_CLIENT_ID=2f900af5-c166-4fdb-90f1-1eaee09eeff2 \
+  --build-arg VITE_MSAL_TENANT_ID=ea77fe37-fd2c-4294-87c3-8746bce6625a \
+  -t orchvateregistry.azurecr.io/orchvate-audit:latest .
 
-> **Note:** `--ingress external` means the frontend IS publicly accessible via a URL like `https://orchvate-audit-ui.azurecontainerapps.io`
+docker push orchvateregistry.azurecr.io/orchvate-audit:latest
 
----
-
-## Step 6 — Get your live URL
-
-```bash
-az containerapp show \
-  --name orchvate-audit-ui \
-  --resource-group orchvate-rg \
-  --query "properties.configuration.ingress.fqdn" \
-  --output tsv
-```
-
-Your app will be live at that URL! 🎉
-
----
-
-## Step 7 — Test Locally with Docker Compose
-
-Before pushing to Azure, always test locally first:
-
-```bash
-# From the project root
-docker compose up --build
-
-# Frontend:  http://localhost:3000
-# Backend:   http://localhost:7071/api/...
-```
-
----
-
-## Re-deploying After Code Changes
-
-Every time you make code changes, just repeat Step 2 and then update the container app:
-
-```bash
-# Rebuild and push
-docker build -t orchvateregistry.azurecr.io/orchvate-audit-api:latest .
-docker push orchvateregistry.azurecr.io/orchvate-audit-api:latest
-
-# Tell Azure to pull the new image
 az containerapp update \
-  --name orchvate-audit-api \
+  --name orchvate-audit \
   --resource-group orchvate-rg \
-  --image orchvateregistry.azurecr.io/orchvate-audit-api:latest
+  --image orchvateregistry.azurecr.io/orchvate-audit:latest
 ```
 
 ---
 
-## Estimated Monthly Cost
+## GitHub Actions Auto-Deploy (Optional)
+
+Create `.github/workflows/deploy.yml`:
+
+```yaml
+name: Deploy to ACA
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR login
+        run: az acr login --name orchvateregistry
+
+      - name: Build and push
+        run: |
+          docker build \
+            --build-arg VITE_MSAL_CLIENT_ID=${{ secrets.VITE_MSAL_CLIENT_ID }} \
+            --build-arg VITE_MSAL_TENANT_ID=${{ secrets.VITE_MSAL_TENANT_ID }} \
+            -t orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }} \
+            -t orchvateregistry.azurecr.io/orchvate-audit:latest .
+          docker push orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }}
+          docker push orchvateregistry.azurecr.io/orchvate-audit:latest
+
+      - name: Deploy to ACA
+        run: |
+          az containerapp update \
+            --name orchvate-audit \
+            --resource-group orchvate-rg \
+            --image orchvateregistry.azurecr.io/orchvate-audit:${{ github.sha }}
+```
+
+GitHub secrets to set: `AZURE_CREDENTIALS`, `VITE_MSAL_CLIENT_ID`, `VITE_MSAL_TENANT_ID`
+
+---
+
+## Estimated Monthly Cost (scale-to-zero)
 
 | Service | Tier | Est. Cost |
 |---|---|---|
-| Azure Container Apps (API) | Consumption | ~$5–15/mo |
-| Azure Container Apps (UI) | Consumption | ~$3–8/mo |
+| Azure Container Apps | Consumption (scale-to-zero) | ~$3–10/mo |
 | Azure Container Registry | Basic | ~$5/mo |
 | Azure PostgreSQL | Already exists | $0 extra |
-| **Total** | | **~$13–28/mo** |
+| **Total** | | **~$8–15/mo** |
 
-> Scales to zero when nobody is using it — you only pay for actual usage!
-
----
-
-## App Name Ideas 🎨
-
-| Name | Why it works |
-|---|---|
-| **`orchvate-audit`** | Clean, matches your brand, Azure-safe |
-| **`nd-audit-portal`** | Descriptive, professional |
-| **`inclusion-lens`** | Creative, memorable |
-| **`ndbridge`** | Short, snappy |
-
-**Recommended:** `orchvate-audit` — it ties directly to your brand.
+Half the cost of the previous two-container setup.
