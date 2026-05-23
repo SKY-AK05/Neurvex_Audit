@@ -54,7 +54,7 @@
     </div>
 
     <!-- This week vs last week -->
-    <div class="card week-card">
+    <div class="card week-card" style="margin-bottom: 1rem;">
       <div class="card-head">
         <span class="card-title">This week vs last week</span>
       </div>
@@ -276,7 +276,7 @@ onMounted(async () => {
 .recent-score { font-size: 0.75rem; font-weight: 700; color: #888; }
 
 /* Week card */
-.week-card { margin-bottom: 0; }
+.week-card { margin-bottom: 1rem; }
 .week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 .week-stat { text-align: center; padding: 0.75rem; background: var(--c-bg); border-radius: 10px; }
 .week-label { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
