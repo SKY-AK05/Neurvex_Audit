@@ -57,6 +57,20 @@
         <ScoreTable :data="sub" />
       </div>
 
+      <!-- Dimension Breakdown & Commentary -->
+      <div class="card">
+        <h2>Dimension Breakdown & Commentary</h2>
+        <div class="dimension-scorecard-grid">
+          <div v-for="d in dimensions" :key="d.key" class="dimension-score-card" :class="getScoreClass(sub[`${d.key}_score`])">
+            <div class="dim-head">
+              <span class="dim-label">{{ d.label }}</span>
+              <span class="dim-val">{{ sub[`${d.key}_score`] }}/20</span>
+            </div>
+            <p class="dim-commentary">{{ getCommentary(d.key, sub[`${d.key}_score`]) }}</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Email Draft -->
       <div class="card">
         <div class="email-header">
@@ -243,6 +257,73 @@ function fmtDate(iso) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
 }
+
+const dimensions = [
+  { key: "lc", label: "Leadership & Culture" },
+  { key: "ro", label: "Recruitment & Onboarding" },
+  { key: "we", label: "Work Environment" },
+  { key: "be", label: "Built Environment" },
+  { key: "tm", label: "Talent Management" },
+  { key: "ca", label: "Communication" },
+  { key: "pc", label: "Products & CX" },
+  { key: "sp", label: "Suppliers & Procurement" }
+];
+
+function getScoreClass(score) {
+  if (score <= 8) return "low-score";
+  if (score <= 14) return "med-score";
+  return "high-score";
+}
+
+const commentaries = {
+  lc: {
+    low: "Your leadership has yet to prioritize neurodiversity inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
+    med: "Early culture changes are visible under committed leaders. Establish structured metrics and encourage senior sponsors to serve as public role models.",
+    high: "Inclusion is deeply embedded in your culture and values. Maintain this maturity by scaling audit tracking and mentoring other sector peers."
+  },
+  ro: {
+    low: "Job design and recruitment screening pose major neurodivergent barriers. Standardize basic interview adjustments and share questions in advance.",
+    med: "Hiring processes offer minor flexibilities but need consistency. Train recruitment staff on neuroinclusive interview models.",
+    high: "Highly tailored talent acquisition pipelines attract diverse profiles. Scale strengths-based hiring strategies across all business units."
+  },
+  we: {
+    low: "Employees face high hurdles securing work adjustments. Formalize request frameworks and equip managers to handle cases without bias.",
+    med: "Reasonable adjustments are available but inconsistently applied. Focus on manager capability training and feedback capture.",
+    high: "Flexible adjustments are fully normalized and proactive. Regularly audit tool options and adjust processes to secure productivity."
+  },
+  be: {
+    low: "Your physical space induces significant sensory load. Conduct workspace sensory audits and establish a designated quiet zone.",
+    med: "Some quiet corners and adjustable lights exist. Introduce structured wayfinding and sensory training for space planners.",
+    high: "Sensory accessibility guides all office space decisions. Maintain active feedback networks with neurodivergent employees."
+  },
+  tm: {
+    low: "Appraisal patterns heavily restrict neurodivergent career paths. Standardize strengths-based review targets for all departments.",
+    med: "Performance metrics are flexible but lack developmental backing. Introduce structured mentorship programs.",
+    high: "Promotions and careers center around individual team strengths. Regularly track retention data to secure equal growth opportunity."
+  },
+  ca: {
+    low: "Corporate messaging is filled with complex jargon. Mandate plain language standards and multi-format communications.",
+    med: "Some emails use simple layouts, but agendas are rarely shared. Ensure digital tools are tested for user accessibility.",
+    high: "All channels strictly employ clear, accessible communications. Keep reviewing new software tools against accessibility guidelines."
+  },
+  pc: {
+    low: "Client channels create accessibility friction. Initiate co-design sessions to remove sensory or navigation difficulties.",
+    med: "Minor digital adaptations have resolved simple user issues. Focus on customer service training to handle customer adjustments.",
+    high: "Products are designed with complete neuroinclusive focus. Maintain this standard by engaging active product testing groups."
+  },
+  sp: {
+    low: "Supplier choices fail to capture DEI alignments. Insert simple neurodiversity commitment criteria in your standard RFP process.",
+    med: "Supplier reviews show early neuroinclusive trends. Formally integrate these audits in vendor review meetings.",
+    high: "Your supply chain amplifies strong neuroinclusive practices. Highlight these supplier partnerships to set sector examples."
+  }
+};
+
+function getCommentary(key, score) {
+  if (score === undefined || score === null) return "";
+  if (score <= 8) return commentaries[key].low;
+  if (score <= 14) return commentaries[key].med;
+  return commentaries[key].high;
+}
 </script>
 
 <style scoped>
@@ -339,4 +420,12 @@ h2 {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+.dimension-scorecard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.dimension-score-card { padding: 1rem; border: 2px solid var(--c-primary-dark); border-radius: 12px; margin-bottom: 0.5rem; }
+.dim-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 0.5rem; color: var(--c-primary-dark); }
+.dim-commentary { font-size: 0.8rem; line-height: 1.4; color: #555; }
+.low-score { background: #FFF0F0; border-color: #C0392B; }
+.med-score { background: #FFF8DC; border-color: #8B6914; }
+.high-score { background: #EDFFD4; border-color: #3A7A00; }
 </style>

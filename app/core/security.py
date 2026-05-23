@@ -2,3 +2,123 @@
 security.py — Security utilities
 Password hashing, token validation, and other security helpers.
 """
+
+import jwt
+import requests
+import os
+from fastapi import Request, HTTPException
+from fastapi.responses import JSONResponse
+from functools import lru_cache, wraps
+import logging
+
+logger = logging.getLogger(__name__)
+
+TENANT_ID = os.environ.get("ENTRA_TENANT_ID", "YOUR_TENANT_ID")
+CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "YOUR_CLIENT_ID")
+JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
+
+@lru_cache(maxsize=1)
+def get_jwks():
+    try:
+        response = requests.get(JWKS_URL, timeout=10)
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        logger.error(f"Failed to fetch JWKS: {e}")
+        return {"keys": []}
+
+def verify_jwt(token: str):
+    jwks = get_jwks()
+    try:
+        unverified_header = jwt.get_unverified_header(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token header")
+
+    rsa_key = {}
+    for key in jwks.get("keys", []):
+        if key.get("kid") == unverified_header.get("kid"):
+            rsa_key = {
+                "kty": key["kty"],
+                "kid": key["kid"],
+                "use": key["use"],
+                "n": key["n"],
+                "e": key["e"]
+            }
+            break
+    
+    if not rsa_key:
+        raise HTTPException(status_code=401, detail="Invalid token kid")
+    
+    try:
+        payload = jwt.decode(
+            token,
+            jwt.algorithms.RSAAlgorithm.from_jwk(rsa_key),
+            algorithms=["RS256"],
+            audience=CLIENT_ID,
+            issuer=f"https://sts.windows.net/{TENANT_ID}/"
+        )
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+async def jwks_middleware(request: Request, call_next):
+    # Only protect admin endpoints
+    protected_paths = ["/api/manage", "/api/settings", "/api/submissions"]
+    
+    # Exceptions that are public
+    if request.url.path == "/api/submit" or request.url.path == "/api/auth/verify" or request.url.path == "/api/health" or request.url.path == "/api/support":
+        return await call_next(request)
+        
+    is_protected = any(request.url.path.startswith(p) for p in protected_paths)
+    if is_protected:
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            return JSONResponse(status_code=401, content={"detail": "Missing or invalid Authorization header"})
+        
+        token = auth_header.split(" ")[1]
+        try:
+            payload = verify_jwt(token)
+            # Store the admin email in the request state for the audit logger
+            request.state.admin_email = payload.get("preferred_username") or payload.get("unique_name") or "unknown"
+        except HTTPException as e:
+            return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+            
+    return await call_next(request)
+
+def audit_log(action_type: str):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            # Extract request from kwargs if possible
+            request = kwargs.get("request")
+            if not request:
+                for arg in args:
+                    if isinstance(arg, Request):
+                        request = arg
+                        break
+            
+            admin_email = getattr(request.state, "admin_email", "unknown") if request else "unknown"
+            ip = request.client.host if request and request.client else "unknown"
+            
+            # Execute the actual endpoint
+            response = await func(*args, **kwargs)
+            
+            # Log action post-execution
+            from app.core.database import get_conn
+            try:
+                conn = get_conn()
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            INSERT INTO audit_logs (admin_id, action_type, ip_address)
+                            VALUES (%s, %s, %s)
+                        """, (admin_email, action_type, ip))
+                conn.close()
+            except Exception as e:
+                logger.error(f"Failed to write audit log: {e}")
+                
+            return response
+        return wrapper
+    return decorator

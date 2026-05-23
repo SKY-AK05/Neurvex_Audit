@@ -83,7 +83,7 @@ def get_settings(cur) -> dict:
     cur.execute(
         """
         SELECT sender_name, sender_address, notification_email, notification_cc_email,
-               notifications_enabled, support_email, updated_at
+               notifications_enabled, support_email, updated_at, crm_sync_enabled, hubspot_api_key
         FROM app_settings WHERE id = 1
         """
     )
@@ -98,6 +98,8 @@ def get_settings(cur) -> dict:
             "notifications_enabled": False,
             "support_email": DEFAULT_SUPPORT_EMAIL,
             "updated_at": None,
+            "crm_sync_enabled": False,
+            "hubspot_api_key": ""
         }
     return {
         "sender_name": row[0] or _env_sender()["sender_name"],
@@ -107,6 +109,8 @@ def get_settings(cur) -> dict:
         "notifications_enabled": bool(row[4]),
         "support_email": (row[5] or "").strip() or DEFAULT_SUPPORT_EMAIL,
         "updated_at": row[6].isoformat() if row[6] else None,
+        "crm_sync_enabled": bool(row[7]),
+        "hubspot_api_key": row[8] or ""
     }
 
 
@@ -132,6 +136,14 @@ def update_settings(cur, data: dict) -> dict:
     support_email = (
         data.get("support_email") if "support_email" in data else current["support_email"]
     ) or DEFAULT_SUPPORT_EMAIL
+    crm_sync_enabled = (
+        data["crm_sync_enabled"]
+        if "crm_sync_enabled" in data
+        else current["crm_sync_enabled"]
+    )
+    hubspot_api_key = (
+        data.get("hubspot_api_key") if "hubspot_api_key" in data else current["hubspot_api_key"]
+    ) or ""
 
     cur.execute(
         """
@@ -142,10 +154,12 @@ def update_settings(cur, data: dict) -> dict:
             notification_cc_email = %s,
             notifications_enabled = %s,
             support_email = %s,
+            crm_sync_enabled = %s,
+            hubspot_api_key = %s,
             updated_at = NOW()
         WHERE id = 1
         """,
-        (sender_name, sender_address, notification_email, notification_cc_email, notifications_enabled, support_email),
+        (sender_name, sender_address, notification_email, notification_cc_email, notifications_enabled, support_email, crm_sync_enabled, hubspot_api_key),
     )
     return get_settings(cur)
 

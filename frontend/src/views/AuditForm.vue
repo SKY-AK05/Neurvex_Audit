@@ -7,7 +7,17 @@
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
         <p>Thank you for completing the Neurvex Audit for <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
-        <router-link to="/portal" class="admin-link-small">Admin →</router-link>
+        
+        <!-- Post-submission claim account -->
+        <div v-if="!hasOrgToken" class="claim-box" style="margin-top: 1.5rem; padding: 1.5rem; border: 2.5px dashed var(--c-primary-dark); border-radius: 12px; background: #FFFDF8;">
+          <h4 style="font-family:'Playfair Display', serif; font-size:1.1rem; color:var(--c-primary-dark); margin-bottom:0.5rem;">Claim your Organisation Account</h4>
+          <p style="font-size:0.8rem; color:#666; margin-bottom:1rem; line-height:1.4;">Create a persistent account to track this audit and view your maturity score progress over time.</p>
+          <router-link :to="`/org/login?email=${encodeURIComponent(form.email)}&company=${encodeURIComponent(form.company_name)}`" class="btn btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem;">
+            Claim Account & Get Dashboard
+          </router-link>
+        </div>
+
+        <router-link to="/portal" class="admin-link-small" style="margin-top:1.5rem; display:inline-block;">Admin →</router-link>
       </div>
     </div>
 
@@ -104,6 +114,13 @@
                 <label>Contact Number (Optional)</label>
                 <input v-model="form.contact_number" type="tel" placeholder="+44 7700 000000" />
               </div>
+              <div class="field full-width consent-wrapper" style="grid-column: 1 / -1; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <label for="gdpr_consent" style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.85rem; line-height: 1.4; font-weight: normal; color: var(--c-text);">
+                  <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" style="margin-top: 3px;" />
+                  <span>I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
+                </label>
+                <span v-if="errors.consent_given" class="field-err" style="margin-left: 1.75rem;">You must provide consent to proceed.</span>
+              </div>
             </div>
 
             <div v-else class="questions-list">
@@ -127,6 +144,9 @@
             <div class="step-nav">
               <button v-if="currentStep > 0" class="btn-back" @click="currentStep--" type="button">← Back</button>
               <div v-else></div>
+
+              <!-- Progress Saving Button -->
+              <SaveContinueButton v-if="currentStep > 0" :onSave="syncToBackend" style="margin-left: 0.5rem;" />
 
               <button
                 v-if="currentStep < totalSteps - 1"
@@ -200,9 +220,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, nextTick } from "vue";
+import { ref, reactive, computed, watch, nextTick, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { submitAudit } from "../api";
+import { useDraftSaving } from "../composables/useDraftSaving";
+import SaveContinueButton from "../components/SaveContinueButton.vue";
 
 const router = useRouter();
 
@@ -424,8 +446,15 @@ watch(currentStep, async () => {
 
 const allQuestionFields = sections.flatMap(s => s.questions.map(q => q.field));
 const form = reactive({
-  name: "", designation: "", company_name: "", email: "", contact_number: "",
+  name: "", designation: "", company_name: "", email: "", contact_number: "", consent_given: false,
   ...Object.fromEntries(allQuestionFields.map(f => [f, ""])),
+});
+
+const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useDraftSaving(form, currentStep);
+const hasOrgToken = computed(() => !!localStorage.getItem("org_token"));
+
+onMounted(() => {
+  restoreLocalDraft();
 });
 
 function validateStep() {
@@ -434,6 +463,7 @@ function validateStep() {
     if (!form.name)         errors.name         = true;
     if (!form.designation)  errors.designation  = true;
     if (!form.company_name) errors.company_name = true;
+    if (!form.consent_given) errors.consent_given = true;
     
     if (!form.email) {
       errors.email = true;
@@ -470,6 +500,7 @@ function fillTestData() {
   form.company_name   = rnd(companies);
   form.email          = "aakash.padyachi@orchvate.com";
   form.contact_number = `+44 77${Math.floor(10000000 + Math.random() * 89999999)}`;
+  form.consent_given  = true;
 
   allQuestionFields.forEach(f => { form[f] = rnd(options); });
 }
@@ -480,7 +511,8 @@ async function submit() {
   submitting.value  = true;
   submitError.value = "";
   try {
-    await submitAudit({ ...form });
+    await submitAudit({ ...form, draft_id: draftId.value });
+    clearDraft();
     submitted.value = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {

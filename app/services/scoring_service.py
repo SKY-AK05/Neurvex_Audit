@@ -22,6 +22,49 @@ SECTIONS = {
     "sp": {"label": "Suppliers & Procurement",           "questions": [f"q{i}" for i in range(40, 45)]},
 }
 
+DIMENSION_COMMENTARY = {
+    "lc": {
+        "low": "Your leadership has yet to prioritize neurodiversity inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
+        "med": "Early culture changes are visible under committed leaders. Establish structured metrics and encourage senior sponsors to serve as public role models.",
+        "high": "Inclusion is deeply embedded in your culture and values. Maintain this maturity by scaling audit tracking and mentoring other sector peers."
+    },
+    "ro": {
+        "low": "Job design and recruitment screening pose major neurodivergent barriers. Standardize basic interview adjustments and share questions in advance.",
+        "med": "Hiring processes offer minor flexibilities but need consistency. Train recruitment staff on neuroinclusive interview models.",
+        "high": "Highly tailored talent acquisition pipelines attract diverse profiles. Scale strengths-based hiring strategies across all business units."
+    },
+    "we": {
+        "low": "Employees face high hurdles securing work adjustments. Formalize request frameworks and equip managers to handle cases without bias.",
+        "med": "Reasonable adjustments are available but inconsistently applied. Focus on manager capability training and feedback capture.",
+        "high": "Flexible adjustments are fully normalized and proactive. Regularly audit tool options and adjust processes to secure productivity."
+    },
+    "be": {
+        "low": "Your physical space induces significant sensory load. Conduct workspace sensory audits and establish a designated quiet zone.",
+        "med": "Some quiet corners and adjustable lights exist. Introduce structured wayfinding and sensory training for space planners.",
+        "high": "Sensory accessibility guides all office space decisions. Maintain active feedback networks with neurodivergent employees."
+    },
+    "tm": {
+        "low": "Appraisal patterns heavily restrict neurodivergent career paths. Standardize strengths-based review targets for all departments.",
+        "med": "Performance metrics are flexible but lack developmental backing. Introduce structured mentorship programs.",
+        "high": "Promotions and careers center around individual team strengths. Regularly track retention data to secure equal growth opportunity."
+    },
+    "ca": {
+        "low": "Corporate messaging is filled with complex jargon. Mandate plain language standards and multi-format communications.",
+        "med": "Some emails use simple layouts, but agendas are rarely shared. Ensure digital tools are tested for user accessibility.",
+        "high": "All channels strictly employ clear, accessible communications. Keep reviewing new software tools against accessibility guidelines."
+    },
+    "pc": {
+        "low": "Client channels create accessibility friction. Initiate co-design sessions to remove sensory or navigation difficulties.",
+        "med": "Minor digital adaptations have resolved simple user issues. Focus on customer service training to handle customer adjustments.",
+        "high": "Products are designed with complete neuroinclusive focus. Maintain this standard by engaging active product testing groups."
+    },
+    "sp": {
+        "low": "Supplier choices fail to capture DEI alignments. Insert simple neurodiversity commitment criteria in your standard RFP process.",
+        "med": "Supplier reviews show early neuroinclusive trends. Formally integrate these audits in vendor review meetings.",
+        "high": "Your supply chain amplifies strong neuroinclusive practices. Highlight these supplier partnerships to set sector examples."
+    }
+}
+
 def get_maturity_level(score: int) -> str:
     if score <= 6:
         return "Level 1 — Foundational"
@@ -165,18 +208,21 @@ def calculate_scores(data: dict) -> dict:
     """
     result = {}
     section_scores = []
+    dimension_scores = {}
 
     for key, section in SECTIONS.items():
         score = score_section(data, section["questions"])
         level = get_maturity_level(score)
         result[f"{key}_score"] = score
         result[f"{key}_level"] = level
+        dimension_scores[key] = score
         section_scores.append((key, section["label"], score, level))
 
     overall_avg = round(sum(s[2] for s in section_scores) / len(section_scores), 2)
     overall_level = get_maturity_level(int(overall_avg))
     result["overall_avg"] = overall_avg
     result["overall_level"] = overall_level
+    result["dimension_scores"] = dimension_scores
 
     result["email_body"] = build_email(
         name=data.get("name", ""),
@@ -285,8 +331,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     # Generate dynamic segment cards
     segment_cards = []
     for key, label, score, level in section_scores:
-        idx = level_index.get(level, 0)
-        interpretation = INTERPRETATIONS[key][idx]
         fill_w = int((score / 20.0) * 100)
         empty_w = 100 - fill_w
         
@@ -300,21 +344,39 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
                 f'<td width="{empty_w}%" height="4" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>'
             )
 
+        # Determine score color class and commentary
+        if score <= 8:
+            badge_color = "#FFF0F0"
+            badge_text = "#C0392B"
+            badge_label = "Foundational"
+            commentary = DIMENSION_COMMENTARY[key]["low"]
+        elif score <= 14:
+            badge_color = "#FFF8DC"
+            badge_text = "#8B6914"
+            badge_label = "Progressing"
+            commentary = DIMENSION_COMMENTARY[key]["med"]
+        else:
+            badge_color = "#EDFFD4"
+            badge_text = "#3A7A00"
+            badge_label = "Developing"
+            commentary = DIMENSION_COMMENTARY[key]["high"]
+
         segment_cards.append(f"""
     <!-- SEGMENT: {label} -->
     <tr><td style="background:#FFFFFF;padding:0 40px 12px;">
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F9F8FF;border-radius:10px;overflow:hidden;">
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F9F8FF;border-radius:10px;overflow:hidden;border:1px solid #E2DDD4;">
         <tr>
           <td style="padding:14px 16px;">
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 <td>
+                  <span style="display:inline-block;background:{badge_color};color:{badge_text};font-family:\'DM Sans\',Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">{badge_label}</span>
                   <p style="margin:0 0 2px;font-family:\'DM Sans\',Arial,sans-serif;font-size:13px;font-weight:600;color:#1E1A4A;">{_e(label)}</p>
                   <!-- bar -->
                   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:6px 0 8px;"><tr>
                     {bar_tds}
                   </tr></table>
-                  <p style="margin:0;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;color:#555;line-height:1.6;">{_e(interpretation)}</p>
+                  <p style="margin:0;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;color:#555;line-height:1.6;">{_e(commentary)}</p>
                 </td>
                 <td width="52" valign="top" align="right" style="padding-left:12px;">
                   <span style="display:inline-block;background:#EEEDFE;color:#534AB7;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;">{score} / 20</span>

@@ -15,9 +15,14 @@ export async function getSubmission(id) {
 }
 
 export async function submitAudit(data) {
+  const headers = { "Content-Type": "application/json" };
+  const token = localStorage.getItem("org_token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   const res = await fetch(`${API_BASE}/submit`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(data),
   });
   const json = await res.json();

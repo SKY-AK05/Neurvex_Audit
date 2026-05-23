@@ -92,6 +92,8 @@
       
       <!-- Theme Tweaker -->
       <ThemeTweaker />
+      <!-- Accessibility Panel -->
+      <AccessibilityPanel />
     </div>
   </div>
 </template>
@@ -102,6 +104,7 @@ import { useRouter, useRoute } from "vue-router";
 import { getSettings, toggleNotifications } from "./api";
 import { msalInstance } from "./authConfig";
 import ThemeTweaker from "./components/ThemeTweaker.vue";
+import AccessibilityPanel from "./components/AccessibilityPanel.vue";
 
 const router = useRouter();
 const route  = useRoute();
@@ -256,12 +259,15 @@ async function logout() {
   --c-accent-retro: #C8F31D;
   --c-bg: #F0F0F0;
   --c-white: #FFFFFF;
+  --font-body: 'Geist', 'Inter', sans-serif;
+  --line-height-body: 1.5;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'Geist', 'Inter', sans-serif;
+  font-family: var(--font-body);
+  line-height: var(--line-height-body);
   background-color: var(--c-bg);
   color: var(--c-primary-dark);
   background-image:
@@ -273,6 +279,33 @@ body {
 }
 
 body::before { content: none; }
+
+/* Accessibility classes */
+body.accessibility-dyslexia {
+  --font-body: 'OpenDyslexic', sans-serif !important;
+}
+
+body.accessibility-lineheight {
+  --line-height-body: 2.1 !important;
+}
+
+body.accessibility-highcontrast {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  --c-bg: #111 !important;
+  --c-white: #000 !important;
+}
+
+body.accessibility-highcontrast .card,
+body.accessibility-highcontrast .info-item,
+body.accessibility-highcontrast input,
+body.accessibility-highcontrast button,
+body.accessibility-highcontrast .step-card,
+body.accessibility-highcontrast .opt-btn {
+  background: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
 
 #app, .app-shell {
   position: relative;
