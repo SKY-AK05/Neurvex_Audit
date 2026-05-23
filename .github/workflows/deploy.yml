@@ -14,13 +14,7 @@ jobs:
       - name: Azure login
         uses: azure/login@v1
         with:
-          creds: >-
-            {
-              "clientId": "${{ secrets.NEURVEXAPP_AZURE_CLIENT_ID }}",
-              "clientSecret": "${{ secrets.NEURVEXAPP_AZURE_CLIENT_SECRET }}",
-              "subscriptionId": "${{ secrets.NEURVEXAPP_AZURE_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ secrets.NEURVEXAPP_AZURE_TENANT_ID }}"
-            }
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ACR login
         run: |
