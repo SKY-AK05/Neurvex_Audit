@@ -149,7 +149,7 @@ const profileWrap = ref(null);
 // Share audit link
 const shareCopied = ref(false);
 function copyAuditLink() {
-  const url = window.location.origin + "/#/";
+  const url = "https://neurvex.orchvate.in/#/";
   navigator.clipboard.writeText(url).then(() => {
     shareCopied.value = true;
     setTimeout(() => { shareCopied.value = false; }, 2000);

@@ -149,7 +149,7 @@ async function save() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 720px;
+  max-width: 100%;
 }
 
 .card h2 {
@@ -164,7 +164,7 @@ async function save() {
 
 .fields-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 0.75rem;
 }
 

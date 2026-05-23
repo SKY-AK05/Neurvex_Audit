@@ -85,7 +85,7 @@ const downloading = ref(false);
 const linkCopied = ref(false);
 
 function copyAuditLink() {
-  const url = window.location.origin + "/#/";
+  const url = "https://neurvex.orchvate.in/#/";
   navigator.clipboard.writeText(url).then(() => {
     linkCopied.value = true;
     setTimeout(() => { linkCopied.value = false; }, 2000);
