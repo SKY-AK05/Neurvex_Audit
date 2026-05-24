@@ -4,9 +4,11 @@ Runs via: uvicorn app.main:app --host 127.0.0.1 --port 8000
 """
 import logging
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware

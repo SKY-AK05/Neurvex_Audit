@@ -52,33 +52,37 @@ def verify_jwt(token: str):
     try:
         unverified_payload = jwt.decode(token, options={"verify_signature": False})
         logger.info(f"Unverified token payload: iss={unverified_payload.get('iss')}, aud={unverified_payload.get('aud')}, tid={unverified_payload.get('tid')}")
+        logger.info(f"Expected parameters in security.py: TENANT_ID={TENANT_ID}, CLIENT_ID={CLIENT_ID}")
     except Exception as ex:
         logger.error(f"Failed to decode unverified token: {ex}")
 
+    VALID_ISSUERS = [
+        f"https://sts.windows.net/{TENANT_ID}/",
+        f"https://login.microsoftonline.com/{TENANT_ID}/v2.0",
+    ]
     try:
+        # Decode without issuer check first (PyJWT 2.x does not support list issuers)
         payload = jwt.decode(
             token,
             jwt.algorithms.RSAAlgorithm.from_jwk(rsa_key),
             algorithms=["RS256"],
             audience=CLIENT_ID,
-            issuer=[
-                f"https://sts.windows.net/{TENANT_ID}/",
-                f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
-            ]
+            options={"verify_iss": False},
         )
+        # Manually validate issuer against both v1 and v2 endpoints
+        token_iss = payload.get("iss", "")
+        if token_iss not in VALID_ISSUERS:
+            logger.error(f"JWT issuer rejected: got={token_iss}, accepted={VALID_ISSUERS}")
+            raise HTTPException(status_code=401, detail=f"Invalid issuer: {token_iss}")
+        logger.info(f"JWT validated successfully for iss={token_iss}")
         return payload
+    except HTTPException:
+        raise
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError as e:
         logger.error(f"JWT Decode failed: {e}")
-        try:
-            unverified_payload = jwt.decode(token, options={"verify_signature": False})
-            token_iss = unverified_payload.get("iss")
-            token_aud = unverified_payload.get("aud")
-            msg = f"Invalid token: {e}. Token iss: {token_iss}, Expected one of: https://sts.windows.net/{TENANT_ID}/, https://login.microsoftonline.com/{TENANT_ID}/v2.0. Token aud: {token_aud}, Expected: {CLIENT_ID}"
-        except Exception:
-            msg = f"Invalid token: {e}"
-        raise HTTPException(status_code=401, detail=msg)
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
 async def jwks_middleware(request: Request, call_next):
     # Only protect admin endpoints
