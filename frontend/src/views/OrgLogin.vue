@@ -2,6 +2,9 @@
   <div class="login-page">
     <div class="login-card">
       <div class="header">
+        <div class="login-logo-wrap">
+          <img src="/logo-dark.png" alt="Neurvex" class="login-logo" />
+        </div>
         <h2>Organisation Dashboard</h2>
         <p>Enter your email and company name to register or receive your access link.</p>
       </div>
@@ -23,6 +26,11 @@
         <div v-if="message" class="alert alert-success">{{ message }}</div>
         <div v-if="error" class="alert alert-error">{{ error }}</div>
       </form>
+
+      <div class="powered-by-wrap">
+        <span class="powered-label">Powered by</span>
+        <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
+      </div>
     </div>
   </div>
 </template>
@@ -59,9 +67,70 @@ async function handleSubmit() {
 </script>
 
 <style scoped>
-.login-page { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--c-bg); }
-.login-card { background: white; border: 2px solid var(--c-primary-dark); padding: 3rem; border-radius: 16px; box-shadow: 4px 4px 0 var(--c-primary-dark); max-width: 450px; width: 90%; }
-.header h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--c-primary-dark); }
-.header p { font-size: 0.85rem; color: #666; margin-bottom: 2rem; }
-.submit-btn { width: 100%; margin-top: 1rem; }
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 2rem 1rem;
+  background: var(--c-bg);
+  overflow-y: auto;
+}
+.login-card {
+  background: white;
+  border: 2px solid var(--c-primary-dark);
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--c-primary-dark);
+  max-width: 450px;
+  width: 100%;
+}
+.login-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+.login-logo {
+  height: 48px;
+  width: auto;
+}
+.header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--c-primary-dark);
+  text-align: center;
+}
+.header p {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+.submit-btn {
+  width: 100%;
+  margin-top: 1rem;
+}
+.powered-by-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 2rem;
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+}
+.powered-label {
+  font-size: 0.65rem;
+  color: #888;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.powered-logo {
+  height: 18px;
+  width: auto;
+  opacity: 0.75;
+}
 </style>

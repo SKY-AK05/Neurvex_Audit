@@ -26,6 +26,15 @@
         <div v-else class="spinner"></div>
         <span>{{ loading ? 'Connecting to Microsoft...' : 'Sign in with Microsoft' }}</span>
       </button>
+
+      <!-- Local Dev Bypass Option -->
+      <div v-if="isLocalhost" class="dev-bypass-wrap" style="margin-top: 2rem; border-top: 1px dashed var(--c-primary-dark); padding-top: 1.5rem;">
+        <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem; font-weight: bold;">Developer Mode: Bypass Microsoft Login</p>
+        <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+          <input v-model="devEmail" type="email" placeholder="admin.email@orchvate.com" style="padding: 0.5rem 0.75rem; border: 2px solid var(--c-primary-dark); border-radius: 8px; font-size: 0.85rem; width: 220px; background: white; color: var(--c-primary-dark);" />
+          <button @click="handleDevLogin" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Log In</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -39,6 +48,47 @@ const error    = ref(false);
 const errorMsg = ref("");
 const loading  = ref(false);
 const router   = useRouter();
+
+const isLocalhost = ref(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+const devEmail = ref("");
+
+async function handleDevLogin() {
+  if (!devEmail.value) {
+    error.value = true;
+    errorMsg.value = "Please enter a developer email address.";
+    return;
+  }
+  
+  loading.value = true;
+  error.value = false;
+  try {
+    const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+    const res = await fetch(`${API_BASE}/auth/verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: devEmail.value.trim() })
+    });
+    
+    if (!res.ok) throw new Error("Bypass verification request failed.");
+    const data = await res.json();
+    if (data.authorized) {
+      sessionStorage.setItem("nd_auth", "1");
+      sessionStorage.setItem("nd_user_name", devEmail.value);
+      sessionStorage.setItem("nd_role", data.role);
+      sessionStorage.setItem("nd_auth_token", "local_bypass:" + devEmail.value.trim());
+      sessionStorage.removeItem("nd_auth_error");
+      router.push("/admin/dashboard");
+    } else {
+      error.value = true;
+      errorMsg.value = "Access Denied: This email is not authorized in admin_users.";
+    }
+  } catch (err) {
+    error.value = true;
+    errorMsg.value = err.message || "Failed to bypass login.";
+  } finally {
+    loading.value = false;
+  }
+}
 
 onMounted(async () => {
   const storedError = sessionStorage.getItem("nd_auth_error");

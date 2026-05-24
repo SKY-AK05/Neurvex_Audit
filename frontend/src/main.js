@@ -5,8 +5,9 @@ import "./style.css";
 import { msalInstance } from "./authConfig";
 
 // Initialize MSAL and process any redirect response
-msalInstance.initialize().then(() => {
-    msalInstance.handleRedirectPromise().then((response) => {
+try {
+    msalInstance.initialize().then(() => {
+        msalInstance.handleRedirectPromise().then((response) => {
         if (response && response.account) {
             const email = response.account.username;
             fetch("/api/auth/verify", {
@@ -51,14 +52,22 @@ msalInstance.initialize().then(() => {
                 app.mount("#app");
                 router.push("/admin");
             });
-        } else {
-            // Not a redirect response (normal page load)
-            const app = createApp(App).use(router);
-            app.mount("#app");
-        }
+            } else {
+                // Not a redirect response (normal page load)
+                const app = createApp(App).use(router);
+                app.mount("#app");
+            }
+        }).catch(error => {
+            console.error("Auth redirect error:", error);
+            sessionStorage.setItem("nd_auth_error", error.message || "Authentication failed.");
+            createApp(App).use(router).mount("#app");
+        });
     }).catch(error => {
-        console.error("Auth redirect error:", error);
-        sessionStorage.setItem("nd_auth_error", error.message || "Authentication failed.");
+        console.error("MSAL initialization failed:", error);
+        sessionStorage.setItem("nd_auth_error", "Microsoft Login is currently unavailable: " + (error.message || error));
         createApp(App).use(router).mount("#app");
     });
-}).catch(console.error);
+} catch (e) {
+    console.error("MSAL startup error:", e);
+    createApp(App).use(router).mount("#app");
+}

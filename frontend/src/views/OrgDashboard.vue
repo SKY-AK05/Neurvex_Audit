@@ -1,72 +1,90 @@
 <template>
   <div class="dashboard-page">
-    <header class="dashboard-header">
-      <div>
-        <h1>Dashboard</h1>
-        <p>Maturity score history and reports over time.</p>
+    <!-- Top Brand Navbar -->
+    <header class="org-topbar">
+      <div class="topbar-left">
+        <div class="topbar-brand">
+          <img src="/logo-dark.png" alt="Neurvex" class="brand-logo" />
+          <span class="brand-name">Neurvex Audit</span>
+        </div>
       </div>
-      <div class="actions">
-        <button class="btn btn-primary" @click="$router.push('/')">Re-Audit Organisation</button>
-        <button class="btn btn-secondary" @click="handleLogout">Logout</button>
+      <div class="topbar-right">
+        <div class="topbar-powered">
+          <span class="powered-label">Powered by</span>
+          <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
+        </div>
       </div>
     </header>
 
-    <div v-if="loading" class="loading">Loading dashboard...</div>
-    <div v-else-if="error" class="alert alert-error">{{ error }}</div>
-    <div v-else class="dashboard-grid">
-      <!-- Left: Level and Line Chart -->
-      <div class="main-card card">
-        <div class="level-indicator">
-          <h3>Current Maturity Status</h3>
-          <span class="badge badge-sent">{{ currentLevel }}</span>
-          <p class="last-date" v-if="lastAuditDate">Last Audited: {{ fmtDate(lastAuditDate) }}</p>
+    <div class="dashboard-content">
+      <header class="dashboard-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Maturity score history and reports over time.</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" @click="$router.push('/')">Re-Audit Organisation</button>
+          <button class="btn btn-secondary" @click="handleLogout">Logout</button>
+        </div>
+      </header>
+
+      <div v-if="loading" class="loading">Loading dashboard...</div>
+      <div v-else-if="error" class="alert alert-error">{{ error }}</div>
+      <div v-else class="dashboard-grid">
+        <!-- Left: Level and Line Chart -->
+        <div class="main-card card">
+          <div class="level-indicator">
+            <h3>Current Maturity Status</h3>
+            <span class="badge badge-sent">{{ currentLevel }}</span>
+            <p class="last-date" v-if="lastAuditDate">Last Audited: {{ fmtDate(lastAuditDate) }}</p>
+          </div>
+
+          <div class="chart-container">
+            <h4>Progress Over Time</h4>
+            <!-- Render custom SVG Line Chart -->
+            <svg viewBox="0 0 500 200" class="svg-chart" v-if="history.length > 0">
+              <!-- Grid Lines -->
+              <line x1="40" y1="20" x2="480" y2="20" stroke="#eee" />
+              <line x1="40" y1="80" x2="480" y2="80" stroke="#eee" />
+              <line x1="40" y1="140" x2="480" y2="140" stroke="#eee" />
+              <line x1="40" y1="170" x2="480" y2="170" stroke="#ccc" stroke-width="2" />
+
+              <!-- Y Axis Label -->
+              <text x="10" y="25" class="axis-text">20</text>
+              <text x="10" y="85" class="axis-text">10</text>
+              <text x="10" y="145" class="axis-text">0</text>
+
+              <!-- Line Path -->
+              <path :d="chartPath" fill="none" stroke="var(--c-primary-dark)" stroke-width="3" />
+
+              <!-- Plot points -->
+              <circle
+                v-for="(point, index) in chartPoints"
+                :key="index"
+                :cx="point.x"
+                :cy="point.y"
+                r="5"
+                fill="var(--c-accent-retro)"
+                stroke="var(--c-primary-dark)"
+                stroke-width="2"
+              />
+            </svg>
+            <p v-else class="empty-chart">Submit your first audit to see progress.</p>
+          </div>
         </div>
 
-        <div class="chart-container">
-          <h4>Progress Over Time</h4>
-          <!-- Render custom SVG Line Chart -->
-          <svg viewBox="0 0 500 200" class="svg-chart" v-if="history.length > 0">
-            <!-- Grid Lines -->
-            <line x1="40" y1="20" x2="480" y2="20" stroke="#eee" />
-            <line x1="40" y1="80" x2="480" y2="80" stroke="#eee" />
-            <line x1="40" y1="140" x2="480" y2="140" stroke="#eee" />
-            <line x1="40" y1="170" x2="480" y2="170" stroke="#ccc" stroke-width="2" />
-
-            <!-- Y Axis Label -->
-            <text x="10" y="25" class="axis-text">20</text>
-            <text x="10" y="85" class="axis-text">10</text>
-            <text x="10" y="145" class="axis-text">0</text>
-
-            <!-- Line Path -->
-            <path :d="chartPath" fill="none" stroke="var(--c-primary-dark)" stroke-width="3" />
-
-            <!-- Plot points -->
-            <circle
-              v-for="(point, index) in chartPoints"
-              :key="index"
-              :cx="point.x"
-              :cy="point.y"
-              r="5"
-              fill="var(--c-accent-retro)"
-              stroke="var(--c-primary-dark)"
-              stroke-width="2"
-            />
-          </svg>
-          <p v-else class="empty-chart">Submit your first audit to see progress.</p>
-        </div>
-      </div>
-
-      <!-- Right: Submissions List -->
-      <div class="side-card card">
-        <h3>Audit Submissions</h3>
-        <div v-if="submissions.length === 0" class="empty-list">No audits submitted yet.</div>
-        <div v-else class="audit-list">
-          <div v-for="s in submissions" :key="s.id" class="audit-item">
-            <div class="audit-meta">
-              <span class="audit-date">{{ fmtDate(s.submitted_at) }}</span>
-              <span class="audit-score"><strong>{{ s.overall_avg }}/20</strong></span>
+        <!-- Right: Submissions List -->
+        <div class="side-card card">
+          <h3>Audit Submissions</h3>
+          <div v-if="submissions.length === 0" class="empty-list">No audits submitted yet.</div>
+          <div v-else class="audit-list">
+            <div v-for="s in submissions" :key="s.id" class="audit-item">
+              <div class="audit-meta">
+                <span class="audit-date">{{ fmtDate(s.submitted_at) }}</span>
+                <span class="audit-score"><strong>{{ s.overall_avg }}/20</strong></span>
+              </div>
+              <div class="audit-level">{{ s.overall_level }}</div>
             </div>
-            <div class="audit-level">{{ s.overall_level }}</div>
           </div>
         </div>
       </div>
@@ -148,7 +166,74 @@ const chartPath = computed(() => {
 </script>
 
 <style scoped>
-.dashboard-page { padding: 2rem 3rem; background: var(--c-bg); min-height: 100vh; }
+.dashboard-page {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--c-bg);
+  display: flex;
+  flex-direction: column;
+}
+.org-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 3rem;
+  border-bottom: 2px solid var(--c-primary-dark);
+  background: rgba(245,242,235,0.95);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-shrink: 0;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.brand-logo {
+  height: 32px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
+.brand-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+.topbar-powered {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.powered-label {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.powered-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.65;
+}
+.dashboard-content {
+  padding: 2rem 3rem;
+  flex: 1;
+  min-height: 0;
+}
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
 .dashboard-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--c-primary-dark); }
 .actions { display: flex; gap: 0.5rem; }

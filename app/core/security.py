@@ -79,11 +79,27 @@ async def jwks_middleware(request: Request, call_next):
         
         token = auth_header.split(" ")[1]
         try:
-            payload = verify_jwt(token)
-            # Store the admin email in the request state for the audit logger
-            request.state.admin_email = payload.get("preferred_username") or payload.get("unique_name") or "unknown"
+            # Check for local developer login bypass
+            if (TENANT_ID == "YOUR_TENANT_ID" or os.environ.get("ENABLE_DEV_BYPASS") == "true") and token.startswith("local_bypass:"):
+                email = token.split("local_bypass:")[1].lower()
+                from app.core.database import get_conn
+                conn = get_conn()
+                with conn.cursor() as cur:
+                    cur.execute("SELECT role FROM admin_users WHERE email = %s", (email,))
+                    row = cur.fetchone()
+                conn.close()
+                if not row:
+                    return JSONResponse(status_code=401, content={"detail": "Unauthorized developer email"})
+                request.state.admin_email = email
+            else:
+                payload = verify_jwt(token)
+                # Store the admin email in the request state for the audit logger
+                request.state.admin_email = payload.get("preferred_username") or payload.get("unique_name") or "unknown"
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
+        except Exception as e:
+            logger.error("JWKS middleware error: %s", e)
+            return JSONResponse(status_code=401, content={"detail": "Token validation failed"})
             
     return await call_next(request)
 

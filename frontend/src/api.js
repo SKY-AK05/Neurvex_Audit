@@ -2,14 +2,27 @@
 // In local dev, set VITE_API_BASE in frontend/.env to http://localhost:7071/api
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
+function getAuthHeaders() {
+  const headers = {};
+  const token = sessionStorage.getItem("nd_auth_token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 export async function getSubmissions() {
-  const res = await fetch(`${API_BASE}/submissions`);
+  const res = await fetch(`${API_BASE}/submissions`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch submissions");
   return res.json();
 }
 
 export async function getSubmission(id) {
-  const res = await fetch(`${API_BASE}/submissions/${id}`);
+  const res = await fetch(`${API_BASE}/submissions/${id}`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error("Failed to fetch submission");
   return res.json();
 }
@@ -33,7 +46,10 @@ export async function submitAudit(data) {
 export async function saveEmail(id, emailBody) {
   const res = await fetch(`${API_BASE}/submissions/${id}/email`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify({ email_body: emailBody }),
   });
   const json = await res.json();
@@ -44,6 +60,7 @@ export async function saveEmail(id, emailBody) {
 export async function sendEmail(id) {
   const res = await fetch(`${API_BASE}/submissions/${id}/send`, {
     method: "POST",
+    headers: getAuthHeaders(),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "Send failed");
@@ -53,6 +70,7 @@ export async function sendEmail(id) {
 export async function regenerateEmail(id) {
   const res = await fetch(`${API_BASE}/submissions/${id}/regenerate-email`, {
     method: "POST",
+    headers: getAuthHeaders(),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "Regeneration failed");
@@ -60,7 +78,9 @@ export async function regenerateEmail(id) {
 }
 
 export async function getSettings() {
-  const res = await fetch(`${API_BASE}/settings`);
+  const res = await fetch(`${API_BASE}/settings`, {
+    headers: getAuthHeaders(),
+  });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "Failed to load settings");
   return json;
@@ -69,7 +89,10 @@ export async function getSettings() {
 export async function saveSettings(data) {
   const res = await fetch(`${API_BASE}/settings`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
     body: JSON.stringify(data),
   });
   const json = await res.json();
@@ -91,6 +114,7 @@ export async function submitSupportRequest(data) {
 export async function toggleNotifications() {
   const res = await fetch(`${API_BASE}/settings/notifications/toggle`, {
     method: "POST",
+    headers: getAuthHeaders(),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.error || "Failed to toggle notifications");

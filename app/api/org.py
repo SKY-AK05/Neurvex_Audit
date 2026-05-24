@@ -13,7 +13,7 @@ from app.services.settings_service import send_acs_email, get_sender_for_send
 router = APIRouter(prefix="/org", tags=["Organizations"])
 logger = logging.getLogger(__name__)
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "default_jwt_secret_key_change_me")
+from app.core.config import JWT_SECRET, FRONTEND_URL
 
 class RegisterPayload(BaseModel):
     email: EmailStr
@@ -30,8 +30,7 @@ async def register_or_login_org(payload: RegisterPayload):
     
     # 1. Send magic link email
     token = create_magic_link_token(email, company_name)
-    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
-    login_url = f"{frontend_url}/#/org/verify?token={token}"
+    login_url = f"{FRONTEND_URL}/#/org/verify?token={token}"
     
     try:
         conn = get_conn()

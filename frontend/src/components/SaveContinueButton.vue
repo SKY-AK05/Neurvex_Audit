@@ -1,7 +1,11 @@
 <template>
   <div class="save-continue-container">
     <button type="button" class="btn btn-outline" @click="handleSave" :disabled="loading">
-      {{ loading ? "Saving..." : "Save and Continue Later" }}
+      <span v-if="loading">Saving...</span>
+      <span v-else>
+        <span class="btn-text-desktop">Save and Continue Later</span>
+        <span class="btn-text-mobile">Save Draft</span>
+      </span>
     </button>
 
     <!-- Modal dialog for resume url -->
@@ -62,6 +66,11 @@ function copyLink() {
 
 <style scoped>
 .save-continue-container { display: inline-block; }
+.btn-text-mobile { display: none; }
+@media (max-width: 600px) {
+  .btn-text-desktop { display: none; }
+  .btn-text-mobile { display: inline; }
+}
 .save-modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;

@@ -41,7 +41,7 @@ router = APIRouter()
 router.include_router(drafts_router)
 router.include_router(org_router)
 
-JWT_SECRET = os.environ.get("JWT_SECRET", "default_jwt_secret_key_change_me")
+from app.core.config import JWT_SECRET
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +136,7 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
     """
 
     params = {
+        **scores,
         "name": data.get("name"),
         "designation": data.get("designation"),
         "company_name": data.get("company_name"),
@@ -144,9 +145,8 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
         "consent_given": data.get("consent_given", False),
         "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
         "organization_id": organization_id,
-        "dimension_scores": dimension_scores_json,
         **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
-        **scores,
+        "dimension_scores": dimension_scores_json,
     }
 
     crm_enabled = False
@@ -158,10 +158,15 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
                 submission_id = cur.fetchone()[0]
                 notify_admin_new_submission(cur, submission_id, data.get("name", ""), data.get("company_name", ""))
                 
-                # Update draft as submitted if draft_id is provided
+                # Update draft as submitted if draft_id is provided and is a valid UUID
                 draft_id = data.get("draft_id")
-                if draft_id:
-                    cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
+                if draft_id and str(draft_id).strip() not in ("", "null", "undefined"):
+                    try:
+                        import uuid
+                        uuid.UUID(str(draft_id))
+                        cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
+                    except ValueError:
+                        logger.warning("Invalid draft_id UUID: %s", draft_id)
                     
                 # Check if CRM is enabled in settings
                 cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")

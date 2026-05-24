@@ -4,6 +4,9 @@ Runs via: uvicorn app.main:app --host 127.0.0.1 --port 8000
 """
 import logging
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,6 +22,8 @@ from app.core.database import get_conn
 from app.core.limiter import limiter
 from app.tasks.email_worker import start_dlq_worker
 
+from app.core.config import CORS_ORIGINS
+
 logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="Orchvate Audit API", docs_url=None, redoc_url=None)
 app.state.limiter = limiter
@@ -31,7 +36,7 @@ async def startup_event():
 # CORS is only needed for local dev (in production, nginx handles same-origin routing)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -147,7 +147,7 @@ const profileWrap = ref(null);
 // Share audit link
 const shareCopied = ref(false);
 function copyAuditLink() {
-  const url = "https://neurvex.orchvate.in/#/";
+  const url = import.meta.env.VITE_APP_URL || "https://neurvex.orchvate.in/#/";
   navigator.clipboard.writeText(url).then(() => {
     shareCopied.value = true;
     setTimeout(() => { shareCopied.value = false; }, 2000);
@@ -505,7 +505,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   text-transform: uppercase; letter-spacing: 0.05em;
   font-family: 'Inter', sans-serif;
 }
-.field input, .field textarea, .field select {
+.field input:not([type="checkbox"]), .field textarea, .field select {
   width: 100%; padding: 0.8rem 1rem;
   border: 2px solid var(--c-primary-dark); border-radius: 8px;
   font-size: 0.95rem; background: var(--c-white); color: var(--c-primary-dark);
@@ -513,7 +513,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   transition: all 0.15s;
   box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
 }
-.field input:focus, .field textarea:focus, .field select:focus {
+.field input:not([type="checkbox"]):focus, .field textarea:focus, .field select:focus {
   outline: none;
   box-shadow: 4px 4px 0 var(--c-accent);
   transform: translate(-2px, -2px);

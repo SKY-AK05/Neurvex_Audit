@@ -167,7 +167,8 @@ function initials(name) {
 }
 
 function copyAuditLink() {
-  navigator.clipboard.writeText("https://neurvex.orchvate.in/#/").then(() => {
+  const url = import.meta.env.VITE_APP_URL || "https://neurvex.orchvate.in/#/";
+  navigator.clipboard.writeText(url).then(() => {
     linkCopied.value = true;
     setTimeout(() => { linkCopied.value = false; }, 2000);
   });

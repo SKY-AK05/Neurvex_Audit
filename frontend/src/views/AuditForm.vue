@@ -77,9 +77,30 @@
         <div class="step-center">
         <div class="step-main">
         <div class="step-card" :key="currentStep">
+          <!-- Mobile progress header -->
+          <div class="mobile-progress-bar">
+            <div class="mobile-progress-info">
+              <span class="mobile-phase">{{ progressPhase }}</span>
+              <span class="mobile-count">{{ currentStep + 1 }} / {{ totalSteps }}</span>
+            </div>
+            <div class="mobile-progress-track">
+              <div class="mobile-progress-fill" :style="{ width: progressPct + '%' }"></div>
+            </div>
+          </div>
+
           <div class="step-card-head">
-            <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
-            <div v-else class="step-tag">Section {{ currentStep }} of 8</div>
+            <div class="step-head-meta">
+              <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
+              <div v-else class="step-tag">Section {{ currentStep }} of 8</div>
+              <button
+                v-if="currentStep > 0"
+                class="mobile-info-toggle"
+                @click="showMobileInfo = !showMobileInfo"
+                type="button"
+              >
+                {{ showMobileInfo ? 'Hide Section Details ▴' : 'Show Section Details ▾' }}
+              </button>
+            </div>
             <h1>{{ currentStep === 0 ? 'Tell us about you' : currentSection.title }}</h1>
             <p class="step-sub">
               {{ currentStep === 0
@@ -114,12 +135,12 @@
                 <label>Contact Number (Optional)</label>
                 <input v-model="form.contact_number" type="tel" placeholder="+44 7700 000000" />
               </div>
-              <div class="field full-width consent-wrapper" style="grid-column: 1 / -1; margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
-                <label for="gdpr_consent" style="display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; font-size: 0.85rem; line-height: 1.4; font-weight: normal; color: var(--c-text);">
-                  <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" style="margin-top: 3px;" />
+              <div class="field full-width consent-wrapper">
+                <label for="gdpr_consent" class="consent-label">
+                  <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" />
                   <span>I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
                 </label>
-                <span v-if="errors.consent_given" class="field-err" style="margin-left: 1.75rem;">You must provide consent to proceed.</span>
+                <span v-if="errors.consent_given" class="field-err" style="margin-left: 2rem;">You must provide consent to proceed.</span>
               </div>
             </div>
 
@@ -173,7 +194,7 @@
         </div>
 
         <!-- Section context panel (right) -->
-        <aside class="step-aside" :key="currentStep">
+        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '']" :key="currentStep">
           <div class="aside-card">
             <div class="aside-icon">
               <!-- Dark aside panel → use light logo -->
@@ -191,12 +212,6 @@
             <ul v-if="currentPanel.points?.length" class="aside-points">
               <li v-for="(point, i) in currentPanel.points" :key="i">{{ point }}</li>
             </ul>
-
-            <div v-if="currentPanel.tip" class="aside-tip">
-              <span class="tip-label">Tip</span>
-              <p>{{ currentPanel.tip }}</p>
-            </div>
-
             <div v-if="currentStep > 0" class="aside-progress-mini">
               <span>{{ sectionAnsweredCount }} of {{ currentSection.questions.length }} answered</span>
               <div class="mini-bar">
@@ -246,6 +261,7 @@ const submitted       = ref(false);
 const submitting      = ref(false);
 const submitError     = ref("");
 const currentStep     = ref(0);
+const showMobileInfo  = ref(false);
 const questionsScroll = ref(null);
 const errors      = reactive({});
 const options     = ["Yes", "Partially", "No", "Not Sure"];
@@ -440,6 +456,7 @@ function goToStep(i) {
 }
 
 watch(currentStep, async () => {
+  showMobileInfo.value = false;
   await nextTick();
   questionsScroll.value?.scrollTo({ top: 0, behavior: "smooth" });
 });
@@ -505,14 +522,26 @@ function fillTestData() {
   allQuestionFields.forEach(f => { form[f] = rnd(options); });
 }
 
+function resetForm() {
+  form.name = "";
+  form.designation = "";
+  form.company_name = "";
+  form.email = "";
+  form.contact_number = "";
+  form.consent_given = false;
+  allQuestionFields.forEach(f => {
+    form[f] = "";
+  });
+}
+
 async function submit() {
-  
   if (!validateStep()) return;
   submitting.value  = true;
   submitError.value = "";
   try {
     await submitAudit({ ...form, draft_id: draftId.value });
     clearDraft();
+    resetForm();
     submitted.value = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
@@ -846,19 +875,7 @@ async function submit() {
 .aside-points li::before {
   content: ""; position: absolute; left: 0; top: 0.45em;
   width: 6px; height: 6px; border-radius: 50%;
-  background: var(--c-accent);
 }
-.aside-tip {
-  background: rgba(200,241,53,0.12);
-  border: 1.5px solid rgba(200,241,53,0.35);
-  border-radius: 12px; padding: 0.85rem 1rem; margin-bottom: 1rem;
-}
-.tip-label {
-  display: block; font-size: 0.65rem; font-weight: 800;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--c-accent); margin-bottom: 0.35rem;
-}
-.aside-tip p { font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.9); margin: 0; }
 .aside-progress-mini {
   padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.15);
   margin-top: auto;
@@ -883,15 +900,91 @@ async function submit() {
 /* Details fields */
 .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
 .field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Playfair Display', serif; }
-.field input {
+.field input:not([type="checkbox"]) {
   width: 100%; padding: 0.7rem 0.9rem;
   border: 2px solid #E2DDD4; border-radius: 10px;
   font-size: 0.9rem; background: var(--c-bg); color: var(--c-primary-dark);
   transition: border-color 0.15s; font-family: inherit;
 }
-.field input:focus { outline: none; border-color: var(--c-primary-dark); background: var(--c-white); }
-.field input.error { border-color: #ff4444; }
+.field input:not([type="checkbox"]):focus { outline: none; border-color: var(--c-primary-dark); background: var(--c-white); }
+.field input:not([type="checkbox"]).error { border-color: #ff4444; }
 .field-err { color: #ff4444; font-size: 0.78rem; margin-top: 0.25rem; display: block; }
+
+/* Consent Checkbox Styling */
+.consent-wrapper {
+  grid-column: 1 / -1;
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.consent-label {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  cursor: pointer;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  font-weight: 500;
+  color: var(--c-primary-dark);
+  user-select: none;
+}
+.consent-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--c-primary-dark);
+  background-color: var(--c-white);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s ease;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+}
+.consent-checkbox:hover {
+  border-color: var(--c-accent);
+  background-color: var(--c-bg);
+}
+.consent-checkbox:checked {
+  background-color: var(--c-primary-dark);
+  border-color: var(--c-primary-dark);
+  box-shadow: 2px 2px 0 var(--c-accent);
+}
+.consent-checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--c-accent-retro);
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+.consent-checkbox:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* Mobile progress header */
+.mobile-progress-bar {
+  display: none;
+}
+/* Step Head Meta for Mobile Info Toggle */
+.step-head-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+}
+.step-head-meta .step-tag {
+  margin-bottom: 0;
+}
+.mobile-info-toggle {
+  display: none;
+}
 
 /* Questions */
 .questions-list { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 0.5rem; }
@@ -955,44 +1048,187 @@ async function submit() {
 .alert-error { background: #FFF0F0; color: #C0392B; border: 1px solid #FFCACA; }
 
 @media (max-width: 900px) {
-  .step-wrap { padding: 1rem 1rem 0.5rem; }
+  .step-wrap { padding: 0.75rem 0.75rem 0.5rem; }
   .step-layout {
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: 0.75rem;
+    grid-template-columns: 1fr;
+    gap: 0;
     max-width: 100%;
   }
-  .progress-wrap { padding: 0.75rem 0.5rem; box-shadow: 3px 3px 0 var(--c-accent); }
-  .progress-header { display: none; }
-  .progress-step-label { display: none; }
-  .progress-track--vertical { --progress-dot: 22px; }
-  .progress-track--vertical .progress-step-dot { font-size: 0.6rem; }
+  .progress-sidebar {
+    display: none;
+  }
+  .mobile-progress-bar {
+    display: block;
+    padding: 1.25rem 1.75rem 0.5rem;
+    background: var(--c-white);
+    border-bottom: 1px solid #E2DDD4;
+  }
+  .mobile-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+  .mobile-phase {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--c-primary-dark);
+    font-family: 'Playfair Display', serif;
+  }
+  .mobile-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #888;
+  }
+  .mobile-progress-track {
+    height: 6px;
+    background: #E2DDD4;
+    border-radius: 99px;
+    overflow: hidden;
+    border: 1.5px solid var(--c-primary-dark);
+  }
+  .mobile-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--c-accent), #A8D820);
+    border-radius: 99px;
+    transition: width 0.45s ease;
+  }
+
   .step-center {
     grid-template-columns: 1fr;
     grid-template-rows: auto minmax(0, 1fr);
-    gap: 1rem;
+    gap: 0.75rem;
   }
   .step-aside {
+    display: none;
+  }
+  .step-aside.mobile-show {
+    display: block;
     grid-row: 1;
     order: -1;
     height: auto;
-    max-height: 28vh;
+    max-height: 38vh;
     overflow-y: auto;
+    margin-bottom: 0.5rem;
   }
   .step-main {
     grid-row: 2;
     min-height: 0;
   }
-  .step-card-head { padding: 1.5rem 1.25rem 0; }
-  .questions-scroll { padding: 1rem 1.25rem 1.5rem; }
-  .progress-sidebar { overflow-y: auto; }
+  .step-card-head { padding: 1.5rem 1.75rem 0; }
+  .questions-scroll { padding: 1rem 1.75rem 1.5rem; }
+  
+  .mobile-info-toggle {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    color: var(--c-accent);
+    border: none;
+    box-shadow: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 0;
+    font-family: var(--font-body);
+  }
+  .mobile-info-toggle:hover {
+    color: var(--c-primary-light);
+  }
 }
 
 @media (max-width: 600px) {
   .fields-grid { grid-template-columns: 1fr; }
-  .step-wrap { padding: 1.25rem 1rem 1rem; }
+  .step-wrap { padding: 0.75rem 0.5rem 0.5rem; }
   .form-header { padding: 0.85rem 1rem; }
-  .step-layout { grid-template-columns: 52px minmax(0, 1fr); }
-  .progress-track--vertical { --progress-dot: 20px; }
-  .progress-track--vertical .progress-step-dot { font-size: 0.58rem; }
+  
+  .mobile-progress-bar {
+    padding: 1.25rem 1.25rem 0.5rem;
+  }
+  .step-card-head { padding: 1.25rem 1.25rem 0; }
+  .step-card-head h1 { font-size: 1.25rem; }
+  .questions-scroll { padding: 1rem 1.25rem 1.25rem; }
+  .q-text { font-size: 0.88rem; line-height: 1.45; }
+  
+  .step-tag {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.55rem;
+    border-width: 1px;
+    margin-bottom: 0;
+  }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  .opt-btn {
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+  }
+  
+  .step-actions {
+    padding: 0.75rem 1.25rem;
+  }
+  .step-nav {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .btn-back, .btn-next, .btn-submit, .save-continue-container :deep(.btn) {
+    height: 38px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1.5px solid var(--c-primary-dark);
+    box-shadow: 2px 2px 0 var(--c-primary-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  .btn-back {
+    flex: 1;
+    min-width: 60px;
+    max-width: 75px;
+  }
+  .save-continue-container {
+    flex: 1.8;
+    display: inline-block;
+    width: auto;
+  }
+  .save-continue-container :deep(.btn) {
+    width: 100%;
+  }
+  .btn-next, .btn-submit {
+    flex: 1.8;
+    min-width: 80px;
+    box-shadow: 2px 2px 0 var(--c-accent);
+  }
+  .btn-submit {
+    box-shadow: 2px 2px 0 var(--c-primary-dark);
+  }
+
+  .form-footer {
+    padding: 0.4rem 1rem 0.5rem;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .fill-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.72rem;
+    border-radius: 6px;
+    border-width: 1.5px;
+    box-shadow: 2px 2px 0 var(--c-accent);
+  }
 }
 </style>
