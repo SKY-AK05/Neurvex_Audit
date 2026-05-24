@@ -500,8 +500,27 @@ function validateStep() {
   return Object.keys(errors).length === 0;
 }
 
+function scrollToError() {
+  nextTick(() => {
+    const firstError = document.querySelector('.field-err');
+    if (firstError) {
+      const block = firstError.closest('.q-block') || firstError.closest('.field');
+      if (block) {
+        block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        block.classList.remove('shake-animation');
+        void block.offsetWidth; // trigger reflow
+        block.classList.add('shake-animation');
+      }
+    }
+  });
+}
+
 function nextStep() {
-  if (validateStep()) currentStep.value++;
+  if (validateStep()) {
+    currentStep.value++;
+  } else {
+    scrollToError();
+  }
 }
 
 function fillTestData() {
@@ -535,7 +554,10 @@ function resetForm() {
 }
 
 async function submit() {
-  if (!validateStep()) return;
+  if (!validateStep()) {
+    scrollToError();
+    return;
+  }
   submitting.value  = true;
   submitError.value = "";
   try {
@@ -969,6 +991,19 @@ async function submit() {
 .consent-checkbox:focus-visible {
   outline: 2px solid var(--c-accent);
   outline-offset: 2px;
+}
+
+@keyframes error-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  50% { transform: translateX(6px); }
+  75% { transform: translateX(-6px); }
+  100% { transform: translateX(0); }
+}
+.shake-animation {
+  animation: error-shake 0.4s ease-in-out;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.4);
 }
 
 /* Mobile progress header */
