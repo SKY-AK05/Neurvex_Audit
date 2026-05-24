@@ -26,6 +26,7 @@ try {
                     sessionStorage.setItem("nd_auth", "1");
                     sessionStorage.setItem("nd_user_name", response.account.name || email);
                     sessionStorage.setItem("nd_role", data.role);
+                    sessionStorage.setItem("nd_auth_token", response.idToken);
                     sessionStorage.removeItem("nd_auth_error");
 
                     const app = createApp(App).use(router);

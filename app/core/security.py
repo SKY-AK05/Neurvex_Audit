@@ -55,13 +55,17 @@ def verify_jwt(token: str):
             jwt.algorithms.RSAAlgorithm.from_jwk(rsa_key),
             algorithms=["RS256"],
             audience=CLIENT_ID,
-            issuer=f"https://sts.windows.net/{TENANT_ID}/"
+            issuer=[
+                f"https://sts.windows.net/{TENANT_ID}/",
+                f"https://login.microsoftonline.com/{TENANT_ID}/v2.0"
+            ]
         )
         return payload
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+    except jwt.InvalidTokenError as e:
+        logger.error(f"JWT Decode failed: {e}")
+        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
 
 async def jwks_middleware(request: Request, call_next):
     # Only protect admin endpoints
