@@ -11,20 +11,42 @@ function getAuthHeaders() {
   return headers;
 }
 
+async function handleResponse(res) {
+  if (res.status === 401) {
+    // Clear session and redirect to login if unauthorized
+    sessionStorage.removeItem("nd_auth");
+    sessionStorage.removeItem("nd_auth_token");
+    sessionStorage.removeItem("nd_user_name");
+    sessionStorage.removeItem("nd_role");
+    window.location.href = "/#/portal";
+    throw new Error("Session expired. Please log in again.");
+  }
+  
+  if (!res.ok) {
+    let errorMsg = "Request failed";
+    try {
+      const data = await res.clone().json();
+      errorMsg = data.error || errorMsg;
+    } catch (e) {
+      // Ignore JSON parse errors for non-JSON error responses
+    }
+    throw new Error(errorMsg);
+  }
+  return res.json();
+}
+
 export async function getSubmissions() {
   const res = await fetch(`${API_BASE}/submissions`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to fetch submissions");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function getSubmission(id) {
   const res = await fetch(`${API_BASE}/submissions/${id}`, {
     headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to fetch submission");
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function submitAudit(data) {
@@ -38,9 +60,7 @@ export async function submitAudit(data) {
     headers,
     body: JSON.stringify(data),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Submission failed");
-  return json;
+  return handleResponse(res);
 }
 
 export async function saveEmail(id, emailBody) {
@@ -52,9 +72,7 @@ export async function saveEmail(id, emailBody) {
     },
     body: JSON.stringify({ email_body: emailBody }),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Save failed");
-  return json;
+  return handleResponse(res);
 }
 
 export async function sendEmail(id) {
@@ -62,9 +80,7 @@ export async function sendEmail(id) {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Send failed");
-  return json;
+  return handleResponse(res);
 }
 
 export async function regenerateEmail(id) {
@@ -72,18 +88,14 @@ export async function regenerateEmail(id) {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Regeneration failed");
-  return json;
+  return handleResponse(res);
 }
 
 export async function getSettings() {
   const res = await fetch(`${API_BASE}/settings`, {
     headers: getAuthHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Failed to load settings");
-  return json;
+  return handleResponse(res);
 }
 
 export async function saveSettings(data) {
@@ -95,9 +107,7 @@ export async function saveSettings(data) {
     },
     body: JSON.stringify(data),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Failed to save settings");
-  return json;
+  return handleResponse(res);
 }
 
 export async function submitSupportRequest(data) {
@@ -106,9 +116,7 @@ export async function submitSupportRequest(data) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Failed to send support request");
-  return json;
+  return handleResponse(res);
 }
 
 export async function toggleNotifications() {
@@ -116,7 +124,5 @@ export async function toggleNotifications() {
     method: "POST",
     headers: getAuthHeaders(),
   });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "Failed to toggle notifications");
-  return json;
+  return handleResponse(res);
 }

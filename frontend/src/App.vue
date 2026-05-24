@@ -556,4 +556,43 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .alert-success { background: var(--c-accent-retro); color: var(--c-primary-dark); border-color: var(--c-primary-dark); }
 
 .loading { text-align: center; padding: 3rem; color: #aaa; font-size: 0.9rem; }
+
+/* Skeleton Loading Animations */
+@keyframes skeleton-pulse {
+  0% { background-color: rgba(0, 0, 0, 0.05); }
+  50% { background-color: rgba(0, 0, 0, 0.12); }
+  100% { background-color: rgba(0, 0, 0, 0.05); }
+}
+.skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+  color: transparent !important;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+.skeleton * {
+  visibility: hidden;
+}
+.skeleton-card {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+  box-shadow: none !important;
+}
+.skeleton-text {
+  height: 1em;
+  width: 60%;
+  border-radius: 4px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  margin: 0.25rem 0;
+}
+.skeleton-title {
+  height: 2rem;
+  width: 40%;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+.skeleton-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
 </style>

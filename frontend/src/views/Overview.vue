@@ -19,36 +19,48 @@
 
     <!-- Stat cards -->
     <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+      <div class="stat-card" :class="{ 'skeleton-card': loading }">
+        <div class="stat-icon" :class="{ skeleton: loading }"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
         <div class="stat-label">Total Submissions</div>
         <div class="stat-bottom">
-          <div class="stat-value">{{ stats.total }}</div>
-          <span v-if="stats.weekNew > 0" class="stat-badge green">+{{ stats.weekNew }} this week</span>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 3rem;"></div>
+          <template v-else>
+            <div class="stat-value">{{ stats.total }}</div>
+            <span v-if="stats.weekNew > 0" class="stat-badge green">+{{ stats.weekNew }} this week</span>
+          </template>
         </div>
       </div>
-      <div class="stat-card urgent">
-        <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+      <div class="stat-card urgent" :class="{ 'skeleton-card': loading }">
+        <div class="stat-icon" :class="{ skeleton: loading }"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
         <div class="stat-label">Pending Review</div>
         <div class="stat-bottom">
-          <div class="stat-value">{{ stats.pending }}</div>
-          <span v-if="stats.pending > 0" class="stat-badge red">Action Needed</span>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 3rem;"></div>
+          <template v-else>
+            <div class="stat-value">{{ stats.pending }}</div>
+            <span v-if="stats.pending > 0" class="stat-badge red">Action Needed</span>
+          </template>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      <div class="stat-card" :class="{ 'skeleton-card': loading }">
+        <div class="stat-icon" :class="{ skeleton: loading }"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
         <div class="stat-label">Emails Sent</div>
         <div class="stat-bottom">
-          <div class="stat-value">{{ stats.sent }}</div>
-          <span class="stat-unit">of {{ stats.total }}</span>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 4rem;"></div>
+          <template v-else>
+            <div class="stat-value">{{ stats.sent }}</div>
+            <span class="stat-unit">of {{ stats.total }}</span>
+          </template>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="stat-card" :class="{ 'skeleton-card': loading }">
+        <div class="stat-icon" :class="{ skeleton: loading }"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
         <div class="stat-label">Avg. Maturity Score</div>
         <div class="stat-bottom">
-          <div class="stat-value">{{ stats.avgScore }}</div>
-          <span class="stat-unit">/ 20</span>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 4rem;"></div>
+          <template v-else>
+            <div class="stat-value">{{ stats.avgScore }}</div>
+            <span class="stat-unit">/ 20</span>
+          </template>
         </div>
       </div>
     </div>
@@ -61,19 +73,23 @@
       <div class="week-grid">
         <div class="week-stat">
           <div class="week-label">New submissions this week</div>
-          <div class="week-val">{{ stats.weekNew }}</div>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 3rem; margin: 0 auto;"></div>
+          <div v-else class="week-val">{{ stats.weekNew }}</div>
         </div>
         <div class="week-stat">
           <div class="week-label">New submissions last week</div>
-          <div class="week-val">{{ stats.weekPrev }}</div>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 3rem; margin: 0 auto;"></div>
+          <div v-else class="week-val">{{ stats.weekPrev }}</div>
         </div>
         <div class="week-stat">
           <div class="week-label">Emails sent this week</div>
-          <div class="week-val">{{ stats.weekSent }}</div>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 3rem; margin: 0 auto;"></div>
+          <div v-else class="week-val">{{ stats.weekSent }}</div>
         </div>
         <div class="week-stat">
           <div class="week-label">Avg score this week</div>
-          <div class="week-val">{{ stats.weekAvg }}<span class="week-unit">/20</span></div>
+          <div v-if="loading" class="skeleton-text" style="height: 2rem; width: 4rem; margin: 0 auto;"></div>
+          <div v-else class="week-val">{{ stats.weekAvg }}<span class="week-unit">/20</span></div>
         </div>
       </div>
     </div>
@@ -87,7 +103,15 @@
           <span class="card-title">Pending Actions</span>
           <span class="count-badge" v-if="pendingList.length">{{ pendingList.length }}</span>
         </div>
-        <p v-if="loading" class="empty-msg">Loading…</p>
+        <div v-if="loading" class="action-list">
+          <div v-for="i in 3" :key="i" class="action-row skeleton-card">
+            <div class="action-info">
+              <div class="skeleton-text" style="width: 70%;"></div>
+              <div class="skeleton-text" style="width: 40%; height: 0.75rem;"></div>
+            </div>
+            <div class="skeleton-text" style="width: 3rem;"></div>
+          </div>
+        </div>
         <p v-else-if="!pendingList.length" class="empty-msg all-good">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
           All caught up — no pending submissions
@@ -112,7 +136,19 @@
           <span class="card-title">Recent Submissions</span>
           <router-link to="/admin/submissions" class="see-all">See all →</router-link>
         </div>
-        <p v-if="loading" class="empty-msg">Loading…</p>
+        <div v-if="loading" class="recent-list">
+          <div v-for="i in 4" :key="i" class="recent-row skeleton-card">
+            <div class="skeleton-avatar"></div>
+            <div class="recent-info">
+              <div class="skeleton-text" style="width: 60%;"></div>
+              <div class="skeleton-text" style="width: 40%; height: 0.75rem;"></div>
+            </div>
+            <div class="recent-right">
+              <div class="skeleton-text" style="width: 4rem; margin-bottom: 0;"></div>
+              <div class="skeleton-text" style="width: 2rem;"></div>
+            </div>
+          </div>
+        </div>
         <p v-else-if="!recentList.length" class="empty-msg">No submissions yet.</p>
         <div v-else class="recent-list">
           <div v-for="s in recentList" :key="s.id" class="recent-row" @click="$router.push(`/admin/submissions/${s.id}`)">
