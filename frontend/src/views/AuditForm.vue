@@ -918,16 +918,19 @@ async function submit() {
   flex-direction: column;
   gap: 0.5rem;
 }
-.consent-label {
+.field label.consent-label {
   display: flex;
   gap: 0.75rem;
   align-items: flex-start;
   cursor: pointer;
-  font-size: 0.875rem;
-  line-height: 1.45;
-  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--c-primary-dark);
   user-select: none;
+  margin-bottom: 0;
 }
 .consent-checkbox {
   appearance: none;
