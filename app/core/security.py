@@ -50,6 +50,12 @@ def verify_jwt(token: str):
         raise HTTPException(status_code=401, detail="Invalid token kid")
     
     try:
+        unverified_payload = jwt.decode(token, options={"verify_signature": False})
+        logger.info(f"Unverified token payload: iss={unverified_payload.get('iss')}, aud={unverified_payload.get('aud')}, tid={unverified_payload.get('tid')}")
+    except Exception as ex:
+        logger.error(f"Failed to decode unverified token: {ex}")
+
+    try:
         payload = jwt.decode(
             token,
             jwt.algorithms.RSAAlgorithm.from_jwk(rsa_key),
@@ -65,7 +71,14 @@ def verify_jwt(token: str):
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError as e:
         logger.error(f"JWT Decode failed: {e}")
-        raise HTTPException(status_code=401, detail=f"Invalid token: {e}")
+        try:
+            unverified_payload = jwt.decode(token, options={"verify_signature": False})
+            token_iss = unverified_payload.get("iss")
+            token_aud = unverified_payload.get("aud")
+            msg = f"Invalid token: {e}. Token iss: {token_iss}, Expected one of: https://sts.windows.net/{TENANT_ID}/, https://login.microsoftonline.com/{TENANT_ID}/v2.0. Token aud: {token_aud}, Expected: {CLIENT_ID}"
+        except Exception:
+            msg = f"Invalid token: {e}"
+        raise HTTPException(status_code=401, detail=msg)
 
 async def jwks_middleware(request: Request, call_next):
     # Only protect admin endpoints
