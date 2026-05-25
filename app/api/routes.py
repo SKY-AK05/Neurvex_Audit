@@ -1,4 +1,4 @@
-"""
+﻿"""
 routes.py — FastAPI route definitions
 Ported from Azure Functions (function_app.py).
 All routes are prefixed with /api via the router prefix in main.py.
@@ -423,7 +423,7 @@ async def send_email_route(request: Request, submission_id: UUID, background_tas
     payload = {
         "to_address": row["email"],
         "to_name": row["name"],
-        "subject": f"Neurvex Audit Results — {row['company_name']}",
+        "subject": f"NeuroMark Audit Results — {row['company_name']}",
         "html": row["email_body"],
         "plain": strip_html(row["email_body"]),
         "sender_address": sender_address,

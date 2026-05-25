@@ -1,4 +1,4 @@
-# SQL scripts — Neurvex Audit
+﻿# SQL scripts — NeuroMark Audit
 
 Run these on your PostgreSQL database **`nd_audit`**.
 
@@ -29,7 +29,7 @@ Both scripts default to:
 
 `aakash.padyachi@rochvate.com`
 
-Change this in the SQL files before running, or update later in **Neurvex → Settings**.
+Change this in the SQL files before running, or update later in **NeuroMark → Settings**.
 
 ## App settings columns
 

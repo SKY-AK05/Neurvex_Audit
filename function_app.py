@@ -1,5 +1,5 @@
-"""
-function_app.py — Azure Functions for Neurvex Audit Tool
+﻿"""
+function_app.py — Azure Functions for NeuroMark Audit Tool
 Routes:
   POST   /api/submit
   GET    /api/submissions
@@ -367,7 +367,7 @@ def send_email(req: func.HttpRequest) -> func.HttpResponse:
         send_acs_email(
             to_address=row["email"],
             to_name=row["name"],
-            subject=f"Neurvex Audit Results — {row['company_name']}",
+            subject=f"NeuroMark Audit Results — {row['company_name']}",
             html=row["email_body"],
             plain=strip_html(row["email_body"]),
             sender_address=sender_address,

@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import logging
 from datetime import datetime, timezone, timedelta
@@ -39,10 +39,10 @@ def send_resume_email(email: str, name: str, company_name: str, resume_url: str)
         logger.error("No sender address configured for resume draft email")
         return
 
-    subject = f"Resume your Neurvex Inclusion Audit — {company_name}"
+    subject = f"Resume your NeuroMark Inclusion Audit — {company_name}"
     plain = (
         f"Hi {name},\n\n"
-        f"Your progress on the Neurvex Inclusion Audit for {company_name} has been saved.\n\n"
+        f"Your progress on the NeuroMark Inclusion Audit for {company_name} has been saved.\n\n"
         f"You can resume your audit anytime within the next 7 days by clicking the link below:\n"
         f"{resume_url}\n\n"
         f"Best regards,\n"
@@ -66,7 +66,7 @@ def send_resume_email(email: str, name: str, company_name: str, resume_url: str)
   <div class="card">
     <h2>Audit Progress Saved</h2>
     <p>Hi {name or 'there'},</p>
-    <p>Your progress on the Neurvex Inclusion Audit for <strong>{company_name}</strong> has been saved.</p>
+    <p>Your progress on the NeuroMark Inclusion Audit for <strong>{company_name}</strong> has been saved.</p>
     <p>You can resume your audit anytime within the next 7 days by clicking the button below:</p>
     <p style="text-align: center;">
       <a href="{resume_url}" class="btn">Resume Audit &rarr;</a>

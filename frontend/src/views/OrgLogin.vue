@@ -1,9 +1,9 @@
-<template>
+﻿<template>
   <div class="login-page">
     <div class="login-card">
       <div class="header">
         <div class="login-logo-wrap">
-          <img src="/logo-dark.png" alt="Neurvex" class="login-logo" />
+          <img src="/logo-dark.png" alt="NeuroMark" class="login-logo" />
         </div>
         <h2>Organisation Dashboard</h2>
         <p>Enter your email and company name to register or receive your access link.</p>

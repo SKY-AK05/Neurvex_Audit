@@ -1,5 +1,5 @@
-"""
-scoring.py — Neurvex Audit scoring logic
+﻿"""
+scoring.py — NeuroMark Audit scoring logic
 Imported by function_app.py
 """
 
@@ -421,7 +421,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Neurvex Audit — {_e(company_name)}</title>
+<title>NeuroMark Audit — {_e(company_name)}</title>
 <!--[if mso]>
 <noscript>
 <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
@@ -454,7 +454,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
 <body style="margin:0;padding:0;background-color:#FFFFFF;">
 
 <!-- Preheader -->
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your Neurvex Audit results for {_e(company_name)} — {_e(overall_level)} ({overall_avg_display}/20) &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your NeuroMark Audit results for {_e(company_name)} — {_e(overall_level)} ({overall_avg_display}/20) &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
 
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#FFFFFF;">
 <tr><td align="center" style="padding: 24px 0 48px;">
@@ -469,7 +469,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
           <td>
             <!-- Logo / wordmark -->
             <p style="margin:0 0 20px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;color:#AFA9EC;text-transform:uppercase;">Orchvate</p>
-            <h1 style="margin:0 0 6px;font-family:'DM Serif Display',Georgia,serif;font-size:28px;font-weight:400;color:#FFFFFF;line-height:1.2;">Neurodiversity<br>Neurvex Audit</h1>
+            <h1 style="margin:0 0 6px;font-family:'DM Serif Display',Georgia,serif;font-size:28px;font-weight:400;color:#FFFFFF;line-height:1.2;">Neurodiversity<br>NeuroMark Audit</h1>
             <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#AFA9EC;">{_e(name)} &nbsp;·&nbsp; {_e(designation) + ' · ' if designation else ''}{_e(company_name)} &nbsp;·&nbsp; {month_year}</p>
           </td>
           <td width="100" align="right" valign="top">
@@ -489,7 +489,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
 
     <!-- ─── GREETING ─── -->
     <tr><td style="background:#FFFFFF;padding:28px 40px 0;">
-      <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#444;line-height:1.6;">Dear <strong style="color:#1E1A4A;">{_e(name)}</strong>{(' (' + _e(designation) + ')') if designation else ''},<br>Thank you for completing the Neurvex Audit. Here is a summary of your results.</p>
+      <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#444;line-height:1.6;">Dear <strong style="color:#1E1A4A;">{_e(name)}</strong>{(' (' + _e(designation) + ')') if designation else ''},<br>Thank you for completing the NeuroMark Audit. Here is a summary of your results.</p>
     </td></tr>
 
     <!-- ─── METRIC CARDS ─── -->

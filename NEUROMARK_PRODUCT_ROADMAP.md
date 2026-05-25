@@ -1,9 +1,9 @@
-# Neurvex (Orchvate audit) — Strategic product roadmap and feature expansion
+﻿# NeuroMark (Orchvate audit) — Strategic product roadmap and feature expansion
 
-> **Title:** Neurvex Strategic Product Roadmap  
+> **Title:** NeuroMark Strategic Product Roadmap  
 > **Version:** 2.0  
 > **Last Updated:** May 2026  
-> **Target System:** Neurvex (Orchvate Audit Platform)  
+> **Target System:** NeuroMark (Orchvate Audit Platform)  
 > **Author:** Senior Product Management & UX Strategy Team  
 > **Status:** Final Strategic Review  
 
@@ -70,7 +70,7 @@
 
 ## 1. Executive summary and roadmap matrix
 
-The Neurvex platform currently operates as a highly effective, transactional diagnostic tool. Organizations submit a 45-question neuro-diversity inclusion audit, and the system computes a maturity score backed by automated email reporting. To transition Neurvex from a single-use evaluation mechanism into a high-retention, enterprise-grade software-as-a-service (SaaS) platform, a rigorous feature expansion strategy is required.
+The NeuroMark platform currently operates as a highly effective, transactional diagnostic tool. Organizations submit a 45-question neuro-diversity inclusion audit, and the system computes a maturity score backed by automated email reporting. To transition NeuroMark from a single-use evaluation mechanism into a high-retention, enterprise-grade software-as-a-service (SaaS) platform, a rigorous feature expansion strategy is required.
 
 This document categorizes strategic initiatives designed to maximize user engagement, unlock recurring revenue streams, and cement Orchvate's technological dominance within the human capital sector. 
 
@@ -111,7 +111,7 @@ async def save_draft(payload: dict):
         SECRET_KEY, 
         algorithm="HS256"
     )
-    resume_url = f"https://audit.neurvex.com/resume?token={token}"
+    resume_url = f"https://audit.neuromark.com/resume?token={token}"
     return {"success": True, "resume_url": resume_url}
 ```
 
@@ -165,7 +165,7 @@ Migrating the scoring mapping dictionaries from the Python codebase into a relat
 
 ### 2.7. Internationalization and multi-language support
 
-Global enterprises mandate localized tools for their distributed workforces. Operating exclusively in English immediately disqualifies Neurvex during international procurement processes, artificially limiting the Total Addressable Market (TAM).
+Global enterprises mandate localized tools for their distributed workforces. Operating exclusively in English immediately disqualifies NeuroMark during international procurement processes, artificially limiting the Total Addressable Market (TAM).
 
 Integrating robust internationalization (`vue-i18n`) on the frontend, combined with language-aware backend email generation, unlocks immediate geographic expansion across European, Asian, and Latin American corporate markets.
 
@@ -182,7 +182,7 @@ Integrating robust internationalization (`vue-i18n`) on the frontend, combined w
 
 ## 3. Reporting and analytics
 
-Transforming raw diagnostic data into compelling, actionable, and boardroom-ready narratives constitutes the primary value proposition of the Neurvex platform.
+Transforming raw diagnostic data into compelling, actionable, and boardroom-ready narratives constitutes the primary value proposition of the NeuroMark platform.
 
 ### 3.1. Interactive PDF report generation
 
@@ -215,7 +215,7 @@ The assessment engine must execute secondary analysis identifying the three lowe
 
 Organizations require a secure, persistent digital hub to evaluate their inclusion trajectory. 
 
-A client-facing Vue 3 dashboard, protected via secure magic links or restricted Entra ID guest accounts, visualizes historical submissions using charting libraries like ECharts. This continuous visibility transforms Neurvex from a disposable survey into a permanent system of record for the organization's diversity and inclusion initiatives.
+A client-facing Vue 3 dashboard, protected via secure magic links or restricted Entra ID guest accounts, visualizes historical submissions using charting libraries like ECharts. This continuous visibility transforms NeuroMark from a disposable survey into a permanent system of record for the organization's diversity and inclusion initiatives.
 
 **Implementation complexity:** High  
 **Strategic horizon:** Later
@@ -274,7 +274,7 @@ Implementing an external identity provider (such as Azure AD B2C or Auth0) facil
 
 Post-assessment, organizations require structured guidance. An interactive builder bridges the gap between diagnostic identification and operational implementation.
 
-Leveraging Vue 3's reactive state management, the platform presents a Kanban-style interface populated with tasks derived directly from the organization's lowest-scoring dimensions. Users assign tasks to internal stakeholders, establish deadlines, and track completion progress directly within their Neurvex organizational account.
+Leveraging Vue 3's reactive state management, the platform presents a Kanban-style interface populated with tasks derived directly from the organization's lowest-scoring dimensions. Users assign tasks to internal stakeholders, establish deadlines, and track completion progress directly within their NeuroMark organizational account.
 
 **Implementation complexity:** High  
 **Strategic horizon:** Later
@@ -301,7 +301,7 @@ A backend background task scheduler (utilizing Celery or Azure Functions Timer T
 
 Organizations place immense value on public employer branding credentials to attract top-tier talent.
 
-Entities achieving Level 4 (Advanced) or Level 5 (Leading) maturity automatically receive a cryptographically signed, dynamic SVG "Neurvex Certified" badge. A dedicated public verification endpoint confirms authenticity. When displayed on corporate career pages, these badges generate viral, organic inbound marketing for the Orchvate platform.
+Entities achieving Level 4 (Advanced) or Level 5 (Leading) maturity automatically receive a cryptographically signed, dynamic SVG "NeuroMark Certified" badge. A dedicated public verification endpoint confirms authenticity. When displayed on corporate career pages, these badges generate viral, organic inbound marketing for the Orchvate platform.
 
 **Implementation complexity:** Medium  
 **Strategic horizon:** Now
@@ -338,7 +338,7 @@ An automated algorithmic pass evaluates the incoming demographic data and the sp
 
 ### 5.3. Platform white-labeling
 
-Global HR consultancies and massive Enterprise Resource Planning (ERP) vendors possess vast distribution networks. White-labeling allows these entities to license the Neurvex engine under their own branding.
+Global HR consultancies and massive Enterprise Resource Planning (ERP) vendors possess vast distribution networks. White-labeling allows these entities to license the NeuroMark engine under their own branding.
 
 The architecture introduces a `tenant_id` to all relational data models. The ingress routing layer (Nginx) maps custom domains to specific tenant configurations, dynamically injecting tenant-specific CSS variables (primary colors, corporate logos) into the Vue application environment upon initialization.
 
@@ -481,7 +481,7 @@ Transitioning the authentication architecture to an agnostic identity broker (li
 
 Corporate clients maintain highly bespoke, proprietary internal workflows that are impossible to predict or build dedicated integrations for manually.
 
-Exposing secure, outbound HTTP webhooks empowers clients to connect Neurvex events (such as `audit.completed` or `maturity_level.changed`) to integration platforms like Zapier or Make.com, granting them infinite extensibility to trigger their own internal automations instantly.
+Exposing secure, outbound HTTP webhooks empowers clients to connect NeuroMark events (such as `audit.completed` or `maturity_level.changed`) to integration platforms like Zapier or Make.com, granting them infinite extensibility to trigger their own internal automations instantly.
 
 **Implementation complexity:** Low  
 **Strategic horizon:** Now
@@ -490,7 +490,7 @@ Exposing secure, outbound HTTP webhooks empowers clients to connect Neurvex even
 > **Summary: Integration and ecosystem**
 > - **Reduce app fatigue:** Surface the audit interface directly inside Microsoft Teams and Slack to guarantee high participation rates.
 > - **Ensure data integrity:** Pull demographic statistics directly from enterprise HRIS tools rather than relying on manual user input.
-> - **Empower client automation:** Provide outbound webhooks, allowing clients to plug Neurvex data securely into their proprietary workflows.
+> - **Empower client automation:** Provide outbound webhooks, allowing clients to plug NeuroMark data securely into their proprietary workflows.
 
 ---
 
@@ -568,7 +568,7 @@ The database defines specific achievement triggers. When a user completes a high
 
 Diversity and inclusion practitioners operate in a rapidly evolving, often isolated discipline. Facilitating peer-to-peer connection provides immense, unreplicable value.
 
-Integrating a headless forum architecture (such as Discourse) allows practitioners from different organizations to connect, share policy templates, and discuss best practices securely within the Neurvex authenticated environment. Communities establish insurmountable competitive moats, as the value of the network rapidly exceeds the value of the software itself.
+Integrating a headless forum architecture (such as Discourse) allows practitioners from different organizations to connect, share policy templates, and discuss best practices securely within the NeuroMark authenticated environment. Communities establish insurmountable competitive moats, as the value of the network rapidly exceeds the value of the software itself.
 
 **Implementation complexity:** High  
 **Strategic horizon:** Later
@@ -592,14 +592,14 @@ A dedicated, public-facing CMS gallery highlights organizations that have achiev
 
 ## 10. Next steps and conclusion
 
-The roadmap detailed within this document provides a comprehensive architectural and strategic blueprint for scaling the Neurvex platform. By systematically executing these features, Orchvate transitions from an auditing consultancy into an indispensable, enterprise-grade technology company.
+The roadmap detailed within this document provides a comprehensive architectural and strategic blueprint for scaling the NeuroMark platform. By systematically executing these features, Orchvate transitions from an auditing consultancy into an indispensable, enterprise-grade technology company.
 
 **Immediate strategic execution priorities (0–3 months):**
 1.  **Deployment of Progress Saving:** Halt assessment abandonment immediately by implementing `localStorage` and database-backed drafts.
 2.  **Implementation of CRM Pipelines:** Route high-value assessment completions directly into the sales engine in real-time.
 3.  **Launch of Certification Badges:** Capitalize on corporate branding desires by issuing verifiable, shareable digital credentials to top performers.
 
-Execution of the "Now" horizon secures the foundational user base and optimizes the existing revenue funnel. Subsequent engineering cycles will pivot toward the "Next" and "Later" horizons, ultimately cementing Neurvex as the global software monopoly in neuro-diversity analytics.
+Execution of the "Now" horizon secures the foundational user base and optimizes the existing revenue funnel. Subsequent engineering cycles will pivot toward the "Next" and "Later" horizons, ultimately cementing NeuroMark as the global software monopoly in neuro-diversity analytics.
 
 ---
 

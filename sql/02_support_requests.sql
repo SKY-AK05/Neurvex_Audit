@@ -1,5 +1,5 @@
--- =============================================================================
--- Support requests (Support page in Neurvex)
+﻿-- =============================================================================
+-- Support requests (Support page in NeuroMark)
 -- =============================================================================
 -- When a user submits the support form, the message is emailed to support_email.
 --
@@ -36,4 +36,4 @@ WHERE id = 1
   AND (support_email IS NULL OR TRIM(support_email) = '');
 
 COMMENT ON COLUMN app_settings.support_email IS
-    'Inbox for Support page form submissions (Neurvex → Support)';
+    'Inbox for Support page form submissions (NeuroMark → Support)';

@@ -1,4 +1,4 @@
-"""
+﻿"""
 Settings and admin notification emails.
 """
 
@@ -215,18 +215,18 @@ def notify_admin_new_submission(cur, submission_id: int, name: str, company_name
 
     subject = f"New audit to review — {company_name}"
     plain = (
-        f"A new Neurvex Audit has been submitted.\n\n"
+        f"A new NeuroMark Audit has been submitted.\n\n"
         f"Organisation: {company_name}\n"
         f"Respondent: {name}\n"
         f"Submission ID: {submission_id}\n\n"
         f"Review the submission: {review_url}\n"
     )
     html = (
-        f"<p>A new <strong>Neurvex Audit</strong> has been submitted and is ready for your review.</p>"
+        f"<p>A new <strong>NeuroMark Audit</strong> has been submitted and is ready for your review.</p>"
         f"<p><strong>Organisation:</strong> {company_name}<br>"
         f"<strong>Respondent:</strong> {name}<br>"
         f"<strong>Submission ID:</strong> {submission_id}</p>"
-        f'<p><a href="{review_url}">Open submission in Neurvex</a></p>'
+        f'<p><a href="{review_url}">Open submission in NeuroMark</a></p>'
     )
 
     try:
@@ -272,16 +272,16 @@ def send_support_request(cur, name: str, email: str, subject: str, message: str)
     def esc(t):
         return html_module.escape(str(t))
 
-    subject_line = f"[Neurvex Support] {subject.strip()}"
+    subject_line = f"[NeuroMark Support] {subject.strip()}"
     plain = (
-        f"New support request from Neurvex\n\n"
+        f"New support request from NeuroMark\n\n"
         f"Name: {name}\n"
         f"Email: {email}\n"
         f"Subject: {subject}\n\n"
         f"Message:\n{message}\n"
     )
     html = (
-        "<p><strong>New support request</strong> from Neurvex</p>"
+        "<p><strong>New support request</strong> from NeuroMark</p>"
         f"<p><strong>Name:</strong> {esc(name)}<br>"
         f"<strong>Email:</strong> <a href=\"mailto:{esc(email)}\">{esc(email)}</a><br>"
         f"<strong>Subject:</strong> {esc(subject)}</p>"

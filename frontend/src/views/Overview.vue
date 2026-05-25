@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div>
     <!-- Header -->
     <div class="page-header">
@@ -203,7 +203,7 @@ function initials(name) {
 }
 
 function copyAuditLink() {
-  const url = import.meta.env.VITE_APP_URL || "https://neurvex.orchvate.in/#/";
+  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/#/";
   navigator.clipboard.writeText(url).then(() => {
     linkCopied.value = true;
     setTimeout(() => { linkCopied.value = false; }, 2000);
@@ -221,7 +221,7 @@ function downloadReport() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `neurvex-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    a.href = url; a.download = `neuromark-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   } finally { downloading.value = false; }
 }

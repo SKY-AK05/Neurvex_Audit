@@ -1,6 +1,6 @@
-# Neurvex (Orchvate audit) — Comprehensive security, reliability, and performance assessment
+﻿# NeuroMark (Orchvate audit) — Comprehensive security, reliability, and performance assessment
 
-> **Title:** Neurvex Security, Reliability, and Performance Assessment  
+> **Title:** NeuroMark Security, Reliability, and Performance Assessment  
 > **Version:** 1.0  
 > **Last Updated:** May 2026  
 > **Author:** Senior Security & Performance Architecture Team  
@@ -37,7 +37,7 @@
 
 ## 1. Security vulnerabilities
 
-The Neurvex application processes sensitive organizational metrics, rendering it a high-value target for malicious actors. This section evaluates systemic security flaws spanning the Vue 3 frontend, the FastAPI backend, and the Azure infrastructure. Addressing these vulnerabilities is critical to preventing unauthorized data access, privilege escalation, and service disruption.
+The NeuroMark application processes sensitive organizational metrics, rendering it a high-value target for malicious actors. This section evaluates systemic security flaws spanning the Vue 3 frontend, the FastAPI backend, and the Azure infrastructure. Addressing these vulnerabilities is critical to preventing unauthorized data access, privilege escalation, and service disruption.
 
 ### 1.1. Frontend and input vulnerabilities
 
@@ -154,7 +154,7 @@ Flaws in the authentication mechanisms allow unauthorized entities to bypass ide
 
 #### Cross-site request forgery (CSRF) protection gaps
 
-**Description:** If the application relies on cookie-based session management without explicit `SameSite` attributes, external malicious websites can force an authenticated administrator's browser to execute state-changing requests against the Neurvex API.
+**Description:** If the application relies on cookie-based session management without explicit `SameSite` attributes, external malicious websites can force an authenticated administrator's browser to execute state-changing requests against the NeuroMark API.
 
 **Why it matters:** Browsers automatically attach cookies to cross-origin requests unless explicitly instructed otherwise. This allows an attacker to manipulate the application state without requiring the victim's credentials.
 
@@ -193,7 +193,7 @@ Vulnerabilities inherent in the deployment environment and third-party libraries
 
 **Description:** The application constructs outgoing email reports by directly concatenating user-supplied strings, such as the company name, into the HTML email body.
 
-**Why it matters:** Attackers can inject malicious HTML, links, or entirely forged content into the email body. Because the email originates from the legitimate Neurvex domain, it circumvents standard spam filters, making it a highly effective phishing vector.
+**Why it matters:** Attackers can inject malicious HTML, links, or entirely forged content into the email body. Because the email originates from the legitimate NeuroMark domain, it circumvents standard spam filters, making it a highly effective phishing vector.
 
 **Severity:** High  
 **Impact:** Reputational damage and facilitation of secondary phishing campaigns using the trusted organizational domain.  
@@ -561,7 +561,7 @@ Mechanisms tracking internal administrative behavior and restricting internal da
 
 ## 6. Next steps and conclusion
 
-This assessment reveals that while the Neurvex application possesses a modern architectural foundation, significant vulnerabilities exist across its security posture, performance characteristics, and compliance frameworks. 
+This assessment reveals that while the NeuroMark application possesses a modern architectural foundation, significant vulnerabilities exist across its security posture, performance characteristics, and compliance frameworks. 
 
 **Immediate Priorities:**
 1.  **Remediate SQL Injection:** Immediately transition all database interactions to parameterized queries.

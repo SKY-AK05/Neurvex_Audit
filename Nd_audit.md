@@ -1,6 +1,6 @@
-# Neurvex Audit Tool — Full Project Document
+﻿# NeuroMark Audit Tool — Full Project Document
 
-**Product:** Neurodiversity Neurvex Audit Tool  
+**Product:** Neurodiversity NeuroMark Audit Tool  
 **Built for:** Orchvate  
 **Version:** 2.0 (Web-based, Azure-backed)  
 **Last Updated:** May 2026
@@ -249,11 +249,11 @@ Four functions, all in Python:
 The generated email follows this structure (matching `Email.docx` sample):
 
 ```
-Subject: Neurvex Audit Results — [Company Name]
+Subject: NeuroMark Audit Results — [Company Name]
 
 Dear [Name],
 
-Thank you for completing the Neurvex Audit for [Company Name]. 
+Thank you for completing the NeuroMark Audit for [Company Name]. 
 Below is your breakdown and interpretation across the 8 key segments:
 
 ● Leadership & Culture: [Level] ([Score]/20)

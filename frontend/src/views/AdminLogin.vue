@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="login-wrap">
     <!-- Ambient glowing background effect -->
     <div class="glow-orb"></div>
@@ -6,10 +6,10 @@
     <div class="login-box">
       <div class="login-logo">
         <!-- Light login card → use dark logo -->
-        <img src="/logo-dark.png" alt="Neurvex" class="login-logo-img" />
+        <img src="/logo-dark.png" alt="NeuroMark" class="login-logo-img" />
       </div>
       <h2>Admin Login</h2>
-      <p class="login-sub">Neurvex Dashboard</p>
+      <p class="login-sub">NeuroMark Dashboard</p>
       
       <div v-if="error" class="error-msg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>

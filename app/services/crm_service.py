@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import logging
 from datetime import datetime, timezone
@@ -119,7 +119,7 @@ def sync_to_hubspot(data: Dict[str, Any], score_data: Dict[str, Any], submission
     # 3. Create Deal
     deal_url = "https://api.hubapi.com/crm/v3/objects/deals"
     deal_properties = {
-        "dealname": f"Neurvex Audit Deal — {company_name}",
+        "dealname": f"NeuroMark Audit Deal — {company_name}",
         "dealstage": deal_stage,
         "pipeline": "default",
         "amount": "0",  # Consultation deal value can be specified

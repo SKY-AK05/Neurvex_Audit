@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div id="app-shell">
     <!-- Main Content Area -->
     <div :class="isAdmin ? 'main-area' : 'public-shell'">
@@ -7,7 +7,7 @@
         <div class="topbar-left">
           <div class="topbar-brand">
             <!-- Dark navbar → use light logo -->
-            <img src="/logo-light.png" alt="Neurvex" class="brand-logo" />
+            <img src="/logo-light.png" alt="NeuroMark" class="brand-logo" />
           </div>
 
           <nav class="topbar-nav">
@@ -131,7 +131,7 @@ const pageTitles = {
   "/admin/settings":   "Settings",
   "/admin/support":    "Support",
 };
-const pageTitle = computed(() => pageTitles[route.path] || "Neurvex Audit");
+const pageTitle = computed(() => pageTitles[route.path] || "NeuroMark Audit");
 
 const notificationsEnabled = ref(false);
 const notificationEmail = ref("");
@@ -147,7 +147,7 @@ const profileWrap = ref(null);
 // Share audit link
 const shareCopied = ref(false);
 function copyAuditLink() {
-  const url = import.meta.env.VITE_APP_URL || "https://neurvex.orchvate.in/#/";
+  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/#/";
   navigator.clipboard.writeText(url).then(() => {
     shareCopied.value = true;
     setTimeout(() => { shareCopied.value = false; }, 2000);

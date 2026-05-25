@@ -1,11 +1,11 @@
-<template>
+﻿<template>
   <div class="dashboard-page">
     <!-- Top Brand Navbar -->
     <header class="org-topbar">
       <div class="topbar-left">
         <div class="topbar-brand">
-          <img src="/logo-dark.png" alt="Neurvex" class="brand-logo" />
-          <span class="brand-name">Neurvex Audit</span>
+          <img src="/logo-dark.png" alt="NeuroMark" class="brand-logo" />
+          <span class="brand-name">NeuroMark Audit</span>
         </div>
       </div>
       <div class="topbar-right">

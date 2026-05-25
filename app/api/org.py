@@ -1,4 +1,4 @@
-import os
+﻿import os
 import logging
 import jwt
 import psycopg2.extras
@@ -44,7 +44,7 @@ async def register_or_login_org(payload: RegisterPayload):
 
     email_html = f"""
     <p>Hello,</p>
-    <p>Please click the link below to access your Neurvex Org Dashboard:</p>
+    <p>Please click the link below to access your NeuroMark Org Dashboard:</p>
     <p><a href="{login_url}" style="font-weight:bold;color:#7F77DD;">Access my Dashboard</a></p>
     <p>This link is valid for 15 minutes.</p>
     """
@@ -53,7 +53,7 @@ async def register_or_login_org(payload: RegisterPayload):
         send_acs_email(
             to_address=email,
             to_name=company_name,
-            subject="Access your Neurvex Org Dashboard",
+            subject="Access your NeuroMark Org Dashboard",
             html=email_html,
             plain=f"Click here to log in: {login_url}",
             sender_address=sender_address,

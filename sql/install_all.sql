@@ -1,5 +1,5 @@
--- =============================================================================
--- Neurvex Audit — full database setup (notifications + support)
+﻿-- =============================================================================
+-- NeuroMark Audit — full database setup (notifications + support)
 -- =============================================================================
 -- Run once on PostgreSQL database: nd_audit
 --

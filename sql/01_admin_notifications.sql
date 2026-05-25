@@ -1,8 +1,8 @@
--- =============================================================================
--- Admin user notifications (bell icon in Neurvex)
+﻿-- =============================================================================
+-- Admin user notifications (bell icon in NeuroMark)
 -- =============================================================================
 -- When notifications_enabled = TRUE, the admin at notification_email receives
--- an email each time someone submits a new Neurvex Audit.
+-- an email each time someone submits a new NeuroMark Audit.
 --
 -- Run on database: nd_audit
 --   psql -h YOUR_HOST -U YOUR_USER -d nd_audit -f sql/01_admin_notifications.sql
@@ -61,4 +61,4 @@ COMMENT ON COLUMN app_settings.notification_email IS
     'Admin inbox: receives email when a new audit is submitted (if notifications_enabled)';
 
 COMMENT ON COLUMN app_settings.notifications_enabled IS
-    'TRUE when admin turned on bell alerts in the Neurvex header';
+    'TRUE when admin turned on bell alerts in the NeuroMark header';

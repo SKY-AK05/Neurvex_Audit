@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="form-page">
 
     <!-- Success screen -->
@@ -6,7 +6,7 @@
       <div class="success-box">
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
-        <p>Thank you for completing the Neurvex Audit for <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
+        <p>Thank you for completing the NeuroMark Audit for <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
         
         <!-- Post-submission claim account -->
         <div v-if="!hasOrgToken" class="claim-box" style="margin-top: 1.5rem; padding: 1.5rem; border: 2.5px dashed var(--c-primary-dark); border-radius: 12px; background: #FFFDF8;">
@@ -26,8 +26,8 @@
       <header class="form-header">
         <div class="form-logo" @click="onLogoClick">
           <!-- Light header → use dark logo -->
-          <img src="/logo-dark.png" alt="Neurvex" class="form-logo-img" />
-          <span class="form-logo-name">Neurvex Audit</span>
+          <img src="/logo-dark.png" alt="NeuroMark" class="form-logo-img" />
+          <span class="form-logo-name">NeuroMark Audit</span>
         </div>
         <div class="form-header-right">
           <div class="header-powered">
@@ -198,7 +198,7 @@
           <div class="aside-card">
             <div class="aside-icon">
               <!-- Dark aside panel → use light logo -->
-              <img src="/logo-light.png" alt="Neurvex" class="aside-logo-img" />
+              <img src="/logo-light.png" alt="NeuroMark" class="aside-logo-img" />
             </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
