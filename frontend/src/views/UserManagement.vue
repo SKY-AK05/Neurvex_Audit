@@ -99,13 +99,22 @@ const currentUserEmail = sessionStorage.getItem('nd_user_name') || '';
 
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
+function getAuthHeaders() {
+  const token = sessionStorage.getItem("nd_auth_token");
+  return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
 async function fetchUsers() {
   loadingList.value = true;
+  error.value = '';
   try {
-    const res = await fetch(`${API_BASE}/manage/users`);
+    const res = await fetch(`${API_BASE}/manage/users`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Failed to load users');
     users.value = await res.json();
   } catch (err) {
+    error.value = err.message;
     console.error(err);
   } finally {
     loadingList.value = false;
@@ -120,13 +129,13 @@ async function addUser() {
   try {
     const res = await fetch(`${API_BASE}/manage/users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ email: newEmail.value, role: newRole.value })
     });
     
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Failed to add user');
+      throw new Error(data.detail || data.error || 'Failed to add user');
     }
     
     success.value = `${newEmail.value} has been granted access.`;
@@ -140,26 +149,26 @@ async function addUser() {
   }
 }
 
-async function updateRole(email, newRole) {
+async function updateRole(email, role) {
   error.value = '';
   success.value = '';
   try {
     const res = await fetch(`${API_BASE}/manage/users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, role: newRole })
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ email, role })
     });
     
     if (!res.ok) {
       const data = await res.json();
-      throw new Error(data.error || 'Failed to update role');
+      throw new Error(data.detail || data.error || 'Failed to update role');
     }
     
     success.value = `Updated role for ${email}.`;
     setTimeout(() => { success.value = ''; }, 3000);
   } catch (err) {
     error.value = err.message;
-    await fetchUsers(); // Revert on failure
+    await fetchUsers();
   }
 }
 
@@ -168,11 +177,11 @@ async function removeUser(email) {
   
   try {
     const res = await fetch(`${API_BASE}/manage/users/${encodeURIComponent(email)}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     
     if (!res.ok) throw new Error('Failed to remove user');
-    
     await fetchUsers();
   } catch (err) {
     alert(err.message);
