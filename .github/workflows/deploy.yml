@@ -17,13 +17,16 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: ACR login
-        run: az acr login --name neurvexregistry
+        run: |
+          docker login neurvexregistry.azurecr.io \
+            --username ${{ secrets.NEURVEXAPP_REGISTRY_USERNAME }} \
+            --password ${{ secrets.NEURVEXAPP_REGISTRY_PASSWORD }}
 
       - name: Build and push Docker image
         run: |
           docker build \
-            --build-arg VITE_MSAL_CLIENT_ID=2f900af5-c166-4fdb-90f1-1eaee09eeff2 \
-            --build-arg VITE_MSAL_TENANT_ID=${{ secrets.NEUROMARKAPP_AZURE_TENANT_ID }} \
+            --build-arg VITE_MSAL_CLIENT_ID=${{ secrets.NEURVEXAPP_AZURE_CLIENT_ID }} \
+            --build-arg VITE_MSAL_TENANT_ID=${{ secrets.NEURVEXAPP_AZURE_TENANT_ID }} \
             -t neurvexregistry.azurecr.io/orchvate-audit:${{ github.sha }} \
             -t neurvexregistry.azurecr.io/orchvate-audit:latest .
           docker push neurvexregistry.azurecr.io/orchvate-audit:${{ github.sha }}
