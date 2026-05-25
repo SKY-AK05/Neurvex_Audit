@@ -132,7 +132,7 @@ async def save_draft(payload: SaveDraftPayload, request: Request, background_tas
     exp = datetime.now(timezone.utc) + timedelta(days=7)
     token = jwt.encode({"draft_id": str(draft_id), "exp": exp}, JWT_SECRET, algorithm="HS256")
     
-    resume_url = f"{FRONTEND_URL}/#/resume?token={token}"
+    resume_url = f"{FRONTEND_URL}/resume?token={token}"
     
     background_tasks.add_task(
         send_resume_email,

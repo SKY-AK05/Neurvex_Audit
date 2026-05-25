@@ -203,7 +203,7 @@ function initials(name) {
 }
 
 function copyAuditLink() {
-  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/#/";
+  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/";
   navigator.clipboard.writeText(url).then(() => {
     linkCopied.value = true;
     setTimeout(() => { linkCopied.value = false; }, 2000);

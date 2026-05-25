@@ -18,7 +18,7 @@ async function handleResponse(res) {
     sessionStorage.removeItem("nd_auth_token");
     sessionStorage.removeItem("nd_user_name");
     sessionStorage.removeItem("nd_role");
-    window.location.href = "/#/portal";
+    window.location.href = "/portal";
     throw new Error("Session expired. Please log in again.");
   }
   

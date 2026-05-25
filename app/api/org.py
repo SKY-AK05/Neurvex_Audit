@@ -30,7 +30,7 @@ async def register_or_login_org(payload: RegisterPayload):
     
     # 1. Send magic link email
     token = create_magic_link_token(email, company_name)
-    login_url = f"{FRONTEND_URL}/#/org/verify?token={token}"
+    login_url = f"{FRONTEND_URL}/org/verify?token={token}"
     
     try:
         conn = get_conn()
