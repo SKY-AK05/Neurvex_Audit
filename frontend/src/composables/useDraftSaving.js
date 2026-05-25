@@ -6,8 +6,22 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
   const resumeUrl = ref("");
   const draftId = ref(localStorage.getItem("nd_draft_id") || null);
 
-  // Restore from LocalStorage on load
+  // Restore from LocalStorage — ONLY if the user arrived via a resume link.
+  // A fresh visit always starts with a blank form to prevent stale/other-user data
+  // from appearing. ResumeDraft.vue sets "nd_resume_ready" before redirecting here;
+  // we consume it once and then clear it so subsequent fresh visits stay blank.
   function restoreLocalDraft() {
+    const resumeReady = localStorage.getItem("nd_resume_ready");
+    if (!resumeReady) {
+      // Fresh visit — wipe any leftover draft so the form is always blank
+      localStorage.removeItem("nd_draft_state");
+      localStorage.removeItem("nd_draft_id");
+      return;
+    }
+
+    // Consume the flag immediately (single-use)
+    localStorage.removeItem("nd_resume_ready");
+
     const saved = localStorage.getItem("nd_draft_state");
     if (saved) {
       try {
