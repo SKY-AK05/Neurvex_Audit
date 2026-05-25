@@ -97,7 +97,7 @@ const success = ref('');
 
 const currentUserEmail = sessionStorage.getItem('nd_user_name') || '';
 
-const API_BASE = "http://localhost:7071/api";
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 async function fetchUsers() {
   loadingList.value = true;

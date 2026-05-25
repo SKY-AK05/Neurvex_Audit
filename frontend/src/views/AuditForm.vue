@@ -226,9 +226,14 @@
 
       <div class="form-footer">
         <div class="form-footer-right">
-          <button class="fill-btn" @click="fillTestData" type="button">⚡ Fill Test Data</button>
           <router-link to="/portal" class="admin-link-small">Admin →</router-link>
         </div>
+      </div>
+
+      <!-- Dev toolbar — bottom-left, away from the accessibility panel (bottom-right) -->
+      <div class="dev-toolbar">
+        <button class="dev-btn dev-btn--fill" @click="fillTestData" type="button">⚡ Fill Test Data</button>
+        <button class="dev-btn dev-btn--fresh" @click="startFresh" type="button">↺ Start Fresh</button>
       </div>
     </div>
   </div>
@@ -553,6 +558,13 @@ function resetForm() {
   });
 }
 
+function startFresh() {
+  resetForm();
+  clearDraft();
+  currentStep.value = 0;
+  Object.keys(errors).forEach(k => delete errors[k]);
+}
+
 async function submit() {
   if (!validateStep()) {
     scrollToError();
@@ -612,15 +624,6 @@ async function submit() {
 .header-powered { display: flex; align-items: center; gap: 0.4rem; }
 .header-powered-label { font-size: 0.7rem; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .header-powered-logo { height: 22px; width: auto; object-fit: contain; opacity: 0.65; }
-.fill-btn {
-  background: var(--c-primary-dark); color: var(--c-accent);
-  border: 2px solid var(--c-primary-dark); border-radius: 99px;
-  padding: 0.4rem 1rem; font-size: 0.82rem; font-weight: 700;
-  cursor: pointer; transition: all 0.15s; font-family: 'Playfair Display', serif;
-  box-shadow: 3px 3px 0 var(--c-accent);
-}
-.fill-btn:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-accent); }
-.fill-btn:hover { background: #333; }
 
 /* Step layout — progress left | form + aside right */
 .step-wrap {
@@ -1068,12 +1071,47 @@ async function submit() {
 .form-footer {
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: flex-end;
-  padding: 0.5rem 2rem 0.75rem;
+  padding: 0.5rem 5.5rem 0.75rem 2rem; /* right padding clears the fixed accessibility button (48px + 20px margin) */
   border-top: 1px solid rgba(0,0,0,0.08);
   gap: 1rem;
 }
 .admin-link-small { color: #bbb; font-size: 0.8rem; text-decoration: none; }
 .admin-link-small:hover { color: var(--c-primary-dark); }
+
+/* Dev toolbar — fixed bottom-left, clear of the accessibility panel (bottom-right) */
+.dev-toolbar {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 900;
+}
+.dev-btn {
+  height: 36px;
+  padding: 0 1rem;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  border: 2px solid var(--c-primary-dark);
+  transition: transform 0.12s, box-shadow 0.12s;
+  white-space: nowrap;
+}
+.dev-btn--fill {
+  background: var(--c-primary-dark);
+  color: var(--c-accent);
+  box-shadow: 3px 3px 0 var(--c-accent);
+}
+.dev-btn--fill:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-accent); }
+.dev-btn--fresh {
+  background: #fff;
+  color: var(--c-primary-dark);
+  box-shadow: 3px 3px 0 var(--c-primary-dark);
+}
+.dev-btn--fresh:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 
 /* Success */
 .success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
@@ -1258,15 +1296,13 @@ async function submit() {
 
   .form-footer {
     padding: 0.4rem 1rem 0.5rem;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
   }
-  .fill-btn {
-    padding: 0.35rem 0.75rem;
+  .dev-btn {
+    height: 32px;
+    padding: 0 0.75rem;
     font-size: 0.72rem;
-    border-radius: 6px;
-    border-width: 1.5px;
-    box-shadow: 2px 2px 0 var(--c-accent);
   }
 }
 </style>

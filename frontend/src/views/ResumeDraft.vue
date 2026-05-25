@@ -44,6 +44,8 @@ onMounted(async () => {
     localStorage.setItem("nd_draft_id", data.draft_id);
     // Signal to AuditForm that this is a legitimate resume — not a fresh visit
     localStorage.setItem("nd_resume_ready", "1");
+    // Timestamp for the 30-minute session window
+    localStorage.setItem("nd_resume_at", String(Date.now()));
 
     // Redirect to main audit form page
     router.push("/");
