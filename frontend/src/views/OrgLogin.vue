@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="login-page">
     <div class="login-card">
       <div class="header">
@@ -71,10 +71,16 @@ async function handleSubmit() {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
+  flex: 1;
   width: 100%;
   padding: 2rem 1rem;
   background: var(--c-bg);
+  background-image:
+    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
   overflow-y: auto;
 }
 .login-card {

@@ -45,10 +45,7 @@ def _fetch_org_links(conn, org_id: str) -> list[dict]:
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
             SELECT
-                s.id, s.name, s.designation, s.email, s.company_name,
-                s.submitted_at, s.overall_avg, s.overall_level, s.status,
-                s.lc_score, s.ro_score, s.we_score, s.be_score,
-                s.tm_score, s.ca_score, s.pc_score, s.sp_score,
+                s.*,
                 osl.weight, osl.linked_by, osl.linked_at
             FROM org_submission_links osl
             JOIN submissions s ON s.id = osl.submission_id
@@ -151,8 +148,7 @@ async def list_unlinked(company_name: str = None):
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 if company_name:
                     cur.execute("""
-                        SELECT s.id, s.name, s.designation, s.company_name,
-                               s.email, s.submitted_at, s.overall_avg, s.overall_level
+                        SELECT s.*
                         FROM submissions s
                         WHERE NOT EXISTS (
                             SELECT 1 FROM org_submission_links osl
@@ -163,8 +159,7 @@ async def list_unlinked(company_name: str = None):
                     """, (company_name,))
                 else:
                     cur.execute("""
-                        SELECT s.id, s.name, s.designation, s.company_name,
-                               s.email, s.submitted_at, s.overall_avg, s.overall_level
+                        SELECT s.*
                         FROM submissions s
                         WHERE NOT EXISTS (
                             SELECT 1 FROM org_submission_links osl
@@ -488,6 +483,30 @@ async def send_org_message(org_id: UUID, request: Request):
         except Exception as e:
             logger.error("Failed to send to %s: %s", r.get("email"), e)
             errors.append(r.get("email"))
+
+    if is_org_report:
+        successful_emails = [r["email"] for r in recipients if r["email"] not in errors]
+        if successful_emails:
+            try:
+                conn = get_conn()
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            UPDATE submissions s
+                            SET status = 'sent', sent_at = CURRENT_TIMESTAMP
+                            FROM org_submission_links osl
+                            WHERE s.id = osl.submission_id
+                              AND osl.org_id = %s
+                              AND s.email = ANY(%s)
+                        """, (oid, successful_emails))
+                conn.close()
+                
+                # Clear dashboard cache in routes.py
+                from app.api.routes import dashboard_cache
+                if "dashboard" in dashboard_cache:
+                    del dashboard_cache["dashboard"]
+            except Exception as update_err:
+                logger.error("Failed to update submission status after sending org report: %s", update_err)
 
     if errors:
         return {"success": False, "failed_recipients": errors}

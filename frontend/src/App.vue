@@ -1,102 +1,110 @@
-﻿<template>
+<template>
   <div id="app-shell">
-    <!-- Main Content Area -->
-    <div :class="isAdmin ? 'main-area' : 'public-shell'">
-      <header v-if="isAdmin" class="topbar">
-        
-        <div class="topbar-left">
-          <div class="topbar-brand">
-            <!-- Dark navbar → use light logo -->
-            <img src="/logo-light.png" alt="NeuroMark" class="brand-logo" />
+    <div :class="isAdmin ? 'admin-layout' : 'public-shell'">
+      <!-- Dark Slim Sidebar -->
+      <aside v-if="isAdmin" class="sidebar">
+        <div class="sidebar-top">
+          <div class="sidebar-brand">
+            <img src="/logo-light.png" alt="NM" class="brand-logo-icon" />
+            <span class="brand-text">NeuroMetric</span>
           </div>
 
-          <nav class="topbar-nav">
-            <router-link to="/admin/dashboard" class="nav-item" :class="{ active: route.path === '/admin/dashboard' }">
-              Dashboard
+          <nav class="sidebar-nav">
+            <router-link to="/admin/dashboard" class="nav-item" :class="{ active: route.path === '/admin/dashboard' }" title="Dashboard">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span class="nav-text">Dashboard</span>
             </router-link>
-            <router-link to="/admin/analytics" class="nav-item" :class="{ active: route.path === '/admin/analytics' }">
-              Analytics
+            <router-link to="/admin/analytics" class="nav-item" :class="{ active: route.path === '/admin/analytics' }" title="Analytics">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+              <span class="nav-text">Analytics</span>
             </router-link>
-            <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }">
-              Submissions
+            <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }" title="Submissions">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+              <span class="nav-text">Submissions</span>
             </router-link>
-            <router-link to="/admin/organisations" class="nav-item" :class="{ active: route.path === '/admin/organisations' }">
-              Organisations
+            <router-link to="/admin/organisations" class="nav-item" :class="{ active: route.path === '/admin/organisations' }" title="Organisations">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              <span class="nav-text">Organisations</span>
             </router-link>
           </nav>
         </div>
+      </aside>
 
-        <div class="topbar-right">
-          <div class="topbar-powered">
-            <span class="powered-label">Powered by</span>
-            <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
-          </div>
-
-          <div class="bell-wrap" ref="bellWrap">
-            <button
-              type="button"
-              class="icon-btn"
-              :class="{ 'bell-on': notificationsEnabled }"
-              title="Submission email alerts"
-              @click.stop="onBellClick"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-              <span v-if="notificationsEnabled" class="bell-badge"></span>
-            </button>
-            <div v-if="bellOpen" class="bell-popover">
-              <p class="bell-pop-title">Submission alerts</p>
-              <p class="bell-pop-text">
-                {{ notificationsEnabled
-                  ? 'You will receive an email when a new audit is submitted.'
-                  : 'Turn on to get emailed when someone submits an audit.' }}
-              </p>
-              <p v-if="notificationEmail" class="bell-pop-email">→ {{ notificationEmail }}</p>
-              <p v-else class="bell-pop-warn">Add a notification email in Settings first.</p>
-              <router-link to="/admin/settings" class="bell-pop-link" @click="bellOpen = false">
-                Email settings →
-              </router-link>
-              <p v-if="bellMsg" :class="['bell-pop-msg', bellMsgType]">{{ bellMsg }}</p>
-            </div>
-          </div>
-
-          <div class="profile-wrap" ref="profileWrap">
-            <div class="avatar" @click.stop="profileOpen = !profileOpen">{{ userInitials }}</div>
-            <div v-if="profileOpen" class="profile-popover">
-              <div class="profile-header">
-                <div class="profile-name">{{ userName }}</div>
-                <div class="profile-role">{{ isSuper ? 'Super Admin' : 'Admin' }}</div>
+      <!-- Main App Content wrapped in floating rounded container -->
+      <div v-if="isAdmin" class="main-container-wrapper">
+        <div class="main-rounded-container">
+          <!-- Internal Top Header -->
+          <header class="main-header">
+            <div class="header-right">
+              <div class="header-powered">
+                <span class="powered-label">Powered by</span>
+                <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
               </div>
-              <router-link to="/admin/settings" class="profile-item" @click="profileOpen = false">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Settings
-              </router-link>
-              <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                User Management
-              </router-link>
-              <router-link to="/admin/support" class="profile-item" @click="profileOpen = false">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Support
-              </router-link>
-              <a href="#" class="profile-item logout-item" @click.prevent="logout(); profileOpen = false;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                Sign Out
-              </a>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <!-- unified router-view to prevent unmounting race conditions -->
-      <main v-if="isAdmin" class="page-content">
-        <router-view />
-      </main>
+              <div class="bell-wrap" ref="bellWrap">
+                <button
+                  type="button"
+                  class="icon-btn"
+                  :class="{ 'bell-on': notificationsEnabled }"
+                  title="Submission email alerts"
+                  @click.stop="onBellClick"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  <span v-if="notificationsEnabled" class="bell-badge"></span>
+                </button>
+                <div v-if="bellOpen" class="bell-popover">
+                  <p class="bell-pop-title">Submission alerts</p>
+                  <p class="bell-pop-text">
+                    {{ notificationsEnabled
+                      ? 'You will receive an email when a new audit is submitted.'
+                      : 'Turn on to get emailed when someone submits an audit.' }}
+                  </p>
+                  <p v-if="notificationEmail" class="bell-pop-email">→ {{ notificationEmail }}</p>
+                  <p v-else class="bell-pop-warn">Add a notification email in Settings first.</p>
+                  <router-link to="/admin/settings" class="bell-pop-link" @click="bellOpen = false">
+                    Email settings →
+                  </router-link>
+                  <p v-if="bellMsg" :class="['bell-pop-msg', bellMsgType]">{{ bellMsg }}</p>
+                </div>
+              </div>
+
+              <div class="profile-wrap" ref="profileWrap">
+                <div class="avatar" @click.stop="profileOpen = !profileOpen">{{ userInitials }}</div>
+                <div v-if="profileOpen" class="profile-popover">
+                  <div class="profile-header">
+                    <div class="profile-name">{{ userName }}</div>
+                    <div class="profile-role">{{ isSuper ? 'Super Admin' : 'Admin' }}</div>
+                  </div>
+                  <router-link to="/admin/settings" class="profile-item" @click="profileOpen = false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                    Settings
+                  </router-link>
+                  <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    User Management
+                  </router-link>
+                  <router-link to="/admin/support" class="profile-item" @click="profileOpen = false">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Support
+                  </router-link>
+                  <a href="#" class="profile-item logout-item" @click.prevent="logout(); profileOpen = false;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Sign Out
+                  </a>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          <main class="page-content">
+            <router-view />
+          </main>
+        </div>
+      </div>
+      
       <router-view v-else />
       
-      <!-- Theme Tweaker -->
-      <ThemeTweaker />
-      <!-- Accessibility Panel -->
-      <AccessibilityPanel />
+
     </div>
   </div>
 </template>
@@ -106,8 +114,6 @@ import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getSettings, toggleNotifications } from "./api";
 import { msalInstance } from "./authConfig";
-import ThemeTweaker from "./components/ThemeTweaker.vue";
-import AccessibilityPanel from "./components/AccessibilityPanel.vue";
 
 const router = useRouter();
 const route  = useRoute();
@@ -256,12 +262,12 @@ async function logout() {
 
 <style>
 :root {
-  --c-primary-dark: #120050;
-  --c-primary-light: #1A1A80;
-  --c-accent: #009070;
+  --c-primary-dark: #161057;
+  --c-primary-light: #4A5A89;
+  --c-accent: #04907C;
   --c-accent-secondary: #20C0B0;
-  --c-accent-retro: #C8F31D;
-  --c-bg: #F0F0F0;
+  --c-accent-retro: #FFF8F2;
+  --c-bg: #F5F2EB;
   --c-white: #FFFFFF;
   --font-body: 'Geist', 'Inter', sans-serif;
   --line-height-body: 1.5;
@@ -339,73 +345,157 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
    Card: var(--c-white)   |  Border: var(--c-primary-dark)  |  Muted: #888     */
 
 /* Main area */
-.main-area {
-  flex: 1; display: flex; flex-direction: column; min-height: 100vh;
-  background: var(--c-bg);
-  background-image:
-    linear-gradient(to right, rgba(180,175,165,0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(180,175,165,0.35) 1px, transparent 1px);
-  background-size: 32px 32px;
+.admin-layout, .public-shell {
+  flex: 1; display: flex; flex-direction: row; height: 100vh;
+  background: #2a2b2e; /* Dark floating background */
+  padding: 1rem;
+  box-sizing: border-box;
+  gap: 1rem;
+}
+.public-shell {
+  flex-direction: column;
 }
 
-.topbar {
-  height: 72px;
-  background: var(--c-primary-dark);
-  display: flex; align-items: center;
-  justify-content: space-between;
-  padding: 0 2rem; position: sticky; top: 0; z-index: 50;
-  border-bottom: 3px solid var(--c-accent);
-}
-
-.topbar-left {
-  display: flex;
+.sidebar {
+  width: 60px;
+  background: transparent;
+  display: flex; flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
-  gap: 2.5rem;
+  z-index: 50;
+  flex-shrink: 0;
+  height: calc(100vh - 2rem);
+  position: sticky;
+  top: 1rem;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-.topbar-brand {
-  display: flex; align-items: center; gap: 0.65rem;
+.sidebar:hover {
+  width: 220px;
+  align-items: stretch;
 }
 
-.brand-logo {
-  height: 32px;
-  width: auto;
+.sidebar-top {
+  display: flex; flex-direction: column; gap: 2.5rem; align-items: center; width: 100%;
+}
+.sidebar:hover .sidebar-top {
+  align-items: flex-start;
+  padding: 0 0.5rem;
+}
+
+.sidebar-brand {
+  display: flex; align-items: center; justify-content: flex-start;
+  white-space: nowrap;
+  width: 48px;
+  overflow: hidden;
+  transition: width 0.3s;
+  padding-left: 4px;
+}
+.sidebar:hover .sidebar-brand {
+  width: 100%;
+}
+
+.brand-logo-icon {
+  height: 40px;
+  width: 40px;
   display: block;
   object-fit: contain;
+  background: var(--c-bg); /* Cream white */
+  border-radius: 12px;
+  padding: 4px;
+  box-sizing: border-box;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
 }
 
-.topbar-nav {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+.brand-text {
+  margin-left: 0.75rem; font-weight: 800; font-size: 1.2rem; color: var(--c-white); font-family: 'Playfair Display', serif;
+  opacity: 0; transition: opacity 0.2s; white-space: nowrap;
+}
+.sidebar:hover .brand-text { opacity: 1; transition-delay: 0.1s; }
+
+.sidebar-nav {
+  display: flex; flex-direction: column; gap: 1.25rem; width: 100%;
 }
 
 .nav-item {
-  display: flex; align-items: center; gap: 0.5rem;
-  padding: 0.5rem 1rem; border-radius: 99px;
-  color: rgba(255,255,255,0.6); font-size: 0.875rem;
+  display: flex; align-items: center; justify-content: flex-start;
+  width: 44px; height: 44px; border-radius: 14px; margin: 0 auto;
+  color: rgba(255,255,255,0.75); 
   text-decoration: none; cursor: pointer;
-  transition: all 0.15s; font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  padding-left: 10px;
+  box-sizing: border-box;
+  position: relative;
 }
-.nav-item:hover { color: var(--c-white); background: rgba(255,255,255,0.07); }
+.sidebar:hover .nav-item {
+  width: 100%;
+}
+
+.nav-icon { flex-shrink: 0; stroke: currentColor; position: relative; z-index: 2; }
+.nav-text {
+  position: absolute;
+  left: 46px;
+  font-weight: 600; font-size: 0.95rem; white-space: nowrap;
+  opacity: 0; transition: opacity 0.2s;
+}
+.sidebar:hover .nav-text { opacity: 1; transition-delay: 0.1s; }
+
+.nav-item:hover { color: var(--c-white); background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+.sidebar:hover .nav-item:hover { transform: translateX(4px); }
+
 .nav-item.active {
-  background: var(--c-accent-retro); color: var(--c-primary-dark); font-weight: 800;
-  box-shadow: 2px 2px 0px rgba(255,255,255,0.2);
+  background: var(--c-bg); color: var(--c-primary-dark);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+}
+.nav-item.active svg { stroke: var(--c-primary-dark) !important; color: var(--c-primary-dark) !important; }
+
+.main-container-wrapper {
+  flex: 1; display: flex; flex-direction: column;
+  min-width: 0;
 }
 
-.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.main-rounded-container {
+  background: var(--c-bg);
+  background-image:
+    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 32px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+}
 
-.topbar-powered {
-  display: flex; align-items: center; gap: 0.4rem;
-  padding-right: 1rem;
-  border-right: 1px solid rgba(255,255,255,0.15);
+.main-header {
+  height: 48px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0.5rem 3rem 0;
+  flex-shrink: 0;
+}
+.header-logo {
+  height: 28px;
+  width: auto;
+  object-fit: contain;
+}
+.header-right {
+  display: flex; align-items: center; gap: 1.5rem;
+}
+.header-powered {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding-right: 1.5rem;
+  border-right: 2px solid rgba(0,0,0,0.06);
 }
 .powered-label {
-  font-size: 0.68rem; color: rgba(255,255,255,0.55); font-weight: 600;
+  font-size: 0.68rem; color: #888; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.05em;
 }
 .powered-logo {
-  height: 28px; width: auto; object-fit: contain;
+  height: 24px; width: auto; object-fit: contain;
 }
 
 .share-audit-btn {
@@ -418,7 +508,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .share-audit-btn:hover { background: var(--c-accent-retro); transform: translate(-1px, -1px); }
 
 .icon-btn {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   border: 2px solid var(--c-primary-dark); background: var(--c-white);
   display: grid; place-items: center; cursor: pointer; color: var(--c-primary-dark);
   transition: all 0.15s; box-shadow: 2px 2px 0 rgba(255,255,255,0.2);
@@ -457,10 +547,10 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 
 .profile-wrap { position: relative; }
 .avatar {
-  width: 40px; height: 40px; border-radius: 50%;
+  width: 44px; height: 44px; border-radius: 50%;
   background: var(--c-primary-dark); color: var(--c-accent); cursor: pointer;
   display: grid; place-items: center;
-  font-size: 0.85rem; font-weight: 800;
+  font-size: 0.95rem; font-weight: 800;
   border: 2px solid var(--c-accent);
   font-family: 'Playfair Display', serif;
   transition: all 0.15s;
@@ -489,8 +579,12 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .logout-item { color: #C0392B; border-top: 1px solid #eee; }
 .logout-item:hover { background: #FFF0F0; }
 
-.page-content { padding: 2rem 3rem; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; }
-.page-header { margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; }
+.page-content {
+  padding: 0.25rem 3rem 2rem;
+  flex: 1;
+  width: 100%;
+  overflow-y: auto; display: flex; flex-direction: column; }
+.page-header { margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 .page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.02em; }
 
 /* Shared card — large radius, clean thick border */

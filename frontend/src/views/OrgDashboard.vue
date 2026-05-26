@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="dashboard-page">
     <!-- Top Brand Navbar -->
     <header class="org-topbar">
@@ -167,9 +167,15 @@ const chartPath = computed(() => {
 
 <style scoped>
 .dashboard-page {
-  height: 100%;
+  flex: 1;
   overflow-y: auto;
   background: var(--c-bg);
+  background-image:
+    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
 }

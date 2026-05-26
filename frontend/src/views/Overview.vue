@@ -1,19 +1,20 @@
-﻿<template>
+<template>
   <div>
-    <!-- Header -->
     <div class="page-header">
-      <div>
-        <h1>Dashboard</h1>
-        <p>What needs your attention today.</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-outline" @click="copyAuditLink">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          {{ linkCopied ? 'Copied!' : 'Copy Audit Link' }}
-        </button>
-        <button class="btn btn-primary" @click="downloadReport" :disabled="downloading">
-          {{ downloading ? 'Preparing…' : '⬇ Download Report' }}
-        </button>
+      <div class="header-left">
+        <div>
+          <h1>Dashboard</h1>
+          <p>What needs your attention today.</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" @click="copyAuditLink">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            {{ linkCopied ? 'Copied!' : 'Copy Audit Link' }}
+          </button>
+          <button class="btn btn-primary" @click="downloadReport" :disabled="downloading">
+            {{ downloading ? 'Preparing…' : '⬇ Download Report' }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -257,10 +258,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.75rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; }
-.page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
-.header-actions { display: flex; gap: 0.6rem; align-items: flex-start; }
+.page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 1.75rem; }
+.header-left { display: flex; align-items: flex-end; gap: 2.5rem; }
+.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; margin-bottom: 0; line-height: 1; }
+.page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.4rem; margin-bottom: 0; }
+.header-actions { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 2px; }
+.header-actions .btn { padding: 0.4rem 1rem; font-size: 0.75rem; }
 
 /* Stat cards */
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
@@ -275,7 +278,7 @@ onMounted(async () => {
 .stat-value { font-size: 2rem; font-weight: 700; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; line-height: 1; }
 .stat-unit { font-size: 0.9rem; color: #bbb; }
 .stat-badge { display: inline-flex; align-items: center; font-size: 0.7rem; font-weight: 700; padding: 0.18rem 0.55rem; border-radius: 99px; border: 1.5px solid currentColor; white-space: nowrap; }
-.stat-badge.green { background: #EDFFD4; color: #3A7A00; }
+.stat-badge.green { background: var(--c-bg); color: var(--c-primary-dark); }
 .stat-badge.red   { background: #FFF0F0; color: #C0392B; }
 
 /* Two col layout */
@@ -288,7 +291,7 @@ onMounted(async () => {
 .see-all:hover { color: var(--c-primary-dark); }
 
 .empty-msg { color: #bbb; font-size: 0.875rem; text-align: center; padding: 1.5rem 0; }
-.empty-msg.all-good { color: #3A7A00; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+.empty-msg.all-good { color: var(--c-primary-dark); display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
 
 /* Pending action list */
 .action-list { display: flex; flex-direction: column; gap: 0.6rem; }

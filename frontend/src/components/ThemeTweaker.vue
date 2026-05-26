@@ -16,7 +16,7 @@
       
       <div class="bulk-input">
         <label>Paste Colors (Markdown / Key-Value)</label>
-        <textarea v-model="bulkColors" @input="applyBulkColors" rows="7" placeholder="Primary: #120050&#10;Secondary: #1A1A80&#10;Main: #009070&#10;Accent: #20C0B0&#10;Retro: #C8F31D&#10;Background: #F0F0F0&#10;White: #FFFFFF"></textarea>
+        <textarea v-model="bulkColors" @input="applyBulkColors" rows="7" placeholder="Primary: #161057&#10;Secondary: #4A5A89&#10;Main: #009070&#10;Accent: #20C0B0&#10;Retro: #FFFFFF&#10;Background: #F0F0F0&#10;White: #FFFFFF"></textarea>
       </div>
       
       <div class="actions">
@@ -35,21 +35,21 @@
 import { ref, onMounted } from 'vue';
 
 const isOpen = ref(false);
-const bulkColors = ref(`Primary: #120050
-Secondary: #1A1A80
-Main: #009070
+const bulkColors = ref(`Primary: #161057
+Secondary: #4A5A89
+Main: #04907C
 Accent: #20C0B0
-Retro: #C8F31D
-Background: #F0F0F0
+Retro: #FFF8F2
+Background: #F5F2EB
 White: #FFFFFF`);
 
 const colors = ref([
-  { name: 'Primary Dark Blue', var: '--c-primary-dark', value: '#120050' },
-  { name: 'Secondary Blue', var: '--c-primary-light', value: '#1A1A80' },
-  { name: 'Main Teal', var: '--c-accent', value: '#009070' },
+  { name: 'Primary Dark Blue', var: '--c-primary-dark', value: '#161057' },
+  { name: 'Secondary Blue', var: '--c-primary-light', value: '#4A5A89' },
+  { name: 'Main Teal', var: '--c-accent', value: '#04907C' },
   { name: 'Accent Teal', var: '--c-accent-secondary', value: '#20C0B0' },
-  { name: 'Retro Lime Accent', var: '--c-accent-retro', value: '#C8F31D' },
-  { name: 'Background Gray', var: '--c-bg', value: '#F0F0F0' },
+  { name: 'Retro Accent', var: '--c-accent-retro', value: '#FFF8F2' },
+  { name: 'Background', var: '--c-bg', value: '#F5F2EB' },
   { name: 'White / Cards', var: '--c-white', value: '#FFFFFF' }
 ]);
 
@@ -62,7 +62,7 @@ const originalTheme = {
   '--c-primary-light': '#333333',
   '--c-accent': '#C8F135',
   '--c-accent-secondary': '#A8D115',
-  '--c-accent-retro': '#C8F31D',
+  '--c-accent-retro': '#FFFFFF',
   '--c-bg': '#F5F2EB',
   '--c-white': '#FFFFFF'
 };

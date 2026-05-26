@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="form-page">
 
     <!-- Success screen -->
@@ -16,8 +16,6 @@
             Claim Account & Get Dashboard
           </router-link>
         </div>
-
-        <router-link to="/portal" class="admin-link-small" style="margin-top:1.5rem; display:inline-block;">Admin →</router-link>
       </div>
     </div>
 
@@ -167,7 +165,10 @@
               <div v-else></div>
 
               <!-- Progress Saving Button -->
-              <SaveContinueButton v-if="currentStep > 0" :onSave="syncToBackend" style="margin-left: 0.5rem;" />
+              <div style="display: flex; gap: 0.5rem; margin-left: 0.5rem;">
+                <button v-if="currentStep > 0" class="btn-back" @click="startFresh" type="button" style="border: 2px solid #ff4444; color: #ff4444; background: white; padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700;">↺ Start Fresh</button>
+                <SaveContinueButton v-if="currentStep > 0" :onSave="syncToBackend" />
+              </div>
 
               <button
                 v-if="currentStep < totalSteps - 1"
@@ -224,17 +225,6 @@
         </div>
       </div>
 
-      <div class="form-footer">
-        <div class="form-footer-right">
-          <router-link to="/portal" class="admin-link-small">Admin →</router-link>
-        </div>
-      </div>
-
-      <!-- Dev toolbar — bottom-left, away from the accessibility panel (bottom-right) -->
-      <div class="dev-toolbar">
-        <button class="dev-btn dev-btn--fill" @click="fillTestData" type="button">⚡ Fill Test Data</button>
-        <button class="dev-btn dev-btn--fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-      </div>
     </div>
   </div>
 </template>
@@ -528,23 +518,6 @@ function nextStep() {
   }
 }
 
-function fillTestData() {
-  const firstNames = ["Alice", "James", "Priya", "Omar", "Sophie", "Liam", "Zara", "Noah"];
-  const lastNames  = ["Smith", "Patel", "Johnson", "Ahmed", "Williams", "Khan", "Brown", "Lee"];
-  const companies  = ["Acme Ltd", "BrightCo", "Nexora Inc", "Orbital Group", "Vertex Solutions", "Horizon Corp"];
-  const roles      = ["HR Director", "DEI Lead", "Operations Manager", "CEO", "Head of Talent"];
-
-  const rnd = arr => arr[Math.floor(Math.random() * arr.length)];
-
-  form.name           = `${rnd(firstNames)} ${rnd(lastNames)}`;
-  form.designation    = rnd(roles);
-  form.company_name   = rnd(companies);
-  form.email          = "aakash.padyachi@orchvate.com";
-  form.contact_number = `+44 77${Math.floor(10000000 + Math.random() * 89999999)}`;
-  form.consent_given  = true;
-
-  allQuestionFields.forEach(f => { form[f] = rnd(options); });
-}
 
 function resetForm() {
   form.name = "";
@@ -595,9 +568,11 @@ async function submit() {
   overflow: hidden;
   background: var(--c-bg);
   background-image:
-    linear-gradient(to right, rgba(180,175,165,0.35) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(180,175,165,0.35) 1px, transparent 1px);
+    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
   background-size: 32px 32px;
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
   display: flex; flex-direction: column;
 }
 
@@ -1040,7 +1015,7 @@ async function submit() {
   transition: all 0.15s;
 }
 .opt-btn:hover { border-color: var(--c-primary-dark); color: var(--c-primary-dark); }
-.opt-btn.selected { background: var(--c-primary-dark); color: var(--c-accent); border-color: var(--c-primary-dark); font-weight: 700; }
+.opt-btn.selected { background: var(--c-primary-dark); color: var(--c-bg); border-color: var(--c-primary-dark); font-weight: 700; }
 
 /* Navigation */
 .step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; }

@@ -133,9 +133,9 @@ const SECTIONS = [
 
 const LEVEL_COLORS = {
   "1": "#E2DDD4",
-  "2": "#C8F31D",
-  "3": "#009070",
-  "4": "#120050",
+  "2": "#E2E8F0",
+  "3": "#CBD5E1",
+  "4": "#161057",
 };
 
 const levelLegend = ref([]);
@@ -199,11 +199,11 @@ onMounted(async () => {
         labels: SECTIONS.map(s => s.label),
         datasets: [{
           data: sectionAvgs,
-          backgroundColor: "rgba(200,241,53,0.2)",
-          borderColor: "#120050",
+          backgroundColor: "rgba(226,232,240,0.4)",
+          borderColor: "#161057",
           borderWidth: 2,
-          pointBackgroundColor: "#C8F31D",
-          pointBorderColor: "#120050",
+          pointBackgroundColor: "#161057",
+          pointBorderColor: "#161057",
           pointRadius: 4,
         }],
       },
@@ -214,7 +214,7 @@ onMounted(async () => {
             min: 0, max: 20,
             ticks: { stepSize: 5, color: "#aaa", font: { size: 10 } },
             grid: { color: "#E2DDD4" },
-            pointLabels: { color: "#120050", font: { size: 11, weight: "600" } },
+            pointLabels: { color: "#161057", font: { size: 11, weight: "600" } },
           },
         },
       },
@@ -246,9 +246,9 @@ onMounted(async () => {
         datasets: [{
           data: sorted.map(s => s.avg),
           backgroundColor: sorted.map(s =>
-            s.avg < 8 ? "#FFF0F0" : s.avg < 14 ? "#C8F31D" : "#009070"
+            s.avg < 8 ? "#FFF0F0" : s.avg < 14 ? "#E2E8F0" : "#4A5A89"
           ),
-          borderColor: "#120050",
+          borderColor: "#161057",
           borderWidth: 1.5,
           borderRadius: 8,
         }],
@@ -269,11 +269,11 @@ onMounted(async () => {
         labels: trendLabels,
         datasets: [{
           data: trendData,
-          borderColor: "#120050",
-          backgroundColor: "rgba(200,241,53,0.15)",
+          borderColor: "#161057",
+          backgroundColor: "rgba(226,232,240,0.4)",
           fill: true, tension: 0.4, pointRadius: 5,
-          pointBackgroundColor: "#C8F31D",
-          pointBorderColor: "#120050",
+          pointBackgroundColor: "#161057",
+          pointBorderColor: "#161057",
           pointBorderWidth: 2,
         }],
       },

@@ -51,7 +51,18 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.verify-page { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--c-bg); }
+.verify-page {
+  display: flex; align-items: center; justify-content: center;
+  flex: 1;
+  background: var(--c-bg);
+  background-image:
+    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  overflow-y: auto;
+}
 .verify-card { background: white; border: 2px solid var(--c-primary-dark); padding: 3rem; border-radius: 16px; text-align: center; max-width: 400px; width: 90%; }
 .loader p { font-size: 1.1rem; font-weight: bold; }
 .error-wrap h2 { font-family: 'Playfair Display', serif; color: #C0392B; margin-bottom: 1rem; }
