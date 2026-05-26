@@ -60,7 +60,8 @@ def _fetch_org_links(conn, org_id: str) -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # GET /api/manage/orgs
-# List all orgs with weighted avg summary
+# List all orgs with weighted avg summary, PLUS virtual groups for unlinked
+# submissions grouped by company_name so the admin can see and link them.
 # ---------------------------------------------------------------------------
 
 @router.get("")
@@ -69,6 +70,7 @@ async def list_orgs():
         conn = get_conn()
         with conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                # 1. Real org accounts
                 cur.execute("""
                     SELECT o.id, o.name, o.created_at,
                            COUNT(osl.submission_id) AS respondent_count
@@ -79,16 +81,56 @@ async def list_orgs():
                 """)
                 orgs = [_serialize_row(dict(r)) for r in cur.fetchall()]
 
-            # Compute weighted avg for each org
+                # 2. Unlinked submissions grouped by company_name (virtual groups)
+                cur.execute("""
+                    SELECT
+                        LOWER(TRIM(s.company_name)) AS name_key,
+                        MIN(s.company_name)          AS display_name,
+                        COUNT(*)                     AS respondent_count,
+                        AVG(s.overall_avg)           AS org_avg
+                    FROM submissions s
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM org_submission_links osl
+                        WHERE osl.submission_id = s.id
+                    )
+                    GROUP BY LOWER(TRIM(s.company_name))
+                    ORDER BY display_name ASC
+                """)
+                unlinked_groups = cur.fetchall()
+
+            # Compute weighted avg for real orgs
             result = []
             for org in orgs:
                 links = _fetch_org_links(conn, org["id"])
                 scores = calc_weighted_org_score(links) if links else None
                 result.append({
                     **org,
-                    "org_avg":   scores["org_avg"]   if scores else None,
-                    "org_level": scores["org_level"]  if scores else None,
+                    "org_avg":    scores["org_avg"]   if scores else None,
+                    "org_level":  scores["org_level"] if scores else None,
+                    "is_virtual": False,
                 })
+
+            # Add virtual groups (unlinked, grouped by company_name)
+            # Use a stable fake id so the frontend can key on it
+            import hashlib
+            for g in unlinked_groups:
+                name_key = g["name_key"] or ""
+                # Skip if a real org already has this name (case-insensitive)
+                real_names = {o["name"].lower().strip() for o in orgs}
+                if name_key in real_names:
+                    continue
+                fake_id = "virtual-" + hashlib.md5(name_key.encode()).hexdigest()[:12]
+                avg = float(g["org_avg"]) if g["org_avg"] else None
+                result.append({
+                    "id":              fake_id,
+                    "name":            g["display_name"],
+                    "created_at":      None,
+                    "respondent_count": int(g["respondent_count"]),
+                    "org_avg":         round(avg, 2) if avg else None,
+                    "org_level":       None,   # no weighted calc without links
+                    "is_virtual":      True,   # flag so frontend can show "Link all" CTA
+                })
+
         conn.close()
         return result
     except Exception as e:
@@ -98,31 +140,108 @@ async def list_orgs():
 
 # ---------------------------------------------------------------------------
 # GET /api/manage/orgs/unlinked
-# Submissions with no org link
+# Submissions with no org link — optionally filtered by company_name
 # ---------------------------------------------------------------------------
 
 @router.get("/unlinked")
-async def list_unlinked():
+async def list_unlinked(company_name: str = None):
     try:
         conn = get_conn()
         with conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("""
-                    SELECT s.id, s.name, s.designation, s.company_name,
-                           s.email, s.submitted_at, s.overall_avg, s.overall_level
-                    FROM submissions s
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM org_submission_links osl
-                        WHERE osl.submission_id = s.id
-                    )
-                    ORDER BY s.submitted_at DESC
-                """)
+                if company_name:
+                    cur.execute("""
+                        SELECT s.id, s.name, s.designation, s.company_name,
+                               s.email, s.submitted_at, s.overall_avg, s.overall_level
+                        FROM submissions s
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM org_submission_links osl
+                            WHERE osl.submission_id = s.id
+                        )
+                        AND LOWER(TRIM(s.company_name)) = LOWER(TRIM(%s))
+                        ORDER BY s.submitted_at DESC
+                    """, (company_name,))
+                else:
+                    cur.execute("""
+                        SELECT s.id, s.name, s.designation, s.company_name,
+                               s.email, s.submitted_at, s.overall_avg, s.overall_level
+                        FROM submissions s
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM org_submission_links osl
+                            WHERE osl.submission_id = s.id
+                        )
+                        ORDER BY s.submitted_at DESC
+                    """)
                 rows = [_serialize_row(dict(r)) for r in cur.fetchall()]
         conn.close()
         return rows
     except Exception as e:
         logger.error("list_unlinked failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# POST /api/manage/orgs/create
+# Create a new org from a company_name and link all matching unlinked submissions
+# ---------------------------------------------------------------------------
+
+@router.post("/create")
+async def create_org_from_name(request: Request):
+    try:
+        body = await request.json()
+        company_name = (body.get("company_name") or "").strip()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    if not company_name:
+        raise HTTPException(status_code=400, detail="company_name is required")
+
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor() as cur:
+                # Create org (or get existing one with same name)
+                cur.execute("""
+                    INSERT INTO organizations (name)
+                    VALUES (%s)
+                    ON CONFLICT DO NOTHING
+                    RETURNING id
+                """, (company_name,))
+                row = cur.fetchone()
+                if not row:
+                    cur.execute("SELECT id FROM organizations WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))", (company_name,))
+                    row = cur.fetchone()
+                org_id = str(row[0])
+
+                # Link all unlinked submissions matching this company_name
+                cur.execute("""
+                    SELECT id FROM submissions s
+                    WHERE LOWER(TRIM(s.company_name)) = LOWER(TRIM(%s))
+                    AND NOT EXISTS (
+                        SELECT 1 FROM org_submission_links osl WHERE osl.submission_id = s.id
+                    )
+                """, (company_name,))
+                sub_ids = [str(r[0]) for r in cur.fetchall()]
+
+                for sid in sub_ids:
+                    cur.execute("""
+                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                        VALUES (%s, %s, 1.0, %s)
+                        ON CONFLICT (org_id, submission_id) DO NOTHING
+                    """, (org_id, sid, admin_email))
+                    cur.execute("""
+                        UPDATE submissions SET organization_id = %s
+                        WHERE id = %s AND organization_id IS NULL
+                    """, (org_id, sid))
+
+        conn.close()
+    except Exception as e:
+        logger.error("create_org_from_name failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    return {"success": True, "org_id": org_id, "linked_count": len(sub_ids)}
 
 
 # ---------------------------------------------------------------------------

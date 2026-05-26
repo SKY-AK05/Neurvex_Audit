@@ -12,20 +12,26 @@
     <div v-else>
       <div v-for="org in orgs" :key="org.id" class="org-card">
 
-        <!-- ── Org header row ── -->
-        <div class="org-header" @click="toggleOrg(org.id)">
+        <!-- Org header row -->
+        <div class="org-header" @click="toggleOrg(org)">
           <div class="org-header-left">
             <span class="org-chevron">{{ expandedOrgs.has(org.id) ? '▾' : '▸' }}</span>
             <div>
               <span class="org-name">{{ org.name }}</span>
+              <span v-if="org.is_virtual" class="virtual-badge">unlinked</span>
               <span class="org-meta">{{ org.respondent_count }} respondent{{ org.respondent_count !== 1 ? 's' : '' }}</span>
             </div>
           </div>
           <div class="org-header-right">
             <span v-if="org.org_avg !== null" class="org-score">{{ org.org_avg }}/20</span>
             <span v-if="org.org_level" :class="['level-badge', levelClass(org.org_level)]">{{ org.org_level }}</span>
-            <span v-else class="org-score muted">No data</span>
-            <button
+            <span v-else-if="!org.is_virtual" class="org-score muted">No data</span>
+            <!-- Virtual org: promote to real org -->
+            <button v-if="org.is_virtual" class="btn btn-secondary btn-sm" @click.stop="createOrg(org)">
+              Create Org &amp; Link All
+            </button>
+            <!-- Real org: send report -->
+            <button v-else
               class="btn btn-primary btn-sm"
               @click.stop="toggleReport(org)"
               :disabled="!org.respondent_count"
@@ -295,12 +301,51 @@ async function fetchReportPreview(orgId) {
 }
 
 // ── Interactions ───────────────────────────────────────────────────────────
-function toggleOrg(orgId) {
-  if (expandedOrgs.has(orgId)) { expandedOrgs.delete(orgId); }
+function toggleOrg(org) {
+  const id = org.id;
+  if (expandedOrgs.has(id)) { expandedOrgs.delete(id); }
   else {
-    expandedOrgs.add(orgId);
-    if (!orgDetails[orgId]) fetchOrgDetail(orgId);
+    expandedOrgs.add(id);
+    if (!orgDetails[id]) {
+      if (org.is_virtual) {
+        fetchVirtualOrgDetail(org);
+      } else {
+        fetchOrgDetail(id);
+      }
+    }
   }
+}
+
+async function fetchVirtualOrgDetail(org) {
+  const id = org.id;
+  loadingDetail[id] = true;
+  try {
+    const params = new URLSearchParams({ company_name: org.name });
+    const res = await fetch(`${API_BASE}/manage/orgs/unlinked?${params}`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Failed to load submissions');
+    const subs = await res.json();
+    // Shape it like a real org detail so the template works
+    orgDetails[id] = {
+      respondents: subs.map(s => ({ ...s, weight: 1.0 })),
+      scores: null,
+    };
+  } catch (e) { console.error(e); }
+  finally { loadingDetail[id] = false; }
+}
+
+async function createOrg(org) {
+  try {
+    const res = await fetch(`${API_BASE}/manage/orgs/create`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ company_name: org.name }),
+    });
+    if (!res.ok) throw new Error('Failed to create org');
+    // Refresh the whole list — virtual entry will be replaced by real org
+    expandedOrgs.delete(org.id);
+    delete orgDetails[org.id];
+    await fetchOrgs();
+  } catch (e) { console.error(e); }
 }
 
 function toggleUnlinked() {
@@ -469,6 +514,11 @@ onMounted(fetchOrgs);
 .org-name { font-weight: 700; font-size: 1rem; color: var(--c-primary-dark); margin-right: 0.75rem; }
 .org-name.muted { color: #aaa; }
 .org-meta  { font-size: 0.8rem; color: #aaa; }
+.virtual-badge {
+  font-size: 0.68rem; font-weight: 700; padding: 0.15rem 0.5rem;
+  border-radius: 99px; background: #FEF3C7; color: #92400E;
+  text-transform: uppercase; letter-spacing: 0.04em; margin-right: 0.5rem;
+}
 .org-score { font-size: 1.1rem; font-weight: 800; color: var(--c-primary-dark); }
 .org-score.muted { color: #ccc; font-size: 0.9rem; }
 
