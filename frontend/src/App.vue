@@ -354,6 +354,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 }
 .public-shell {
   flex-direction: column;
+  overflow: hidden;
 }
 
 .sidebar {

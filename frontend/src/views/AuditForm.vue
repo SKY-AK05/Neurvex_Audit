@@ -469,6 +469,14 @@ onMounted(() => {
   restoreLocalDraft();
 });
 
+watch(() => form, (newForm) => {
+  Object.keys(newForm).forEach(k => {
+    if (newForm[k] && errors[k]) {
+      delete errors[k];
+    }
+  });
+}, { deep: true });
+
 function validateStep() {
   Object.keys(errors).forEach(k => delete errors[k]);
   if (currentStep.value === 0) {
@@ -692,17 +700,17 @@ async function submit() {
   align-self: stretch;
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-.progress-sidebar::-webkit-scrollbar { display: none; }
-.progress-wrap {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  padding: 1.15rem 1rem 1.25rem;
   background: var(--c-white);
   border: 2px solid var(--c-primary-dark);
   border-radius: 16px;
   box-shadow: 4px 4px 0 var(--c-accent);
+}
+.progress-sidebar::-webkit-scrollbar { display: none; }
+.progress-wrap {
+  display: flex;
+  flex-direction: column;
+  padding: 1.15rem 1rem 1.25rem;
+  min-height: 100%;
 }
 .progress-header {
   display: flex; flex-direction: column; gap: 0.35rem;
@@ -815,17 +823,19 @@ async function submit() {
   align-self: stretch;
   -ms-overflow-style: none;
   scrollbar-width: none;
+  background: var(--c-primary-dark);
+  border-radius: 20px;
+  border: 2px solid var(--c-primary-dark);
+  box-shadow: 6px 6px 0 var(--c-accent);
 }
 .step-aside::-webkit-scrollbar { display: none; }
 .aside-card {
-  background: var(--c-primary-dark); color: var(--c-white);
-  border-radius: 20px; padding: 1.75rem;
-  border: 2px solid var(--c-primary-dark);
-  box-shadow: 6px 6px 0 var(--c-accent);
-  animation: asideIn 0.35s ease;
+  padding: 2rem;
+  color: var(--c-white);
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  animation: asideIn 0.35s ease;
 }
 @keyframes asideIn {
   from { opacity: 0; transform: translateY(8px); }
