@@ -12,11 +12,12 @@ import ResumeDraft      from "../views/ResumeDraft.vue";
 import OrgLogin         from "../views/OrgLogin.vue";
 import OrgVerify        from "../views/OrgVerify.vue";
 import OrgDashboard     from "../views/OrgDashboard.vue";
+import Organisations    from "../views/Organisations.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
   { path: "/portal",                  component: AdminLogin },
-  { path: "/admin",                   redirect: "/portal" },   // keep old link working
+  { path: "/admin",                   redirect: "/portal" },
   { path: "/admin/dashboard",         component: Overview,         meta: { requiresAuth: true } },
   { path: "/admin/submissions",       component: Submissions,      meta: { requiresAuth: true } },
   { path: "/admin/submissions/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",   component: SubmissionDetail, meta: { requiresAuth: true } },
@@ -24,8 +25,9 @@ const routes = [
   { path: "/admin/settings",          component: Settings,         meta: { requiresAuth: true } },
   { path: "/admin/support",           component: Support,          meta: { requiresAuth: true } },
   { path: "/admin/users",             component: UserManagement,   meta: { requiresAuth: true, requiresSuper: true } },
-  
-  // New features
+  { path: "/admin/organisations",     component: Organisations,    meta: { requiresAuth: true } },
+
+  // Public / org routes
   { path: "/resume",                  component: ResumeDraft },
   { path: "/org/login",               component: OrgLogin },
   { path: "/org/verify",              component: OrgVerify },

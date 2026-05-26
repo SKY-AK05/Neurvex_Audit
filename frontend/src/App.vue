@@ -20,6 +20,9 @@
             <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }">
               Submissions
             </router-link>
+            <router-link to="/admin/organisations" class="nav-item" :class="{ active: route.path === '/admin/organisations' }">
+              Organisations
+            </router-link>
           </nav>
         </div>
 
@@ -129,7 +132,8 @@ const pageTitles = {
   "/admin/submissions": "Submissions",
   "/admin/analytics":  "Analytics",
   "/admin/settings":   "Settings",
-  "/admin/support":    "Support",
+  "/admin/support":       "Support",
+  "/admin/organisations": "Organisations",
 };
 const pageTitle = computed(() => pageTitles[route.path] || "NeuroMark Audit");
 

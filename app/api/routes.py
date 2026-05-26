@@ -35,11 +35,13 @@ from app.core.security import audit_log
 import jwt
 from app.api.drafts import router as drafts_router
 from app.api.org import router as org_router
+from app.api.orgs import router as orgs_router
 from app.services.crm_service import sync_to_hubspot
 
 router = APIRouter()
 router.include_router(drafts_router)
 router.include_router(org_router)
+router.include_router(orgs_router)
 
 from app.core.config import JWT_SECRET
 
@@ -167,6 +169,14 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
                         cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
                     except ValueError:
                         logger.warning("Invalid draft_id UUID: %s", draft_id)
+
+                # Auto-link to org_submission_links if org session was present
+                if organization_id:
+                    cur.execute("""
+                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                        VALUES (%s, %s, 1.0, NULL)
+                        ON CONFLICT (org_id, submission_id) DO NOTHING
+                    """, (str(organization_id), str(submission_id)))
                     
                 # Check if CRM is enabled in settings
                 cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
