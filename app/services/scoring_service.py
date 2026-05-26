@@ -6,8 +6,11 @@ Imported by function_app.py
 import html as html_module
 import math
 import json
+import os
 import urllib.parse
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 ANSWER_POINTS = {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}
 
@@ -243,6 +246,8 @@ def _e(text: str) -> str:
 def build_email(name: str, designation: str, company_name: str, section_scores: list,
                 overall_avg: float, overall_level: str) -> str:
     """Build a formatted HTML email body for the rich-text editor and ACS send."""
+    frontend_url = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
+    booking_url  = f"{frontend_url}/book-a-call"
     level_index = {"Level 1 — Foundational": 0, "Level 2 — Early Progress": 1, "Level 3 — Developing": 2}
 
     # Extract dynamic level numbers and descriptions
@@ -261,7 +266,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     overall_avg_display = f"{overall_avg:g}"
     dash = round((overall_avg / 20.0) * 226.2, 1)
     synopsis = OVERALL_SYNOPSIS[level_index.get(overall_level, 0)]
-    month_year = datetime.now(timezone.utc).strftime("%B %Y")
+    month_year = datetime.now(IST).strftime("%B %Y")
 
     # Calculate domains subtitle dynamically based on section scores
     levels_set = {s[3] for s in section_scores}
@@ -577,7 +582,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         <tr><td style="padding:24px 24px;">
           <p style="margin:0 0 8px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#1E1A4A;">Explore your next steps</p>
           <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#555;line-height:1.6;">We would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.</p>
-          <a href="mailto:hello@orchvate.com" style="display:inline-block;background:#1E1A4A;color:#FFFFFF;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Book a complimentary call →</a>
+          <a href="{booking_url}" style="display:inline-block;background:#1E1A4A;color:#FFFFFF;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Book a complimentary call →</a>
         </td></tr>
       </table>
     </td></tr>

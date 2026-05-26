@@ -1,4 +1,4 @@
-﻿"""
+"""
 routes.py — FastAPI route definitions
 Ported from Azure Functions (function_app.py).
 All routes are prefixed with /api via the router prefix in main.py.
@@ -533,8 +533,108 @@ async def toggle_notifications(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/support
+# POST /api/book-call
 # ---------------------------------------------------------------------------
+
+@router.post("/book-call")
+@limiter.limit("10/hour")
+async def book_call(request: Request):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    name           = (body.get("name") or "").strip()
+    designation    = (body.get("designation") or "").strip()
+    company        = (body.get("company") or "").strip()
+    email          = (body.get("email") or "").strip()
+    phone          = (body.get("phone") or "").strip()
+    preferred_time = (body.get("preferred_time") or "").strip()
+    message        = (body.get("message") or "").strip()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="A valid email is required")
+    if not company:
+        raise HTTPException(status_code=400, detail="Organisation is required")
+
+    import html as html_module
+
+    def esc(t):
+        return html_module.escape(str(t))
+
+    subject_line = f"[NeuroMark] New call booking request — {company}"
+    plain = (
+        f"New call booking request from NeuroMark\n\n"
+        f"Name: {name}\n"
+        f"Job title: {designation or '—'}\n"
+        f"Organisation: {company}\n"
+        f"Email: {email}\n"
+        f"Phone: {phone or '—'}\n"
+        f"Preferred time: {preferred_time or 'No preference'}\n\n"
+        f"Message:\n{message or '—'}\n"
+    )
+    html_body = (
+        "<p><strong>New call booking request</strong> from NeuroMark</p>"
+        f"<table style='border-collapse:collapse;font-family:sans-serif;font-size:14px;'>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Name</td><td style='padding:4px 0;'><strong>{esc(name)}</strong></td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Job title</td><td style='padding:4px 0;'>{esc(designation) or '—'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Organisation</td><td style='padding:4px 0;'>{esc(company)}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Email</td><td style='padding:4px 0;'><a href='mailto:{esc(email)}'>{esc(email)}</a></td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Phone</td><td style='padding:4px 0;'>{esc(phone) or '—'}</td></tr>"
+        f"<tr><td style='padding:4px 12px 4px 0;color:#888;'>Preferred time</td><td style='padding:4px 0;'>{esc(preferred_time) or 'No preference'}</td></tr>"
+        f"</table>"
+        + (f"<p><strong>Message:</strong></p><p style='white-space:pre-wrap;line-height:1.6;'>{esc(message)}</p>" if message else "")
+    )
+
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor() as cur:
+                from app.services.settings_service import get_settings, get_sender_for_send
+                settings = get_settings(cur)
+                sender_address, sender_name = get_sender_for_send(cur)
+
+                # Send to the support / notification email (whoever should receive bookings)
+                to_address = (
+                    (settings.get("notification_email") or "").strip()
+                    or os.environ.get("SUPPORT_EMAIL", "").strip()
+                    or "aakash.padyachi@orchvate.com"
+                )
+
+                if not sender_address:
+                    raise ValueError("Sender address is not configured")
+
+                from app.services.settings_service import send_acs_email as _send
+                import threading
+
+                def _bg():
+                    try:
+                        _send(
+                            to_address=to_address,
+                            to_name="Orchvate Team",
+                            subject=subject_line,
+                            html=html_body,
+                            plain=plain,
+                            sender_address=sender_address,
+                            sender_name=sender_name,
+                        )
+                    except Exception as e:
+                        logger.error("Book-call email failed: %s", e)
+
+                threading.Thread(target=_bg).start()
+        conn.close()
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("Book-call request failed: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to send booking request")
+
+    return {"success": True, "message": "Booking request received. We will be in touch soon."}
+
+
+
 
 @router.post("/support")
 @limiter.limit("5/hour")

@@ -117,7 +117,11 @@ const paginated  = computed(() => filtered.value.slice((page.value - 1) * perPag
 
 function fmtDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 </script>
 

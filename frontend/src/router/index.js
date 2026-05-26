@@ -13,9 +13,11 @@ import OrgLogin         from "../views/OrgLogin.vue";
 import OrgVerify        from "../views/OrgVerify.vue";
 import OrgDashboard     from "../views/OrgDashboard.vue";
 import Organisations    from "../views/Organisations.vue";
+import BookCall         from "../views/BookCall.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
+  { path: "/book-a-call",             component: BookCall },
   { path: "/portal",                  component: AdminLogin },
   { path: "/admin",                   redirect: "/portal" },
   { path: "/admin/dashboard",         component: Overview,         meta: { requiresAuth: true } },

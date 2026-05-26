@@ -255,7 +255,11 @@ function showMsg(type, msg) {
 }
 function fmtDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
+  return new Date(iso).toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 const dimensions = [
