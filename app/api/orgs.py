@@ -262,9 +262,38 @@ async def link_submission(org_id: UUID, request: Request):
 
 
 # ---------------------------------------------------------------------------
-# POST /api/manage/orgs/{org_id}/message
-# Send ad-hoc email to selected respondents
+# GET /api/manage/orgs/{org_id}/report-preview
+# Returns the rendered HTML for the org summary email (for admin preview)
 # ---------------------------------------------------------------------------
+
+@router.get("/{org_id}/report-preview")
+async def org_report_preview(org_id: UUID):
+    oid = str(org_id)
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT id, name FROM organizations WHERE id = %s", (oid,))
+                org_row = cur.fetchone()
+            if not org_row:
+                conn.close()
+                raise HTTPException(status_code=404, detail="Organisation not found")
+            links = _fetch_org_links(conn, oid)
+        conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("org_report_preview failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+    scores = calc_weighted_org_score(links)
+    if not scores:
+        raise HTTPException(status_code=400, detail="No linked submissions to preview")
+
+    html = build_org_summary_email(
+        org_row["name"], scores, scores["respondents"]
+    )
+    return {"html": html, "org_avg": scores["org_avg"], "org_level": scores["org_level"]}
 
 @router.post("/{org_id}/message")
 async def send_org_message(org_id: UUID, request: Request):

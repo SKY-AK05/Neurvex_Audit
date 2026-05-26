@@ -140,37 +140,57 @@
 
     <!-- Send Org Report Modal -->
     <div v-if="reportModal.open" class="modal-overlay" @click.self="reportModal.open = false">
-      <div class="modal-card">
+      <div class="modal-card modal-card--wide">
         <h3>Send Org Report — {{ reportModal.org?.name }}</h3>
-        <p class="modal-sub">Select recipients and confirm. Each will receive the full weighted summary.</p>
+        <p class="modal-sub">Select recipients, preview the email, then send.</p>
 
-        <div class="recipient-list">
-          <label class="check-all">
-            <input type="checkbox" :checked="allRecipientsChecked" @change="toggleAllRecipients" />
-            Select all
-          </label>
-          <label v-for="r in reportModal.respondents" :key="r.id" class="recipient-row">
-            <input type="checkbox" :value="r" v-model="reportModal.selected" />
-            <span>{{ r.name }} <span class="text-muted">— {{ r.email }}</span></span>
-          </label>
-        </div>
+        <div class="report-modal-body">
+          <!-- Left: recipients + subject -->
+          <div class="report-modal-left">
+            <p class="field-label">Recipients</p>
+            <div class="recipient-list">
+              <label class="check-all">
+                <input type="checkbox" :checked="allRecipientsChecked" @change="toggleAllRecipients" />
+                Select all
+              </label>
+              <label v-for="r in reportModal.respondents" :key="r.id" class="recipient-row">
+                <input type="checkbox" :value="r" v-model="reportModal.selected" />
+                <span>{{ r.name }} <span class="text-muted">— {{ r.email }}</span></span>
+              </label>
+            </div>
 
-        <div class="field" style="margin-top:1rem;">
-          <label>Subject</label>
-          <input v-model="reportModal.subject" type="text" />
-        </div>
+            <div class="field" style="margin-top:1rem;">
+              <label>Subject</label>
+              <input v-model="reportModal.subject" type="text" />
+            </div>
 
-        <div v-if="reportModal.error" class="error-msg">{{ reportModal.error }}</div>
+            <div v-if="reportModal.error" class="error-msg">{{ reportModal.error }}</div>
 
-        <div class="modal-actions">
-          <button class="btn btn-secondary" @click="reportModal.open = false">Cancel</button>
-          <button
-            class="btn btn-primary"
-            :disabled="!reportModal.selected.length || reportModal.sending"
-            @click="sendOrgReport"
-          >
-            {{ reportModal.sending ? 'Sending…' : `Send to ${reportModal.selected.length} recipient${reportModal.selected.length !== 1 ? 's' : ''}` }}
-          </button>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" @click="reportModal.open = false">Cancel</button>
+              <button
+                class="btn btn-primary"
+                :disabled="!reportModal.selected.length || reportModal.sending"
+                @click="sendOrgReport"
+              >
+                {{ reportModal.sending ? 'Sending…' : `Send to ${reportModal.selected.length} recipient${reportModal.selected.length !== 1 ? 's' : ''}` }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: email preview -->
+          <div class="report-modal-right">
+            <p class="field-label">Email Preview</p>
+            <div v-if="reportModal.loadingPreview" class="preview-loading">Loading preview…</div>
+            <div v-else-if="reportModal.previewHtml" class="email-preview-frame">
+              <iframe
+                :srcdoc="reportModal.previewHtml"
+                sandbox="allow-same-origin"
+                class="email-iframe"
+              ></iframe>
+            </div>
+            <div v-else class="preview-empty">No preview available.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -231,7 +251,8 @@ const linkTargets     = reactive({});  // submission_id → org_id
 
 // ── Modals ─────────────────────────────────────────────────────────────────
 const reportModal = reactive({
-  open: false, org: null, respondents: [], selected: [], subject: '', sending: false, error: '',
+  open: false, org: null, respondents: [], selected: [], subject: '',
+  sending: false, error: '', previewHtml: '', loadingPreview: false,
 });
 const msgModal = reactive({
   open: false, org: null, recipient: null, subject: '', body: '', sending: false, error: '', success: '',
@@ -340,6 +361,21 @@ async function linkSubmission(submissionId, orgId) {
 }
 
 // ── Report modal ───────────────────────────────────────────────────────────
+async function fetchReportPreview(orgId) {
+  reportModal.loadingPreview = true;
+  reportModal.previewHtml    = '';
+  try {
+    const res = await fetch(`${API_BASE}/manage/orgs/${orgId}/report-preview`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error('Preview failed');
+    const data = await res.json();
+    reportModal.previewHtml = data.html;
+  } catch (e) {
+    console.error(e);
+  } finally {
+    reportModal.loadingPreview = false;
+  }
+}
+
 function openReportModal(org) {
   const detail = orgDetails[org.id];
   const respondents = detail?.respondents ?? [];
@@ -349,13 +385,15 @@ function openReportModal(org) {
   reportModal.subject    = `${org.name} — NeuroMark Audit Organisation Summary`;
   reportModal.error      = '';
   reportModal.sending    = false;
+  reportModal.previewHtml = '';
   reportModal.open       = true;
 
-  // Ensure detail is loaded
-  if (!detail) fetchOrgDetail(org.id).then(() => {
+  // Load detail + preview in parallel
+  const detailPromise = detail ? Promise.resolve() : fetchOrgDetail(org.id).then(() => {
     reportModal.respondents = orgDetails[org.id]?.respondents ?? [];
     reportModal.selected    = [...reportModal.respondents];
   });
+  detailPromise.then(() => fetchReportPreview(org.id));
 }
 
 const allRecipientsChecked = computed(() =>
@@ -543,6 +581,32 @@ onMounted(fetchOrgs);
   border-radius: 16px; padding: 2rem; width: 480px; max-width: 95vw;
   box-shadow: 6px 6px 0 var(--c-primary-dark);
   max-height: 85vh; overflow-y: auto;
+}
+.modal-card--wide {
+  width: 900px;
+  max-width: 96vw;
+}
+.report-modal-body {
+  display: flex; gap: 1.5rem; margin-top: 0.5rem;
+}
+.report-modal-left {
+  flex: 0 0 280px; display: flex; flex-direction: column;
+}
+.report-modal-right {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+.field-label {
+  font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #aaa; margin-bottom: 0.5rem;
+}
+.preview-loading { color: #aaa; font-size: 0.9rem; padding: 1rem 0; }
+.preview-empty   { color: #ccc; font-size: 0.9rem; padding: 1rem 0; }
+.email-preview-frame {
+  flex: 1; border: 2px solid #E2DDD4; border-radius: 8px; overflow: hidden;
+  min-height: 480px;
+}
+.email-iframe {
+  width: 100%; height: 100%; min-height: 480px; border: none; display: block;
 }
 .modal-card h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.25rem; }
 .modal-sub { font-size: 0.85rem; color: #888; margin-bottom: 1.25rem; }

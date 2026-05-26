@@ -171,12 +171,17 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
                         logger.warning("Invalid draft_id UUID: %s", draft_id)
 
                 # Auto-link to org_submission_links if org session was present
+                # Wrapped in try/except so a missing table (migration not yet run)
+                # does not break the submission itself.
                 if organization_id:
-                    cur.execute("""
-                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-                        VALUES (%s, %s, 1.0, NULL)
-                        ON CONFLICT (org_id, submission_id) DO NOTHING
-                    """, (str(organization_id), str(submission_id)))
+                    try:
+                        cur.execute("""
+                            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                            VALUES (%s, %s, 1.0, NULL)
+                            ON CONFLICT (org_id, submission_id) DO NOTHING
+                        """, (str(organization_id), str(submission_id)))
+                    except Exception as link_err:
+                        logger.warning("org_submission_links insert skipped (table may not exist yet): %s", link_err)
                     
                 # Check if CRM is enabled in settings
                 cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
