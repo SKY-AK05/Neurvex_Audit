@@ -754,7 +754,7 @@ async function submit() {
   width: 100%;
   height: 0;
   min-height: 0;
-  background: linear-gradient(180deg, var(--c-accent), #A8D820);
+  background: linear-gradient(180deg, #161057, #2A2080);
   border-radius: 99px;
   transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -801,11 +801,11 @@ async function submit() {
   z-index: 1;
 }
 .progress-step.done .progress-step-dot {
-  background: var(--c-accent); color: var(--c-primary-dark);
+  background: #161057; color: #FFFFFF;
 }
 .progress-step.active .progress-step-dot {
-  background: var(--c-primary-dark); color: var(--c-accent);
-  box-shadow: 0 0 0 3px rgba(200,241,53,0.45);
+  background: var(--c-primary-dark); color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(22, 16, 87, 0.25);
 }
 .step-check { font-size: 0.7rem; line-height: 1; }
 .progress-step-label {
@@ -1022,7 +1022,7 @@ async function submit() {
 /* Questions */
 .questions-list { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 0.5rem; }
 .q-block:last-child { padding-bottom: 0.25rem; }
-.q-number { font-size: 0.68rem; font-weight: 800; color: var(--c-accent); background: var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; margin-bottom: 0.4rem; letter-spacing: 0.06em; font-family: 'Playfair Display', serif; }
+.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; margin-bottom: 0.4rem; letter-spacing: 0.06em; font-family: 'Playfair Display', serif; }
 .q-text { font-size: 0.95rem; font-weight: 500; color: var(--c-primary-dark); line-height: 1.55; margin-bottom: 0.75rem; }
 .options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .opt-btn {
@@ -1157,7 +1157,7 @@ async function submit() {
   }
   .mobile-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--c-accent), #A8D820);
+    background: linear-gradient(90deg, #161057, #2A2080);
     border-radius: 99px;
     transition: width 0.45s ease;
   }
