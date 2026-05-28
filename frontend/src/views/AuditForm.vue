@@ -198,8 +198,8 @@
         <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '']" :key="currentStep">
           <div class="aside-card">
             <div class="aside-icon">
-              <!-- Dark aside panel → use light logo -->
-              <img src="/logo-light.png" alt="NeuroMark" class="aside-logo-img" />
+              <!-- Transparent aside panel → use dark logo -->
+              <img src="/logo-dark.png" alt="NeuroMark" class="aside-logo-img" />
             </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
@@ -823,15 +823,15 @@ async function submit() {
   align-self: stretch;
   -ms-overflow-style: none;
   scrollbar-width: none;
-  background: var(--c-primary-dark);
+  background: transparent;
   border-radius: 20px;
-  border: 2px solid var(--c-primary-dark);
-  box-shadow: 6px 6px 0 var(--c-accent);
+  border: 2px solid #7F77DD;
+  box-shadow: 6px 6px 0 rgba(127, 119, 221, 0.25);
 }
 .step-aside::-webkit-scrollbar { display: none; }
 .aside-card {
   padding: 2rem;
-  color: var(--c-white);
+  color: var(--c-primary-dark);
   min-height: 100%;
   display: flex;
   flex-direction: column;
@@ -843,7 +843,7 @@ async function submit() {
 }
 .aside-icon {
   width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(127, 119, 221, 0.12);
   display: grid; place-items: center;
   margin-bottom: 1rem;
   overflow: hidden;
@@ -855,51 +855,58 @@ async function submit() {
 .aside-tag {
   display: inline-block; font-size: 0.68rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--c-accent); margin-bottom: 0.5rem;
+  color: #7F77DD; margin-bottom: 0.5rem;
+  font-family: 'Inter', sans-serif;
 }
 .aside-title {
   font-size: 1.35rem; font-weight: 800; line-height: 1.25;
-  margin-bottom: 0.75rem; color: var(--c-white);
-  font-family: 'Playfair Display', serif; letter-spacing: -0.02em;
+  margin-bottom: 0.75rem; color: var(--c-primary-dark);
+  font-family: 'Inter', sans-serif; letter-spacing: -0.02em;
 }
 .aside-summary {
-  font-size: 0.88rem; line-height: 1.6; color: rgba(255,255,255,0.75);
+  font-size: 0.88rem; line-height: 1.6; color: #555;
   margin-bottom: 1.25rem;
+  font-family: 'Inter', sans-serif;
 }
 .aside-block h3 {
   font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.08em; color: var(--c-accent); margin-bottom: 0.4rem;
+  letter-spacing: 0.08em; color: #7F77DD; margin-bottom: 0.4rem;
+  font-family: 'Inter', sans-serif;
 }
 .aside-block p {
-  font-size: 0.85rem; line-height: 1.55; color: rgba(255,255,255,0.85);
+  font-size: 0.85rem; line-height: 1.55; color: #444;
   margin-bottom: 1rem;
+  font-family: 'Inter', sans-serif;
 }
 .aside-points {
   list-style: none; margin: 0 0 1.25rem; padding: 0;
   display: flex; flex-direction: column; gap: 0.5rem;
 }
 .aside-points li {
-  font-size: 0.82rem; color: rgba(255,255,255,0.9);
+  font-size: 0.82rem; color: #333;
   padding-left: 1.1rem; position: relative; line-height: 1.45;
+  font-family: 'Inter', sans-serif;
 }
 .aside-points li::before {
   content: ""; position: absolute; left: 0; top: 0.45em;
   width: 6px; height: 6px; border-radius: 50%;
+  background: #7F77DD;
 }
 .aside-progress-mini {
-  padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 1rem; border-top: 1px solid rgba(127, 119, 221, 0.25);
   margin-top: auto;
 }
 .aside-progress-mini span {
-  font-size: 0.75rem; color: rgba(255,255,255,0.55);
+  font-size: 0.75rem; color: #888;
   display: block; margin-bottom: 0.5rem;
+  font-family: 'Inter', sans-serif;
 }
 .mini-bar {
-  height: 6px; background: rgba(255,255,255,0.15);
+  height: 6px; background: rgba(127, 119, 221, 0.15);
   border-radius: 99px; overflow: hidden;
 }
 .mini-fill {
-  height: 100%; background: var(--c-accent);
+  height: 100%; background: #7F77DD;
   border-radius: 99px; transition: width 0.3s ease;
 }
 
