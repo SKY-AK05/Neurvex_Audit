@@ -825,8 +825,8 @@ async function submit() {
   scrollbar-width: none;
   background: transparent;
   border-radius: 20px;
-  border: 2px solid #7F77DD;
-  box-shadow: 6px 6px 0 rgba(127, 119, 221, 0.25);
+  border: 2px solid #161057;
+  box-shadow: 6px 6px 0 rgba(22, 16, 87, 0.18);
 }
 .step-aside::-webkit-scrollbar { display: none; }
 .aside-card {
@@ -843,7 +843,7 @@ async function submit() {
 }
 .aside-icon {
   width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(127, 119, 221, 0.12);
+  background: rgba(22, 16, 87, 0.08);
   display: grid; place-items: center;
   margin-bottom: 1rem;
   overflow: hidden;
@@ -855,7 +855,7 @@ async function submit() {
 .aside-tag {
   display: inline-block; font-size: 0.68rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.08em;
-  color: #7F77DD; margin-bottom: 0.5rem;
+  color: #161057; margin-bottom: 0.5rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-title {
@@ -870,7 +870,7 @@ async function submit() {
 }
 .aside-block h3 {
   font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.08em; color: #7F77DD; margin-bottom: 0.4rem;
+  letter-spacing: 0.08em; color: #161057; margin-bottom: 0.4rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-block p {
@@ -890,10 +890,10 @@ async function submit() {
 .aside-points li::before {
   content: ""; position: absolute; left: 0; top: 0.45em;
   width: 6px; height: 6px; border-radius: 50%;
-  background: #7F77DD;
+  background: #161057;
 }
 .aside-progress-mini {
-  padding-top: 1rem; border-top: 1px solid rgba(127, 119, 221, 0.25);
+  padding-top: 1rem; border-top: 1px solid rgba(22, 16, 87, 0.2);
   margin-top: auto;
 }
 .aside-progress-mini span {
@@ -902,11 +902,11 @@ async function submit() {
   font-family: 'Inter', sans-serif;
 }
 .mini-bar {
-  height: 6px; background: rgba(127, 119, 221, 0.15);
+  height: 6px; background: rgba(22, 16, 87, 0.12);
   border-radius: 99px; overflow: hidden;
 }
 .mini-fill {
-  height: 100%; background: #7F77DD;
+  height: 100%; background: #161057;
   border-radius: 99px; transition: width 0.3s ease;
 }
 
