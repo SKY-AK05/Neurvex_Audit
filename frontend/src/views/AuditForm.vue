@@ -910,7 +910,7 @@ async function submit() {
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-block; background: var(--c-accent); color: var(--c-primary-dark); font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid var(--c-primary-dark); font-family: 'Playfair Display', serif; }
+.step-tag { display: inline-block; background: transparent; color: #161057; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid #161057; font-family: 'Playfair Display', serif; }
 .step-card-head h1 { font-size: 1.8rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Playfair Display', serif; }
 .step-sub { color: #999; font-size: 0.875rem; margin-bottom: 0; }
 
