@@ -86,6 +86,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { formatDate } from '../utils/datetime';
 
 const users = ref([]);
 const newEmail = ref('');
@@ -188,12 +189,6 @@ async function removeUser(email) {
   }
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return 'N/A';
-  return new Date(dateStr).toLocaleDateString('en-US', {
-    year: 'numeric', month: 'short', day: 'numeric'
-  });
-}
 
 onMounted(() => {
   fetchUsers();

@@ -82,6 +82,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { getSubmissions } from "../api";
+import { formatDateTime as fmtDate, toISTDateString } from "../utils/datetime";
 
 const submissions = ref([]);
 const loading     = ref(true);
@@ -104,8 +105,9 @@ const filtered = computed(() => {
       s.company_name?.toLowerCase().includes(search.value.toLowerCase()) ||
       s.email?.toLowerCase().includes(search.value.toLowerCase()) ||
       s.designation?.toLowerCase().includes(search.value.toLowerCase());
-    const matchFrom = !dateFrom.value || new Date(s.submitted_at) >= new Date(dateFrom.value);
-    const matchTo   = !dateTo.value   || new Date(s.submitted_at) <= new Date(dateTo.value + "T23:59:59");
+    const subDay = toISTDateString(s.submitted_at);
+    const matchFrom = !dateFrom.value || subDay >= dateFrom.value;
+    const matchTo   = !dateTo.value   || subDay <= dateTo.value;
     return matchSearch && matchFrom && matchTo;
   });
 });
@@ -115,14 +117,6 @@ const pageStart  = computed(() => filtered.value.length ? (page.value - 1) * per
 const pageEnd    = computed(() => Math.min(page.value * perPage, filtered.value.length));
 const paginated  = computed(() => filtered.value.slice((page.value - 1) * perPage, page.value * perPage));
 
-function fmtDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 </script>
 
 <style scoped>

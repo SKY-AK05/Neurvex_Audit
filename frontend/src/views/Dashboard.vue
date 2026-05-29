@@ -49,6 +49,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { getSubmissions } from "../api";
+import { formatDateTime as fmtDate } from "../utils/datetime";
 
 const submissions = ref([]);
 const loading     = ref(false);
@@ -66,14 +67,6 @@ async function load() {
   }
 }
 
-function fmtDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    dateStyle: "short",
-    timeStyle: "short",
-  });
-}
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
 
 onMounted(load);

@@ -44,6 +44,7 @@ router.include_router(org_router)
 router.include_router(orgs_router)
 
 from app.core.config import JWT_SECRET
+from app.utils.helpers import to_iso_utc
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ def serialize(obj: Any) -> Any:
     if isinstance(obj, Decimal):
         return float(obj)
     if isinstance(obj, datetime):
-        return obj.isoformat()
+        return to_iso_utc(obj)
     if isinstance(obj, UUID):
         return str(obj)
     raise TypeError(f"Type {type(obj)} not serializable")
@@ -230,7 +231,7 @@ async def get_submissions():
     for row in rows:
         r = dict(row)
         if r.get("submitted_at"):
-            r["submitted_at"] = r["submitted_at"].isoformat()
+            r["submitted_at"] = to_iso_utc(r["submitted_at"])
         if r.get("id"):
             r["id"] = str(r["id"])
         result.append(r)
@@ -263,7 +264,7 @@ async def get_submission(submission_id: UUID):
     r = dict(row)
     for ts_field in ("submitted_at", "sent_at", "consent_timestamp"):
         if r.get(ts_field):
-            r[ts_field] = r[ts_field].isoformat()
+            r[ts_field] = to_iso_utc(r[ts_field])
             
     if r.get("id"):
         r["id"] = str(r["id"])

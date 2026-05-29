@@ -122,6 +122,7 @@ import { getSubmission, saveEmail, sendEmail, regenerateEmail } from "../api";
 import ScoreTable from "../components/ScoreTable.vue";
 import RichEditor from "../components/RichEditor.vue";
 import { normalizeEmailHtml } from "../utils/emailHtml.js";
+import { formatDateTime as fmtDate } from "../utils/datetime";
 
 const route         = useRoute();
 const sub           = ref(null);
@@ -252,14 +253,6 @@ async function confirmSend() {
 function showMsg(type, msg) {
   actionMsgType.value = type;
   actionMsg.value     = msg;
-}
-function fmtDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    dateStyle: "short",
-    timeStyle: "short",
-  });
 }
 
 const dimensions = [

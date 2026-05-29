@@ -14,6 +14,7 @@ router = APIRouter(prefix="/org", tags=["Organizations"])
 logger = logging.getLogger(__name__)
 
 from app.core.config import JWT_SECRET, FRONTEND_URL
+from app.utils.helpers import to_iso_utc
 
 class RegisterPayload(BaseModel):
     email: EmailStr
@@ -168,7 +169,7 @@ async def get_org_dashboard(current_user: dict = Depends(get_current_org_user)):
     last_audit_date = None
     
     for sub in submissions:
-        submitted_at_iso = sub["submitted_at"].isoformat() if sub.get("submitted_at") else None
+        submitted_at_iso = to_iso_utc(sub["submitted_at"]) if sub.get("submitted_at") else None
         history.append({
             "date": submitted_at_iso,
             "score": float(sub["overall_avg"]) if sub.get("overall_avg") else 0.0

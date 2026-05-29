@@ -17,6 +17,7 @@ services:
     env_file:
       - .env
     environment:
+      TZ: Asia/Kolkata
       # Required for admin "Sign in with Microsoft" when VITE_MSAL_* were not passed at build
       ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
       ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}

@@ -174,6 +174,12 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { getSubmissions } from "../api";
+import {
+  formatDateShort as fmtDate,
+  formatDate,
+  startOfISTWeek,
+  todayISTDateString,
+} from "../utils/datetime";
 
 const loading = ref(true);
 const allSubmissions = ref([]);
@@ -192,10 +198,6 @@ const recentList = computed(() =>
   allSubmissions.value.slice(0, 6)
 );
 
-function fmtDate(iso) {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
 function initials(name) {
   if (!name) return "?";
@@ -217,12 +219,12 @@ function downloadReport() {
     const subs = allSubmissions.value;
     if (!subs.length) return;
     const headers = ["ID","Name","Designation","Organisation","Email","Submitted","Overall Score","Overall Level","Status","Leadership","Recruitment","Workplace","Sensory","Talent","Comms","Products","Suppliers"];
-    const rows = subs.map(s => [s.id, s.name, s.designation, s.company_name, s.email, s.submitted_at ? new Date(s.submitted_at).toLocaleDateString("en-GB") : "", s.overall_avg, s.overall_level, s.status, s.lc_score, s.ro_score, s.we_score, s.be_score, s.tm_score, s.ca_score, s.pc_score, s.sp_score]);
+    const rows = subs.map(s => [s.id, s.name, s.designation, s.company_name, s.email, s.submitted_at ? formatDate(s.submitted_at) : "", s.overall_avg, s.overall_level, s.status, s.lc_score, s.ro_score, s.we_score, s.be_score, s.tm_score, s.ca_score, s.pc_score, s.sp_score]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `NIWI-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    a.href = url; a.download = `NIWI-report-${todayISTDateString()}.csv`; a.click();
     URL.revokeObjectURL(url);
   } finally { downloading.value = false; }
 }
@@ -232,12 +234,13 @@ onMounted(async () => {
     const subs = await getSubmissions();
     allSubmissions.value = subs;
 
-    const now = new Date();
-    const startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay());
-    const startOfLastWeek = new Date(startOfWeek); startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+    const startOfWeek = startOfISTWeek();
+    const startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const thisWeek = subs.filter(s => new Date(s.submitted_at) >= startOfWeek);
-    const lastWeek = subs.filter(s => new Date(s.submitted_at) >= startOfLastWeek && new Date(s.submitted_at) < startOfWeek);
+    const lastWeek = subs.filter(
+      s => new Date(s.submitted_at) >= startOfLastWeek && new Date(s.submitted_at) < startOfWeek
+    );
 
     const avg = subs.length ? (subs.reduce((a, s) => a + parseFloat(s.overall_avg || 0), 0) / subs.length).toFixed(1) : 0;
     const weekAvg = thisWeek.length ? (thisWeek.reduce((a, s) => a + parseFloat(s.overall_avg || 0), 0) / thisWeek.length).toFixed(1) : 0;

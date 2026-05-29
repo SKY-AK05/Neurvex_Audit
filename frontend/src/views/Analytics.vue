@@ -109,6 +109,7 @@
 import { ref, computed, onMounted, nextTick } from "vue";
 import { Chart, registerables } from "chart.js";
 import { getSubmissions } from "../api";
+import { getISTMonthKey } from "../utils/datetime";
 
 Chart.register(...registerables);
 
@@ -179,13 +180,11 @@ onMounted(async () => {
       { label: "Level 4 — Leading",       color: LEVEL_COLORS["4"], count: levelCounts["4"] },
     ];
 
-    // Monthly trend
-    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    // Monthly trend (grouped by IST calendar month)
     const monthData = {};
     subs.forEach(s => {
-      const d = new Date(s.submitted_at);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      if (!monthData[key]) monthData[key] = { label: months[d.getMonth()], scores: [] };
+      const { key, label } = getISTMonthKey(s.submitted_at);
+      if (!monthData[key]) monthData[key] = { label, scores: [] };
       monthData[key].scores.push(parseFloat(s.overall_avg || 0));
     });
     const trendEntries = Object.values(monthData).slice(-8);

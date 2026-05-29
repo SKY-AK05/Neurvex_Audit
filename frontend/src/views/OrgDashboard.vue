@@ -95,6 +95,7 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { formatDate as fmtDate } from "../utils/datetime";
 
 const router = useRouter();
 const loading = ref(true);
@@ -135,11 +136,6 @@ function handleLogout() {
   localStorage.removeItem("org_name");
   localStorage.removeItem("org_user_email");
   router.push("/org/login");
-}
-
-function fmtDate(iso) {
-  if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
 // Convert history points to SVG Coordinates
