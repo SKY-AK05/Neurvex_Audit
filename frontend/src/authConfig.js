@@ -1,7 +1,7 @@
 import { PublicClientApplication } from "@azure/msal-browser";
 
 export const loginRequest = {
-    scopes: ["User.Read"],
+    scopes: ["openid", "profile", "email", "User.Read"],
 };
 
 let msalInstancePromise = null;
@@ -36,7 +36,7 @@ export async function getMsalInstance() {
                     clientId,
                     authority: `https://login.microsoftonline.com/${tenantId}`,
                     redirectUri: window.location.origin,
-                    postLogoutRedirectUri: window.location.origin,
+                    postLogoutRedirectUri: `${window.location.origin}/portal`,
                 },
                 cache: {
                     cacheLocation: "sessionStorage",
@@ -48,4 +48,43 @@ export async function getMsalInstance() {
         })();
     }
     return msalInstancePromise;
+}
+
+/** Finish login after MSAL redirect: verify email with backend and store session. */
+export async function completeAdminLogin(msalResponse) {
+    if (!msalResponse?.account) {
+        return { ok: false, reason: "no_account" };
+    }
+
+    const idToken = msalResponse.idToken;
+    if (!idToken) {
+        throw new Error("Microsoft did not return an ID token. Check Entra app registration.");
+    }
+
+    const email = (msalResponse.account.username || "").trim().toLowerCase();
+    const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+        throw new Error(`Sign-in verification failed (${res.status}). Is the API running?`);
+    }
+    const data = await res.json();
+    if (!data.authorized) {
+        return { ok: false, reason: "denied", email };
+    }
+
+    sessionStorage.setItem("nd_auth", "1");
+    sessionStorage.setItem("nd_user_name", msalResponse.account.name || email);
+    sessionStorage.setItem("nd_role", data.role || "admin");
+    sessionStorage.setItem("nd_auth_token", idToken);
+    sessionStorage.removeItem("nd_auth_error");
+    return { ok: true };
+}
+
+export function clearMsalCache() {
+    Object.keys(sessionStorage)
+        .filter((k) => k.startsWith("msal.") || k.includes("login.windows"))
+        .forEach((k) => sessionStorage.removeItem(k));
 }

@@ -62,13 +62,20 @@ def verify_jwt(token: str):
     ]
     try:
         # Decode without issuer check first (PyJWT 2.x does not support list issuers)
+        decode_opts = {"verify_iss": False, "verify_aud": False}
         payload = jwt.decode(
             token,
             jwt.algorithms.RSAAlgorithm.from_jwk(rsa_key),
             algorithms=["RS256"],
-            audience=CLIENT_ID,
-            options={"verify_iss": False},
+            options=decode_opts,
         )
+        token_aud = payload.get("aud")
+        valid_audiences = {CLIENT_ID}
+        if isinstance(token_aud, list):
+            if not valid_audiences.intersection(token_aud):
+                raise jwt.InvalidTokenError(f"Invalid audience: {token_aud}")
+        elif token_aud not in valid_audiences:
+            raise jwt.InvalidTokenError(f"Invalid audience: {token_aud}")
         # Manually validate issuer against both v1 and v2 endpoints
         token_iss = payload.get("iss", "")
         if token_iss not in VALID_ISSUERS:

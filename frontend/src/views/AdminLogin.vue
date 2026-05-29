@@ -36,7 +36,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { getMsalInstance, loginRequest } from "../authConfig";
+import { getMsalInstance, loginRequest, completeAdminLogin, clearMsalCache } from "../authConfig";
 
 const error    = ref(false);
 const errorMsg = ref("");
@@ -85,6 +85,11 @@ async function handleDevLogin() {
 }
 
 onMounted(async () => {
+  if (sessionStorage.getItem("nd_auth") === "1") {
+    router.replace("/admin/dashboard");
+    return;
+  }
+
   const storedError = sessionStorage.getItem("nd_auth_error");
   if (storedError) {
     error.value = true;
@@ -94,18 +99,21 @@ onMounted(async () => {
 
   try {
     const msalInstance = await getMsalInstance();
-    const keys = Object.keys(sessionStorage).filter(k =>
-      k.includes("interaction.status") || k.includes("request.params")
-    );
-    keys.forEach(k => sessionStorage.removeItem(k));
-    await msalInstance.handleRedirectPromise();
-  } catch (err) {
-    if (err.message && !err.message.includes("not configured")) {
-      // ignore transient MSAL state errors
-    } else if (err.message) {
+    const response = await msalInstance.handleRedirectPromise();
+    if (response?.account) {
+      const result = await completeAdminLogin(response);
+      if (result.ok) {
+        router.replace("/admin/dashboard");
+        return;
+      }
       error.value = true;
-      errorMsg.value = err.message;
+      errorMsg.value = `Access denied: ${result.email || "your account"} is not in admin_users.`;
+      clearMsalCache();
     }
+  } catch (err) {
+    error.value = true;
+    errorMsg.value = err.message || "Authentication failed.";
+    clearMsalCache();
   }
 });
 

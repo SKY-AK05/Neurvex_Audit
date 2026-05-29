@@ -113,7 +113,7 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getSettings, toggleNotifications } from "./api";
-import { getMsalInstance } from "./authConfig";
+import { getMsalInstance, clearMsalCache } from "./authConfig";
 
 const router = useRouter();
 const route  = useRoute();
@@ -247,10 +247,7 @@ async function logout() {
     const account = msalInstance.getAllAccounts()[0];
     if (account) {
       msalInstance.getTokenCache().clear();
-      // Remove all MSAL keys from sessionStorage
-      Object.keys(sessionStorage)
-        .filter(k => k.startsWith("msal.") || k.includes("login.windows"))
-        .forEach(k => sessionStorage.removeItem(k));
+      clearMsalCache();
     }
   } catch (err) {
     console.error("Logout error:", err);

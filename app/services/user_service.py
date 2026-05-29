@@ -3,7 +3,10 @@ import psycopg2.extras
 def verify_user(conn, email: str) -> dict:
     """Check if an email exists in admin_users and return role."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("SELECT email, role FROM admin_users WHERE email = %s", (email,))
+        cur.execute(
+            "SELECT email, role FROM admin_users WHERE LOWER(email) = LOWER(%s)",
+            (email,),
+        )
         row = cur.fetchone()
         
     if row:

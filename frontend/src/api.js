@@ -13,7 +13,11 @@ function getAuthHeaders() {
 
 async function handleResponse(res) {
   if (res.status === 401) {
-    // Clear session and redirect to login if unauthorized
+    const detail = await res.clone().json().catch(() => ({}));
+    sessionStorage.setItem(
+      "nd_auth_error",
+      detail.detail || "Session expired or token rejected. Sign in again."
+    );
     sessionStorage.removeItem("nd_auth");
     sessionStorage.removeItem("nd_auth_token");
     sessionStorage.removeItem("nd_user_name");
