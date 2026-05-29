@@ -8,14 +8,18 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        # MSAL vars are baked into the Vue build at image build time
-        VITE_MSAL_CLIENT_ID: ${VITE_MSAL_CLIENT_ID}
-        VITE_MSAL_TENANT_ID: ${VITE_MSAL_TENANT_ID}
+        # Optional at build time; if omitted, set ENTRA_* below and use runtime /api/auth/config
+        VITE_MSAL_CLIENT_ID: ${VITE_MSAL_CLIENT_ID:-}
+        VITE_MSAL_TENANT_ID: ${VITE_MSAL_TENANT_ID:-}
     container_name: orchvate-audit
     ports:
       - "8080:80"
     env_file:
       - .env
+    environment:
+      # Required for admin "Sign in with Microsoft" when VITE_MSAL_* were not passed at build
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
+      ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
     depends_on:
       - db
     restart: unless-stopped

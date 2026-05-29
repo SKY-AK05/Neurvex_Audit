@@ -36,7 +36,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { msalInstance, loginRequest } from "../authConfig";
+import { getMsalInstance, loginRequest } from "../authConfig";
 
 const error    = ref(false);
 const errorMsg = ref("");
@@ -93,15 +93,19 @@ onMounted(async () => {
   }
 
   try {
-    await msalInstance.initialize();
-    // Clear any stale MSAL interaction state that causes interaction_in_progress errors
+    const msalInstance = await getMsalInstance();
     const keys = Object.keys(sessionStorage).filter(k =>
       k.includes("interaction.status") || k.includes("request.params")
     );
     keys.forEach(k => sessionStorage.removeItem(k));
     await msalInstance.handleRedirectPromise();
   } catch (err) {
-    // ignore
+    if (err.message && !err.message.includes("not configured")) {
+      // ignore transient MSAL state errors
+    } else if (err.message) {
+      error.value = true;
+      errorMsg.value = err.message;
+    }
   }
 });
 
@@ -109,6 +113,7 @@ async function login() {
   error.value = false;
   loading.value = true;
   try {
+    const msalInstance = await getMsalInstance();
     await msalInstance.loginRedirect(loginRequest);
   } catch (err) {
     console.error("Login failed:", err);

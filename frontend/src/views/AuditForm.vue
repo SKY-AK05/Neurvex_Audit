@@ -7,15 +7,6 @@
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
         <p>Thank you for completing the Neuro-Inclusive Workplace Index <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
-        
-        <!-- Post-submission claim account -->
-        <div v-if="!hasOrgToken" class="claim-box" style="margin-top: 1.5rem; padding: 1.5rem; border: 2.5px dashed var(--c-primary-dark); border-radius: 12px; background: #FFFDF8;">
-          <h4 style="font-family:'Fraunces', serif; font-size:1.1rem; color:var(--c-primary-dark); margin-bottom:0.5rem;">Claim your Organisation Account</h4>
-          <p style="font-size:0.8rem; color:#666; margin-bottom:1rem; line-height:1.4;">Create a persistent account to track this audit and view your maturity score progress over time.</p>
-          <router-link :to="`/org/login?email=${encodeURIComponent(form.email)}&company=${encodeURIComponent(form.company_name)}`" class="btn btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem;">
-            Claim Account & Get Dashboard
-          </router-link>
-        </div>
       </div>
     </div>
 
@@ -461,7 +452,6 @@ const form = reactive({
 });
 
 const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useDraftSaving(form, currentStep);
-const hasOrgToken = computed(() => !!localStorage.getItem("org_token"));
 
 onMounted(() => {
   restoreLocalDraft();

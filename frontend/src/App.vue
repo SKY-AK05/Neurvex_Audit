@@ -113,7 +113,7 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { getSettings, toggleNotifications } from "./api";
-import { msalInstance } from "./authConfig";
+import { getMsalInstance } from "./authConfig";
 
 const router = useRouter();
 const route  = useRoute();
@@ -243,7 +243,7 @@ async function logout() {
   // Clear MSAL cache locally only — do NOT call logoutRedirect/logoutPopup
   // as that signs the user out of ALL Microsoft apps in the browser
   try {
-    await msalInstance.initialize();
+    const msalInstance = await getMsalInstance();
     const account = msalInstance.getAllAccounts()[0];
     if (account) {
       msalInstance.getTokenCache().clear();

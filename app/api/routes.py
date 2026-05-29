@@ -674,6 +674,19 @@ async def support_request(request: Request):
 
 
 # ---------------------------------------------------------------------------
+# GET /api/auth/config  — public MSAL settings for the admin portal
+# ---------------------------------------------------------------------------
+
+@router.get("/auth/config")
+async def auth_config():
+    from app.core.config import ENTRA_CLIENT_ID, ENTRA_TENANT_ID
+    return {
+        "clientId": ENTRA_CLIENT_ID or None,
+        "tenantId": ENTRA_TENANT_ID or None,
+    }
+
+
+# ---------------------------------------------------------------------------
 # POST /api/auth/verify
 # ---------------------------------------------------------------------------
 

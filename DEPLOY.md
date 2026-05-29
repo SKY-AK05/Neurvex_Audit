@@ -36,14 +36,16 @@ MSAL auth runs entirely in the browser — no backend involvement.
 | `ACS_CONNECTION_STRING` | ACS connection string (use ACA secret) |
 | `ACS_SENDER_ADDRESS` | Sender email address |
 | `ACS_SENDER_NAME` | Sender display name |
+| `ENTRA_CLIENT_ID` | Azure AD app client ID (required for admin Microsoft sign-in) |
+| `ENTRA_TENANT_ID` | Azure AD tenant ID |
 
-### Frontend (baked into the image at build time via Docker build args)
+### Frontend (optional build-time; runtime fallback uses `ENTRA_*` above)
 | Variable | Description |
 |---|---|
-| `VITE_MSAL_CLIENT_ID` | Azure AD app client ID |
+| `VITE_MSAL_CLIENT_ID` | Azure AD app client ID (local `npm run dev` only) |
 | `VITE_MSAL_TENANT_ID` | Azure AD tenant ID |
 
-These are public values (they appear in the browser bundle) — safe to pass as build args.
+If the Docker image is built without `VITE_MSAL_*` build args, the app loads MSAL settings from `GET /api/auth/config` using `ENTRA_CLIENT_ID` / `ENTRA_TENANT_ID` on the container. **Set at least one of these paths** or admin login will show `AADSTS900144` (missing `client_id`).
 
 ---
 

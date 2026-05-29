@@ -2,73 +2,63 @@ import { createApp } from "vue";
 import App from "./App.vue";
 import router from "./router";
 import "./style.css";
-import { msalInstance } from "./authConfig";
+import { getMsalInstance } from "./authConfig";
 
-// Initialize MSAL and process any redirect response
-try {
-    msalInstance.initialize().then(() => {
-        msalInstance.handleRedirectPromise().then((response) => {
-        if (response && response.account) {
-            const email = response.account.username;
-            fetch("/api/auth/verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
-            }).then(res => {
-                // Guard: if the backend is down or not proxied, res is a 404/HTML page
-                // Calling .json() on it causes "Unexpected end of JSON input"
-                if (!res.ok) {
-                    throw new Error(`Backend returned ${res.status}. Is the FastAPI backend running on port 8000?`);
-                }
-                return res.json();
-            }).then(data => {
-                if (data.authorized) {
-                    sessionStorage.setItem("nd_auth", "1");
-                    sessionStorage.setItem("nd_user_name", response.account.name || email);
-                    sessionStorage.setItem("nd_role", data.role);
-                    sessionStorage.setItem("nd_auth_token", response.idToken);
-                    sessionStorage.removeItem("nd_auth_error");
-
-                    const app = createApp(App).use(router);
-                    app.mount("#app");
-                    router.push("/admin/dashboard");
-                } else {
-                    sessionStorage.setItem("nd_auth_error", "Access Denied: Your email is not authorised to access this portal.");
-                    // Log out of MSAL to clear their invalid session
-                    // Clear MSAL cache locally, don't sign out of all Microsoft apps
-                    Object.keys(sessionStorage)
-                      .filter(k => k.startsWith("msal.") || k.includes("login.windows"))
-                      .forEach(k => sessionStorage.removeItem(k));
-                    const app = createApp(App).use(router);
-                    app.mount("#app");
-                    router.push("/portal");
-                }
-            }).catch(error => {
-                console.error("Backend verification error:", error);
-                const msg = error.message.includes("8000")
-                    ? "Backend is not running. Start uvicorn on port 8000 and try again."
-                    : "Server error during verification. Please try again.";
-                sessionStorage.setItem("nd_auth_error", msg);
-                const app = createApp(App).use(router);
-                app.mount("#app");
-                router.push("/admin");
-            });
-            } else {
-                // Not a redirect response (normal page load)
-                const app = createApp(App).use(router);
-                app.mount("#app");
-            }
-        }).catch(error => {
-            console.error("Auth redirect error:", error);
-            sessionStorage.setItem("nd_auth_error", error.message || "Authentication failed.");
-            createApp(App).use(router).mount("#app");
-        });
-    }).catch(error => {
-        console.error("MSAL initialization failed:", error);
-        sessionStorage.setItem("nd_auth_error", "Microsoft Login is currently unavailable: " + (error.message || error));
-        createApp(App).use(router).mount("#app");
-    });
-} catch (e) {
-    console.error("MSAL startup error:", e);
+function mountApp() {
     createApp(App).use(router).mount("#app");
 }
+
+function isMsalRedirect() {
+    const hash = window.location.hash || "";
+    return hash.includes("code=") || hash.includes("error=");
+}
+
+async function handleAuthRedirect() {
+    if (!isMsalRedirect()) {
+        mountApp();
+        return;
+    }
+
+    try {
+        const msalInstance = await getMsalInstance();
+        const response = await msalInstance.handleRedirectPromise();
+        if (response && response.account) {
+            const email = response.account.username;
+            const res = await fetch("/api/auth/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            });
+            if (!res.ok) {
+                throw new Error(`Backend returned ${res.status}. Is the FastAPI backend running?`);
+            }
+            const data = await res.json();
+            mountApp();
+            if (data.authorized) {
+                sessionStorage.setItem("nd_auth", "1");
+                sessionStorage.setItem("nd_user_name", response.account.name || email);
+                sessionStorage.setItem("nd_role", data.role);
+                sessionStorage.setItem("nd_auth_token", response.idToken);
+                sessionStorage.removeItem("nd_auth_error");
+                router.push("/admin/dashboard");
+            } else {
+                sessionStorage.setItem(
+                    "nd_auth_error",
+                    "Access Denied: Your email is not authorised to access this portal."
+                );
+                Object.keys(sessionStorage)
+                    .filter((k) => k.startsWith("msal.") || k.includes("login.windows"))
+                    .forEach((k) => sessionStorage.removeItem(k));
+                router.push("/portal");
+            }
+            return;
+        }
+        mountApp();
+    } catch (error) {
+        console.error("Auth redirect error:", error);
+        sessionStorage.setItem("nd_auth_error", error.message || "Authentication failed.");
+        mountApp();
+    }
+}
+
+handleAuthRedirect();

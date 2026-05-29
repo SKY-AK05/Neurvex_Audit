@@ -89,7 +89,13 @@ async def jwks_middleware(request: Request, call_next):
     protected_paths = ["/api/manage", "/api/settings", "/api/submissions"]
     
     # Exceptions that are public
-    if request.url.path == "/api/submit" or request.url.path == "/api/auth/verify" or request.url.path == "/api/health" or request.url.path == "/api/support":
+    if request.url.path in (
+        "/api/submit",
+        "/api/auth/verify",
+        "/api/auth/config",
+        "/api/health",
+        "/api/support",
+    ):
         return await call_next(request)
         
     is_protected = any(request.url.path.startswith(p) for p in protected_paths)

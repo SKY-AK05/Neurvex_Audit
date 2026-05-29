@@ -19,3 +19,7 @@ CORS_ORIGINS = os.environ.get(
     "http://localhost:5173,http://localhost:3000,https://neuromark.orchvate.in"
 ).split(",")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
+
+# Microsoft Entra ID (public — exposed via GET /api/auth/config for browser MSAL)
+ENTRA_CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "")
+ENTRA_TENANT_ID = os.environ.get("ENTRA_TENANT_ID", "")
