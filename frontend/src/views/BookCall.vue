@@ -1,74 +1,97 @@
 <template>
-  <div class="book-page">
-    <div class="book-card">
-      <!-- Header -->
-      <div class="book-header">
-        <p class="brand">Orchvate</p>
-        <h1>Book a Complimentary Call</h1>
-        <p class="subtitle">
-          We'd love to walk through your NIWI – Neuro-Inclusive Workplace Index results, reflect on what they mean for your
-          organisation, and explore the next phase of your neurodiversity inclusion journey.
-        </p>
+  <div class="form-page">
+    <div class="form-inner">
+      <header class="form-header">
+        <div class="form-header-left">
+          <router-link to="/" class="form-logo">
+            <img src="/logonew1.png" alt="" class="form-logo-img" />
+            <span class="form-logo-name">Neuro-Inclusive Workplace Index</span>
+          </router-link>
+        </div>
+        <div class="form-header-right">
+          <div class="header-powered">
+            <span class="header-powered-label">Powered by</span>
+            <img src="/logo_orchvate.png" alt="Orchvate" class="header-powered-logo" />
+          </div>
+        </div>
+      </header>
+
+      <div v-if="submitted" class="success-wrap">
+        <div class="success-box">
+          <div class="success-icon">?</div>
+          <h2>Request received</h2>
+          <p>
+            Thank you, <strong>{{ form.name }}</strong>. We'll be in touch at
+            <strong>{{ form.email }}</strong> to confirm your call.
+          </p>
+          <router-link to="/" class="btn-back">Back to audit</router-link>
+        </div>
       </div>
 
-      <!-- Success state -->
-      <div v-if="submitted" class="success-box">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#3A7A00" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-        <h2>Request received!</h2>
-        <p>Thank you, <strong>{{ form.name }}</strong>. We'll be in touch at <strong>{{ form.email }}</strong> to confirm your call.</p>
+      <div v-else class="book-wrap">
+        <div class="book-card">
+          <div class="step-card-head">
+            <div class="step-tag">Orchvate</div>
+            <h1>Book a Complimentary Call</h1>
+            <p class="step-sub">
+              We'd love to walk through your NIWI results, reflect on what they mean for your
+              organisation, and explore the next phase of your neurodiversity inclusion journey.
+            </p>
+          </div>
+
+          <div class="book-scroll">
+            <form @submit.prevent="submit" class="book-form">
+              <div class="fields-grid">
+                <div class="field">
+                  <label>Full name *</label>
+                  <input v-model="form.name" type="text" placeholder="Jane Smith" required />
+                </div>
+                <div class="field">
+                  <label>Job title</label>
+                  <input v-model="form.designation" type="text" placeholder="HR Director" />
+                </div>
+                <div class="field">
+                  <label>Organisation *</label>
+                  <input v-model="form.company" type="text" placeholder="Acme Ltd" required />
+                </div>
+                <div class="field">
+                  <label>Work email *</label>
+                  <input v-model="form.email" type="email" placeholder="jane@acme.com" required />
+                </div>
+                <div class="field field--full">
+                  <label>Phone number</label>
+                  <input v-model="form.phone" type="tel" placeholder="+44 7700 900000" />
+                </div>
+                <div class="field field--full">
+                  <label>Preferred time to call</label>
+                  <select v-model="form.preferred_time">
+                    <option value="">No preference</option>
+                    <option>Morning (9 am – 12 pm IST)</option>
+                    <option>Afternoon (12 pm – 3 pm IST)</option>
+                    <option>Late afternoon (3 pm – 6 pm IST)</option>
+                  </select>
+                </div>
+                <div class="field field--full">
+                  <label>Anything you'd like us to know?</label>
+                  <textarea
+                    v-model="form.message"
+                    rows="4"
+                    placeholder="e.g. specific areas from the audit you'd like to focus on…"
+                  ></textarea>
+                </div>
+              </div>
+
+              <p v-if="errorMsg" class="alert alert-error">{{ errorMsg }}</p>
+            </form>
+          </div>
+
+          <div class="book-actions">
+            <button type="button" class="btn-submit" :disabled="loading" @click="submit">
+              {{ loading ? "Sending…" : "Request a call ?" }}
+            </button>
+          </div>
+        </div>
       </div>
-
-      <!-- Form -->
-      <form v-else @submit.prevent="submit" class="book-form">
-        <div class="field-row">
-          <div class="field">
-            <label>Full name <span class="req">*</span></label>
-            <input v-model="form.name" type="text" placeholder="Jane Smith" required />
-          </div>
-          <div class="field">
-            <label>Job title</label>
-            <input v-model="form.designation" type="text" placeholder="HR Director" />
-          </div>
-        </div>
-
-        <div class="field-row">
-          <div class="field">
-            <label>Organisation <span class="req">*</span></label>
-            <input v-model="form.company" type="text" placeholder="Acme Ltd" required />
-          </div>
-          <div class="field">
-            <label>Work email <span class="req">*</span></label>
-            <input v-model="form.email" type="email" placeholder="jane@acme.com" required />
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Phone number</label>
-          <input v-model="form.phone" type="tel" placeholder="+44 7700 900000" />
-        </div>
-
-        <div class="field">
-          <label>Preferred time to call</label>
-          <select v-model="form.preferred_time">
-            <option value="">No preference</option>
-            <option>Morning (9 am â€“ 12 pm IST)</option>
-            <option>Afternoon (12 pm â€“ 3 pm IST)</option>
-            <option>Late afternoon (3 pm â€“ 6 pm IST)</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Anything you'd like us to know?</label>
-          <textarea v-model="form.message" rows="3" placeholder="e.g. specific areas from the audit you'd like to focus onâ€¦"></textarea>
-        </div>
-
-        <p v-if="errorMsg" class="form-error">{{ errorMsg }}</p>
-
-        <button type="submit" class="submit-btn" :disabled="loading">
-          <span v-if="loading">Sendingâ€¦</span>
-          <span v-else>Request a call â†’</span>
-        </button>
-      </form>
     </div>
   </div>
 </template>
@@ -89,12 +112,16 @@ const form = ref({
 });
 
 const submitted = ref(false);
-const loading   = ref(false);
-const errorMsg  = ref("");
+const loading = ref(false);
+const errorMsg = ref("");
 
 async function submit() {
   errorMsg.value = "";
-  loading.value  = true;
+  if (!form.value.name?.trim() || !form.value.company?.trim() || !form.value.email?.trim()) {
+    errorMsg.value = "Please fill in all required fields.";
+    return;
+  }
+  loading.value = true;
   try {
     const res = await fetch(`${API_BASE}/book-call`, {
       method: "POST",
@@ -115,165 +142,372 @@ async function submit() {
 </script>
 
 <style scoped>
-.book-page {
-  min-height: 100vh;
-  background: #F4F2F0;
+.form-page {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--c-bg);
+  background-image:
+    linear-gradient(to right, rgba(180, 175, 165, 0.25) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(180, 175, 165, 0.25) 1px, transparent 1px);
+  background-size: 32px 32px;
+  border-radius: 32px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 3rem 1rem 4rem;
+  flex-direction: column;
 }
 
-.book-card {
-  background: #fff;
-  border-radius: 16px;
-  border: 2px solid #1E1A4A;
-  box-shadow: 6px 6px 0 rgba(0,0,0,0.08);
-  max-width: 640px;
+.form-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   width: 100%;
+  min-height: 0;
   overflow: hidden;
 }
 
-.book-header {
-  background: #1E1A4A;
-  padding: 2.5rem 2.5rem 2rem;
-  color: #fff;
+.form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 2rem;
+  border-bottom: 2px solid var(--c-primary-dark);
+  background: var(--c-bg);
+  flex-shrink: 0;
+  z-index: 10;
 }
 
-.brand {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 2px;
+.form-header-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.form-header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-left: auto;
+}
+
+.form-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.form-logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
+  object-fit: contain;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.form-logo-name {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  font-family: "Fraunces", serif;
+}
+
+.header-powered {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.header-powered-label {
+  font-size: 0.7rem;
+  color: #aaa;
+  font-weight: 600;
   text-transform: uppercase;
-  color: #AFA9EC;
-  margin: 0 0 1rem;
+  letter-spacing: 0.05em;
 }
 
-.book-header h1 {
-  font-family: 'Fraunces', serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0 0 0.75rem;
-  line-height: 1.2;
+.header-powered-logo {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.65;
 }
 
-.subtitle {
-  font-size: 0.9rem;
-  color: #AFA9EC;
-  line-height: 1.6;
-  margin: 0;
+.book-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 2rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.book-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 100%;
+  width: 100%;
+  max-width: 720px;
+  overflow: hidden;
+  background: var(--c-white);
+  border: 2px solid var(--c-primary-dark);
+  border-radius: 20px;
+  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
+}
+
+.step-card-head {
+  flex-shrink: 0;
+  padding: 2rem 2.5rem 0;
+}
+
+.step-tag {
+  display: inline-block;
+  background: transparent;
+  color: #161057;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.2rem 0.7rem;
+  border-radius: 99px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.85rem;
+  border: 1.5px solid #161057;
+  font-family: "Fraunces", serif;
+}
+
+.step-card-head h1 {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  letter-spacing: -0.03em;
+  margin-bottom: 0.35rem;
+  font-family: "Fraunces", serif;
+}
+
+.step-sub {
+  color: #999;
+  font-size: 0.875rem;
+  margin-bottom: 0;
+  line-height: 1.55;
+}
+
+.book-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 1.25rem 2.5rem 1rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .book-form {
-  padding: 2rem 2.5rem 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.5rem;
 }
 
-.field-row {
+.fields-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.field--full {
+  grid-column: 1 / -1;
 }
 
 .field label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #1E1A4A;
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  margin-bottom: 0.35rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-family: "Fraunces", serif;
 }
-
-.req { color: #C0392B; }
 
 .field input,
 .field select,
 .field textarea {
-  border: 2px solid #1E1A4A;
-  border-radius: 8px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
-  color: #1E1A4A;
-  background: #fff;
-  outline: none;
-  transition: box-shadow 0.15s, transform 0.15s;
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 2px solid var(--c-primary-dark);
+  border-radius: 10px;
+  font-size: 0.9rem;
+  background: var(--c-white);
+  color: var(--c-primary-dark);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.field textarea {
   resize: vertical;
+  min-height: 100px;
 }
 
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  box-shadow: 4px 4px 0 #7F77DD;
-  transform: translate(-2px, -2px);
+  outline: none;
+  border-color: var(--c-primary-dark);
+  box-shadow: 3px 3px 0 var(--c-accent);
 }
 
-.form-error {
-  color: #C0392B;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin: 0;
+.book-actions {
+  flex-shrink: 0;
+  padding: 1rem 2.5rem 1.5rem;
+  border-top: 1px solid #e2ddd4;
 }
 
-.submit-btn {
-  background: #1E1A4A;
-  color: #fff;
-  border: 2px solid #1E1A4A;
-  border-radius: 8px;
-  padding: 0.85rem 2rem;
-  font-size: 0.95rem;
-  font-weight: 700;
+.btn-submit {
+  background: var(--c-primary-dark);
+  color: var(--c-white);
+  border: 2px solid var(--c-primary-dark);
+  border-radius: 99px;
+  padding: 0.7rem 1.75rem;
+  font-size: 0.9rem;
+  font-weight: 800;
   cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-  align-self: flex-start;
+  transition: all 0.15s;
+  font-family: "Fraunces", serif;
+  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
 }
 
-.submit-btn:hover:not(:disabled) {
-  background: #7F77DD;
-  border-color: #7F77DD;
-  box-shadow: 4px 4px 0 rgba(0,0,0,0.15);
+.btn-submit:hover:not(:disabled) {
   transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3);
 }
 
-.submit-btn:disabled {
-  opacity: 0.6;
+.btn-submit:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.alert {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.alert-error {
+  background: #fff0f0;
+  color: #c0392b;
+  border: 1px solid #ffcaca;
+}
+
+.success-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
 }
 
 .success-box {
+  background: var(--c-white);
+  border-radius: 16px;
   padding: 3rem 2.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   text-align: center;
-  gap: 1rem;
+  border: 2px solid var(--c-primary-dark);
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  background: var(--c-accent);
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.8rem;
+  margin-bottom: 1.25rem;
+  color: var(--c-primary-dark);
+  font-weight: 800;
 }
 
 .success-box h2 {
-  font-family: 'Fraunces', serif;
   font-size: 1.5rem;
-  color: #1E1A4A;
-  margin: 0;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  margin-bottom: 0.75rem;
+  font-family: "Fraunces", serif;
 }
 
 .success-box p {
-  color: #555;
-  font-size: 0.95rem;
+  color: #666;
   line-height: 1.6;
-  margin: 0;
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
 }
 
-@media (max-width: 520px) {
-  .book-header { padding: 2rem 1.5rem 1.5rem; }
-  .book-form { padding: 1.5rem; }
-  .field-row { grid-template-columns: 1fr; }
+.btn-back {
+  display: inline-block;
+  background: var(--c-white);
+  border: 2px solid var(--c-primary-dark);
+  border-radius: 99px;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--c-primary-dark);
+  text-decoration: none;
+  font-family: "Fraunces", serif;
+  box-shadow: 3px 3px 0 var(--c-primary-dark);
+  transition: all 0.15s;
+}
+
+.btn-back:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 var(--c-primary-dark);
+}
+
+@media (max-width: 640px) {
+  .form-header {
+    padding: 0.6rem 1rem;
+  }
+
+  .form-logo-name {
+    font-size: 0.8rem;
+  }
+
+  .book-wrap {
+    padding: 0.5rem 1rem 0.75rem;
+  }
+
+  .step-card-head {
+    padding: 1.25rem 1.25rem 0;
+  }
+
+  .book-scroll {
+    padding: 1rem 1.25rem 0.75rem;
+  }
+
+  .book-actions {
+    padding: 0.85rem 1.25rem 1.25rem;
+  }
+
+  .fields-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-card-head h1 {
+    font-size: 1.45rem;
+  }
 }
 </style>
