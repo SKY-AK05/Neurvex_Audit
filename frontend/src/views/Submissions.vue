@@ -1,4 +1,4 @@
-<template>
+]jnb<template>
   <div>
     <div class="page-header">
       <div>
@@ -127,7 +127,7 @@ function fmtDate(iso) {
 
 <style scoped>
 .page-header { margin-bottom: 1.5rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; }
+.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
 .page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
 
 .filters { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
@@ -155,7 +155,7 @@ function fmtDate(iso) {
 .org-name { font-weight: 700; color: var(--c-primary-dark); }
 .email-cell { color: #888; }
 .designation-cell { color: #555; font-style: italic; }
-.empty { text-align: center; color: #ccc; padding: 3rem; font-family: 'Playfair Display', serif; font-weight: 700; }
+.empty { text-align: center; color: #ccc; padding: 3rem; font-family: 'Fraunces', serif; font-weight: 700; }
 
 .action-btn {
   width: 34px; height: 34px; border-radius: 50%;
@@ -173,7 +173,7 @@ function fmtDate(iso) {
   border: 2px solid var(--c-primary-dark); background: var(--c-white);
   font-size: 0.85rem; cursor: pointer; color: var(--c-primary-dark); font-weight: 700;
   display: grid; place-items: center; transition: all 0.15s;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 .page-btn:hover:not(:disabled) { background: var(--c-bg); }
 .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }

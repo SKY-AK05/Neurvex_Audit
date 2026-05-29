@@ -1,15 +1,15 @@
-﻿<template>
+<template>
   <div class="login-wrap">
     <!-- Ambient glowing background effect -->
     <div class="glow-orb"></div>
     
     <div class="login-box">
       <div class="login-logo">
-        <!-- Light login card → use dark logo -->
-        <img src="/logo-dark.png" alt="NeuroMark" class="login-logo-img" />
+        <!-- Light login card ? use dark logo -->
+        <img src="/logonew.png" alt="NIWI" class="login-logo-img" />
       </div>
       <h2>Admin Login</h2>
-      <p class="login-sub">NeuroMark Dashboard</p>
+      <p class="login-sub">NIWI Dashboard</p>
       
       <div v-if="error" class="error-msg">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -27,14 +27,8 @@
         <span>{{ loading ? 'Connecting to Microsoft...' : 'Sign in with Microsoft' }}</span>
       </button>
 
-      <!-- Local Dev Bypass Option -->
-      <div v-if="isLocalhost" class="dev-bypass-wrap" style="margin-top: 2rem; border-top: 1px dashed var(--c-primary-dark); padding-top: 1.5rem;">
-        <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem; font-weight: bold;">Developer Mode: Bypass Microsoft Login</p>
-        <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
-          <input v-model="devEmail" type="email" placeholder="admin.email@orchvate.com" style="padding: 0.5rem 0.75rem; border: 2px solid var(--c-primary-dark); border-radius: 8px; font-size: 0.85rem; width: 220px; background: white; color: var(--c-primary-dark);" />
-          <button @click="handleDevLogin" class="btn btn-primary" style="font-size: 0.8rem; padding: 0.45rem 1rem;">Log In</button>
-        </div>
-      </div>
+      <!-- Local Dev Bypass hidden in production -->
+      <div v-if="false" class="dev-bypass-wrap"></div>
     </div>
   </div>
 </template>
@@ -180,9 +174,10 @@ async function login() {
 }
 
 .login-logo-img {
-  height: 56px;
-  width: auto;
+  height: 64px;
+  width: 64px;
   object-fit: contain;
+  border-radius: 8px;
   animation: float 4s ease-in-out infinite;
 }
 
@@ -197,7 +192,7 @@ h2 {
   font-weight: 800;
   margin-bottom: 0.25rem;
   color: var(--c-primary-dark);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   letter-spacing: -0.02em;
 }
 

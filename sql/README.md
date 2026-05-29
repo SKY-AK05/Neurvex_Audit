@@ -1,4 +1,4 @@
-﻿# SQL scripts — NeuroMark Audit
+# SQL scripts — NeuroMark Audit
 
 Run these on your PostgreSQL database **`nd_audit`**.
 

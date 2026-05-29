@@ -4,8 +4,8 @@
     <header class="org-topbar">
       <div class="topbar-left">
         <div class="topbar-brand">
-          <img src="/logo-dark.png" alt="NeuroMark" class="brand-logo" />
-          <span class="brand-name">NeuroMark Audit</span>
+          <img src="/logonew.png" alt="NIWI" class="brand-logo" />
+          <span class="brand-name">NIWI – Neuro-Inclusive Workplace Index</span>
         </div>
       </div>
       <div class="topbar-right">
@@ -202,13 +202,15 @@ const chartPath = computed(() => {
   gap: 0.5rem;
 }
 .brand-logo {
-  height: 32px;
-  width: auto;
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  border-radius: 6px;
   display: block;
   object-fit: contain;
 }
 .brand-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.1rem;
   font-weight: 800;
   color: var(--c-primary-dark);
@@ -241,12 +243,12 @@ const chartPath = computed(() => {
   min-height: 0;
 }
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-.dashboard-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--c-primary-dark); }
+.dashboard-header h1 { font-family: 'Fraunces', serif; font-size: 2rem; color: var(--c-primary-dark); }
 .actions { display: flex; gap: 0.5rem; }
 .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
 .level-indicator { margin-bottom: 1.5rem; }
 .last-date { font-size: 0.8rem; color: #888; margin-top: 0.5rem; }
-.chart-container h4 { font-family: 'Playfair Display', serif; margin-bottom: 1rem; }
+.chart-container h4 { font-family: 'Fraunces', serif; margin-bottom: 1rem; }
 .svg-chart { width: 100%; height: auto; background: #faf9f6; border-radius: 8px; border: 1.5px solid var(--c-primary-dark); }
 .axis-text { font-size: 10px; font-weight: bold; fill: #aaa; }
 .audit-list { display: flex; flex-direction: column; gap: 0.75rem; }

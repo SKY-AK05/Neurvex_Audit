@@ -1,4 +1,4 @@
-﻿"""
+"""
 scoring.py — NeuroMark Audit scoring logic
 Imported by function_app.py
 """
@@ -349,8 +349,8 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
                 f'<td width="{empty_w}%" height="4" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>'
             )
 
-        # Determine score color class and commentary
-        if score <= 8:
+        # Determine score color class and commentary — thresholds match framework: 0-6, 7-14, 15-20
+        if score <= 6:
             badge_color = "#FFF0F0"
             badge_text = "#C0392B"
             badge_label = "Foundational"
@@ -358,7 +358,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         elif score <= 14:
             badge_color = "#FFF8DC"
             badge_text = "#8B6914"
-            badge_label = "Progressing"
+            badge_label = "Early Progress"
             commentary = DIMENSION_COMMENTARY[key]["med"]
         else:
             badge_color = "#EDFFD4"
@@ -394,13 +394,11 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     </td></tr>
 """)
 
-    # Generate maturity scale HTML
+    # Generate maturity scale HTML — 3 levels per framework
     scale_levels = [
-        {"num": 1, "name": "Starting out", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 1<br>Starting out"},
+        {"num": 1, "name": "Foundational", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 1<br>Foundational"},
         {"num": 2, "name": "Early Progress", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 2<br>Early Progress"},
         {"num": 3, "name": "Developing", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 3<br>Developing"},
-        {"num": 4, "name": "Advanced", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 4<br>Advanced"},
-        {"num": 5, "name": "Leading", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 5<br>Leading"},
     ]
     for lvl in scale_levels:
         if lvl["num"] == active_level:
@@ -412,7 +410,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     scale_html = []
     for lvl in scale_levels:
         scale_html.append(f"""
-          <td width="20%" align="center" style="padding:0 3px;">
+          <td width="33%" align="center" style="padding:0 3px;">
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
               <tr><td height="6" style="background:{lvl["color"]};border-radius:3px;font-size:0;">&nbsp;</td></tr>
               <tr><td style="padding-top:5px;font-family:'DM Sans',Arial,sans-serif;font-size:10px;color:{lvl["text_color"]};font-weight:{lvl["weight"]};text-align:center;">{lvl["label"]}</td></tr>

@@ -5,8 +5,8 @@
       <aside v-if="isAdmin" class="sidebar">
         <div class="sidebar-top">
           <div class="sidebar-brand">
-            <img src="/logo-light.png" alt="NM" class="brand-logo-icon" />
-            <span class="brand-text">NeuroMetric</span>
+            <img src="/logonew.png" alt="NIWI" class="brand-logo-icon" />
+            <span class="brand-text">NIWI</span>
           </div>
 
           <nav class="sidebar-nav">
@@ -141,7 +141,7 @@ const pageTitles = {
   "/admin/support":       "Support",
   "/admin/organisations": "Organisations",
 };
-const pageTitle = computed(() => pageTitles[route.path] || "NeuroMark Audit");
+const pageTitle = computed(() => pageTitles[route.path] || "NIWI � Neuro-Inclusive Workplace Index");
 
 const notificationsEnabled = ref(false);
 const notificationEmail = ref("");
@@ -157,7 +157,7 @@ const profileWrap = ref(null);
 // Share audit link
 const shareCopied = ref(false);
 function copyAuditLink() {
-  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/";
+  const url = import.meta.env.VITE_APP_URL || "https://NIWI.orchvate.in/";
   navigator.clipboard.writeText(url).then(() => {
     shareCopied.value = true;
     setTimeout(() => { shareCopied.value = false; }, 2000);
@@ -323,7 +323,7 @@ body.accessibility-highcontrast .opt-btn {
 
 h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .chart-title, .step-tag, .topbar-title {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 
 #app-shell { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
@@ -398,20 +398,16 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 }
 
 .brand-logo-icon {
-  height: 40px;
-  width: 40px;
+  height: 44px;
+  width: 44px;
   display: block;
   object-fit: contain;
-  background: var(--c-bg); /* Cream white */
-  border-radius: 12px;
-  padding: 4px;
-  box-sizing: border-box;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
   flex-shrink: 0;
 }
 
 .brand-text {
-  margin-left: 0.75rem; font-weight: 800; font-size: 1.2rem; color: var(--c-white); font-family: 'Playfair Display', serif;
+  margin-left: 0.75rem; font-weight: 800; font-size: 1.2rem; color: var(--c-white); font-family: 'Fraunces', serif;
   opacity: 0; transition: opacity 0.2s; white-space: nowrap;
 }
 .sidebar:hover .brand-text { opacity: 1; transition-delay: 0.1s; }
@@ -504,7 +500,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.5rem 1.1rem; font-size: 0.875rem; font-weight: 700;
   cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 0.4rem;
-  transition: all 0.15s; font-family: 'Playfair Display', serif;
+  transition: all 0.15s; font-family: 'Fraunces', serif;
 }
 .share-audit-btn:hover { background: var(--c-accent-retro); transform: translate(-1px, -1px); }
 
@@ -532,7 +528,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 }
 .bell-pop-title {
   font-size: 0.85rem; font-weight: 800; color: var(--c-primary-dark);
-  margin-bottom: 0.4rem; font-family: 'Playfair Display', serif;
+  margin-bottom: 0.4rem; font-family: 'Fraunces', serif;
 }
 .bell-pop-text { font-size: 0.8rem; color: #666; line-height: 1.45; margin-bottom: 0.5rem; }
 .bell-pop-email { font-size: 0.78rem; color: var(--c-primary-dark); font-weight: 600; margin-bottom: 0.5rem; }
@@ -553,7 +549,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   display: grid; place-items: center;
   font-size: 0.95rem; font-weight: 800;
   border: 2px solid var(--c-accent);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   transition: all 0.15s;
   box-shadow: 2px 2px 0 rgba(255,255,255,0.2);
 }
@@ -623,7 +619,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   padding: 0.6rem 1.3rem; border-radius: 99px;
   font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
   display: inline-flex; align-items: center; gap: 0.4rem;
-  font-family: 'Playfair Display', serif; border: 2px solid var(--c-primary-dark);
+  font-family: 'Fraunces', serif; border: 2px solid var(--c-primary-dark);
 }
 .btn-primary { background: var(--c-primary-dark); color: var(--c-white); box-shadow: 3px 3px 0 var(--c-accent-retro); }
 .btn-primary:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-accent-retro); }
@@ -643,7 +639,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   padding: 0.25rem 0.75rem; border-radius: 99px;
   font-size: 0.78rem; font-weight: 700;
   border: 1.5px solid currentColor;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 .badge-pending  { background: var(--c-bg); color: var(--c-primary-dark); }
 .badge-sent, .badge-delivered { background: var(--c-accent-retro); color: var(--c-primary-dark); border-color: var(--c-primary-dark); }

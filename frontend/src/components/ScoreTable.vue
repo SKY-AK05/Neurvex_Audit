@@ -69,10 +69,14 @@
     <!-- Overall Average row -->
     <tbody>
       <tr class="overall-row">
-        <td>Overall Average</td>
+        <td>Overall Score</td>
         <td>
           <div class="score-progress-wrap">
-            <span class="score-num">{{ data.overall_avg }}/20</span>
+            <span class="score-num">
+              {{ Math.round(data.overall_avg * 8) }}
+              <span class="score-denom"> / 160</span>
+              <span class="score-avg">({{ data.overall_avg }}/20)</span>
+            </span>
             <div class="progress-bar-bg">
               <div
                 class="progress-bar-fill overall-fill"
@@ -281,7 +285,7 @@ const sections = [
   font-family: 'Geist', monospace;
   font-size: 0.85rem;
   font-weight: 700;
-  min-width: 42px;
+  min-width: 80px;
   color: var(--c-primary-dark);
 }
 

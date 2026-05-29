@@ -6,7 +6,7 @@
         <p class="brand">Orchvate</p>
         <h1>Book a Complimentary Call</h1>
         <p class="subtitle">
-          We'd love to walk through your NeuroMark Audit results, reflect on what they mean for your
+          We'd love to walk through your NIWI – Neuro-Inclusive Workplace Index results, reflect on what they mean for your
           organisation, and explore the next phase of your neurodiversity inclusion journey.
         </p>
       </div>
@@ -150,7 +150,7 @@ async function submit() {
 }
 
 .book-header h1 {
-  font-family: 'Playfair Display', 'DM Serif Display', Georgia, serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 0.75rem;
@@ -258,7 +258,7 @@ async function submit() {
 }
 
 .success-box h2 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.5rem;
   color: #1E1A4A;
   margin: 0;

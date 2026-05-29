@@ -110,7 +110,7 @@ async function submit() {
 .page-header { margin-bottom: 1.5rem; }
 .page-header h1 {
   font-size: 1.7rem; font-weight: 700; color: var(--c-primary-dark);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 .page-header p { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
 
@@ -125,7 +125,7 @@ async function submit() {
 .support-card h2,
 .info-card h2 {
   font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem;
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 .card-hint {
   font-size: 0.82rem; color: #888; line-height: 1.5;

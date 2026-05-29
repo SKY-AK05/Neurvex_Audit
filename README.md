@@ -1,4 +1,4 @@
-﻿# NeuroMark Audit Tool
+# NeuroMark Audit Tool
 
 Web-based neurodiversity inclusion self-assessment tool built for Orchvate.
 

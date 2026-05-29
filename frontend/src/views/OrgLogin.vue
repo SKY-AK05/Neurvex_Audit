@@ -3,7 +3,7 @@
     <div class="login-card">
       <div class="header">
         <div class="login-logo-wrap">
-          <img src="/logo-dark.png" alt="NeuroMark" class="login-logo" />
+          <img src="/logonew.png" alt="NIWI" class="login-logo" />
         </div>
         <h2>Organisation Dashboard</h2>
         <p>Enter your email and company name to register or receive your access link.</p>
@@ -98,11 +98,13 @@ async function handleSubmit() {
   margin-bottom: 1.5rem;
 }
 .login-logo {
-  height: 48px;
-  width: auto;
+  height: 56px;
+  width: 56px;
+  object-fit: contain;
+  border-radius: 8px;
 }
 .header h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.5rem;
   margin-bottom: 0.5rem;
   color: var(--c-primary-dark);

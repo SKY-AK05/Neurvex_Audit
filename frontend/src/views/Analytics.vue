@@ -295,7 +295,7 @@ onMounted(async () => {
 
 <style scoped>
 .page-header { margin-bottom: 1.75rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; }
+.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
 .page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
 .loading { color: #aaa; padding: 3rem; text-align: center; font-size: 0.9rem; }
 
@@ -304,7 +304,7 @@ onMounted(async () => {
 .chart-card-full { padding: 1.5rem; margin-bottom: 1rem; }
 
 .chart-head { margin-bottom: 1.25rem; }
-.chart-title { display: block; font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
+.chart-title { display: block; font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Fraunces', serif; }
 .chart-sub { display: block; font-size: 0.78rem; color: #aaa; margin-top: 0.2rem; }
 
 .radar-wrap { max-width: 340px; margin: 0 auto; }

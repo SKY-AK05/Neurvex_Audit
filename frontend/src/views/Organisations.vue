@@ -300,7 +300,7 @@ async function openReport() {
   const respondents = detail.value?.respondents ?? [];
   report.respondents = respondents;
   report.selected    = [...respondents];
-  report.subject     = `${selectedOrg.value.name} — NeuroMark Audit Organisation Summary`;
+  report.subject     = `${selectedOrg.value.name} — NIWI � Neuro-Inclusive Workplace Index Organisation Summary`;
   report.error       = '';
   report.success     = '';
   report.previewHtml = '';
@@ -448,7 +448,7 @@ onMounted(fetchOrgs);
   flex-shrink: 0;
 }
 .org-list-header h2 {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.1rem; font-weight: 700;
   color: var(--c-primary-dark); margin: 0 0 2px;
 }
@@ -511,7 +511,7 @@ onMounted(fetchOrgs);
   margin-bottom: 1.25rem; gap: 1rem;
 }
 .detail-org-name {
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
   font-size: 1.4rem; font-weight: 700;
   color: var(--c-primary-dark); margin: 0 0 0.4rem;
 }

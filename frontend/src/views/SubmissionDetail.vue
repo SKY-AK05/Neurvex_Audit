@@ -345,7 +345,7 @@ h2 {
   font-size: 1rem; font-weight: 700; color: var(--c-primary-dark);
   margin-bottom: 1.25rem; padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--c-bg);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 
 /* Info grid */
@@ -409,7 +409,7 @@ h2 {
   animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .modal-content h3 {
-  font-family: 'Playfair Display', serif; font-size: 1.25rem; font-weight: 700;
+  font-family: 'Fraunces', serif; font-size: 1.25rem; font-weight: 700;
   color: var(--c-primary-dark); margin-bottom: 0.75rem;
 }
 .modal-content p {

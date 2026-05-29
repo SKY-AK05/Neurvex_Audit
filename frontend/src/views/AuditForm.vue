@@ -6,11 +6,11 @@
       <div class="success-box">
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
-        <p>Thank you for completing the NeuroMark Audit for <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
+        <p>Thank you for completing the Neuro-Inclusive Workplace Index <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
         
         <!-- Post-submission claim account -->
         <div v-if="!hasOrgToken" class="claim-box" style="margin-top: 1.5rem; padding: 1.5rem; border: 2.5px dashed var(--c-primary-dark); border-radius: 12px; background: #FFFDF8;">
-          <h4 style="font-family:'Playfair Display', serif; font-size:1.1rem; color:var(--c-primary-dark); margin-bottom:0.5rem;">Claim your Organisation Account</h4>
+          <h4 style="font-family:'Fraunces', serif; font-size:1.1rem; color:var(--c-primary-dark); margin-bottom:0.5rem;">Claim your Organisation Account</h4>
           <p style="font-size:0.8rem; color:#666; margin-bottom:1rem; line-height:1.4;">Create a persistent account to track this audit and view your maturity score progress over time.</p>
           <router-link :to="`/org/login?email=${encodeURIComponent(form.email)}&company=${encodeURIComponent(form.company_name)}`" class="btn btn-primary" style="font-size:0.8rem; padding:0.4rem 1rem;">
             Claim Account & Get Dashboard
@@ -22,10 +22,11 @@
     <div v-else class="form-inner">
       <!-- Header -->
       <header class="form-header">
-        <div class="form-logo" @click="onLogoClick">
-          <!-- Light header → use dark logo -->
-          <img src="/logo-dark.png" alt="NeuroMark" class="form-logo-img" />
-          <span class="form-logo-name">NeuroMark Audit</span>
+        <div class="form-header-left">
+          <div class="form-logo" @click="onLogoClick">
+            <img src="/logonew1.png" alt="" class="form-logo-img" />
+            <span class="form-logo-name">Neuro-Inclusive Workplace Index</span>
+          </div>
         </div>
         <div class="form-header-right">
           <div class="header-powered">
@@ -72,7 +73,7 @@
           </div>
         </aside>
 
-        <div class="step-center">
+        <div :class="['step-center', currentStep > 0 ? 'step-center--full' : '']">
         <div class="step-main">
         <div class="step-card" :key="currentStep">
           <!-- Mobile progress header -->
@@ -91,7 +92,7 @@
               <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
               <div v-else class="step-tag">Section {{ currentStep }} of 8</div>
               <button
-                v-if="currentStep > 0"
+                v-if="currentStep > 0 && false"
                 class="mobile-info-toggle"
                 @click="showMobileInfo = !showMobileInfo"
                 type="button"
@@ -166,7 +167,7 @@
 
               <!-- Progress Saving Button -->
               <div style="display: flex; gap: 0.5rem; margin-left: 0.5rem;">
-                <button v-if="currentStep > 0" class="btn-back" @click="startFresh" type="button" style="border: 2px solid #ff4444; color: #ff4444; background: white; padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700;">↺ Start Fresh</button>
+                <button v-if="currentStep > 0" class="btn-back" @click="startFresh" type="button" style="border: 2px solid #161057; color: #161057; background: transparent; padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700;">↺ Start Fresh</button>
                 <SaveContinueButton v-if="currentStep > 0" :onSave="syncToBackend" />
               </div>
 
@@ -194,12 +195,11 @@
 
         </div>
 
-        <!-- Section context panel (right) -->
-        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '']" :key="currentStep">
+        <!-- Section context panel (right) — fades out on question steps -->
+        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', currentStep > 0 ? 'step-aside--hidden' : '']" :key="currentStep">
           <div class="aside-card">
-            <div class="aside-icon">
-              <!-- Transparent aside panel → use dark logo -->
-              <img src="/logo-dark.png" alt="NeuroMark" class="aside-logo-img" />
+            <div class="aside-header">
+              <img src="/logonew1.png" alt="NIWI" class="aside-logo-img" />
             </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
@@ -264,15 +264,13 @@ const options     = ["Yes", "Partially", "No", "Not Sure"];
 const step0Panel = {
   icon: "✦",
   tag: "Welcome",
-  title: "Your ND Inclusion journey",
-  summary: "This audit maps how neuroinclusive your organisation is across eight dimensions — from leadership to your supply chain.",
-  why: "Honest answers help us benchmark your maturity and deliver a tailored report with clear, actionable recommendations.",
+  title: "Neurodiversity Inclusion Audit Questionnaire",
+  summary: "Neurodiversity inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing unique strengths like creativity, innovation, and attention to detail. To help C-suite executives, HR, and DEI leaders assess and improve their company's neuro-inclusivity, we present a short, structured self-audit tool that covers key segments across the employee lifecycle and customer experience, providing a holistic view of neurodiversity (ND) inclusion.",
+  why: "The Questionnaire has 8 segments and each have 5 statements. Read each statement and choose the option that best reflects your current reality (not intention).",
   points: [
-    "Takes about 15–20 minutes to complete",
-    "40 questions across 8 themed sections",
-    "No wrong answers — reflect where you are today",
+    "When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.",
   ],
-  tip: "Gather input from HR, facilities, or employee networks if you can — a broader perspective gives a truer picture.",
+  tip: "",
 };
 
 const sections = [
@@ -284,11 +282,11 @@ const sections = [
     points: ["Executive sponsorship", "Policy & strategy alignment", "Visible role models"],
     tip: "Look beyond policy documents — consider what leaders actually say and do in meetings and communications.",
     questions: [
-      { field: "q5",  text: "Does your organisation have a named senior leader or executive sponsor responsible for neurodiversity inclusion?" },
-      { field: "q6",  text: "Is neurodiversity inclusion explicitly referenced in your organisation's values, strategy, or DEI policy?" },
-      { field: "q7",  text: "Have senior leaders received education or training on neurodiversity in the past 12 months?" },
-      { field: "q8",  text: "Does your organisation publicly communicate its commitment to neurodiversity inclusion?" },
-      { field: "q9",  text: "Are neurodivergent employees represented in leadership or decision-making roles?" },
+      { field: "q5",  text: "We have a clearly defined neurodiversity inclusion strategy with specific, time-bound objectives (e.g., annual goals) that are actively reviewed." },
+      { field: "q6",  text: "A senior leader (C-suite or equivalent) is explicitly accountable for neurodiversity inclusion, with visible ownership, cross-organisation coordination, and regular monitoring of progress." },
+      { field: "q7",  text: "Senior leaders receive training on neuro-inclusion and actively model inclusive behaviors (e.g., valuing different thinking styles, encouraging psychological safety, celebrating differences)." },
+      { field: "q8",  text: "We have an active neurodiversity-focused employee resource group (ERG) or network that is supported, heard, and involved in shaping initiatives and decisions." },
+      { field: "q9",  text: "We publicly communicate our commitment to neuro-inclusion and demonstrate it through actions (e.g., campaigns, reporting, partnerships, inclusive employer branding)." },
     ],
   },
   {
@@ -299,11 +297,11 @@ const sections = [
     points: ["Inclusive job design", "Flexible interviews", "Structured onboarding"],
     tip: "Small changes — sharing interview questions in advance or offering written tasks — can make a big difference without lowering standards.",
     questions: [
-      { field: "q10", text: "Are job descriptions reviewed to remove unnecessarily restrictive language or requirements?" },
-      { field: "q11", text: "Are alternative interview formats offered to candidates who request them?" },
-      { field: "q12", text: "Are reasonable adjustments discussed proactively during the recruitment process?" },
-      { field: "q13", text: "Is onboarding structured, clear, and provided in multiple formats?" },
-      { field: "q14", text: "Are hiring managers trained to conduct inclusive, bias-aware interviews?" },
+      { field: "q10", text: "We ensure our job descriptions are clear, concise, and aligned with the actual role (tasks, expectations, outcomes), minimising jargon, with a visible commitment to inclusion." },
+      { field: "q11", text: "Our application process is transparent and supportive, including clear timelines and stages, explanation of selection methods, a named contact person and multiple contact options (e.g., email, phone) to reduce uncertainty and anxiety for candidates." },
+      { field: "q12", text: "Our selection processes include practical or skills-based assessments (e.g., work samples, task-based evaluations, project submissions) and do not rely solely on traditional interviews." },
+      { field: "q13", text: "Our interviews are designed to be flexible and inclusive, with options such as providing accommodations, sharing questions in advance, allowing virtual formats or camera flexibility and being open to alternative or asynchronous responses and candidates are invited to share their preferred ways of working and need for reasonable adjustments if any." },
+      { field: "q14", text: "Before starting, new hires are supported with a clear point of contact within the team, simple, structured communication about their role and expectations and early conversations about adjustments, so these can be in place from day one where possible." },
     ],
   },
   {
@@ -314,11 +312,11 @@ const sections = [
     points: ["Adjustment requests", "Flexible working", "Manager capability"],
     tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
     questions: [
-      { field: "q15", text: "Is there a clear, accessible process for employees to request reasonable adjustments?" },
-      { field: "q16", text: "Are flexible working arrangements available and actively supported?" },
-      { field: "q17", text: "Are managers trained to understand and implement reasonable adjustments?" },
-      { field: "q18", text: "Are assistive technologies or tools available to employees who need them?" },
-      { field: "q19", text: "Are adjustment requests handled promptly and without stigma?" },
+      { field: "q15", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
+      { field: "q16", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
+      { field: "q17", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement appropriate workplace adjustments confidently and consistently." },
+      { field: "q18", text: "Where possible, inclusive practices are built into standard ways of working (e.g., flexible communication, clear documentation, meeting norms), reducing the need for individuals to request adjustments." },
+      { field: "q19", text: "Adjustment policies and processes are regularly reviewed, using employee and manager feedback as well as data (where available) to assess effectiveness and improve over time." },
     ],
   },
   {
@@ -329,11 +327,11 @@ const sections = [
     points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
     tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
     questions: [
-      { field: "q20", text: "Are quiet or low-stimulation spaces available for employees who need them?" },
-      { field: "q21", text: "Has your organisation considered lighting, acoustics, and sensory factors in workspace design?" },
-      { field: "q22", text: "Is clear, consistent wayfinding and signage in place throughout your premises?" },
-      { field: "q23", text: "Are employees able to personalise their workstations to meet sensory needs?" },
-      { field: "q24", text: "Has a sensory or environmental audit been conducted in the past two years?" },
+      { field: "q20", text: "Workplace environments are designed or adapted using inclusive (universal design) principles to reduce sensory and accessibility barriers." },
+      { field: "q21", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
+      { field: "q22", text: "Employees have access to different types of workspaces (e.g., quiet, low-stimulation, collaborative), rather than a one-size-fits-all environment." },
+      { field: "q23", text: "There are designated quiet or low-stimulation spaces available for employees to focus, take breaks, or regulate when needed." },
+      { field: "q24", text: "Hybrid or remote work is not treated as the primary solution for inclusion; we also address barriers within the physical workplace and consider individual needs across different work settings." },
     ],
   },
   {
@@ -344,11 +342,11 @@ const sections = [
     points: ["Fair appraisals", "Equal development access", "Retention insight"],
     tip: "Review whether performance criteria reward only one style of communication or collaboration.",
     questions: [
-      { field: "q25", text: "Are performance appraisal processes reviewed to ensure they do not disadvantage neurodivergent employees?" },
-      { field: "q26", text: "Do neurodivergent employees have equal access to learning and development opportunities?" },
-      { field: "q27", text: "Are strengths-based approaches used in talent management and career development?" },
-      { field: "q28", text: "Are mentoring or coaching programmes available and accessible to neurodivergent employees?" },
-      { field: "q29", text: "Is retention data monitored to identify whether neurodivergent employees leave at higher rates?" },
+      { field: "q25", text: "Managers and team leads are trained in inclusive leadership and are expected to apply these practices in their day-to-day management." },
+      { field: "q26", text: "Managers provide regular, structured feedback that is specific, evidence-based, and balanced (recognising strengths as well as areas for development)." },
+      { field: "q27", text: "Employees have access to appropriate support (e.g., coaching, wellbeing resources, or specialist support where needed) to help them work effectively and build on their strengths." },
+      { field: "q28", text: "Learning and development opportunities are designed to be accessible and inclusive by default (e.g., clear content, flexible formats, self-paced options, inclusive assessments)." },
+      { field: "q29", text: "Regular career and development conversations take place, using a strengths-based approach, with clear development plans and appropriate support to help employees progress." },
     ],
   },
   {
@@ -359,11 +357,11 @@ const sections = [
     points: ["Plain language", "Multi-format info", "Digital accessibility"],
     tip: "Agendas sent 24 hours ahead and recordings of key meetings are simple wins with wide impact.",
     questions: [
-      { field: "q30", text: "Are internal communications written in plain, clear language and free from jargon?" },
-      { field: "q31", text: "Is information provided in multiple formats where possible?" },
-      { field: "q32", text: "Are meeting agendas shared in advance to support employees who benefit from preparation time?" },
-      { field: "q33", text: "Are digital tools and platforms used by your organisation tested for accessibility?" },
-      { field: "q34", text: "Are employees able to request communication adjustments?" },
+      { field: "q30", text: "Employees are trained to communicate in neuro-inclusive ways, including understanding different communication styles and how to adapt for internal and external audiences." },
+      { field: "q31", text: "Organisational communications are typically clear, concise, and well-structured (e.g., use of plain language, bullet points, logical flow), reducing ambiguity and cognitive load." },
+      { field: "q32", text: "Information is available in accessible formats where needed (e.g., transcripts, captions, recordings, screen reader compatibility), and accessibility features are actively supported and encouraged." },
+      { field: "q33", text: "We use inclusive, respectful language when communicating about neurodiversity, and aim to frame differences in a strengths-based and non-stigmatising way." },
+      { field: "q34", text: "Employees and external stakeholders can give feedback on communication and accessibility, and there are clear mechanisms to review and improve based on that input." },
     ],
   },
   {
@@ -374,11 +372,11 @@ const sections = [
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
     questions: [
-      { field: "q35", text: "Are your customer-facing products and services designed with neurodivergent users in mind?" },
-      { field: "q36", text: "Are neurodivergent customers or users involved in product testing or feedback processes?" },
-      { field: "q37", text: "Are customer service staff trained to support neurodivergent customers effectively?" },
-      { field: "q38", text: "Do your digital products meet recognised accessibility standards?" },
-      { field: "q39", text: "Is there a clear process for neurodivergent customers to request adjustments or alternative formats?" },
+      { field: "q35", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
+      { field: "q36", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
+      { field: "q37", text: "Physical customer environments are designed or adapted to reduce sensory overload where possible (e.g., managing noise, lighting, crowding, and visual stimuli)." },
+      { field: "q38", text: "Employees involved in product design and customer service are trained in neurodiversity awareness and inclusive practices." },
+      { field: "q39", text: "We regularly assess the neuro-inclusivity of products and customer interactions (e.g., user testing, audits, feedback) and make improvements based on what we learn." },
     ],
   },
   {
@@ -389,11 +387,11 @@ const sections = [
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
     tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
     questions: [
-      { field: "q40", text: "Does your procurement process include questions about suppliers' neurodiversity inclusion practices?" },
-      { field: "q41", text: "Are suppliers expected to meet minimum neurodiversity inclusion standards as part of your contracts?" },
-      { field: "q42", text: "Do you actively seek to work with neurodiversity-led or neurodiversity-friendly suppliers?" },
-      { field: "q43", text: "Is neurodiversity inclusion performance reviewed as part of supplier relationship management?" },
-      { field: "q44", text: "Does your organisation share neurodiversity inclusion best practice with its supply chain?" },
+      { field: "q40", text: "Documents and communications with suppliers are clear, structured, and presented in neuro-inclusive formats across both digital and physical channels." },
+      { field: "q41", text: "When assessing and selecting suppliers, we consider their commitment to inclusive practices, including neurodiversity where possible." },
+      { field: "q42", text: "Employees involved in procurement and supply chain management are trained in neurodiversity awareness and inclusive practices." },
+      { field: "q43", text: "Suppliers and vendors are able to engage through a range of contact methods (e.g., email, phone, written communication), supporting different communication preferences." },
+      { field: "q44", text: "There are clear opportunities for suppliers and partners to provide feedback on our processes, and this feedback is used to improve inclusivity over time." },
     ],
   },
 ];
@@ -594,16 +592,32 @@ async function submit() {
 /* Header */
 .form-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 1rem 2rem;
+  padding: 0.6rem 2rem;
   border-bottom: 2px solid var(--c-primary-dark);
-  background: rgba(245,242,235,0.95);
-  backdrop-filter: blur(8px);
+  background: var(--c-bg);
   flex-shrink: 0; z-index: 10;
 }
-.form-logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1rem; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
-.form-logo-img { height: 32px; width: auto; display: block; object-fit: contain; }
-.form-logo-name { font-size: 1rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
-.form-header-right { display: flex; align-items: center; gap: 1rem; }
+.form-header-left { display: flex; align-items: center; gap: 1rem; }
+.form-header-right { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+.form-logo {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-weight: 800; font-size: 1rem; color: var(--c-primary-dark);
+  font-family: 'Fraunces', serif;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.form-logo-img {
+  height: 36px; width: auto; display: block; object-fit: contain;
+  border-radius: 6px; flex-shrink: 0;
+  pointer-events: none;
+}
+.form-logo-name {
+  font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark);
+  font-family: 'Fraunces', serif;
+  cursor: default;
+  user-select: none;
+}
 .header-powered { display: flex; align-items: center; gap: 0.4rem; }
 .header-powered-label { font-size: 0.7rem; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .header-powered-logo { height: 22px; width: auto; object-fit: contain; opacity: 0.65; }
@@ -616,7 +630,7 @@ async function submit() {
   align-items: center;
   min-height: 0;
   overflow: hidden;
-  padding: 1.25rem 2rem 0.75rem;
+  padding: 0.75rem 2rem 0.75rem;
   width: 100%;
 }
 
@@ -634,11 +648,17 @@ async function submit() {
 
 .step-center {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  grid-template-columns: minmax(0, 1fr) 380px;
   gap: 1.75rem;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  transition: grid-template-columns 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+              gap 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-center--full {
+  grid-template-columns: minmax(0, 1fr) 0px;
+  gap: 0;
 }
 
 .step-main {
@@ -656,10 +676,10 @@ async function submit() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--c-white);
+  background: transparent;
   border-radius: 20px;
   padding: 0;
-  border: 2px solid var(--c-primary-dark);
+  border: 2px solid #161057;
   width: 100%;
 }
 
@@ -703,7 +723,7 @@ async function submit() {
   background: var(--c-white);
   border: 2px solid var(--c-primary-dark);
   border-radius: 16px;
-  box-shadow: 4px 4px 0 var(--c-accent);
+  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
 }
 .progress-sidebar::-webkit-scrollbar { display: none; }
 .progress-wrap {
@@ -719,12 +739,12 @@ async function submit() {
 }
 .progress-phase {
   font-size: 0.82rem; font-weight: 800; color: var(--c-primary-dark);
-  font-family: 'Playfair Display', serif; letter-spacing: -0.02em;
+  font-family: 'Fraunces', serif; letter-spacing: -0.02em;
   line-height: 1.3;
 }
 .progress-pct {
   font-size: 1.1rem; font-weight: 800; color: var(--c-primary-dark);
-  font-family: 'Playfair Display', serif;
+  font-family: 'Fraunces', serif;
 }
 .progress-count {
   font-size: 0.72rem; font-weight: 700; color: #888;
@@ -820,6 +840,7 @@ async function submit() {
   min-height: 0;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   align-self: stretch;
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -827,10 +848,21 @@ async function submit() {
   border-radius: 20px;
   border: 2px solid #161057;
   box-shadow: 6px 6px 0 rgba(22, 16, 87, 0.18);
+  /* Smooth collapse */
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.4s ease, transform 0.4s ease, border-width 0.4s ease;
+}
+.step-aside--hidden {
+  opacity: 0;
+  transform: translateX(24px);
+  pointer-events: none;
+  border-width: 0;
+  box-shadow: none;
 }
 .step-aside::-webkit-scrollbar { display: none; }
 .aside-card {
-  padding: 2rem;
+  padding: 1rem 1.35rem 1.5rem;
   color: var(--c-primary-dark);
   min-height: 100%;
   display: flex;
@@ -841,31 +873,35 @@ async function submit() {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.aside-icon {
-  width: 44px; height: 44px; border-radius: 12px;
-  background: rgba(22, 16, 87, 0.08);
-  display: grid; place-items: center;
-  margin-bottom: 1rem;
-  overflow: hidden;
-  padding: 4px;
+.aside-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 .aside-logo-img {
-  width: 100%; height: 100%; object-fit: contain; display: block;
+  height: 44px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
 }
 .aside-tag {
   display: inline-block; font-size: 0.68rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.08em;
-  color: #161057; margin-bottom: 0.5rem;
+  color: #161057; margin: 0 0 0.35rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-title {
   font-size: 1.35rem; font-weight: 800; line-height: 1.25;
-  margin-bottom: 0.75rem; color: var(--c-primary-dark);
+  margin: 0 0 0.5rem; color: var(--c-primary-dark);
   font-family: 'Inter', sans-serif; letter-spacing: -0.02em;
 }
 .aside-summary {
   font-size: 0.88rem; line-height: 1.6; color: #555;
-  margin-bottom: 1.25rem;
+  margin: 0 0 1rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-block h3 {
@@ -910,18 +946,18 @@ async function submit() {
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-block; background: transparent; color: #161057; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid #161057; font-family: 'Playfair Display', serif; }
-.step-card-head h1 { font-size: 1.8rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Playfair Display', serif; }
+.step-tag { display: inline-block; background: transparent; color: #161057; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid #161057; font-family: 'Fraunces', serif; }
+.step-card-head h1 { font-size: 1.8rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Fraunces', serif; }
 .step-sub { color: #999; font-size: 0.875rem; margin-bottom: 0; }
 
 /* Details fields */
 .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Playfair Display', serif; }
+.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
 .field input:not([type="checkbox"]) {
   width: 100%; padding: 0.7rem 0.9rem;
-  border: 2px solid #E2DDD4; border-radius: 10px;
-  font-size: 0.9rem; background: var(--c-bg); color: var(--c-primary-dark);
-  transition: border-color 0.15s; font-family: inherit;
+  border: 2px solid var(--c-primary-dark); border-radius: 10px;
+  font-size: 0.9rem; background: var(--c-white); color: var(--c-primary-dark);
+  transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
 }
 .field input:not([type="checkbox"]):focus { outline: none; border-color: var(--c-primary-dark); background: var(--c-white); }
 .field input:not([type="checkbox"]).error { border-color: #ff4444; }
@@ -1022,7 +1058,7 @@ async function submit() {
 /* Questions */
 .questions-list { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 0.5rem; }
 .q-block:last-child { padding-bottom: 0.25rem; }
-.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; margin-bottom: 0.4rem; letter-spacing: 0.06em; font-family: 'Playfair Display', serif; }
+.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; margin-bottom: 0.4rem; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
 .q-text { font-size: 0.95rem; font-weight: 500; color: var(--c-primary-dark); line-height: 1.55; margin-bottom: 0.75rem; }
 .options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .opt-btn {
@@ -1040,23 +1076,23 @@ async function submit() {
   background: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700;
   cursor: pointer; color: var(--c-primary-dark); transition: all 0.15s;
-  font-family: 'Playfair Display', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
+  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
 }
 .btn-back:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 .btn-next {
   background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
-  cursor: pointer; transition: all 0.15s; font-family: 'Playfair Display', serif;
-  box-shadow: 3px 3px 0 var(--c-accent);
+  cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
+  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
 }
-.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-accent); }
+.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3); }
 .btn-submit {
-  background: var(--c-accent); color: var(--c-primary-dark); border: 2px solid var(--c-primary-dark); border-radius: 99px;
+  background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
-  cursor: pointer; transition: all 0.15s; font-family: 'Playfair Display', serif;
-  box-shadow: 3px 3px 0 var(--c-primary-dark);
+  cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
+  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
 }
-.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
+.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3); }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 /* Footer */
@@ -1141,7 +1177,7 @@ async function submit() {
     font-size: 0.78rem;
     font-weight: 800;
     color: var(--c-primary-dark);
-    font-family: 'Playfair Display', serif;
+    font-family: 'Fraunces', serif;
   }
   .mobile-count {
     font-size: 0.72rem;

@@ -1,4 +1,4 @@
-﻿import os
+import os
 import logging
 import jwt
 import psycopg2.extras

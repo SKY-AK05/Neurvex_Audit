@@ -1,4 +1,4 @@
-﻿"""
+"""
 Settings and admin notification emails.
 """
 

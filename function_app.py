@@ -1,4 +1,4 @@
-﻿"""
+"""
 function_app.py — Azure Functions for NeuroMark Audit Tool
 Routes:
   POST   /api/submit

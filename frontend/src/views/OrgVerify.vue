@@ -65,6 +65,6 @@ onMounted(async () => {
 }
 .verify-card { background: white; border: 2px solid var(--c-primary-dark); padding: 3rem; border-radius: 16px; text-align: center; max-width: 400px; width: 90%; }
 .loader p { font-size: 1.1rem; font-weight: bold; }
-.error-wrap h2 { font-family: 'Playfair Display', serif; color: #C0392B; margin-bottom: 1rem; }
+.error-wrap h2 { font-family: 'Fraunces', serif; color: #C0392B; margin-bottom: 1rem; }
 .error-msg { margin-bottom: 2rem; color: #555; }
 </style>

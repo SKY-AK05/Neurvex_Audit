@@ -204,7 +204,7 @@ function initials(name) {
 }
 
 function copyAuditLink() {
-  const url = import.meta.env.VITE_APP_URL || "https://neuromark.orchvate.in/";
+  const url = import.meta.env.VITE_APP_URL || "https://NIWI.orchvate.in/";
   navigator.clipboard.writeText(url).then(() => {
     linkCopied.value = true;
     setTimeout(() => { linkCopied.value = false; }, 2000);
@@ -222,7 +222,7 @@ function downloadReport() {
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `neuromark-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
+    a.href = url; a.download = `NIWI-report-${new Date().toISOString().slice(0,10)}.csv`; a.click();
     URL.revokeObjectURL(url);
   } finally { downloading.value = false; }
 }
@@ -260,7 +260,7 @@ onMounted(async () => {
 <style scoped>
 .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 1.75rem; }
 .header-left { display: flex; align-items: flex-end; gap: 2.5rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; margin-bottom: 0; line-height: 1; }
+.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; margin-bottom: 0; line-height: 1; }
 .page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.4rem; margin-bottom: 0; }
 .header-actions { display: flex; gap: 0.6rem; align-items: center; margin-bottom: 2px; }
 .header-actions .btn { padding: 0.4rem 1rem; font-size: 0.75rem; }
@@ -275,7 +275,7 @@ onMounted(async () => {
 .stat-icon { position: absolute; top: 1rem; right: 1rem; color: #ddd; }
 .stat-label { font-size: 0.68rem; color: #aaa; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.5rem; }
 .stat-bottom { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.stat-value { font-size: 2rem; font-weight: 700; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Playfair Display', serif; line-height: 1; }
+.stat-value { font-size: 2rem; font-weight: 700; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; line-height: 1; }
 .stat-unit { font-size: 0.9rem; color: #bbb; }
 .stat-badge { display: inline-flex; align-items: center; font-size: 0.7rem; font-weight: 700; padding: 0.18rem 0.55rem; border-radius: 99px; border: 1.5px solid currentColor; white-space: nowrap; }
 .stat-badge.green { background: var(--c-bg); color: var(--c-primary-dark); }
@@ -285,7 +285,7 @@ onMounted(async () => {
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
 
 .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.card-title { font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
+.card-title { font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Fraunces', serif; }
 .count-badge { background: #C0392B; color: #fff; font-size: 0.72rem; font-weight: 800; padding: 0.15rem 0.55rem; border-radius: 99px; }
 .see-all { font-size: 0.8rem; color: #aaa; text-decoration: none; font-weight: 600; }
 .see-all:hover { color: var(--c-primary-dark); }
@@ -320,7 +320,7 @@ onMounted(async () => {
 .week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
 .week-stat { text-align: center; padding: 0.75rem; background: var(--c-bg); border-radius: 10px; }
 .week-label { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; }
-.week-val { font-size: 1.6rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Playfair Display', serif; }
+.week-val { font-size: 1.6rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Fraunces', serif; }
 .week-unit { font-size: 0.85rem; font-weight: 400; color: #bbb; }
 
 @media (max-width: 900px) {
