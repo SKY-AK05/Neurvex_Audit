@@ -635,7 +635,7 @@ async function submit() {
   pointer-events: none;
 }
 .form-logo-name {
-  font-size: 0.95rem; font-weight: 800; color: var(--c-accent);
+  font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark);
   font-family: 'Fraunces', serif;
   cursor: default;
   user-select: none;
