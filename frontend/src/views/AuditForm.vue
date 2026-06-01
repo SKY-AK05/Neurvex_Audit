@@ -698,7 +698,7 @@ async function submit() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: transparent;
+  background: #ffffff;
   border-radius: 20px;
   padding: 0;
   border: 2px solid var(--c-border);
@@ -978,7 +978,7 @@ async function submit() {
 
 /* Details fields */
 .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-accent); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
+.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
 .field input:not([type="checkbox"]) {
   width: 100%; padding: 0.7rem 0.9rem;
   border: 2px solid var(--c-border); border-radius: 10px;
