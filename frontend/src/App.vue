@@ -266,6 +266,7 @@ async function logout() {
   --c-accent-retro: #FFF8F2;
   --c-bg: #F5F2EB;
   --c-white: #FFFFFF;
+  --c-border: #0a0032;
   --font-body: 'Geist', 'Inter', sans-serif;
   --line-height-body: 1.5;
 }

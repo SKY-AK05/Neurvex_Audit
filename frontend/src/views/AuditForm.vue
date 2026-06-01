@@ -64,7 +64,7 @@
           </div>
         </aside>
 
-        <div :class="['step-center', currentStep > 0 ? 'step-center--full' : '']">
+        <div :class="['step-center', currentStep > 1 ? 'step-center--full' : '']">
         <div class="step-main">
         <div class="step-card" :key="currentStep">
           <!-- Mobile progress header -->
@@ -78,12 +78,13 @@
             </div>
           </div>
 
-          <div class="step-card-head">
+            <div class="step-card-head">
             <div class="step-head-meta">
               <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
-              <div v-else class="step-tag">Section {{ currentStep }} of 8</div>
+              <div v-else-if="currentStep === 1"></div>
+              <div v-else class="step-tag">Section {{ currentStep - 1 }} of 8</div>
               <button
-                v-if="currentStep > 0 && false"
+                v-if="currentStep > 1 && false"
                 class="mobile-info-toggle"
                 @click="showMobileInfo = !showMobileInfo"
                 type="button"
@@ -91,12 +92,12 @@
                 {{ showMobileInfo ? 'Hide Section Details ▴' : 'Show Section Details ▾' }}
               </button>
             </div>
-            <h1>{{ currentStep === 0 ? 'Tell us about you' : currentSection.title }}</h1>
-            <p class="step-sub">
-              {{ currentStep === 0
-                ? "We'll use this to personalise your audit report."
-                : "Select the answer that best reflects your organisation's current position." }}
-            </p>
+            <div class="step-head-row">
+              <h1 class="h1-green">{{ currentStep === 0 ? 'Tell us about you' : currentStep === 1 ? 'Before you begin' : currentSection.title }}</h1>
+              <p v-if="currentStep > 1" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
+            </div>
+            <p v-if="currentStep === 0" class="step-sub">We'll use this to personalise your audit report.</p>
+            <p v-if="currentStep === 1" class="step-sub">Here's what to expect before you begin the audit.</p>
           </div>
 
           <div ref="questionsScroll" class="questions-scroll">
@@ -134,9 +135,33 @@
               </div>
             </div>
 
+            <!-- Instructions screen (step 1) -->
+            <div v-else-if="currentStep === 1" class="instructions-screen">
+              <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire is organised into <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
+              <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
+              <div class="instr-options">
+                <span class="instr-opt">Yes</span>
+                <span class="instr-opt">Partially</span>
+                <span class="instr-opt">No</span>
+                <span class="instr-opt">Not Sure</span>
+              </div>
+              <p class="instr-note">Your responses will only include details that you choose to share.</p>
+              <div class="instr-divider"></div>
+              <p class="instr-segments-label">The 8 segments covered:</p>
+              <div class="instr-segments-grid">
+                <div v-for="(s, i) in sections" :key="i" class="instr-segment-row">
+                  <span class="instr-seg-num">{{ i + 1 }}</span>
+                  <span class="instr-seg-name">{{ s.title }}</span>
+                </div>
+              </div>
+            </div>
+
             <div v-else class="questions-list">
               <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
-                <div class="q-number">Q{{ (currentStep - 1) * 5 + qi + 1 }}</div>
+                <div class="q-header-row">
+                  <span class="q-number">Q{{ (currentStep - 2) * 5 + qi + 1 }}</span>
+                  <span class="q-short">{{ q.short }}</span>
+                </div>
                 <p class="q-text">{{ q.text }}</p>
                 <div class="options">
                   <button
@@ -158,8 +183,8 @@
 
               <!-- Progress Saving Button -->
               <div style="display: flex; gap: 0.5rem; margin-left: 0.5rem;">
-                <button v-if="currentStep > 0" class="btn-back" @click="startFresh" type="button" style="border: 2px solid #161057; color: #161057; background: transparent; padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700;">↺ Start Fresh</button>
-                <SaveContinueButton v-if="currentStep > 0" :onSave="syncToBackend" />
+                <button v-if="currentStep > 1" class="btn-back" @click="startFresh" type="button" style="background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700; box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3); cursor: pointer;">↺ Start Fresh</button>
+                <SaveContinueButton v-if="currentStep > 1" :onSave="syncToBackend" />
               </div>
 
               <button
@@ -168,7 +193,7 @@
                 @click="nextStep"
                 type="button"
               >
-                {{ currentStep === 0 ? 'Start Audit →' : 'Next →' }}
+                {{ currentStep === 0 ? 'Next →' : currentStep === 1 ? 'Start Audit →' : 'Next →' }}
               </button>
               <button
                 v-else
@@ -187,11 +212,8 @@
         </div>
 
         <!-- Section context panel (right) — fades out on question steps -->
-        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', currentStep > 0 ? 'step-aside--hidden' : '']" :key="currentStep">
+        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', currentStep > 1 ? 'step-aside--hidden' : '']" :key="currentStep">
           <div class="aside-card">
-            <div class="aside-header">
-              <img src="/logonew1.png" alt="NIWI" class="aside-logo-img" />
-            </div>
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
             <p class="aside-summary">{{ currentPanel.summary }}</p>
@@ -201,10 +223,15 @@
               <p>{{ currentPanel.why }}</p>
             </div>
 
+            <div v-if="currentStep === 0 && currentPanel.tip" class="aside-block">
+              <h3>How to complete the questionnaire</h3>
+              <p>{{ currentPanel.tip }}</p>
+            </div>
+
             <ul v-if="currentPanel.points?.length" class="aside-points">
               <li v-for="(point, i) in currentPanel.points" :key="i">{{ point }}</li>
             </ul>
-            <div v-if="currentStep > 0" class="aside-progress-mini">
+            <div v-if="currentStep > 1" class="aside-progress-mini">
               <span>{{ sectionAnsweredCount }} of {{ currentSection.questions.length }} answered</span>
               <div class="mini-bar">
                 <div class="mini-fill" :style="{ width: sectionProgressPct + '%' }"></div>
@@ -255,13 +282,13 @@ const options     = ["Yes", "Partially", "No", "Not Sure"];
 const step0Panel = {
   icon: "✦",
   tag: "Welcome",
-  title: "Neurodiversity Inclusion Audit Questionnaire",
-  summary: "Neurodiversity inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing unique strengths like creativity, innovation, and attention to detail. To help C-suite executives, HR, and DEI leaders assess and improve their company's neuro-inclusivity, we present a short, structured self-audit tool that covers key segments across the employee lifecycle and customer experience, providing a holistic view of neurodiversity (ND) inclusion.",
-  why: "The Questionnaire has 8 segments and each have 5 statements. Read each statement and choose the option that best reflects your current reality (not intention).",
+  title: "Neuro-Inclusive Workplace Index (NIWI) Self-Assessment",
+  summary: "Neurodiversity inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing valuable strengths such as creativity, innovation, and attention to detail.",
+  why: "The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neurodiversity inclusion. It covers key segments across the employee lifecycle and customer experience, providing a holistic view of current practices.\n\nNIWI is not a ranking tool, but a reflection-based index to help organisations understand where they are in their neurodiversity inclusion journey.",
   points: [
-    "When you submit this form, it will not automatically collect your details like name and email address unless you provide it yourself.",
+    "Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.",
   ],
-  tip: "",
+  tip: "This should take approximately 10 minutes to complete. The questionnaire is organised into 8 key segments, each with 5 statements. Please read each statement carefully and choose the option that best reflects your current reality (rather than intention). Your responses will only include details that you choose to share.",
 };
 
 const sections = [
@@ -273,11 +300,11 @@ const sections = [
     points: ["Executive sponsorship", "Policy & strategy alignment", "Visible role models"],
     tip: "Look beyond policy documents — consider what leaders actually say and do in meetings and communications.",
     questions: [
-      { field: "q5",  text: "We have a clearly defined neurodiversity inclusion strategy with specific, time-bound objectives (e.g., annual goals) that are actively reviewed." },
-      { field: "q6",  text: "A senior leader (C-suite or equivalent) is explicitly accountable for neurodiversity inclusion, with visible ownership, cross-organisation coordination, and regular monitoring of progress." },
-      { field: "q7",  text: "Senior leaders receive training on neuro-inclusion and actively model inclusive behaviors (e.g., valuing different thinking styles, encouraging psychological safety, celebrating differences)." },
-      { field: "q8",  text: "We have an active neurodiversity-focused employee resource group (ERG) or network that is supported, heard, and involved in shaping initiatives and decisions." },
-      { field: "q9",  text: "We publicly communicate our commitment to neuro-inclusion and demonstrate it through actions (e.g., campaigns, reporting, partnerships, inclusive employer branding)." },
+      { field: "q5",  short: "Strategy & Direction", text: "We have a clearly defined neurodiversity inclusion strategy with specific, time-bound objectives (e.g., annual goals) that are actively reviewed." },
+      { field: "q6",  short: "Executive Accountability", text: "A senior leader (C-suite or equivalent) is explicitly accountable for neurodiversity inclusion, with visible ownership, cross-organisation coordination, and regular monitoring of progress." },
+      { field: "q7",  short: "Leadership Training & Modelling", text: "Senior leaders receive training on neuro-inclusion and actively model inclusive behaviors (e.g., valuing different thinking styles, encouraging psychological safety, celebrating differences)." },
+      { field: "q8",  short: "Employee Resource Group", text: "We have an active neurodiversity-focused employee resource group (ERG) or network that is supported, heard, and involved in shaping initiatives and decisions." },
+      { field: "q9",  short: "Public Commitment", text: "We publicly communicate our commitment to neuro-inclusion and demonstrate it through actions (e.g., campaigns, reporting, partnerships, inclusive employer branding)." },
     ],
   },
   {
@@ -288,11 +315,11 @@ const sections = [
     points: ["Inclusive job design", "Flexible interviews", "Structured onboarding"],
     tip: "Small changes — sharing interview questions in advance or offering written tasks — can make a big difference without lowering standards.",
     questions: [
-      { field: "q10", text: "We ensure our job descriptions are clear, concise, and aligned with the actual role (tasks, expectations, outcomes), minimising jargon, with a visible commitment to inclusion." },
-      { field: "q11", text: "Our application process is transparent and supportive, including clear timelines and stages, explanation of selection methods, a named contact person and multiple contact options (e.g., email, phone) to reduce uncertainty and anxiety for candidates." },
-      { field: "q12", text: "Our selection processes include practical or skills-based assessments (e.g., work samples, task-based evaluations, project submissions) and do not rely solely on traditional interviews." },
-      { field: "q13", text: "Our interviews are designed to be flexible and inclusive, with options such as providing accommodations, sharing questions in advance, allowing virtual formats or camera flexibility and being open to alternative or asynchronous responses and candidates are invited to share their preferred ways of working and need for reasonable adjustments if any." },
-      { field: "q14", text: "Before starting, new hires are supported with a clear point of contact within the team, simple, structured communication about their role and expectations and early conversations about adjustments, so these can be in place from day one where possible." },
+      { field: "q10", short: "Inclusive Job Design", text: "We ensure our job descriptions are clear, concise, and aligned with the actual role (tasks, expectations, outcomes), minimising jargon, with a visible commitment to inclusion." },
+      { field: "q11", short: "Transparent Application Process", text: "Our application process is transparent and supportive, including clear timelines and stages, explanation of selection methods, a named contact person and multiple contact options (e.g., email, phone) to reduce uncertainty and anxiety for candidates." },
+      { field: "q12", short: "Skills-Based Assessment", text: "Our selection processes include practical or skills-based assessments (e.g., work samples, task-based evaluations, project submissions) and do not rely solely on traditional interviews." },
+      { field: "q13", short: "Flexible Interviews", text: "Our interviews are designed to be flexible and inclusive, with options such as providing accommodations, sharing questions in advance, allowing virtual formats or camera flexibility and being open to alternative or asynchronous responses and candidates are invited to share their preferred ways of working and need for reasonable adjustments if any." },
+      { field: "q14", short: "Structured Onboarding", text: "Before starting, new hires are supported with a clear point of contact within the team, simple, structured communication about their role and expectations and early conversations about adjustments, so these can be in place from day one where possible." },
     ],
   },
   {
@@ -303,11 +330,11 @@ const sections = [
     points: ["Adjustment requests", "Flexible working", "Manager capability"],
     tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
     questions: [
-      { field: "q15", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
-      { field: "q16", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
-      { field: "q17", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement appropriate workplace adjustments confidently and consistently." },
-      { field: "q18", text: "Where possible, inclusive practices are built into standard ways of working (e.g., flexible communication, clear documentation, meeting norms), reducing the need for individuals to request adjustments." },
-      { field: "q19", text: "Adjustment policies and processes are regularly reviewed, using employee and manager feedback as well as data (where available) to assess effectiveness and improve over time." },
+      { field: "q15", short: "Lifecycle Adjustments", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
+      { field: "q16", short: "Clear Adjustment Pathways", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
+      { field: "q17", short: "Manager & HR Training", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement appropriate workplace adjustments confidently and consistently." },
+      { field: "q18", short: "Built-In Inclusive Practices", text: "Where possible, inclusive practices are built into standard ways of working (e.g., flexible communication, clear documentation, meeting norms), reducing the need for individuals to request adjustments." },
+      { field: "q19", short: "Regular Policy Review", text: "Adjustment policies and processes are regularly reviewed, using employee and manager feedback as well as data (where available) to assess effectiveness and improve over time." },
     ],
   },
   {
@@ -318,11 +345,11 @@ const sections = [
     points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
     tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
     questions: [
-      { field: "q20", text: "Workplace environments are designed or adapted using inclusive (universal design) principles to reduce sensory and accessibility barriers." },
-      { field: "q21", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
-      { field: "q22", text: "Employees have access to different types of workspaces (e.g., quiet, low-stimulation, collaborative), rather than a one-size-fits-all environment." },
-      { field: "q23", text: "There are designated quiet or low-stimulation spaces available for employees to focus, take breaks, or regulate when needed." },
-      { field: "q24", text: "Hybrid or remote work is not treated as the primary solution for inclusion; we also address barriers within the physical workplace and consider individual needs across different work settings." },
+      { field: "q20", short: "Universal Design Principles", text: "Workplace environments are designed or adapted using inclusive (universal design) principles to reduce sensory and accessibility barriers." },
+      { field: "q21", short: "Sensory Impact Consideration", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
+      { field: "q22", short: "Varied Workspaces", text: "Employees have access to different types of workspaces (e.g., quiet, low-stimulation, collaborative), rather than a one-size-fits-all environment." },
+      { field: "q23", short: "Quiet & Low-Stimulation Spaces", text: "There are designated quiet or low-stimulation spaces available for employees to focus, take breaks, or regulate when needed." },
+      { field: "q24", short: "Hybrid & Remote Balance", text: "Hybrid or remote work is not treated as the primary solution for inclusion; we also address barriers within the physical workplace and consider individual needs across different work settings." },
     ],
   },
   {
@@ -333,11 +360,11 @@ const sections = [
     points: ["Fair appraisals", "Equal development access", "Retention insight"],
     tip: "Review whether performance criteria reward only one style of communication or collaboration.",
     questions: [
-      { field: "q25", text: "Managers and team leads are trained in inclusive leadership and are expected to apply these practices in their day-to-day management." },
-      { field: "q26", text: "Managers provide regular, structured feedback that is specific, evidence-based, and balanced (recognising strengths as well as areas for development)." },
-      { field: "q27", text: "Employees have access to appropriate support (e.g., coaching, wellbeing resources, or specialist support where needed) to help them work effectively and build on their strengths." },
-      { field: "q28", text: "Learning and development opportunities are designed to be accessible and inclusive by default (e.g., clear content, flexible formats, self-paced options, inclusive assessments)." },
-      { field: "q29", text: "Regular career and development conversations take place, using a strengths-based approach, with clear development plans and appropriate support to help employees progress." },
+      { field: "q25", short: "Inclusive Leadership Training", text: "Managers and team leads are trained in inclusive leadership and are expected to apply these practices in their day-to-day management." },
+      { field: "q26", short: "Structured Feedback", text: "Managers provide regular, structured feedback that is specific, evidence-based, and balanced (recognising strengths as well as areas for development)." },
+      { field: "q27", short: "Wellbeing & Coaching Support", text: "Employees have access to appropriate support (e.g., coaching, wellbeing resources, or specialist support where needed) to help them work effectively and build on their strengths." },
+      { field: "q28", short: "Accessible Learning & Development", text: "Learning and development opportunities are designed to be accessible and inclusive by default (e.g., clear content, flexible formats, self-paced options, inclusive assessments)." },
+      { field: "q29", short: "Strengths-Based Development", text: "Regular career and development conversations take place, using a strengths-based approach, with clear development plans and appropriate support to help employees progress." },
     ],
   },
   {
@@ -348,11 +375,11 @@ const sections = [
     points: ["Plain language", "Multi-format info", "Digital accessibility"],
     tip: "Agendas sent 24 hours ahead and recordings of key meetings are simple wins with wide impact.",
     questions: [
-      { field: "q30", text: "Employees are trained to communicate in neuro-inclusive ways, including understanding different communication styles and how to adapt for internal and external audiences." },
-      { field: "q31", text: "Organisational communications are typically clear, concise, and well-structured (e.g., use of plain language, bullet points, logical flow), reducing ambiguity and cognitive load." },
-      { field: "q32", text: "Information is available in accessible formats where needed (e.g., transcripts, captions, recordings, screen reader compatibility), and accessibility features are actively supported and encouraged." },
-      { field: "q33", text: "We use inclusive, respectful language when communicating about neurodiversity, and aim to frame differences in a strengths-based and non-stigmatising way." },
-      { field: "q34", text: "Employees and external stakeholders can give feedback on communication and accessibility, and there are clear mechanisms to review and improve based on that input." },
+      { field: "q30", short: "Neuro-Inclusive Communication", text: "Employees are trained to communicate in neuro-inclusive ways, including understanding different communication styles and how to adapt for internal and external audiences." },
+      { field: "q31", short: "Clear & Structured Communication", text: "Organisational communications are typically clear, concise, and well-structured (e.g., use of plain language, bullet points, logical flow), reducing ambiguity and cognitive load." },
+      { field: "q32", short: "Accessible Formats", text: "Information is available in accessible formats where needed (e.g., transcripts, captions, recordings, screen reader compatibility), and accessibility features are actively supported and encouraged." },
+      { field: "q33", short: "Inclusive Language", text: "We use inclusive, respectful language when communicating about neurodiversity, and aim to frame differences in a strengths-based and non-stigmatising way." },
+      { field: "q34", short: "Feedback & Improvement", text: "Employees and external stakeholders can give feedback on communication and accessibility, and there are clear mechanisms to review and improve based on that input." },
     ],
   },
   {
@@ -363,11 +390,11 @@ const sections = [
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
     questions: [
-      { field: "q35", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
-      { field: "q36", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
-      { field: "q37", text: "Physical customer environments are designed or adapted to reduce sensory overload where possible (e.g., managing noise, lighting, crowding, and visual stimuli)." },
-      { field: "q38", text: "Employees involved in product design and customer service are trained in neurodiversity awareness and inclusive practices." },
-      { field: "q39", text: "We regularly assess the neuro-inclusivity of products and customer interactions (e.g., user testing, audits, feedback) and make improvements based on what we learn." },
+      { field: "q35", short: "Neuro-Inclusive Design", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
+      { field: "q36", short: "Multiple Contact Channels", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
+      { field: "q37", short: "Sensory-Aware Environments", text: "Physical customer environments are designed or adapted to reduce sensory overload where possible (e.g., managing noise, lighting, crowding, and visual stimuli)." },
+      { field: "q38", short: "Staff Neurodiversity Training", text: "Employees involved in product design and customer service are trained in neurodiversity awareness and inclusive practices." },
+      { field: "q39", short: "Regular Inclusivity Assessment", text: "We regularly assess the neuro-inclusivity of products and customer interactions (e.g., user testing, audits, feedback) and make improvements based on what we learn." },
     ],
   },
   {
@@ -378,44 +405,47 @@ const sections = [
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
     tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
     questions: [
-      { field: "q40", text: "Documents and communications with suppliers are clear, structured, and presented in neuro-inclusive formats across both digital and physical channels." },
-      { field: "q41", text: "When assessing and selecting suppliers, we consider their commitment to inclusive practices, including neurodiversity where possible." },
-      { field: "q42", text: "Employees involved in procurement and supply chain management are trained in neurodiversity awareness and inclusive practices." },
-      { field: "q43", text: "Suppliers and vendors are able to engage through a range of contact methods (e.g., email, phone, written communication), supporting different communication preferences." },
-      { field: "q44", text: "There are clear opportunities for suppliers and partners to provide feedback on our processes, and this feedback is used to improve inclusivity over time." },
+      { field: "q40", short: "Neuro-Inclusive Supplier Comms", text: "Documents and communications with suppliers are clear, structured, and presented in neuro-inclusive formats across both digital and physical channels." },
+      { field: "q41", short: "Inclusive Procurement Criteria", text: "When assessing and selecting suppliers, we consider their commitment to inclusive practices, including neurodiversity where possible." },
+      { field: "q42", short: "Procurement Staff Training", text: "Employees involved in procurement and supply chain management are trained in neurodiversity awareness and inclusive practices." },
+      { field: "q43", short: "Multiple Supplier Contact Methods", text: "Suppliers and vendors are able to engage through a range of contact methods (e.g., email, phone, written communication), supporting different communication preferences." },
+      { field: "q44", short: "Supplier Feedback Mechanisms", text: "There are clear opportunities for suppliers and partners to provide feedback on our processes, and this feedback is used to improve inclusivity over time." },
     ],
   },
 ];
 
-const totalSteps     = sections.length + 1; // 0 = details, 1-8 = sections
-const currentSection = computed(() => sections[currentStep.value - 1]);
+const totalSteps     = sections.length + 2; // 0 = details, 1 = instructions, 2-9 = sections
+const currentSection = computed(() => sections[currentStep.value - 2]);
 const progressPct    = computed(() => ((currentStep.value) / (totalSteps - 1)) * 100);
 
 const sectionShortNames = [
-  "Leadership", "Recruit", "Workplace", "Sensory",
-  "Talent", "Comms", "Products", "Suppliers",
+  "Leadership & Culture", "Recruitment & Onboarding", "Work Environment & Adjustments", "Built Environment & Sensory",
+  "Talent Management & Development", "Communication & Accessibility", "Products & Customer Experience", "Suppliers & Procurement",
 ];
 
 const progressSteps = [
   { id: "start", short: "Start", label: "Your details" },
+  { id: "intro", short: "Before You Begin", label: "Before You Begin" },
   ...sections.map((s, i) => ({
     id: `s${i + 1}`,
-    short: sectionShortNames[i],
+    short: s.title,
     label: s.title,
   })),
 ];
 
 const progressPhase = computed(() => {
   if (currentStep.value === 0) return "Getting started";
-  return `Section ${currentStep.value} — ${currentSection.value.title}`;
+  if (currentStep.value === 1) return "Before you begin";
+  return `Section ${currentStep.value - 1} — ${currentSection.value.title}`;
 });
 
 const currentPanel = computed(() => {
   if (currentStep.value === 0) return step0Panel;
+  if (currentStep.value === 1) return step0Panel; // reuse welcome panel on instructions screen
   const s = currentSection.value;
   return {
     icon: s.icon,
-    tag: `Section ${currentStep.value} of 8`,
+    tag: `Section ${currentStep.value - 1} of 8`,
     title: s.title,
     summary: s.summary,
     why: s.why,
@@ -425,12 +455,12 @@ const currentPanel = computed(() => {
 });
 
 const sectionAnsweredCount = computed(() => {
-  if (currentStep.value === 0) return 0;
+  if (currentStep.value <= 1) return 0;
   return currentSection.value.questions.filter(q => form[q.field]).length;
 });
 
 const sectionProgressPct = computed(() => {
-  if (currentStep.value === 0) return 0;
+  if (currentStep.value <= 1) return 0;
   const total = currentSection.value.questions.length;
   return (sectionAnsweredCount.value / total) * 100;
 });
@@ -484,8 +514,10 @@ function validateStep() {
         errors.emailMsg = "Please use a company email address";
       }
     }
+  } else if (currentStep.value === 1) {
+    // Instructions screen — no validation needed
   } else {
-    const section = sections[currentStep.value - 1];
+    const section = sections[currentStep.value - 2];
     section.questions.forEach(q => { if (!form[q.field]) errors[q.field] = true; });
   }
   return Object.keys(errors).length === 0;
@@ -583,7 +615,7 @@ async function submit() {
 .form-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0.6rem 2rem;
-  border-bottom: 2px solid var(--c-primary-dark);
+  border-bottom: 2px solid var(--c-border);
   background: var(--c-bg);
   flex-shrink: 0; z-index: 10;
 }
@@ -603,7 +635,7 @@ async function submit() {
   pointer-events: none;
 }
 .form-logo-name {
-  font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark);
+  font-size: 0.95rem; font-weight: 800; color: var(--c-accent);
   font-family: 'Fraunces', serif;
   cursor: default;
   user-select: none;
@@ -669,7 +701,7 @@ async function submit() {
   background: transparent;
   border-radius: 20px;
   padding: 0;
-  border: 2px solid #161057;
+  border: 2px solid var(--c-border);
   width: 100%;
 }
 
@@ -684,7 +716,7 @@ async function submit() {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: 1.25rem 2.5rem 2rem;
+  padding: 1.25rem 2.5rem 5rem;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -711,9 +743,9 @@ async function submit() {
   -ms-overflow-style: none;
   scrollbar-width: none;
   background: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
+  border: 2px solid var(--c-border);
   border-radius: 16px;
-  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
+  box-shadow: 4px 4px 0 rgba(4, 144, 124, 0.15);
 }
 .progress-sidebar::-webkit-scrollbar { display: none; }
 .progress-wrap {
@@ -728,12 +760,12 @@ async function submit() {
   border-bottom: 1.5px solid #E2DDD4;
 }
 .progress-phase {
-  font-size: 0.82rem; font-weight: 800; color: var(--c-primary-dark);
+  font-size: 0.82rem; font-weight: 800; color: var(--c-accent);
   font-family: 'Fraunces', serif; letter-spacing: -0.02em;
   line-height: 1.3;
 }
 .progress-pct {
-  font-size: 1.1rem; font-weight: 800; color: var(--c-primary-dark);
+  font-size: 1.1rem; font-weight: 800; color: var(--c-accent);
   font-family: 'Fraunces', serif;
 }
 .progress-count {
@@ -755,7 +787,7 @@ async function submit() {
   box-sizing: border-box;
   background: #E2DDD4;
   border-radius: 99px;
-  border: 1px solid var(--c-primary-dark);
+  border: 1px solid var(--c-border);
   overflow: hidden;
   z-index: 0;
   pointer-events: none;
@@ -764,7 +796,7 @@ async function submit() {
   width: 100%;
   height: 0;
   min-height: 0;
-  background: linear-gradient(180deg, #161057, #2A2080);
+  background: linear-gradient(180deg, var(--c-accent), #20C0B0);
   border-radius: 99px;
   transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -799,23 +831,23 @@ async function submit() {
   width: var(--progress-dot);
   height: var(--progress-dot);
   border-radius: 50%;
-  background: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
+  background: rgba(4, 144, 124, 0.08);
+  border: 2px solid var(--c-accent);
   display: grid;
   place-items: center;
   font-size: 0.68rem;
   font-weight: 800;
-  color: #888;
+  color: var(--c-accent);
   transition: all 0.25s;
   position: relative;
   z-index: 1;
 }
 .progress-step.done .progress-step-dot {
-  background: #161057; color: #FFFFFF;
+  background: var(--c-accent); color: #FFFFFF;
 }
 .progress-step.active .progress-step-dot {
-  background: var(--c-primary-dark); color: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(22, 16, 87, 0.25);
+  background: var(--c-accent); color: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.25);
 }
 .step-check { font-size: 0.7rem; line-height: 1; }
 .progress-step-label {
@@ -823,7 +855,7 @@ async function submit() {
   line-height: 1.25;
 }
 .progress-step.active .progress-step-label,
-.progress-step.done .progress-step-label { color: var(--c-primary-dark); font-weight: 800; }
+.progress-step.done .progress-step-label { color: var(--c-accent); font-weight: 800; }
 
 /* Aside panel */
 .step-aside {
@@ -836,8 +868,8 @@ async function submit() {
   scrollbar-width: none;
   background: transparent;
   border-radius: 20px;
-  border: 2px solid #161057;
-  box-shadow: 6px 6px 0 rgba(22, 16, 87, 0.18);
+  border: 2px solid var(--c-border);
+  box-shadow: 6px 6px 0 rgba(4, 144, 124, 0.18);
   /* Smooth collapse */
   opacity: 1;
   transform: translateX(0);
@@ -852,12 +884,14 @@ async function submit() {
 }
 .step-aside::-webkit-scrollbar { display: none; }
 .aside-card {
-  padding: 1rem 1.35rem 1.5rem;
+  padding: 1.25rem 1.5rem 1.5rem;
   color: var(--c-primary-dark);
   min-height: 100%;
   display: flex;
   flex-direction: column;
   animation: asideIn 0.35s ease;
+  background: #ffffff;
+  border-radius: 18px;
 }
 @keyframes asideIn {
   from { opacity: 0; transform: translateY(8px); }
@@ -881,22 +915,22 @@ async function submit() {
 .aside-tag {
   display: inline-block; font-size: 0.68rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.08em;
-  color: #161057; margin: 0 0 0.35rem;
+  color: var(--c-accent); margin: 0 0 0.35rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-title {
-  font-size: 1.35rem; font-weight: 800; line-height: 1.25;
-  margin: 0 0 0.5rem; color: var(--c-primary-dark);
+  font-size: 1.55rem; font-weight: 800; line-height: 1.2;
+  margin: 0 0 0.65rem; color: var(--c-primary-dark);
   font-family: 'Inter', sans-serif; letter-spacing: -0.02em;
 }
 .aside-summary {
-  font-size: 0.88rem; line-height: 1.6; color: #555;
-  margin: 0 0 1rem;
+  font-size: 0.9rem; line-height: 1.65; color: #555;
+  margin: 0 0 1.25rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-block h3 {
   font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
-  letter-spacing: 0.08em; color: #161057; margin-bottom: 0.4rem;
+  letter-spacing: 0.08em; color: var(--c-accent); margin-bottom: 0.4rem;
   font-family: 'Inter', sans-serif;
 }
 .aside-block p {
@@ -916,10 +950,10 @@ async function submit() {
 .aside-points li::before {
   content: ""; position: absolute; left: 0; top: 0.45em;
   width: 6px; height: 6px; border-radius: 50%;
-  background: #161057;
+  background: var(--c-accent);
 }
 .aside-progress-mini {
-  padding-top: 1rem; border-top: 1px solid rgba(22, 16, 87, 0.2);
+  padding-top: 1rem; border-top: 1px solid rgba(4, 144, 124, 0.2);
   margin-top: auto;
 }
 .aside-progress-mini span {
@@ -928,28 +962,30 @@ async function submit() {
   font-family: 'Inter', sans-serif;
 }
 .mini-bar {
-  height: 6px; background: rgba(22, 16, 87, 0.12);
+  height: 6px; background: rgba(4, 144, 124, 0.12);
   border-radius: 99px; overflow: hidden;
 }
 .mini-fill {
-  height: 100%; background: #161057;
+  height: 100%; background: var(--c-accent);
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-block; background: transparent; color: #161057; font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid #161057; font-family: 'Fraunces', serif; }
-.step-card-head h1 { font-size: 1.8rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Fraunces', serif; }
+.step-tag { display: inline-block; background: transparent; color: var(--c-border); font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid var(--c-border); font-family: 'Fraunces', serif; }
+.step-head-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.h1-green { font-size: 1.8rem; font-weight: 800; color: var(--c-accent); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Fraunces', serif; }
 .step-sub { color: #999; font-size: 0.875rem; margin-bottom: 0; }
+.step-sub-inline { color: #999; font-size: 0.8rem; white-space: nowrap; margin-bottom: 0; align-self: flex-end; padding-bottom: 0.4rem; }
 
 /* Details fields */
 .fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
+.field label { display: block; font-size: 0.72rem; font-weight: 800; color: var(--c-accent); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
 .field input:not([type="checkbox"]) {
   width: 100%; padding: 0.7rem 0.9rem;
-  border: 2px solid var(--c-primary-dark); border-radius: 10px;
+  border: 2px solid var(--c-border); border-radius: 10px;
   font-size: 0.9rem; background: var(--c-white); color: var(--c-primary-dark);
   transition: border-color 0.15s, box-shadow 0.15s; font-family: inherit;
 }
-.field input:not([type="checkbox"]):focus { outline: none; border-color: var(--c-primary-dark); background: var(--c-white); }
+.field input:not([type="checkbox"]):focus { outline: none; border-color: var(--c-border); background: var(--c-white); }
 .field input:not([type="checkbox"]).error { border-color: #ff4444; }
 .field-err { color: #ff4444; font-size: 0.78rem; margin-top: 0.25rem; display: block; }
 
@@ -971,7 +1007,7 @@ async function submit() {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--c-primary-dark);
+  color: var(--c-accent);
   user-select: none;
   margin-bottom: 0;
 }
@@ -981,7 +1017,7 @@ async function submit() {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 2px solid var(--c-primary-dark);
+  border: 2px solid var(--c-border);
   background-color: var(--c-white);
   cursor: pointer;
   margin-top: 2px;
@@ -991,13 +1027,13 @@ async function submit() {
   box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
 }
 .consent-checkbox:hover {
-  border-color: var(--c-accent);
+  border-color: var(--c-border);
   background-color: var(--c-bg);
 }
 .consent-checkbox:checked {
-  background-color: var(--c-primary-dark);
-  border-color: var(--c-primary-dark);
-  box-shadow: 2px 2px 0 var(--c-accent);
+  background-color: var(--c-accent);
+  border-color: var(--c-border);
+  box-shadow: 2px 2px 0 var(--c-accent-secondary);
 }
 .consent-checkbox:checked::after {
   content: "✓";
@@ -1046,9 +1082,27 @@ async function submit() {
 }
 
 /* Questions */
-.questions-list { display: flex; flex-direction: column; gap: 1.5rem; padding-bottom: 0.5rem; }
+.questions-list { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 0.5rem; }
+.how-to-intro {
+  background: var(--c-white);
+  border: 2px solid var(--c-border);
+  border-left: 4px solid var(--c-accent);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.how-to-intro h3 {
+  font-size: 0.85rem; font-weight: 800; color: var(--c-accent);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  margin-bottom: 0.5rem; font-family: 'Fraunces', serif;
+}
+.how-to-intro p {
+  font-size: 0.9rem; line-height: 1.6; color: #444;
+}
 .q-block:last-child { padding-bottom: 0.25rem; }
-.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; margin-bottom: 0.4rem; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
+.q-header-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-accent); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
+.q-short { font-size: 0.78rem; font-weight: 700; color: var(--c-accent); font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
 .q-text { font-size: 0.95rem; font-weight: 500; color: var(--c-primary-dark); line-height: 1.55; margin-bottom: 0.75rem; }
 .options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .opt-btn {
@@ -1057,32 +1111,32 @@ async function submit() {
   font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #555;
   transition: all 0.15s;
 }
-.opt-btn:hover { border-color: var(--c-primary-dark); color: var(--c-primary-dark); }
-.opt-btn.selected { background: var(--c-primary-dark); color: var(--c-bg); border-color: var(--c-primary-dark); font-weight: 700; }
+.opt-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+.opt-btn.selected { background: var(--c-accent); color: var(--c-bg); border-color: var(--c-accent); font-weight: 700; }
 
 /* Navigation */
 .step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .btn-back {
-  background: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
+  background: var(--c-accent); border: 2px solid var(--c-border); border-radius: 99px;
   padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700;
-  cursor: pointer; color: var(--c-primary-dark); transition: all 0.15s;
-  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
+  cursor: pointer; color: var(--c-white); transition: all 0.15s;
+  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
 }
-.btn-back:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
+.btn-back:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
 .btn-next {
-  background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
+  background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
   cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
-  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
+  box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
 }
-.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3); }
+.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
 .btn-submit {
-  background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
+  background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
   cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
-  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
+  box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
 }
-.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3); }
+.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 /* Footer */
@@ -1134,7 +1188,7 @@ async function submit() {
 /* Success */
 .success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
 .success-box { background: var(--c-white); border-radius: 16px; padding: 3rem 2.5rem; text-align: center; border: 1px solid #E2DDD4; max-width: 440px; width: 100%; }
-.success-icon { width: 64px; height: 64px; background: var(--c-accent); border-radius: 50%; display: inline-grid; place-items: center; font-size: 1.8rem; margin-bottom: 1.25rem; }
+.success-icon { width: 64px; height: 64px; background: var(--c-accent-secondary); border-radius: 50%; display: inline-grid; place-items: center; font-size: 1.8rem; margin-bottom: 1.25rem; }
 .success-box h2 { font-size: 1.5rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.75rem; }
 .success-box p  { color: #666; line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
@@ -1166,7 +1220,7 @@ async function submit() {
   .mobile-phase {
     font-size: 0.78rem;
     font-weight: 800;
-    color: var(--c-primary-dark);
+    color: var(--c-accent);
     font-family: 'Fraunces', serif;
   }
   .mobile-count {
@@ -1179,22 +1233,31 @@ async function submit() {
     background: #E2DDD4;
     border-radius: 99px;
     overflow: hidden;
-    border: 1.5px solid var(--c-primary-dark);
+    border: 1.5px solid var(--c-border);
   }
   .mobile-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #161057, #2A2080);
+    background: linear-gradient(90deg, var(--c-accent), #20C0B0);
     border-radius: 99px;
     transition: width 0.45s ease;
   }
 
   .step-center {
     grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
     gap: 0.75rem;
   }
   .step-aside {
     display: none;
+  }
+  /* Show aside below the form card on steps 0 and 1 (welcome + instructions) */
+  .step-aside:not(.step-aside--hidden) {
+    display: block;
+    grid-row: 2;
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+    border-radius: 16px;
   }
   .step-aside.mobile-show {
     display: block;
@@ -1205,12 +1268,17 @@ async function submit() {
     overflow-y: auto;
     margin-bottom: 0.5rem;
   }
+  .step-aside--hidden {
+    display: none !important;
+  }
   .step-main {
-    grid-row: 2;
+    grid-row: 1;
     min-height: 0;
   }
   .step-card-head { padding: 1.5rem 1.75rem 0; }
   .questions-scroll { padding: 1rem 1.75rem 1.5rem; }
+  .aside-title { font-size: 1.2rem; }
+  .aside-summary { font-size: 0.85rem; }
   
   .mobile-info-toggle {
     display: inline-flex;
@@ -1277,14 +1345,15 @@ async function submit() {
     justify-content: space-between;
     width: 100%;
   }
-  .btn-back, .btn-next, .btn-submit, .save-continue-container :deep(.btn) {
+  .btn-back, .btn-next, .btn-submit, .save-continue-container :deep(.btn),
+  .save-continue-container :deep(.btn-green) {
     height: 38px;
     padding: 0.4rem 0.7rem;
     font-size: 0.8rem;
     font-weight: 700;
     border-radius: 8px;
-    border: 1.5px solid var(--c-primary-dark);
-    box-shadow: 2px 2px 0 var(--c-primary-dark);
+    border: 1.5px solid var(--c-border);
+    box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1303,13 +1372,10 @@ async function submit() {
   .save-continue-container :deep(.btn) {
     width: 100%;
   }
-  .btn-next, .btn-submit {
+  .btn-next, .btn-submit, .btn-back {
     flex: 1.8;
     min-width: 80px;
-    box-shadow: 2px 2px 0 var(--c-accent);
-  }
-  .btn-submit {
-    box-shadow: 2px 2px 0 var(--c-primary-dark);
+    box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
   }
 
   .form-footer {
@@ -1323,4 +1389,83 @@ async function submit() {
     font-size: 0.72rem;
   }
 }
+/* Instructions screen */
+.instructions-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 580px;
+  padding: 1.5rem;
+  padding-bottom: 1.5rem;
+  background: rgba(4, 144, 124, 0.04);
+  border-radius: 12px;
+}
+.instr-body {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #444;
+  margin: 0;
+}
+.instr-options {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0.1rem 0;
+}
+.instr-opt {
+  padding: 0.3rem 1rem;
+  border-radius: 99px;
+  border: 1.5px solid #C8C3BA;
+  background: var(--c-white);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+}
+.instr-note {
+  font-size: 0.8rem;
+  color: #aaa;
+  margin: 0;
+  font-style: italic;
+}
+.instr-divider {
+  height: 1px;
+  background: #E2DDD4;
+  margin: 0.4rem 0;
+}
+.instr-segments-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+  font-family: 'Fraunces', serif;
+  margin: 0;
+}
+.instr-segments-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem 1.5rem;
+}
+.instr-segment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.instr-seg-num {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--c-accent);
+  font-family: 'Fraunces', serif;
+  min-width: 1rem;
+}
+.instr-seg-name {
+  font-size: 0.875rem;
+  color: var(--c-primary-dark);
+  font-weight: 500;
+  line-height: 1.35;
+}
+@media (max-width: 600px) {
+  .instr-segments-grid { grid-template-columns: 1fr; }
+}
+
 </style>
