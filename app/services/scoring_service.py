@@ -199,8 +199,12 @@ def score_answer(answer: str) -> int:
     return ANSWER_POINTS.get(answer, 0)
 
 
-def score_section(answers: dict, question_keys: list) -> int:
-    return sum(score_answer(answers.get(k, "")) for k in question_keys)
+def score_section(data: dict, section_key: str, question_keys: list) -> float:
+    if section_key == "pc" and data.get("q37") == "NA":
+        other_keys = [k for k in question_keys if k != "q37"]
+        raw_score = sum(score_answer(data.get(k, "")) for k in other_keys)
+        return (raw_score / 16.0) * 20.0
+    return sum(score_answer(data.get(k, "")) for k in question_keys)
 
 
 def calculate_scores(data: dict) -> dict:
@@ -214,14 +218,28 @@ def calculate_scores(data: dict) -> dict:
     dimension_scores = {}
 
     for key, section in SECTIONS.items():
-        score = score_section(data, section["questions"])
+        if key == "be" and data.get("has_physical_workspace") == "No":
+            result[f"{key}_score"] = "NA"
+            result[f"{key}_level"] = "Not applicable"
+            dimension_scores[key] = "NA"
+            section_scores.append((key, section["label"], "NA", "Not applicable"))
+            continue
+        if key == "sp" and data.get("has_suppliers") == "No":
+            result[f"{key}_score"] = "NA"
+            result[f"{key}_level"] = "Not applicable"
+            dimension_scores[key] = "NA"
+            section_scores.append((key, section["label"], "NA", "Not applicable"))
+            continue
+
+        score = score_section(data, key, section["questions"])
         level = get_maturity_level(score)
         result[f"{key}_score"] = score
         result[f"{key}_level"] = level
         dimension_scores[key] = score
         section_scores.append((key, section["label"], score, level))
 
-    overall_avg = round(sum(s[2] for s in section_scores) / len(section_scores), 2)
+    valid_scores = [s[2] for s in section_scores if s[2] != "NA"]
+    overall_avg = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0
     overall_level = get_maturity_level(int(overall_avg))
     result["overall_avg"] = overall_avg
     result["overall_level"] = overall_level
@@ -269,7 +287,8 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     month_year = datetime.now(IST).strftime("%B %Y")
 
     # Calculate domains subtitle dynamically based on section scores
-    levels_set = {s[3] for s in section_scores}
+    valid_sections = [s for s in section_scores if s[2] != "NA"]
+    levels_set = {s[3] for s in valid_sections}
     if len(levels_set) == 1:
         # e.g., "Level 2 — Early Progress" -> "All at Level 2"
         common_level_parts = list(levels_set)[0].split(" — ")
@@ -278,12 +297,16 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         common_lvl_num = common_level_parts[0].replace("Level ", "").strip()
         domains_subtitle = f"All at Level {common_lvl_num}"
     else:
-        domains_subtitle = "8 domains assessed"
+        domains_subtitle = f"{len(valid_sections)} domains assessed"
 
     # Generate QuickChart URL for the radar chart
-    labels = ["Leadership & Culture", "Recruitment & Onboarding", "Work Environment", "Built Environment", "Talent Management", "Communication", "Products & CX", "Suppliers & Procurement"]
-    scores = [s[2] for s in section_scores]
-    
+    labels = []
+    scores = []
+    for s in section_scores:
+        if s[2] != "NA":
+            labels.append(s[1].replace(" & ", " &amp; ")) # Just simple replace, actual radar uses exact label
+            scores.append(s[2])
+
     chart_config = {
         "type": "radar",
         "data": {
@@ -336,12 +359,38 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     # Generate dynamic segment cards
     segment_cards = []
     for key, label, score, level in section_scores:
+        if score == "NA":
+            segment_cards.append(f"""
+    <!-- SEGMENT: {label} -->
+    <tr><td style="background:#FFFFFF;padding:0 40px 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F9F8FF;border-radius:10px;overflow:hidden;border:1px solid #E2DDD4;">
+        <tr>
+          <td style="padding:14px 16px;">
+            <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+              <tr>
+                <td>
+                  <span style="display:inline-block;background:#F4F2F0;color:#888;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">Not Applicable</span>
+                  <p style="margin:0 0 2px;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:13px;font-weight:600;color:#1E1A4A;">{_e(label)}</p>
+                  <p style="margin:0;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:12px;color:#555;line-height:1.6;">This section was skipped.</p>
+                </td>
+                <td width="52" valign="top" align="right" style="padding-left:12px;">
+                  <span style="display:inline-block;background:#EEEDFE;color:#534AB7;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;">NA</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+""")
+            continue
+
         fill_w = int((score / 20.0) * 100)
         empty_w = 100 - fill_w
         
-        if fill_w == 100:
+        if fill_w >= 100:
             bar_tds = '<td width="100%" height="4" style="background:#7F77DD;border-radius:3px;font-size:0;">&nbsp;</td>'
-        elif fill_w == 0:
+        elif fill_w <= 0:
             bar_tds = '<td width="100%" height="4" style="background:#E0DDD8;border-radius:3px;font-size:0;">&nbsp;</td>'
         else:
             bar_tds = (
@@ -366,6 +415,8 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
             badge_label = "Developing"
             commentary = DIMENSION_COMMENTARY[key]["high"]
 
+        display_score = f"{score:g}" if isinstance(score, float) and score.is_integer() else f"{score:.1f}" if isinstance(score, float) else score
+
         segment_cards.append(f"""
     <!-- SEGMENT: {label} -->
     <tr><td style="background:#FFFFFF;padding:0 40px 12px;">
@@ -375,16 +426,16 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
             <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
               <tr>
                 <td>
-                  <span style="display:inline-block;background:{badge_color};color:{badge_text};font-family:\'DM Sans\',Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">{badge_label}</span>
-                  <p style="margin:0 0 2px;font-family:\'DM Sans\',Arial,sans-serif;font-size:13px;font-weight:600;color:#1E1A4A;">{_e(label)}</p>
+                  <span style="display:inline-block;background:{badge_color};color:{badge_text};font-family:\\'DM Sans\\',Arial,sans-serif;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;text-transform:uppercase;margin-bottom:6px;">{badge_label}</span>
+                  <p style="margin:0 0 2px;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:13px;font-weight:600;color:#1E1A4A;">{_e(label)}</p>
                   <!-- bar -->
                   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:6px 0 8px;"><tr>
                     {bar_tds}
                   </tr></table>
-                  <p style="margin:0;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;color:#555;line-height:1.6;">{_e(commentary)}</p>
+                  <p style="margin:0;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:12px;color:#555;line-height:1.6;">{_e(commentary)}</p>
                 </td>
                 <td width="52" valign="top" align="right" style="padding-left:12px;">
-                  <span style="display:inline-block;background:#EEEDFE;color:#534AB7;font-family:\'DM Sans\',Arial,sans-serif;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;">{score} / 20</span>
+                  <span style="display:inline-block;background:#EEEDFE;color:#534AB7;font-family:\\'DM Sans\\',Arial,sans-serif;font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;white-space:nowrap;">{display_score} / 20</span>
                 </td>
               </tr>
             </table>

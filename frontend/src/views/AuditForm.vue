@@ -82,7 +82,7 @@
             <div class="step-head-meta">
               <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
               <div v-else-if="currentStep === 1"></div>
-              <div v-else class="step-tag">Section {{ currentStep - 1 }} of 8</div>
+              <div v-else class="step-tag">Section {{ currentStep - 1 }} of {{ visibleSections.length }}</div>
               <button
                 v-if="currentStep > 1 && false"
                 class="mobile-info-toggle"
@@ -137,7 +137,7 @@
 
             <!-- Instructions screen (step 1) -->
             <div v-else-if="currentStep === 1" class="instructions-screen">
-              <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire is organised into <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
+              <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
               <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
               <div class="instr-options">
                 <span class="instr-opt">Yes</span>
@@ -147,9 +147,9 @@
               </div>
               <p class="instr-note">Your responses will only include details that you choose to share.</p>
               <div class="instr-divider"></div>
-              <p class="instr-segments-label">The 8 segments covered:</p>
+              <p class="instr-segments-label">The segments covered:</p>
               <div class="instr-segments-grid">
-                <div v-for="(s, i) in sections" :key="i" class="instr-segment-row">
+                <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-row">
                   <span class="instr-seg-num">{{ i + 1 }}</span>
                   <span class="instr-seg-name">{{ s.title }}</span>
                 </div>
@@ -157,6 +157,10 @@
             </div>
 
             <div v-else class="questions-list">
+              <div v-if="currentSection.liner" class="section-liner">
+                {{ currentSection.liner }}
+              </div>
+              
               <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
                 <div class="q-header-row">
                   <span class="q-number">Q{{ (currentStep - 2) * 5 + qi + 1 }}</span>
@@ -165,13 +169,31 @@
                 <p class="q-text">{{ q.text }}</p>
                 <div class="options">
                   <button
-                    v-for="opt in options" :key="opt"
+                    v-for="opt in (q.field === 'q37' ? [...options, 'NA'] : options)" :key="opt"
                     type="button"
                     :class="['opt-btn', form[q.field] === opt ? 'selected' : '']"
                     @click="form[q.field] = opt"
                   >{{ opt }}</button>
                 </div>
                 <span v-if="errors[q.field]" class="field-err">Please select an answer</span>
+              </div>
+
+              <!-- Trailing gating question -->
+              <div v-if="currentSection.trailingGatingQuestion" class="q-block gating-block" style="margin-top: 1.5rem;">
+                <p class="q-text"><strong>{{ currentSection.trailingGatingQuestion }}</strong></p>
+                <div class="options">
+                  <button
+                    type="button"
+                    :class="['opt-btn', form[currentSection.trailingGatingField] === 'Yes' ? 'selected' : '']"
+                    @click="form[currentSection.trailingGatingField] = 'Yes'"
+                  >Yes</button>
+                  <button
+                    type="button"
+                    :class="['opt-btn', form[currentSection.trailingGatingField] === 'No' ? 'selected' : '']"
+                    @click="form[currentSection.trailingGatingField] = 'No'"
+                  >No</button>
+                </div>
+                <span v-if="errors[currentSection.trailingGatingField]" class="field-err">Please select an answer</span>
               </div>
             </div>
           </div>
@@ -183,12 +205,12 @@
 
               <!-- Progress Saving Button -->
               <div style="display: flex; gap: 0.5rem; margin-left: 0.5rem;">
-                <button v-if="currentStep > 1" class="btn-back" @click="startFresh" type="button" style="background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700; box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3); cursor: pointer;">↺ Start Fresh</button>
+                <button v-if="currentStep > 1" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
                 <SaveContinueButton v-if="currentStep > 1" :onSave="syncToBackend" />
               </div>
 
               <button
-                v-if="currentStep < totalSteps - 1"
+                v-if="currentStep < totalSteps.value - 1 || currentStep < visibleSections.length + 1"
                 class="btn-next"
                 @click="nextStep"
                 type="button"
@@ -293,6 +315,7 @@ const step0Panel = {
 
 const sections = [
   {
+    id: "lc",
     title: "Leadership & Culture",
     icon: "◆",
     summary: "Inclusion starts at the top. Leadership sets the tone, allocates resources, and signals what the organisation truly values.",
@@ -308,6 +331,7 @@ const sections = [
     ],
   },
   {
+    id: "ro",
     title: "Recruitment & Onboarding",
     icon: "◇",
     summary: "The hiring funnel is where many neurodivergent candidates are lost — rigid processes and unclear expectations create unnecessary barriers.",
@@ -323,12 +347,15 @@ const sections = [
     ],
   },
   {
+    id: "we",
     title: "Work Environment & Adjustments",
     icon: "▣",
     summary: "Day-to-day work practices determine whether neurodivergent employees can perform at their best — or spend energy masking and compensating.",
     why: "Clear adjustment pathways and manager confidence reduce friction, build trust, and improve retention.",
     points: ["Adjustment requests", "Flexible working", "Manager capability"],
     tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
+    trailingGatingQuestion: "Does your organisation have physical workplace environments (e.g., offices, facilities, or on-site workspaces)?",
+    trailingGatingField: "has_physical_workspace",
     questions: [
       { field: "q15", short: "Lifecycle Adjustments", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
       { field: "q16", short: "Clear Adjustment Pathways", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
@@ -338,6 +365,7 @@ const sections = [
     ],
   },
   {
+    id: "be",
     title: "Built Environment & Sensory",
     icon: "◎",
     summary: "Physical and sensory environments affect focus, comfort, and wellbeing — especially for people who are sensitive to noise, light, or crowding.",
@@ -353,6 +381,7 @@ const sections = [
     ],
   },
   {
+    id: "tm",
     title: "Talent Management & Development",
     icon: "↑",
     summary: "Career growth systems can unintentionally penalise different working styles — from annual reviews to unstructured promotion conversations.",
@@ -368,6 +397,7 @@ const sections = [
     ],
   },
   {
+    id: "ca",
     title: "Communication & Accessibility",
     icon: "◈",
     summary: "How information flows internally shapes who can participate fully — unclear emails, last-minute meetings, and jargon all create friction.",
@@ -383,12 +413,15 @@ const sections = [
     ],
   },
   {
+    id: "pc",
     title: "Products & Customer Experience",
     icon: "◉",
     summary: "Inclusion extends beyond your workforce — customers and users experience your brand through products, services, and support channels.",
     why: "Neuroinclusive design improves usability for all users and reduces complaints, abandonment, and reputational risk.",
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
+    trailingGatingQuestion: "Does your organisation have recurring engagement with external vendors, consultants, or partners?",
+    trailingGatingField: "has_suppliers",
     questions: [
       { field: "q35", short: "Neuro-Inclusive Design", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
       { field: "q36", short: "Multiple Contact Channels", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
@@ -398,8 +431,10 @@ const sections = [
     ],
   },
   {
+    id: "sp",
     title: "Suppliers & Procurement",
     icon: "⬡",
+    liner: "Suppliers refer to any external individuals or organisations your organisation engages with, including consultants, freelancers, technology providers, agencies, partners, service providers and contractors.",
     summary: "Your supply chain amplifies your inclusion impact — procurement choices signal whether inclusion is embedded or only internal-facing.",
     why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
@@ -414,24 +449,32 @@ const sections = [
   },
 ];
 
-const totalSteps     = sections.length + 2; // 0 = details, 1 = instructions, 2-9 = sections
-const currentSection = computed(() => sections[currentStep.value - 2]);
-const progressPct    = computed(() => ((currentStep.value) / (totalSteps - 1)) * 100);
+const visibleSections = computed(() => {
+  return sections.filter(s => {
+    if (s.id === 'be' && form.has_physical_workspace === 'No') return false;
+    if (s.id === 'sp' && form.has_suppliers === 'No') return false;
+    return true;
+  });
+});
+
+const totalSteps = computed(() => visibleSections.value.length + 2);
+const currentSection = computed(() => visibleSections.value[currentStep.value - 2]);
+const progressPct    = computed(() => ((currentStep.value) / (totalSteps.value - 1)) * 100);
 
 const sectionShortNames = [
   "Leadership & Culture", "Recruitment & Onboarding", "Work Environment & Adjustments", "Built Environment & Sensory",
   "Talent Management & Development", "Communication & Accessibility", "Products & Customer Experience", "Suppliers & Procurement",
 ];
 
-const progressSteps = [
+const progressSteps = computed(() => [
   { id: "start", short: "Start", label: "Your details" },
   { id: "intro", short: "Before You Begin", label: "Before You Begin" },
-  ...sections.map((s, i) => ({
-    id: `s${i + 1}`,
+  ...visibleSections.value.map((s) => ({
+    id: s.id,
     short: s.title,
     label: s.title,
   })),
-];
+]);
 
 const progressPhase = computed(() => {
   if (currentStep.value === 0) return "Getting started";
@@ -445,7 +488,7 @@ const currentPanel = computed(() => {
   const s = currentSection.value;
   return {
     icon: s.icon,
-    tag: `Section ${currentStep.value - 1} of 8`,
+    tag: `Section ${currentStep.value - 1} of ${visibleSections.value.length}`,
     title: s.title,
     summary: s.summary,
     why: s.why,
@@ -478,6 +521,7 @@ watch(currentStep, async () => {
 const allQuestionFields = sections.flatMap(s => s.questions.map(q => q.field));
 const form = reactive({
   name: "", designation: "", company_name: "", email: "", contact_number: "", consent_given: false,
+  has_physical_workspace: "", has_suppliers: "",
   ...Object.fromEntries(allQuestionFields.map(f => [f, ""])),
 });
 
@@ -517,7 +561,13 @@ function validateStep() {
   } else if (currentStep.value === 1) {
     // Instructions screen — no validation needed
   } else {
-    const section = sections[currentStep.value - 2];
+    const section = currentSection.value;
+    if (section.trailingGatingQuestion) {
+      if (!form[section.trailingGatingField]) {
+        errors[section.trailingGatingField] = true;
+      }
+    }
+    
     section.questions.forEach(q => { if (!form[q.field]) errors[q.field] = true; });
   }
   return Object.keys(errors).length === 0;
@@ -554,6 +604,8 @@ function resetForm() {
   form.email = "";
   form.contact_number = "";
   form.consent_given = false;
+  form.has_physical_workspace = "";
+  form.has_suppliers = "";
   allQuestionFields.forEach(f => {
     form[f] = "";
   });
@@ -1083,6 +1135,8 @@ async function submit() {
 
 /* Questions */
 .questions-list { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 0.5rem; }
+.section-liner { font-size: 0.9rem; color: #444; background: rgba(4, 144, 124, 0.05); padding: 1rem 1.25rem; border-radius: 8px; border-left: 3px solid var(--c-accent); font-style: italic; }
+.gating-block { background: #F9F8FF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E2DDD4; }
 .how-to-intro {
   background: var(--c-white);
   border: 2px solid var(--c-border);
@@ -1101,8 +1155,8 @@ async function submit() {
 }
 .q-block:last-child { padding-bottom: 0.25rem; }
 .q-header-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
-.q-number { font-size: 0.68rem; font-weight: 800; color: #FFFFFF; background: var(--c-accent); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
-.q-short { font-size: 0.78rem; font-weight: 700; color: var(--c-accent); font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
+.q-number { font-size: 0.68rem; font-weight: 800; color: var(--c-primary-dark); background: var(--c-bg); border: 1.5px solid var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
+.q-short { font-size: 0.78rem; font-weight: 700; color: var(--c-primary-dark); font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
 .q-text { font-size: 0.95rem; font-weight: 500; color: var(--c-primary-dark); line-height: 1.55; margin-bottom: 0.75rem; }
 .options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .opt-btn {
@@ -1111,32 +1165,38 @@ async function submit() {
   font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #555;
   transition: all 0.15s;
 }
-.opt-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
-.opt-btn.selected { background: var(--c-accent); color: var(--c-bg); border-color: var(--c-accent); font-weight: 700; }
+.opt-btn:hover { border-color: var(--c-primary-dark); color: var(--c-primary-dark); }
+.opt-btn.selected { background: var(--c-primary-dark); color: var(--c-white); border-color: var(--c-primary-dark); font-weight: 700; }
 
 /* Navigation */
 .step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; }
 .btn-back {
-  background: var(--c-accent); border: 2px solid var(--c-border); border-radius: 99px;
+  background: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700;
-  cursor: pointer; color: var(--c-white); transition: all 0.15s;
-  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
+  cursor: pointer; color: var(--c-primary-dark); transition: all 0.15s;
+  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
 }
-.btn-back:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
+.btn-back:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
+.btn-start-fresh {
+  background: var(--c-white); color: var(--c-primary-dark); border: 2px solid var(--c-primary-dark); 
+  padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700; font-family: 'Fraunces', serif;
+  box-shadow: 3px 3px 0 var(--c-primary-dark); cursor: pointer; transition: all 0.15s;
+}
+.btn-start-fresh:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 .btn-next {
-  background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); border-radius: 99px;
+  background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
   cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
-  box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
+  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.4);
 }
-.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
+.btn-next:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.4); }
 .btn-submit {
-  background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); border-radius: 99px;
+  background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
   cursor: pointer; transition: all 0.15s; font-family: 'Fraunces', serif;
-  box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
+  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.4);
 }
-.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
+.btn-submit:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.4); }
 .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
 /* Footer */
@@ -1442,9 +1502,9 @@ async function submit() {
   margin: 0;
 }
 .instr-segments-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.4rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 .instr-segment-row {
   display: flex;

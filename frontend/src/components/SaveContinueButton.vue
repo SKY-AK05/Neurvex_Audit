@@ -67,12 +67,12 @@ function copyLink() {
 <style scoped>
 .save-continue-container { display: inline-block; }
 .save-continue-container .btn-green {
-  background: var(--c-accent); color: var(--c-white); border: 2px solid var(--c-border); border-radius: 99px;
+  background: var(--c-white); color: var(--c-primary-dark); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
-  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 rgba(4, 144, 124, 0.3);
+  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
   display: inline-flex; align-items: center; gap: 0.4rem;
 }
-.save-continue-container .btn-green:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4, 144, 124, 0.3); }
+.save-continue-container .btn-green:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 .save-continue-container .btn-green:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 .btn-text-mobile { display: none; }
 @media (max-width: 600px) {
