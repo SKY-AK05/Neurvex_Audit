@@ -200,11 +200,39 @@ def score_answer(answer: str) -> int:
 
 
 def score_section(data: dict, section_key: str, question_keys: list) -> float:
-    if section_key == "pc" and data.get("q37") == "NA":
-        other_keys = [k for k in question_keys if k != "q37"]
-        raw_score = sum(score_answer(data.get(k, "")) for k in other_keys)
-        return (raw_score / 16.0) * 20.0
-    return sum(score_answer(data.get(k, "")) for k in question_keys)
+    """
+    Score a section, excluding any NA answers and rescaling to the full section maximum.
+
+    Rescaling formula:
+        If n_applicable questions are answered (non-NA), max possible = n_applicable * 4.
+        Rescaled score = (raw_score / (n_applicable * 4)) * (n_total * 4)
+
+    This ensures NA answers don't penalise the organisation — their score is
+    proportionally rescaled to the full section maximum.
+    Examples:
+        - Section 7 (pc), q37 = NA: 4 questions scored, max = 16.
+          If score is 10/16, rescaled to (10/16)*20 = 12.5
+        - Section 4 (be), 2 questions = NA: 3 questions scored, max = 12.
+          If score is 8/12, rescaled to (8/12)*20 = 13.33
+    """
+    n_total = len(question_keys)
+    applicable_keys = [k for k in question_keys if data.get(k, "") != "NA"]
+    n_applicable = len(applicable_keys)
+
+    # If all questions are NA (edge case), return 0
+    if n_applicable == 0:
+        return 0
+
+    raw_score = sum(score_answer(data.get(k, "")) for k in applicable_keys)
+
+    # If no NAs present, return the raw score directly (no rescaling needed)
+    if n_applicable == n_total:
+        return raw_score
+
+    # Rescale: raw_score / max_applicable * max_total
+    max_applicable = n_applicable * 4
+    max_total = n_total * 4
+    return round((raw_score / max_applicable) * max_total, 2)
 
 
 def calculate_scores(data: dict) -> dict:

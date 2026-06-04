@@ -160,41 +160,54 @@
               <div v-if="currentSection.liner" class="section-liner">
                 {{ currentSection.liner }}
               </div>
-              
-              <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
-                <div class="q-header-row">
-                  <span class="q-number">Q{{ (currentStep - 2) * 5 + qi + 1 }}</span>
-                  <span class="q-short">{{ q.short }}</span>
-                </div>
-                <p class="q-text">{{ q.text }}</p>
-                <div class="options">
-                  <button
-                    v-for="opt in (q.field === 'q37' ? [...options, 'NA'] : options)" :key="opt"
-                    type="button"
-                    :class="['opt-btn', form[q.field] === opt ? 'selected' : '']"
-                    @click="form[q.field] = opt"
-                  >{{ opt }}</button>
-                </div>
-                <span v-if="errors[q.field]" class="field-err">Please select an answer</span>
-              </div>
 
-              <!-- Trailing gating question -->
-              <div v-if="currentSection.trailingGatingQuestion" class="q-block gating-block" style="margin-top: 1.5rem;">
-                <p class="q-text"><strong>{{ currentSection.trailingGatingQuestion }}</strong></p>
+              <!-- Leading gating question (Sections 4 & 8) -->
+              <div v-if="currentSection.gatingQuestion" class="q-block gating-block leading-gating-block">
+                <div class="gating-eligibility-label">Section Eligibility</div>
+                <p class="q-text"><strong>{{ currentSection.gatingQuestion }}</strong></p>
                 <div class="options">
                   <button
                     type="button"
-                    :class="['opt-btn', form[currentSection.trailingGatingField] === 'Yes' ? 'selected' : '']"
-                    @click="form[currentSection.trailingGatingField] = 'Yes'"
+                    :class="['opt-btn', form[currentSection.gatingField] === 'Yes' ? 'selected' : '']"
+                    @click="form[currentSection.gatingField] = 'Yes'"
                   >Yes</button>
                   <button
                     type="button"
-                    :class="['opt-btn', form[currentSection.trailingGatingField] === 'No' ? 'selected' : '']"
-                    @click="form[currentSection.trailingGatingField] = 'No'"
+                    :class="['opt-btn', form[currentSection.gatingField] === 'No' ? 'selected' : '']"
+                    @click="form[currentSection.gatingField] = 'No'"
                   >No</button>
                 </div>
-                <span v-if="errors[currentSection.trailingGatingField]" class="field-err">Please select an answer</span>
+                <span v-if="errors[currentSection.gatingField]" class="field-err">Please select an answer</span>
               </div>
+
+              <!-- Section skipped notice -->
+              <div v-if="currentSection.gatingQuestion && form[currentSection.gatingField] === 'No'" class="section-skipped-notice">
+                <div class="skipped-notice-icon">⊘</div>
+                <div>
+                  <strong>This section is not applicable to your organisation.</strong>
+                  <p>It will be marked as <em>Not Applicable</em> and excluded from your score. Click <strong>Next</strong> to continue.</p>
+                </div>
+              </div>
+
+              <!-- Questions — only shown when gating is passed or section has no gating -->
+              <template v-if="!currentSection.gatingQuestion || form[currentSection.gatingField] === 'Yes'">
+                <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
+                  <div class="q-header-row">
+                    <span class="q-number">Q{{ (currentStep - 2) * 5 + qi + 1 }}</span>
+                    <span class="q-short">{{ q.short }}</span>
+                  </div>
+                  <p class="q-text">{{ q.text }}</p>
+                  <div class="options">
+                    <button
+                      v-for="opt in (currentSection.naAllowed || q.field === 'q37' ? [...options, 'NA'] : options)" :key="opt"
+                      type="button"
+                      :class="['opt-btn', form[q.field] === opt ? 'selected' : '']"
+                      @click="form[q.field] = opt"
+                    >{{ opt }}</button>
+                  </div>
+                  <span v-if="errors[q.field]" class="field-err">Please select an answer</span>
+                </div>
+              </template>
             </div>
           </div>
           
@@ -354,8 +367,6 @@ const sections = [
     why: "Clear adjustment pathways and manager confidence reduce friction, build trust, and improve retention.",
     points: ["Adjustment requests", "Flexible working", "Manager capability"],
     tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
-    trailingGatingQuestion: "Does your organisation have physical workplace environments (e.g., offices, facilities, or on-site workspaces)?",
-    trailingGatingField: "has_physical_workspace",
     questions: [
       { field: "q15", short: "Lifecycle Adjustments", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
       { field: "q16", short: "Clear Adjustment Pathways", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
@@ -372,6 +383,9 @@ const sections = [
     why: "Environmental design is often overlooked in DEI work, yet it directly impacts productivity and whether people feel safe at work.",
     points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
     tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
+    gatingQuestion: "Does your organisation have physical workplace environments (e.g., offices, facilities, or on-site workspaces)?",
+    gatingField: "has_physical_workspace",
+    naAllowed: true,
     questions: [
       { field: "q20", short: "Universal Design Principles", text: "Workplace environments are designed or adapted using inclusive (universal design) principles to reduce sensory and accessibility barriers." },
       { field: "q21", short: "Sensory Impact Consideration", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
@@ -420,8 +434,6 @@ const sections = [
     why: "Neuroinclusive design improves usability for all users and reduces complaints, abandonment, and reputational risk.",
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
-    trailingGatingQuestion: "Does your organisation have recurring engagement with external vendors, consultants, or partners?",
-    trailingGatingField: "has_suppliers",
     questions: [
       { field: "q35", short: "Neuro-Inclusive Design", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
       { field: "q36", short: "Multiple Contact Channels", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
@@ -439,6 +451,9 @@ const sections = [
     why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
     tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
+    gatingQuestion: "Does your organisation have recurring engagement with external vendors, consultants, or partners?",
+    gatingField: "has_suppliers",
+    naAllowed: true,
     questions: [
       { field: "q40", short: "Neuro-Inclusive Supplier Comms", text: "Documents and communications with suppliers are clear, structured, and presented in neuro-inclusive formats across both digital and physical channels." },
       { field: "q41", short: "Inclusive Procurement Criteria", text: "When assessing and selecting suppliers, we consider their commitment to inclusive practices, including neurodiversity where possible." },
@@ -449,13 +464,11 @@ const sections = [
   },
 ];
 
-const visibleSections = computed(() => {
-  return sections.filter(s => {
-    if (s.id === 'be' && form.has_physical_workspace === 'No') return false;
-    if (s.id === 'sp' && form.has_suppliers === 'No') return false;
-    return true;
-  });
-});
+// All 8 sections always appear in the flow.
+// Gating questions are at the START of Sections 4 (be) and 8 (sp).
+// If the user answers "No", the section is shown as skipped but still
+// occupies a step — scores as "Not Applicable" on the backend.
+const visibleSections = computed(() => sections);
 
 const totalSteps = computed(() => visibleSections.value.length + 2);
 const currentSection = computed(() => visibleSections.value[currentStep.value - 2]);
@@ -562,12 +575,21 @@ function validateStep() {
     // Instructions screen — no validation needed
   } else {
     const section = currentSection.value;
-    if (section.trailingGatingQuestion) {
-      if (!form[section.trailingGatingField]) {
-        errors[section.trailingGatingField] = true;
+
+    // Leading gating question — must be answered before anything else
+    if (section.gatingQuestion) {
+      if (!form[section.gatingField]) {
+        errors[section.gatingField] = true;
+        // Don't validate questions yet — gating question must be answered first
+        return Object.keys(errors).length === 0;
+      }
+      // If gating answer is "No", section is skipped — no question validation needed
+      if (form[section.gatingField] === 'No') {
+        return true;
       }
     }
-    
+
+    // Validate all questions (NA is a valid answer)
     section.questions.forEach(q => { if (!form[q.field]) errors[q.field] = true; });
   }
   return Object.keys(errors).length === 0;
@@ -1137,6 +1159,20 @@ async function submit() {
 .questions-list { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 0.5rem; }
 .section-liner { font-size: 0.9rem; color: #444; background: rgba(4, 144, 124, 0.05); padding: 1rem 1.25rem; border-radius: 8px; border-left: 3px solid var(--c-accent); font-style: italic; }
 .gating-block { background: #F9F8FF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E2DDD4; }
+.leading-gating-block { border-color: var(--c-accent); border-width: 1.5px; background: rgba(4, 144, 124, 0.04); }
+.gating-eligibility-label {
+  font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--c-accent); font-family: 'Fraunces', serif;
+  margin-bottom: 0.5rem;
+}
+.section-skipped-notice {
+  display: flex; align-items: flex-start; gap: 1rem;
+  background: #F4F2F0; border: 1.5px solid #E2DDD4; border-radius: 12px;
+  padding: 1.25rem 1.5rem; color: #555;
+}
+.section-skipped-notice strong { color: var(--c-primary-dark); display: block; margin-bottom: 0.25rem; }
+.section-skipped-notice p { margin: 0; font-size: 0.875rem; line-height: 1.55; color: #666; }
+.skipped-notice-icon { font-size: 1.5rem; color: #aaa; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; }
 .how-to-intro {
   background: var(--c-white);
   border: 2px solid var(--c-border);
