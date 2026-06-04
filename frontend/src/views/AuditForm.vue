@@ -184,7 +184,7 @@
               <div v-if="currentSection.gatingQuestion && form[currentSection.gatingField] === 'No'" class="section-skipped-notice">
                 <div class="skipped-notice-icon">⊘</div>
                 <div>
-                  <strong>This section is not applicable to your organisation.</strong>
+                  <span class="skipped-heading">This section is not applicable to your organisation.</span>
                   <p>You can safely skip this section. Please click <strong>Next</strong> to continue.</p>
                 </div>
               </div>
@@ -1170,8 +1170,9 @@ async function submit() {
   background: #F4F2F0; border: 1.5px solid #E2DDD4; border-radius: 12px;
   padding: 1.25rem 1.5rem; color: #555;
 }
-.section-skipped-notice strong { color: var(--c-primary-dark); display: block; margin-bottom: 0.25rem; }
+.section-skipped-notice .skipped-heading { font-weight: 800; color: var(--c-primary-dark); display: block; margin-bottom: 0.25rem; }
 .section-skipped-notice p { margin: 0; font-size: 0.875rem; line-height: 1.55; color: #666; }
+.section-skipped-notice strong { color: var(--c-primary-dark); font-weight: 700; }
 .skipped-notice-icon { font-size: 1.5rem; color: #aaa; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; }
 .how-to-intro {
   background: var(--c-white);
