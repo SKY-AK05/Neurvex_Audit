@@ -13,7 +13,7 @@ services:
         VITE_MSAL_TENANT_ID: ${VITE_MSAL_TENANT_ID:-}
     container_name: orchvate-audit
     ports:
-      - "8000:80"
+      - "3600:80"
     env_file:
       - .env
     environment:
