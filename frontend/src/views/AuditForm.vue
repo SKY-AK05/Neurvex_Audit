@@ -185,7 +185,7 @@
                 <div class="skipped-notice-icon">⊘</div>
                 <div>
                   <strong>This section is not applicable to your organisation.</strong>
-                  <p>It will be marked as <em>Not Applicable</em> and excluded from your score. Click <strong>Next</strong> to continue.</p>
+                  <p>You can safely skip this section. Please click <strong>Next</strong> to continue.</p>
                 </div>
               </div>
 
