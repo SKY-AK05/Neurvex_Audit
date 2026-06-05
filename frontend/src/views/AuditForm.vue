@@ -243,6 +243,7 @@
               <!-- Progress Saving Button -->
               <div class="step-nav-mid">
                 <button v-if="currentStep > 2" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
+                <button v-if="currentStep > 0" class="btn-auto-fill" @click="autoFillTestData" type="button" title="Auto-fill with test data">⚡ Auto-Fill</button>
                 <SaveContinueButton v-if="currentStep > 2" :onSave="syncToBackend" />
               </div>
 
@@ -657,6 +658,30 @@ function resetForm() {
   allQuestionFields.forEach(f => {
     form[f] = "";
   });
+}
+
+function autoFillTestData() {
+  // Fill person details
+  form.name = "Test User";
+  form.designation = "QA Tester";
+  form.company_name = "Orchvate Testing Ltd";
+  form.email = "test@orchvate.com";
+  form.contact_number = "+44 7700 900000";
+  form.consent_given = true;
+  
+  // Fill gating questions
+  form.has_physical_workspace = "Yes";
+  form.has_suppliers = "Yes";
+  
+  // Fill all questions with "Yes" for testing
+  allQuestionFields.forEach(f => {
+    form[f] = "Yes";
+  });
+  
+  // Set Q37 to "N/A" for testing that edge case
+  form.q37 = "N/A";
+  
+  console.log("✅ Test data auto-filled");
 }
 
 function startFresh() {
@@ -1284,6 +1309,13 @@ async function submit() {
   box-shadow: 3px 3px 0 var(--c-primary-dark); cursor: pointer; transition: all 0.15s;
 }
 .btn-start-fresh:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
+.btn-auto-fill {
+  background: #FFA500; color: var(--c-white); border: 2px solid #FF8C00; 
+  padding: 0.45rem 1rem; border-radius: 99px; font-weight: 700; font-family: 'Fraunces', serif;
+  box-shadow: 3px 3px 0 #FF8C00; cursor: pointer; transition: all 0.15s;
+  font-size: 0.85rem;
+}
+.btn-auto-fill:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 #FF8C00; background: #FFB52E; }
 .btn-next {
   background: var(--c-primary-dark); color: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.7rem 1.75rem; font-size: 0.9rem; font-weight: 800;
