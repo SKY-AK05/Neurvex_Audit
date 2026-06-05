@@ -154,21 +154,39 @@
 
             <!-- Instructions screen (step 2) -->
             <div v-else-if="currentStep === 2" class="instructions-screen">
-              <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
-              <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
-              <div class="instr-options">
-                <span class="instr-opt">Yes</span>
-                <span class="instr-opt">Partially</span>
-                <span class="instr-opt">No</span>
-                <span class="instr-opt">Not Sure</span>
-              </div>
-              <p class="instr-note">Your responses will only include details that you choose to share.</p>
-              <div class="instr-divider"></div>
-              <p class="instr-segments-label">The segments covered:</p>
-              <div class="instr-segments-list">
-                <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-row">
-                  <span class="instr-seg-num">{{ i + 1 }}</span>
-                  <span class="instr-seg-name">{{ s.title }}</span>
+              <div class="instr-layout">
+                <!-- Left: how to complete -->
+                <div class="instr-left">
+                  <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
+                  <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
+                  <div class="instr-options">
+                    <span class="instr-opt">Yes</span>
+                    <span class="instr-opt">Partially</span>
+                    <span class="instr-opt">No</span>
+                    <span class="instr-opt">Not Sure</span>
+                  </div>
+                  <p class="instr-note">Your responses will only include details that you choose to share.</p>
+                  <div class="instr-divider"></div>
+                  <p class="instr-segments-label">The segments covered:</p>
+                  <div class="instr-segments-list">
+                    <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-row">
+                      <span class="instr-seg-num">{{ i + 1 }}</span>
+                      <span class="instr-seg-name">{{ s.title }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Right: section descriptions -->
+                <div class="instr-right">
+                  <p class="instr-right-label">What each segment covers</p>
+                  <div class="instr-desc-list">
+                    <div v-for="(s, i) in sections" :key="s.id" class="instr-desc-row">
+                      <div class="instr-desc-num">{{ i + 1 }}</div>
+                      <div>
+                        <span class="instr-desc-title">{{ s.title }}</span>
+                        <p class="instr-desc-body">{{ s.summary }}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -200,6 +218,7 @@
                     @click="form[currentSection.gatingField] = 'No'"
                   >No</button>
                 </div>
+                <p class="gating-guidance">If a context exists—even occasionally—the question is applicable. Please answer based on how these environments are typically experienced, not how often they are used.</p>
                 <span v-if="errors[currentSection.gatingField]" class="field-err">Please select an answer</span>
               </div>
 
@@ -354,7 +373,7 @@ const sections = [
     id: "lc",
     title: "Leadership & Culture",
     icon: "◆",
-    summary: "Inclusion starts at the top. Leadership sets the tone, allocates resources, and signals what the organisation truly values.",
+    summary: "Assesses how neurodiversity inclusion is led and modelled by senior leadership, including accountability, culture, and psychological safety.",
     why: "Without visible executive commitment, neurodiversity initiatives often stall — employees notice when inclusion is only on paper.",
     points: ["Executive sponsorship", "Policy & strategy alignment", "Visible role models"],
     tip: "Look beyond policy documents — consider what leaders actually say and do in meetings and communications.",
@@ -370,7 +389,7 @@ const sections = [
     id: "ro",
     title: "Recruitment & Onboarding",
     icon: "◇",
-    summary: "The hiring funnel is where many neurodivergent candidates are lost — rigid processes and unclear expectations create unnecessary barriers.",
+    summary: "Examines how inclusive hiring and onboarding practices are for neurodivergent candidates, from job design to early support and clarity.",
     why: "Inclusive recruitment widens your talent pool and reduces early attrition from candidates who could thrive with small adjustments.",
     points: ["Inclusive job design", "Flexible interviews", "Structured onboarding"],
     tip: "Small changes — sharing interview questions in advance or offering written tasks — can make a big difference without lowering standards.",
@@ -386,7 +405,7 @@ const sections = [
     id: "we",
     title: "Work Environment & Adjustments",
     icon: "▣",
-    summary: "Day-to-day work practices determine whether neurodivergent employees can perform at their best — or spend energy masking and compensating.",
+    summary: "Focuses on how workplace support, flexibility, and adjustments are understood, accessed, and implemented across teams.",
     why: "Clear adjustment pathways and manager confidence reduce friction, build trust, and improve retention.",
     points: ["Adjustment requests", "Flexible working", "Manager capability"],
     tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
@@ -402,7 +421,7 @@ const sections = [
     id: "be",
     title: "Built Environment & Sensory",
     icon: "◎",
-    summary: "Physical and sensory environments affect focus, comfort, and wellbeing — especially for people who are sensitive to noise, light, or crowding.",
+    summary: "Evaluates how physical workspaces are designed or adapted to support sensory needs and reduce environmental stress.",
     why: "Environmental design is often overlooked in DEI work, yet it directly impacts productivity and whether people feel safe at work.",
     points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
     tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
@@ -421,7 +440,7 @@ const sections = [
     id: "tm",
     title: "Talent Management & Development",
     icon: "↑",
-    summary: "Career growth systems can unintentionally penalise different working styles — from annual reviews to unstructured promotion conversations.",
+    summary: "Assesses how performance management, feedback, learning, and career progression support neurodivergent employees.",
     why: "Fair talent processes ensure neurodivergent employees are developed and retained, not overlooked for roles they could excel in.",
     points: ["Fair appraisals", "Equal development access", "Retention insight"],
     tip: "Review whether performance criteria reward only one style of communication or collaboration.",
@@ -437,7 +456,7 @@ const sections = [
     id: "ca",
     title: "Communication & Accessibility",
     icon: "◈",
-    summary: "How information flows internally shapes who can participate fully — unclear emails, last-minute meetings, and jargon all create friction.",
+    summary: "Examines how clearly and accessibly information is shared, including inclusive communication practices and formats.",
     why: "Accessible communication is a daily inclusion practice, not a one-off training — it benefits everyone, not only neurodivergent staff.",
     points: ["Plain language", "Multi-format info", "Digital accessibility"],
     tip: "Agendas sent 24 hours ahead and recordings of key meetings are simple wins with wide impact.",
@@ -453,7 +472,7 @@ const sections = [
     id: "pc",
     title: "Products & Customer Experience",
     icon: "◉",
-    summary: "Inclusion extends beyond your workforce — customers and users experience your brand through products, services, and support channels.",
+    summary: "Reviews how products, services, and customer interactions are designed to be clear, accessible, and neuro-inclusive.",
     why: "Neuroinclusive design improves usability for all users and reduces complaints, abandonment, and reputational risk.",
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
@@ -469,7 +488,7 @@ const sections = [
     id: "sp",
     title: "Suppliers & Procurement",
     icon: "⬡",
-    summary: "Your supply chain amplifies your inclusion impact — procurement choices signal whether inclusion is embedded or only internal-facing.",
+    summary: "Looks at how inclusion and accessibility are considered in supplier relationships, procurement practices, and partner engagement.",
     why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
     tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
@@ -795,7 +814,7 @@ async function submit() {
 
 .step-layout {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   gap: 1.5rem;
   width: 100%;
   max-width: 1500px;
@@ -1258,6 +1277,15 @@ async function submit() {
   color: var(--c-accent); font-family: 'Fraunces', serif;
   margin-bottom: 0.5rem;
 }
+.gating-guidance {
+  font-size: 0.8rem;
+  color: #777;
+  line-height: 1.55;
+  margin: 0.75rem 0 0;
+  font-style: italic;
+  border-top: 1px solid rgba(4, 144, 124, 0.15);
+  padding-top: 0.65rem;
+}
 .section-skipped-notice {
   display: flex; align-items: flex-start; gap: 1rem;
   background: #F4F2F0; border: 1.5px solid #E2DDD4; border-radius: 12px;
@@ -1394,6 +1422,12 @@ async function submit() {
 .alert-error { background: #FFF0F0; color: #C0392B; border: 1px solid #FFCACA; }
 
 @media (max-width: 900px) {
+  .instr-layout {
+    grid-template-columns: 1fr;
+  }
+  .instr-right {
+    display: none; /* hide section descriptions on small screens to save space */
+  }
   .step-wrap { padding: 0.75rem 0.75rem 0.5rem; }
   .step-layout {
     grid-template-columns: 1fr;
@@ -1676,14 +1710,77 @@ async function submit() {
 /* Instructions screen */
 
 .instructions-screen {
+  width: 100%;
+}
+.instr-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 480px) 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+.instr-left {
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  max-width: 580px;
   padding: 1.5rem;
-  padding-bottom: 1.5rem;
   background: rgba(4, 144, 124, 0.04);
   border-radius: 12px;
+}
+.instr-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.instr-right-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-accent);
+  font-family: 'Fraunces', serif;
+  margin: 0 0 0.25rem;
+}
+.instr-desc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.instr-desc-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.65rem 0.85rem;
+  background: var(--c-white);
+  border: 1.5px solid #E2DDD4;
+  border-radius: 10px;
+}
+.instr-desc-num {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--c-white);
+  background: var(--c-accent);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-family: 'Fraunces', serif;
+}
+.instr-desc-title {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--c-primary-dark);
+  display: block;
+  margin-bottom: 0.2rem;
+  font-family: 'Fraunces', serif;
+}
+.instr-desc-body {
+  font-size: 0.78rem;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
 }
 .instr-body {
   font-size: 0.95rem;
