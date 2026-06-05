@@ -64,7 +64,7 @@
           </div>
         </aside>
 
-        <div :class="['step-center', currentStep > 1 ? 'step-center--full' : '']">
+        <div :class="['step-center', (currentStep === 0 || currentStep > 2) ? 'step-center--full' : '']">
         <div class="step-main">
         <div class="step-card" :key="currentStep">
           <!-- Mobile progress header -->
@@ -80,11 +80,12 @@
 
             <div class="step-card-head">
             <div class="step-head-meta">
-              <div v-if="currentStep === 0" class="step-tag">Getting Started</div>
-              <div v-else-if="currentStep === 1"></div>
-              <div v-else class="step-tag">Section {{ currentStep - 1 }} of {{ visibleSections.length }}</div>
+              <div v-if="currentStep === 0" class="step-tag">Welcome</div>
+              <div v-else-if="currentStep === 1" class="step-tag">Getting Started</div>
+              <div v-else-if="currentStep === 2"></div>
+              <div v-else class="step-tag">Section {{ currentStep - 2 }} of {{ visibleSections.length }}</div>
               <button
-                v-if="currentStep > 1 && false"
+                v-if="currentStep > 2 && false"
                 class="mobile-info-toggle"
                 @click="showMobileInfo = !showMobileInfo"
                 type="button"
@@ -93,15 +94,47 @@
               </button>
             </div>
             <div class="step-head-row">
-              <h1 class="h1-green">{{ currentStep === 0 ? 'Tell us about you' : currentStep === 1 ? 'Before you begin' : currentSection.title }}</h1>
-              <p v-if="currentStep > 1" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
+              <h1 class="h1-green">{{ currentStep === 0 ? 'Neuro-Inclusive Workplace Index' : currentStep === 1 ? 'Tell us about you' : currentStep === 2 ? 'Before you begin' : currentSection.title }}</h1>
+              <p v-if="currentStep > 2" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
             </div>
-            <p v-if="currentStep === 0" class="step-sub">We'll use this to personalise your audit report.</p>
-            <p v-if="currentStep === 1" class="step-sub">Here's what to expect before you begin the audit.</p>
+            <p v-if="currentStep === 0" class="step-sub">A structured self-assessment for neurodiversity inclusion.</p>
+            <p v-if="currentStep === 1" class="step-sub">We'll use this to personalise your audit report.</p>
+            <p v-if="currentStep === 2" class="step-sub">Here's what to expect before you begin the audit.</p>
           </div>
 
           <div ref="questionsScroll" class="questions-scroll">
-            <div v-if="currentStep === 0" class="fields-grid">
+            <!-- Intro screen — What is NIWI? (step 0) -->
+            <div v-if="currentStep === 0" class="intro-screen">
+              <div class="intro-stats">
+                <div class="intro-stat">
+                  <span class="intro-stat-num">~15%</span>
+                  <span class="intro-stat-label">of people are neurodivergent</span>
+                </div>
+                <div class="intro-stat">
+                  <span class="intro-stat-num">8</span>
+                  <span class="intro-stat-label">key segments</span>
+                </div>
+                <div class="intro-stat">
+                  <span class="intro-stat-num">10 min</span>
+                  <span class="intro-stat-label">to complete</span>
+                </div>
+              </div>
+              <p class="intro-body">Neurodiversity inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing valuable strengths such as creativity, innovation, and attention to detail.</p>
+              <p class="intro-body">The NIWI is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neurodiversity inclusion across key segments of the employee lifecycle and customer experience.</p>
+              <div class="intro-points">
+                <div class="intro-point">
+                  <span class="intro-point-arrow">→</span>
+                  <span>Building neuro-inclusive workplaces is about how inclusion is <em>experienced</em> every day, not just about policy.</span>
+                </div>
+                <div class="intro-point">
+                  <span class="intro-point-arrow">→</span>
+                  <span>NIWI is a reflection-based index — not a ranking tool — to help you understand where you are in your inclusion journey.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Person details form (step 1) -->
+            <div v-else-if="currentStep === 1" class="fields-grid">
               <div class="field">
                 <label>Full Name *</label>
                 <input v-model="form.name" type="text" placeholder="Jane Smith" :class="{ error: errors.name }" />
@@ -135,8 +168,8 @@
               </div>
             </div>
 
-            <!-- Instructions screen (step 1) -->
-            <div v-else-if="currentStep === 1" class="instructions-screen">
+            <!-- Instructions screen (step 2) -->
+            <div v-else-if="currentStep === 2" class="instructions-screen">
               <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
               <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
               <div class="instr-options">
@@ -156,6 +189,7 @@
               </div>
             </div>
 
+            <!-- Section questions (step 3+) -->
             <div v-else class="questions-list">
               <div v-if="currentSection.liner" class="section-liner">
                 {{ currentSection.liner }}
@@ -193,7 +227,7 @@
               <template v-if="!currentSection.gatingQuestion || form[currentSection.gatingField] === 'Yes'">
                 <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
                   <div class="q-header-row">
-                    <span class="q-number">Q{{ (currentStep - 2) * 5 + qi + 1 }}</span>
+                    <span class="q-number">Q{{ (currentStep - 3) * 5 + qi + 1 }}</span>
                     <span class="q-short">{{ q.short }}</span>
                   </div>
                   <p class="q-text">{{ q.text }}</p>
@@ -212,23 +246,24 @@
           </div>
           
           <div class="step-actions">
+            <div v-if="submitError" class="alert alert-error">❌ {{ submitError }}</div>
             <div class="step-nav">
               <button v-if="currentStep > 0" class="btn-back" @click="currentStep--" type="button">← Back</button>
               <div v-else></div>
 
               <!-- Progress Saving Button -->
-              <div style="display: flex; gap: 0.5rem; margin-left: 0.5rem;">
-                <button v-if="currentStep > 1" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-                <SaveContinueButton v-if="currentStep > 1" :onSave="syncToBackend" />
+              <div class="step-nav-mid">
+                <button v-if="currentStep > 2" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
+                <SaveContinueButton v-if="currentStep > 2" :onSave="syncToBackend" />
               </div>
 
               <button
-                v-if="currentStep < totalSteps.value - 1 || currentStep < visibleSections.length + 1"
+                v-if="currentStep < visibleSections.length + 2"
                 class="btn-next"
                 @click="nextStep"
                 type="button"
               >
-                {{ currentStep === 0 ? 'Next →' : currentStep === 1 ? 'Start Audit →' : 'Next →' }}
+                {{ currentStep === 2 ? 'Start Audit →' : 'Next →' }}
               </button>
               <button
                 v-else
@@ -240,14 +275,13 @@
                 {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
               </button>
             </div>
-            <div v-if="submitError" class="alert alert-error">{{ submitError }}</div>
           </div>
         </div>
 
         </div>
 
         <!-- Section context panel (right) — fades out on question steps -->
-        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', currentStep > 1 ? 'step-aside--hidden' : '']" :key="currentStep">
+        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', (currentStep === 0 || currentStep > 2) ? 'step-aside--hidden' : '']" :key="currentStep">
           <div class="aside-card">
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
@@ -258,7 +292,7 @@
               <p>{{ currentPanel.why }}</p>
             </div>
 
-            <div v-if="currentStep === 0 && currentPanel.tip" class="aside-block">
+            <div v-if="currentStep === 1 && currentPanel.tip" class="aside-block">
               <h3>How to complete the questionnaire</h3>
               <p>{{ currentPanel.tip }}</p>
             </div>
@@ -266,7 +300,7 @@
             <ul v-if="currentPanel.points?.length" class="aside-points">
               <li v-for="(point, i) in currentPanel.points" :key="i">{{ point }}</li>
             </ul>
-            <div v-if="currentStep > 1" class="aside-progress-mini">
+            <div v-if="currentStep > 2" class="aside-progress-mini">
               <span>{{ sectionAnsweredCount }} of {{ currentSection.questions.length }} answered</span>
               <div class="mini-bar">
                 <div class="mini-fill" :style="{ width: sectionProgressPct + '%' }"></div>
@@ -470,8 +504,8 @@ const sections = [
 // occupies a step — scores as "Not Applicable" on the backend.
 const visibleSections = computed(() => sections);
 
-const totalSteps = computed(() => visibleSections.value.length + 2);
-const currentSection = computed(() => visibleSections.value[currentStep.value - 2]);
+const totalSteps = computed(() => visibleSections.value.length + 3);
+const currentSection = computed(() => visibleSections.value[currentStep.value - 3]);
 const progressPct    = computed(() => ((currentStep.value) / (totalSteps.value - 1)) * 100);
 
 const sectionShortNames = [
@@ -480,8 +514,9 @@ const sectionShortNames = [
 ];
 
 const progressSteps = computed(() => [
-  { id: "start", short: "Start", label: "Your details" },
-  { id: "intro", short: "Before You Begin", label: "Before You Begin" },
+  { id: "welcome", short: "Welcome",          label: "What is NIWI?" },
+  { id: "start",   short: "Start",            label: "Your details" },
+  { id: "intro",   short: "Before You Begin", label: "Before You Begin" },
   ...visibleSections.value.map((s) => ({
     id: s.id,
     short: s.title,
@@ -490,18 +525,20 @@ const progressSteps = computed(() => [
 ]);
 
 const progressPhase = computed(() => {
-  if (currentStep.value === 0) return "Getting started";
-  if (currentStep.value === 1) return "Before you begin";
-  return `Section ${currentStep.value - 1} — ${currentSection.value.title}`;
+  if (currentStep.value === 0) return "What is NIWI?";
+  if (currentStep.value === 1) return "Getting started";
+  if (currentStep.value === 2) return "Before you begin";
+  return `Section ${currentStep.value - 2} — ${currentSection.value.title}`;
 });
 
 const currentPanel = computed(() => {
   if (currentStep.value === 0) return step0Panel;
-  if (currentStep.value === 1) return step0Panel; // reuse welcome panel on instructions screen
+  if (currentStep.value === 1) return step0Panel;
+  if (currentStep.value === 2) return step0Panel; // reuse welcome panel on instructions screen
   const s = currentSection.value;
   return {
     icon: s.icon,
-    tag: `Section ${currentStep.value - 1} of ${visibleSections.value.length}`,
+    tag: `Section ${currentStep.value - 2} of ${visibleSections.value.length}`,
     title: s.title,
     summary: s.summary,
     why: s.why,
@@ -511,12 +548,12 @@ const currentPanel = computed(() => {
 });
 
 const sectionAnsweredCount = computed(() => {
-  if (currentStep.value <= 1) return 0;
+  if (currentStep.value <= 2) return 0;
   return currentSection.value.questions.filter(q => form[q.field]).length;
 });
 
 const sectionProgressPct = computed(() => {
-  if (currentStep.value <= 1) return 0;
+  if (currentStep.value <= 2) return 0;
   const total = currentSection.value.questions.length;
   return (sectionAnsweredCount.value / total) * 100;
 });
@@ -555,11 +592,14 @@ watch(() => form, (newForm) => {
 function validateStep() {
   Object.keys(errors).forEach(k => delete errors[k]);
   if (currentStep.value === 0) {
-    if (!form.name)         errors.name         = true;
-    if (!form.designation)  errors.designation  = true;
-    if (!form.company_name) errors.company_name = true;
+    // Intro screen — no validation needed
+  } else if (currentStep.value === 1) {
+    // Person details form validation
+    if (!form.name)          errors.name         = true;
+    if (!form.designation)   errors.designation  = true;
+    if (!form.company_name)  errors.company_name = true;
     if (!form.consent_given) errors.consent_given = true;
-    
+
     if (!form.email) {
       errors.email = true;
       errors.emailMsg = "Required";
@@ -571,7 +611,7 @@ function validateStep() {
         errors.emailMsg = "Please use a company email address";
       }
     }
-  } else if (currentStep.value === 1) {
+  } else if (currentStep.value === 2) {
     // Instructions screen — no validation needed
   } else {
     const section = currentSection.value;
@@ -580,10 +620,8 @@ function validateStep() {
     if (section.gatingQuestion) {
       if (!form[section.gatingField]) {
         errors[section.gatingField] = true;
-        // Don't validate questions yet — gating question must be answered first
         return Object.keys(errors).length === 0;
       }
-      // If gating answer is "No", section is skipped — no question validation needed
       if (form[section.gatingField] === 'No') {
         return true;
       }
@@ -1206,7 +1244,8 @@ async function submit() {
 .opt-btn.selected { background: var(--c-primary-dark); color: var(--c-white); border-color: var(--c-primary-dark); font-weight: 700; }
 
 /* Navigation */
-.step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.5rem; }
+.step-nav-mid { display: flex; gap: 0.5rem; align-items: center; }
 .btn-back {
   background: var(--c-white); border: 2px solid var(--c-primary-dark); border-radius: 99px;
   padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700;
@@ -1289,7 +1328,7 @@ async function submit() {
 .success-box h2 { font-size: 1.5rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.75rem; }
 .success-box p  { color: #666; line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-.alert { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-top: 1rem; }
+.alert { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 0.75rem; word-break: break-word; }
 .alert-error { background: #FFF0F0; color: #C0392B; border: 1px solid #FFCACA; }
 
 @media (max-width: 900px) {
@@ -1347,18 +1386,20 @@ async function submit() {
   .step-aside {
     display: none;
   }
-  /* Show aside below the form card on steps 0 and 1 (welcome + instructions) */
+  /* On steps 0 & 1: show aside panel ABOVE the form card (app info → form) */
   .step-aside:not(.step-aside--hidden) {
     display: block;
-    grid-row: 2;
+    order: -1;         /* ← appears before step-main in visual order */
     height: auto;
-    max-height: none;
-    overflow-y: visible;
+    max-height: 420px;
+    overflow-y: auto;
     border-radius: 16px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
+  .step-aside:not(.step-aside--hidden)::-webkit-scrollbar { display: none; }
   .step-aside.mobile-show {
     display: block;
-    grid-row: 1;
     order: -1;
     height: auto;
     max-height: 38vh;
@@ -1369,7 +1410,6 @@ async function submit() {
     display: none !important;
   }
   .step-main {
-    grid-row: 1;
     min-height: 0;
   }
   .step-card-head { padding: 1.5rem 1.75rem 0; }
@@ -1395,6 +1435,11 @@ async function submit() {
   .mobile-info-toggle:hover {
     color: var(--c-primary-light);
   }
+}
+
+@media (max-width: 480px) {
+  /* Hide text on tiny screens — keep just the logo image */
+  .form-logo-name { display: none; }
 }
 
 @media (max-width: 600px) {
@@ -1435,12 +1480,16 @@ async function submit() {
     padding: 0.75rem 1.25rem;
   }
   .step-nav {
-    display: flex;
-    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
-    align-items: center;
-    justify-content: space-between;
+    row-gap: 0.5rem;
+  }
+  /* On mobile: mid group (Start Fresh + Save) takes full width above back/next */
+  .step-nav-mid {
+    order: -1;
     width: 100%;
+    justify-content: center;
+    gap: 0.4rem;
   }
   .btn-back, .btn-next, .btn-submit, .save-continue-container :deep(.btn),
   .save-continue-container :deep(.btn-green) {
@@ -1461,6 +1510,15 @@ async function submit() {
     min-width: 60px;
     max-width: 75px;
   }
+  .btn-start-fresh {
+    flex: 1;
+    height: 38px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--c-border);
+    box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
+  }
   .save-continue-container {
     flex: 1.8;
     display: inline-block;
@@ -1469,8 +1527,8 @@ async function submit() {
   .save-continue-container :deep(.btn) {
     width: 100%;
   }
-  .btn-next, .btn-submit, .btn-back {
-    flex: 1.8;
+  .btn-next, .btn-submit {
+    flex: 1;
     min-width: 80px;
     box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
   }
@@ -1486,7 +1544,75 @@ async function submit() {
     font-size: 0.72rem;
   }
 }
+/* ── Intro screen (step 0) ─────────────────────────────── */
+.intro-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.25rem 0 0.5rem;
+}
+.intro-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+.intro-stat {
+  background: rgba(4, 144, 124, 0.06);
+  border: 1.5px solid rgba(4, 144, 124, 0.18);
+  border-radius: 12px;
+  padding: 0.85rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+}
+.intro-stat-num {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--c-accent);
+  font-family: 'Fraunces', serif;
+  line-height: 1;
+}
+.intro-stat-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #666;
+  line-height: 1.3;
+}
+.intro-body {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: #444;
+  margin: 0;
+}
+.intro-points {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: rgba(4, 144, 124, 0.04);
+  border-left: 3px solid var(--c-accent);
+  border-radius: 0 8px 8px 0;
+  padding: 0.85rem 1rem;
+}
+.intro-point {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #444;
+}
+.intro-point-arrow {
+  color: var(--c-accent);
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-top: 0.05rem;
+}
+
 /* Instructions screen */
+
 .instructions-screen {
   display: flex;
   flex-direction: column;

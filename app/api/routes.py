@@ -113,6 +113,7 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
     insert_sql = """
         INSERT INTO submissions (
             name, designation, company_name, email, contact_number,
+            has_physical_workspace, has_suppliers,
             q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
             q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
             q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
@@ -125,6 +126,7 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
             consent_given, consent_timestamp, organization_id, dimension_scores
         ) VALUES (
             %(name)s, %(designation)s, %(company_name)s, %(email)s, %(contact_number)s,
+            %(has_physical_workspace)s, %(has_suppliers)s,
             %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
             %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
             %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
@@ -145,6 +147,8 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
         "company_name": data.get("company_name"),
         "email": data.get("email"),
         "contact_number": data.get("contact_number", None),
+        "has_physical_workspace": data.get("has_physical_workspace") or None,
+        "has_suppliers": data.get("has_suppliers") or None,
         "consent_given": data.get("consent_given", False),
         "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
         "organization_id": organization_id,

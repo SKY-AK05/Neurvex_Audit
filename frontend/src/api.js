@@ -30,7 +30,8 @@ async function handleResponse(res) {
     let errorMsg = "Request failed";
     try {
       const data = await res.clone().json();
-      errorMsg = data.error || errorMsg;
+      // FastAPI returns {"detail": "..."}, custom errors use {"error": "..."}
+      errorMsg = data.error || data.detail || errorMsg;
     } catch (e) {
       // Ignore JSON parse errors for non-JSON error responses
     }

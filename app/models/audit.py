@@ -14,6 +14,10 @@ class AuditSubmission(BaseModel):
     consent_given: Optional[bool] = False
     draft_id: Optional[str] = None
 
+    # Gating questions for Built Environment (section 4) and Suppliers (section 8)
+    has_physical_workspace: Optional[str] = Field(None, pattern="^(Yes|No|)$")
+    has_suppliers: Optional[str] = Field(None, pattern="^(Yes|No|)$")
+
     q5: str = Field(..., pattern="^(Yes|Partially|No|Not Sure|NA|)$")
     q6: str = Field(..., pattern="^(Yes|Partially|No|Not Sure|NA|)$")
     q7: str = Field(..., pattern="^(Yes|Partially|No|Not Sure|NA|)$")
