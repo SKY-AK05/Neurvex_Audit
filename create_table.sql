@@ -12,6 +12,10 @@ CREATE TABLE IF NOT EXISTS submissions (
     contact_number    VARCHAR(50),
     designation       VARCHAR(255),
 
+    -- Gating questions (Section 4 & 8)
+    has_physical_workspace VARCHAR(10),
+    has_suppliers          VARCHAR(10),
+
     -- Raw answers Q5–Q44
     q5  VARCHAR(20), q6  VARCHAR(20), q7  VARCHAR(20), q8  VARCHAR(20), q9  VARCHAR(20),
     q10 VARCHAR(20), q11 VARCHAR(20), q12 VARCHAR(20), q13 VARCHAR(20), q14 VARCHAR(20),
@@ -23,14 +27,14 @@ CREATE TABLE IF NOT EXISTS submissions (
     q40 VARCHAR(20), q41 VARCHAR(20), q42 VARCHAR(20), q43 VARCHAR(20), q44 VARCHAR(20),
 
     -- Section scores and levels
-    lc_score INT,         lc_level VARCHAR(50),
-    ro_score INT,         ro_level VARCHAR(50),
-    we_score INT,         we_level VARCHAR(50),
-    be_score INT,         be_level VARCHAR(50),
-    tm_score INT,         tm_level VARCHAR(50),
-    ca_score INT,         ca_level VARCHAR(50),
-    pc_score INT,         pc_level VARCHAR(50),
-    sp_score INT,         sp_level VARCHAR(50),
+    lc_score DECIMAL(5,2), lc_level VARCHAR(50),
+    ro_score DECIMAL(5,2), ro_level VARCHAR(50),
+    we_score DECIMAL(5,2), we_level VARCHAR(50),
+    be_score DECIMAL(5,2), be_level VARCHAR(50),
+    tm_score DECIMAL(5,2), tm_level VARCHAR(50),
+    ca_score DECIMAL(5,2), ca_level VARCHAR(50),
+    pc_score DECIMAL(5,2), pc_level VARCHAR(50),
+    sp_score DECIMAL(5,2), sp_level VARCHAR(50),
 
     -- Overall
     overall_avg   DECIMAL(4,2),
@@ -39,7 +43,17 @@ CREATE TABLE IF NOT EXISTS submissions (
     -- Email and status
     email_body    TEXT,
     status        VARCHAR(20) DEFAULT 'pending',
-    sent_at       TIMESTAMP
+    sent_at       TIMESTAMP,
+
+    -- GDPR Consent
+    consent_given      BOOLEAN NOT NULL DEFAULT FALSE,
+    consent_timestamp  TIMESTAMP,
+
+    -- Organization support (multi-tenant)
+    organization_id    UUID,
+
+    -- Detailed dimension breakdown
+    dimension_scores   JSONB
 );
 
 CREATE TABLE IF NOT EXISTS app_settings (
