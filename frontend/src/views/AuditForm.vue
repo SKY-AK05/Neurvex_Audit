@@ -243,7 +243,6 @@
               <!-- Progress Saving Button -->
               <div class="step-nav-mid">
                 <button v-if="currentStep > 2" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-                <button v-if="currentStep > 0" class="btn-auto-fill" @click="autoFillTestData" type="button" title="Auto-fill with test data">⚡ Auto-Fill</button>
                 <SaveContinueButton v-if="currentStep > 2" :onSave="syncToBackend" />
               </div>
 
