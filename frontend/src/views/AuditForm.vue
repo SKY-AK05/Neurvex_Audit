@@ -661,27 +661,33 @@ function resetForm() {
 }
 
 function autoFillTestData() {
-  // Fill person details
-  form.name = "Test User";
-  form.designation = "QA Tester";
-  form.company_name = "Orchvate Testing Ltd";
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const answers = ["Yes", "Partially", "No", "Not Sure"];
+  const names = ["Alex Johnson", "Priya Sharma", "Jordan Lee", "Sam Clarke", "Morgan Davis"];
+  const roles = ["HR Manager", "DEI Lead", "People Director", "CHRO", "Inclusion Manager"];
+  const companies = ["Acme Corp", "BluePeak Ltd", "Nexgen Solutions", "Vertex Group", "Orbis Technologies"];
+
+  // Fill person details with random values
+  form.name = rand(names);
+  form.designation = rand(roles);
+  form.company_name = rand(companies);
   form.email = "test@orchvate.com";
   form.contact_number = "+44 7700 900000";
   form.consent_given = true;
-  
-  // Fill gating questions
-  form.has_physical_workspace = "Yes";
-  form.has_suppliers = "Yes";
-  
-  // Fill all questions with "Yes" for testing
+
+  // Gating questions — randomly Yes or No
+  form.has_physical_workspace = rand(["Yes", "No"]);
+  form.has_suppliers = rand(["Yes", "No"]);
+
+  // Fill all questions with a random answer
   allQuestionFields.forEach(f => {
-    form[f] = "Yes";
+    form[f] = rand(answers);
   });
-  
-  // Set Q37 to "N/A" for testing that edge case
-  form.q37 = "N/A";
-  
-  console.log("✅ Test data auto-filled");
+
+  // Q37 randomly gets N/A sometimes
+  if (Math.random() > 0.5) form.q37 = "N/A";
+
+  console.log("✅ Test data auto-filled with random answers");
 }
 
 function startFresh() {
