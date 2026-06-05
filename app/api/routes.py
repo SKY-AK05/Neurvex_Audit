@@ -140,8 +140,11 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
         ) RETURNING id
     """
 
+    # Sanitize "NA" scores to None for PostgreSQL DECIMAL columns
+    sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
+
     params = {
-        **scores,
+        **sanitized_scores,
         "name": data.get("name"),
         "designation": data.get("designation"),
         "company_name": data.get("company_name"),

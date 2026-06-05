@@ -64,7 +64,8 @@
           <div v-for="d in dimensions" :key="d.key" class="dimension-score-card" :class="getScoreClass(sub[`${d.key}_score`])">
             <div class="dim-head">
               <span class="dim-label">{{ d.label }}</span>
-              <span class="dim-val">{{ sub[`${d.key}_score`] }}/20</span>
+              <span class="dim-val" v-if="sub[`${d.key}_score`] === null || sub[`${d.key}_score`] === 'NA'">N/A</span>
+              <span class="dim-val" v-else>{{ sub[`${d.key}_score`] }}/20</span>
             </div>
             <p class="dim-commentary">{{ getCommentary(d.key, sub[`${d.key}_score`]) }}</p>
           </div>
@@ -267,6 +268,7 @@ const dimensions = [
 ];
 
 function getScoreClass(score) {
+  if (score === null || score === undefined || score === "NA") return "na-score";
   if (score <= 8) return "low-score";
   if (score <= 14) return "med-score";
   return "high-score";
@@ -316,7 +318,7 @@ const commentaries = {
 };
 
 function getCommentary(key, score) {
-  if (score === undefined || score === null) return "";
+  if (score === null || score === undefined || score === "NA") return "This section was skipped as it is not applicable to the organisation.";
   if (score <= 8) return commentaries[key].low;
   if (score <= 14) return commentaries[key].med;
   return commentaries[key].high;
@@ -425,4 +427,7 @@ h2 {
 .low-score { background: #FFF0F0; border-color: #C0392B; }
 .med-score { background: #FFF8DC; border-color: #8B6914; }
 .high-score { background: #EDFFD4; border-color: #3A7A00; }
+.na-score { background: #F4F2F0; border-color: #ccc; }
+.na-score .dim-label, .na-score .dim-val { color: #888; }
+.na-score .dim-commentary { color: #888; font-style: italic; }
 </style>
