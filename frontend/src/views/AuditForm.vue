@@ -80,7 +80,7 @@
 
             <div class="step-card-head">
             <div class="step-head-meta">
-              <div v-if="currentStep === 0" class="step-tag">Welcome</div>
+              <div v-if="currentStep === 0" class="step-tag" style="color: var(--c-accent); border-color: var(--c-accent);">Welcome</div>
               <div v-else-if="currentStep === 1" class="step-tag">Getting Started</div>
               <div v-else-if="currentStep === 2"></div>
               <div v-else class="step-tag">Section {{ currentStep - 2 }} of {{ visibleSections.length }}</div>
@@ -94,10 +94,10 @@
               </button>
             </div>
             <div class="step-head-row">
-              <h1 class="h1-green">{{ currentStep === 0 ? 'Neuro-Inclusive Workplace Index' : currentStep === 1 ? 'Tell us about you' : currentStep === 2 ? 'Before you begin' : currentSection.title }}</h1>
+              <h1 :class="currentStep === 0 ? 'h1-navy' : 'h1-green'">{{ currentStep === 0 ? 'Neuro-Inclusive Workplace Index (NIWI) Self-Assessment' : currentStep === 1 ? 'Tell us about you' : currentStep === 2 ? 'Before you begin' : currentSection.title }}</h1>
               <p v-if="currentStep > 2" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
             </div>
-            <p v-if="currentStep === 0" class="step-sub">A structured self-assessment for neurodiversity inclusion.</p>
+            <p v-if="currentStep === 0" class="step-sub" style="display:none;"></p>
             <p v-if="currentStep === 1" class="step-sub">We'll use this to personalise your audit report.</p>
             <p v-if="currentStep === 2" class="step-sub">Here's what to expect before you begin the audit.</p>
           </div>
@@ -105,32 +105,16 @@
           <div ref="questionsScroll" class="questions-scroll">
             <!-- Intro screen — What is NIWI? (step 0) -->
             <div v-if="currentStep === 0" class="intro-screen">
-              <div class="intro-stats">
-                <div class="intro-stat">
-                  <span class="intro-stat-num">~15%</span>
-                  <span class="intro-stat-label">of people are neurodivergent</span>
-                </div>
-                <div class="intro-stat">
-                  <span class="intro-stat-num">8</span>
-                  <span class="intro-stat-label">key segments</span>
-                </div>
-                <div class="intro-stat">
-                  <span class="intro-stat-num">10 min</span>
-                  <span class="intro-stat-label">to complete</span>
-                </div>
-              </div>
               <p class="intro-body">Neurodiversity inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing valuable strengths such as creativity, innovation, and attention to detail.</p>
-              <p class="intro-body">The NIWI is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neurodiversity inclusion across key segments of the employee lifecycle and customer experience.</p>
-              <div class="intro-points">
-                <div class="intro-point">
-                  <span class="intro-point-arrow">→</span>
-                  <span>Building neuro-inclusive workplaces is about how inclusion is <em>experienced</em> every day, not just about policy.</span>
-                </div>
-                <div class="intro-point">
-                  <span class="intro-point-arrow">→</span>
-                  <span>NIWI is a reflection-based index — not a ranking tool — to help you understand where you are in your inclusion journey.</span>
-                </div>
-              </div>
+              <p class="intro-body">The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neurodiversity inclusion. It covers key segments across the employee lifecycle and customer experience, providing a holistic view of current practices.</p>
+              <p class="intro-body" style="margin-bottom: 2rem;">NIWI is not a ranking tool, but a reflection-based index to help organisations understand where they are in their neurodiversity inclusion journey.</p>
+              
+              <hr style="border: 0; border-top: 1px solid var(--c-border); margin: 2rem 0;" />
+              
+              <h2 style="color: var(--c-accent); font-family: 'Fraunces', serif; font-size: 1.2rem; margin-bottom: 0.75rem;">Why this matters</h2>
+              <p class="intro-body">Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.</p>
+              
+              <hr style="border: 0; border-top: 1px solid var(--c-border); margin: 2rem 0;" />
             </div>
 
             <!-- Person details form (step 1) -->
@@ -1082,9 +1066,10 @@ async function submit() {
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-block; background: transparent; color: var(--c-border); font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid var(--c-border); font-family: 'Fraunces', serif; }
+.step-tag { display: inline-block; background: transparent; color: var(--c-primary-dark); font-size: 0.7rem; font-weight: 800; padding: 0.2rem 0.7rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.85rem; border: 1.5px solid var(--c-primary-dark); font-family: 'Fraunces', serif; }
 .step-head-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
 .h1-green { font-size: 1.8rem; font-weight: 800; color: var(--c-accent); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Fraunces', serif; }
+.h1-navy { font-size: 1.8rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; margin-bottom: 0.35rem; font-family: 'Fraunces', serif; }
 .step-sub { color: #999; font-size: 0.875rem; margin-bottom: 0; }
 .step-sub-inline { color: #999; font-size: 0.8rem; white-space: nowrap; margin-bottom: 0; align-self: flex-end; padding-bottom: 0.4rem; }
 
