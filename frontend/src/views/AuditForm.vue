@@ -64,7 +64,7 @@
           </div>
         </aside>
 
-        <div :class="['step-center', currentStep <= 2 ? 'step-center--full' : '']">
+        <div class="step-center step-center--full">
         <div class="step-main">
         <div class="step-card" :key="currentStep">
           <!-- Mobile progress header -->
@@ -264,8 +264,8 @@
 
         </div>
 
-        <!-- Section context panel (right) — fades out on question steps -->
-        <aside :class="['step-aside', showMobileInfo ? 'mobile-show' : '', currentStep <= 2 ? 'step-aside--hidden' : '']" :key="currentStep">
+        <!-- Section context panel (right) — hidden as per user request to use full view only -->
+        <aside class="step-aside step-aside--hidden" :key="currentStep" style="display: none;">
           <div class="aside-card">
             <div class="aside-tag">{{ currentPanel.tag }}</div>
             <h2 class="aside-title">{{ currentPanel.title }}</h2>
