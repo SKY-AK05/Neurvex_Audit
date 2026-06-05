@@ -165,7 +165,7 @@
               <p class="instr-note">Your responses will only include details that you choose to share.</p>
               <div class="instr-divider"></div>
               <p class="instr-segments-label">The segments covered:</p>
-              <div class="instr-segments-grid">
+              <div class="instr-segments-list">
                 <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-row">
                   <span class="instr-seg-num">{{ i + 1 }}</span>
                   <span class="instr-seg-name">{{ s.title }}</span>
@@ -177,6 +177,11 @@
             <div v-else class="questions-list">
               <div v-if="currentSection.liner" class="section-liner">
                 {{ currentSection.liner }}
+              </div>
+
+              <!-- Supplier definition banner for Section 8 -->
+              <div v-if="currentSection.id === 'sp'" class="supplier-definition-banner">
+                <strong>Suppliers</strong> refer to any external individuals or organisations your organisation engages with, including consultants, freelancers, technology providers, agencies, partners, service providers and contractors.
               </div>
 
               <!-- Leading gating question (Sections 4 & 8) -->
@@ -217,7 +222,7 @@
                   <p class="q-text">{{ q.text }}</p>
                   <div class="options">
                     <button
-                      v-for="opt in (currentSection.naAllowed || q.field === 'q37' ? [...options, 'NA'] : options)" :key="opt"
+                      v-for="opt in (q.field === 'q37' ? [...options, 'N/A'] : options)" :key="opt"
                       type="button"
                       :class="['opt-btn', form[q.field] === opt ? 'selected' : '']"
                       @click="form[q.field] = opt"
@@ -464,7 +469,6 @@ const sections = [
     id: "sp",
     title: "Suppliers & Procurement",
     icon: "⬡",
-    liner: "Suppliers refer to any external individuals or organisations your organisation engages with, including consultants, freelancers, technology providers, agencies, partners, service providers and contractors.",
     summary: "Your supply chain amplifies your inclusion impact — procurement choices signal whether inclusion is embedded or only internal-facing.",
     why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
@@ -670,6 +674,13 @@ async function submit() {
   submitting.value  = true;
   submitError.value = "";
   try {
+    // SCORING NOTES FOR BACKEND:
+    // 1. Sections marked as "Not Applicable" (gating question = No) should be excluded from scoring
+    //    - Section 4 (Built Environment): if form.has_physical_workspace === "No"
+    //    - Section 8 (Suppliers & Procurement): if form.has_suppliers === "No"
+    // 2. Section 7 (Products & Customer Experience): if q37 = "N/A", rescale section score from /20 to /16
+    //    (since q37 becomes non-applicable, calculate section score based on 4 questions instead of 5)
+    
     await submitAudit({ ...form, draft_id: draftId.value });
     clearDraft();
     resetForm();
@@ -754,7 +765,7 @@ async function submit() {
 
 .step-layout {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 180px minmax(0, 1fr);
   gap: 1.5rem;
   width: 100%;
   max-width: 1500px;
@@ -803,7 +814,7 @@ async function submit() {
 
 .step-card-head {
   flex-shrink: 0;
-  padding: 2rem 2.5rem 0;
+  padding: 1.5rem 2rem 0;
 }
 
 .questions-scroll {
@@ -812,20 +823,33 @@ async function submit() {
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  padding: 1.25rem 2.5rem 5rem;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  padding: 1rem 2rem 3rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(4, 144, 124, 0.3) rgba(4, 144, 124, 0.08);
 }
 
 .questions-scroll::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+  width: 8px;
+}
+
+.questions-scroll::-webkit-scrollbar-track {
+  background: rgba(4, 144, 124, 0.08);
+  border-radius: 4px;
+}
+
+.questions-scroll::-webkit-scrollbar-thumb {
+  background: rgba(4, 144, 124, 0.3);
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.questions-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(4, 144, 124, 0.5);
 }
 
 .step-actions {
   flex-shrink: 0;
-  padding: 1rem 2.5rem 1.5rem;
+  padding: 1rem 2rem 1.25rem;
   margin-top: 0;
   border-top: 1px solid #E2DDD4;
 }
@@ -847,7 +871,7 @@ async function submit() {
 .progress-wrap {
   display: flex;
   flex-direction: column;
-  padding: 1.15rem 1rem 1.25rem;
+  padding: 1.15rem 0.85rem 1.25rem;
   min-height: 100%;
 }
 .progress-header {
@@ -868,9 +892,9 @@ async function submit() {
   font-size: 0.72rem; font-weight: 700; color: #888;
 }
 .progress-track--vertical {
-  --progress-dot: 26px;
+  --progress-dot: 24px;
   --progress-rail: 4px;
-  --progress-pad: 0.4rem;
+  --progress-pad: 0.35rem;
   position: relative;
   flex: 1;
 }
@@ -947,8 +971,8 @@ async function submit() {
 }
 .step-check { font-size: 0.7rem; line-height: 1; }
 .progress-step-label {
-  font-size: 0.68rem; font-weight: 700; color: #999;
-  line-height: 1.25;
+  font-size: 0.65rem; font-weight: 700; color: #999;
+  line-height: 1.2;
 }
 .progress-step.active .progress-step-label,
 .progress-step.done .progress-step-label { color: var(--c-accent); font-weight: 800; }
@@ -1179,8 +1203,24 @@ async function submit() {
 }
 
 /* Questions */
-.questions-list { display: flex; flex-direction: column; gap: 1.25rem; padding-bottom: 0.5rem; }
+.questions-list { display: flex; flex-direction: column; gap: 1rem; padding-bottom: 0.5rem; }
 .section-liner { font-size: 0.9rem; color: #444; background: rgba(4, 144, 124, 0.05); padding: 1rem 1.25rem; border-radius: 8px; border-left: 3px solid var(--c-accent); font-style: italic; }
+.supplier-definition-banner { 
+  font-size: 0.85rem; 
+  color: #555; 
+  background: #F4F2F0; 
+  padding: 0.875rem 1.25rem; 
+  border-radius: 8px; 
+  border: 1px solid #E2DDD4; 
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 0.5rem;
+}
+.supplier-definition-banner strong {
+  color: var(--c-primary-dark);
+  font-weight: 700;
+  font-style: normal;
+}
 .gating-block { background: #F9F8FF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E2DDD4; }
 .leading-gating-block { border-color: var(--c-accent); border-width: 1.5px; background: rgba(4, 144, 124, 0.04); }
 .gating-eligibility-label {
@@ -1649,7 +1689,7 @@ async function submit() {
   font-family: 'Fraunces', serif;
   margin: 0;
 }
-.instr-segments-grid {
+.instr-segments-list {
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
@@ -1673,7 +1713,7 @@ async function submit() {
   line-height: 1.35;
 }
 @media (max-width: 600px) {
-  .instr-segments-grid { grid-template-columns: 1fr; }
+  .instr-segments-list { grid-template-columns: 1fr; }
 }
 
 </style>
