@@ -203,7 +203,7 @@
               </div>
 
               <!-- Leading gating question (Sections 4 & 8) -->
-              <div v-if="currentSection.gatingQuestion" class="q-block gating-block leading-gating-block">
+              <div v-if="currentSection.gatingQuestion && form[currentSection.gatingField] !== 'Yes'" class="q-block gating-block leading-gating-block">
                 <div class="gating-eligibility-label">Section Eligibility</div>
                 <p class="q-text"><strong>{{ currentSection.gatingQuestion }}</strong></p>
                 <div class="options">
@@ -220,6 +220,13 @@
                 </div>
                 <p class="gating-guidance">If a context exists—even occasionally—the question is applicable. Please answer based on how these environments are typically experienced, not how often they are used.</p>
                 <span v-if="errors[currentSection.gatingField]" class="field-err">Please select an answer</span>
+              </div>
+
+              <!-- Gating answered Yes: show compact confirmed badge so user can still change -->
+              <div v-if="currentSection.gatingQuestion && form[currentSection.gatingField] === 'Yes'" class="gating-confirmed-badge">
+                <span class="gating-confirmed-check">✓</span>
+                <span class="gating-confirmed-text">{{ currentSection.gatingQuestion }}</span>
+                <button type="button" class="gating-change-btn" @click="form[currentSection.gatingField] = ''">Change</button>
               </div>
 
               <!-- Section skipped notice -->
@@ -1285,6 +1292,50 @@ async function submit() {
   font-style: italic;
   border-top: 1px solid rgba(4, 144, 124, 0.15);
   padding-top: 0.65rem;
+}
+.gating-confirmed-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(4, 144, 124, 0.06);
+  border: 1.5px solid rgba(4, 144, 124, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+}
+.gating-confirmed-check {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--c-white);
+  background: var(--c-accent);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.gating-confirmed-text {
+  font-size: 0.8rem;
+  color: var(--c-primary-dark);
+  font-weight: 600;
+  flex: 1;
+  line-height: 1.4;
+}
+.gating-change-btn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--c-accent);
+  background: none;
+  border: 1.5px solid var(--c-accent);
+  border-radius: 99px;
+  padding: 0.2rem 0.65rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+.gating-change-btn:hover {
+  background: var(--c-accent);
+  color: var(--c-white);
 }
 .section-skipped-notice {
   display: flex; align-items: flex-start; gap: 1rem;
