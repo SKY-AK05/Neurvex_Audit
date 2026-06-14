@@ -18,6 +18,9 @@
         <span class="date-sep">to</span>
         <input v-model="dateTo" type="date" class="date-input" />
         <button class="btn btn-outline">⇅ More Filters</button>
+        <button class="btn-download" :disabled="!filtered.length" @click="downloadAll" title="Download filtered results">
+          ⬇ Download CSV <span class="dl-count">({{ filtered.length }})</span>
+        </button>
       </div>
 
       <!-- Table -->
@@ -53,9 +56,14 @@
               </td>
               <td>{{ s.overall_level }}</td>
               <td @click.stop>
-                <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                </button>
+                <div class="action-group">
+                  <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)" title="View">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </button>
+                  <button class="action-btn dl-btn" @click="downloadOne(s)" title="Download CSV">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -81,8 +89,9 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getSubmissions } from "../api";
+import { getSubmissions, getSubmission } from "../api";
 import { formatDateTime as fmtDate, toISTDateString } from "../utils/datetime";
+import { downloadSingleSubmission, downloadFilteredSubmissions } from "../utils/csvExport";
 
 const submissions = ref([]);
 const loading     = ref(true);
@@ -117,6 +126,26 @@ const pageStart  = computed(() => filtered.value.length ? (page.value - 1) * per
 const pageEnd    = computed(() => Math.min(page.value * perPage, filtered.value.length));
 const paginated  = computed(() => filtered.value.slice((page.value - 1) * perPage, page.value * perPage));
 
+async function downloadOne(s) {
+  try {
+    const full = await getSubmission(s.id);
+    downloadSingleSubmission(full);
+  } catch (e) {
+    alert("Export failed: " + e.message);
+  }
+}
+
+async function downloadAll() {
+  loading.value = true;
+  try {
+    const full = await Promise.all(filtered.value.map(s => getSubmission(s.id)));
+    downloadFilteredSubmissions(full, dateFrom.value, dateTo.value);
+  } catch (e) {
+    alert("Export failed: " + e.message);
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -151,13 +180,28 @@ const paginated  = computed(() => filtered.value.slice((page.value - 1) * perPag
 .designation-cell { color: #555; font-style: italic; }
 .empty { text-align: center; color: #ccc; padding: 3rem; font-family: 'Fraunces', serif; font-weight: 700; }
 
+.action-group { display: flex; gap: 0.4rem; align-items: center; }
 .action-btn {
   width: 34px; height: 34px; border-radius: 50%;
   border: 2px solid var(--c-primary-dark); background: var(--c-bg);
   display: grid; place-items: center; cursor: pointer; color: var(--c-primary-dark);
   transition: all 0.15s;
 }
-.action-btn:hover { background: var(--c-accent); }
+.action-btn:hover { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
+.dl-btn { border-color: var(--c-accent); color: var(--c-accent); }
+.dl-btn:hover { background: var(--c-accent); color: #fff; }
+
+.btn-download {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: var(--c-accent); color: #fff;
+  border: 2px solid var(--c-accent); border-radius: 8px;
+  padding: 0.55rem 1rem; font-size: 0.875rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+  box-shadow: 3px 3px 0 rgba(4,144,124,0.3);
+}
+.btn-download:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4,144,124,0.3); }
+.btn-download:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+.dl-count { font-weight: 400; opacity: 0.85; font-size: 0.82rem; }
 
 .pagination { display: flex; align-items: center; justify-content: space-between; padding-top: 1rem; margin-top: 0.5rem; border-top: 2px solid var(--c-primary-dark); }
 .page-info { font-size: 0.82rem; color: #bbb; font-weight: 600; }
