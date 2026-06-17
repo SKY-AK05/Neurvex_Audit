@@ -35,7 +35,7 @@ def get_all_sections():
                 }
                 
                 cur.execute("""
-                    SELECT id, section_id, field_name, short_title, question_text, order_index, score_mapping
+                    SELECT id, section_id, field_name, short_title, question_text, order_index, score_mapping, depends_on_field, depends_on_value
                     FROM form_questions
                     WHERE section_id = %s
                     ORDER BY order_index ASC
@@ -50,7 +50,9 @@ def get_all_sections():
                         "short_title": q_row[3],
                         "question_text": q_row[4],
                         "order_index": q_row[5],
-                        "score_mapping": q_row[6]
+                        "score_mapping": q_row[6],
+                        "depends_on_field": q_row[7],
+                        "depends_on_value": q_row[8]
                     })
                 sections.append(section)
     except Exception as e:
@@ -128,12 +130,12 @@ def create_question(section_id: int, question: QuestionCreate):
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                INSERT INTO form_questions (section_id, field_name, short_title, question_text, order_index, score_mapping)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO form_questions (section_id, field_name, short_title, question_text, order_index, score_mapping, depends_on_field, depends_on_value)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 section_id, question.field_name, question.short_title, question.question_text, 
-                question.order_index, json.dumps(question.score_mapping)
+                question.order_index, json.dumps(question.score_mapping), question.depends_on_field, question.depends_on_value
             ))
             q_id = cur.fetchone()[0]
             conn.commit()
@@ -157,11 +159,11 @@ def update_question(question_id: int, question: QuestionCreate):
             
             cur.execute("""
                 UPDATE form_questions 
-                SET field_name=%s, short_title=%s, question_text=%s, order_index=%s, score_mapping=%s
+                SET field_name=%s, short_title=%s, question_text=%s, order_index=%s, score_mapping=%s, depends_on_field=%s, depends_on_value=%s
                 WHERE id=%s
             """, (
                 question.field_name, question.short_title, question.question_text, 
-                question.order_index, json.dumps(question.score_mapping), question_id
+                question.order_index, json.dumps(question.score_mapping), question.depends_on_field, question.depends_on_value, question_id
             ))
             conn.commit()
             return {**question.dict(), "id": question_id, "section_id": section_id}

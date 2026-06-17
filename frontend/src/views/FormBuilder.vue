@@ -24,6 +24,7 @@
           </div>
           <div class="section-actions">
             <button class="btn btn-outline btn-sm" @click="openSectionModal(section)">Edit Section</button>
+            <button class="btn btn-outline btn-sm btn-danger-outline" @click="deleteSection(section.id, section.title)">Delete Section</button>
             <button class="btn btn-outline btn-sm" @click="openQuestionModal(section.id)">+ Add Question</button>
           </div>
         </div>
@@ -39,6 +40,7 @@
             </div>
             <div class="q-right">
               <button class="btn btn-outline btn-sm" @click="openQuestionModal(section.id, question)">Edit</button>
+              <button class="btn btn-outline btn-sm btn-danger-outline" @click="deleteQuestion(question.id, question.short_title)">Delete</button>
             </div>
           </div>
         </div>
@@ -51,8 +53,8 @@
         <h2>{{ editingSection?.id ? 'Edit Section' : 'Add Section' }}</h2>
         <div class="modal-body">
           <div class="field">
-            <label>Section Code (e.g. lc)</label>
-            <input v-model="sectionForm.section_code" type="text" />
+            <label>Section Code (Auto-generated)</label>
+            <input v-model="sectionForm.section_code" type="text" readonly style="background: #f0f0f0; cursor: not-allowed;" />
           </div>
           <div class="field">
             <label>Title</label>
@@ -100,8 +102,8 @@
         <h2>{{ editingQuestion?.id ? 'Edit Question' : 'Add Question' }}</h2>
         <div class="modal-body">
           <div class="field">
-            <label>Field Name (e.g. q5)</label>
-            <input v-model="questionForm.field_name" type="text" />
+            <label>Field Name (Auto-generated)</label>
+            <input v-model="questionForm.field_name" type="text" readonly style="background: #f0f0f0; cursor: not-allowed;" />
           </div>
           <div class="field">
             <label>Short Title</label>
@@ -114,6 +116,19 @@
           <div class="field">
             <label>Order Index</label>
             <input v-model.number="questionForm.order_index" type="number" />
+          </div>
+          
+          <div class="dependency-mapping" style="background: #fff8f2; padding: 1rem; border-radius: 8px; border: 1px solid var(--c-primary-dark);">
+            <h3>Conditional Logic (Optional)</h3>
+            <p style="font-size: 0.8rem; color: #666; margin-bottom: 1rem;">Show this question ONLY if another question was answered a certain way.</p>
+            <div class="field">
+              <label>Depends on Field (e.g. q10)</label>
+              <input v-model="questionForm.depends_on_field" type="text" placeholder="Leave blank if always shown" />
+            </div>
+            <div class="field" v-if="questionForm.depends_on_field">
+              <label>Equals Value (e.g. Yes)</label>
+              <input v-model="questionForm.depends_on_value" type="text" />
+            </div>
           </div>
           
           <div class="score-mapping">
@@ -174,9 +189,10 @@ function openSectionModal(section = null) {
   if (section) {
     sectionForm.value = { ...section };
   } else {
+    const orderIdx = sections.value.length + 1;
     sectionForm.value = {
-      section_code: "", title: "", icon: "◆", summary: "", why_it_matters: "", tip: "", 
-      gating_question: "", gating_field: "", order_index: sections.value.length + 1
+      section_code: `s${orderIdx}`, title: "", icon: "◆", summary: "", why_it_matters: "", tip: "", 
+      gating_question: "", gating_field: "", order_index: orderIdx
     };
   }
   showSectionModal.value = true;
@@ -224,8 +240,13 @@ function openQuestionModal(secId, question = null) {
   } else {
     const sec = sections.value.find(s => s.id === secId);
     const orderIdx = sec?.questions?.length ? sec.questions.length + 1 : 1;
+    
+    let totalQs = 0;
+    sections.value.forEach(s => totalQs += (s.questions?.length || 0));
+    
     questionForm.value = {
-      field_name: "", short_title: "", question_text: "", order_index: orderIdx,
+      field_name: `q${totalQs + 1}`, short_title: "", question_text: "", order_index: orderIdx,
+      depends_on_field: "", depends_on_value: "",
       score_mapping: { "Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0, "N/A": 0 }
     };
   }
@@ -242,10 +263,14 @@ async function saveQuestion() {
     const url = isEdit ? `/api/form/questions/${editingQuestion.value.id}` : `/api/form/sections/${currentSectionId.value}/questions`;
     const method = isEdit ? "PUT" : "POST";
     
+    const payload = { ...questionForm.value };
+    if (!payload.depends_on_field) payload.depends_on_field = null;
+    if (!payload.depends_on_value) payload.depends_on_value = null;
+
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(questionForm.value)
+      body: JSON.stringify(payload)
     });
     
     if (res.ok) {
@@ -260,6 +285,36 @@ async function saveQuestion() {
   }
 }
 
+// DELETE ACTIONS
+async function deleteSection(id, title) {
+  if (!confirm(`Are you sure you want to delete section "${title}"? This will also delete all its questions.`)) return;
+  try {
+    const res = await fetch(`/api/form/sections/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      loadData();
+    } else {
+      const err = await res.json();
+      alert("Error deleting section: " + JSON.stringify(err));
+    }
+  } catch(e) {
+    alert("Error: " + e.message);
+  }
+}
+
+async function deleteQuestion(id, shortTitle) {
+  if (!confirm(`Are you sure you want to delete question "${shortTitle}"?`)) return;
+  try {
+    const res = await fetch(`/api/form/questions/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      loadData();
+    } else {
+      const err = await res.json();
+      alert("Error deleting question: " + JSON.stringify(err));
+    }
+  } catch(e) {
+    alert("Error: " + e.message);
+  }
+}
 </script>
 
 <style scoped>
@@ -282,6 +337,8 @@ async function saveQuestion() {
 .section-code { color: #888; font-size: 0.9rem; }
 .section-actions { display: flex; gap: 0.5rem; }
 .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
+.btn-danger-outline { color: #c0392b; border-color: #c0392b; }
+.btn-danger-outline:hover { background: #fff0f0; color: #c0392b; }
 
 .questions-list {
   display: flex; flex-direction: column; gap: 0.75rem;

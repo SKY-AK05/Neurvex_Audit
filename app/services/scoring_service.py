@@ -80,18 +80,19 @@ OVERALL_SYNOPSIS = [
     "Orchvate can support you in reaching and sustaining best practice.",
 ]
 
-def score_section(data: dict, section_key: str, questions: list) -> float:
+def score_section(data: dict, section_key: str, questions: list) -> tuple[float, int, int]:
     n_total = len(questions)
     # Exclude questions answered with NA
     applicable_questions = [q for q in questions if data.get(q["field_name"], "") != "NA"]
     n_applicable = len(applicable_questions)
 
     if n_applicable == 0:
-        return 0
+        return 0, 0, 0
 
     raw_score = 0
     max_applicable = 0
     max_total = 0
+    not_sure_count = 0
 
     for q in questions:
         # Determine max score for this question based on its score_mapping
@@ -100,17 +101,19 @@ def score_section(data: dict, section_key: str, questions: list) -> float:
 
         ans = data.get(q["field_name"], "")
         if ans != "NA":
+            if ans == "Not Sure":
+                not_sure_count += 1
             raw_score += q["score_mapping"].get(ans, 0)
             max_applicable += q_max
 
     if n_applicable == n_total:
-        return raw_score
+        return raw_score, not_sure_count, n_applicable
 
     if max_applicable == 0:
-        return 0
+        return 0, not_sure_count, n_applicable
 
     # Rescale
-    return round((raw_score / max_applicable) * max_total, 2)
+    return round((raw_score / max_applicable) * max_total, 2), not_sure_count, n_applicable
 
 
 def calculate_scores(data: dict, conn) -> dict:
@@ -127,6 +130,7 @@ def calculate_scores(data: dict, conn) -> dict:
     result = {}
     section_scores = []
     dimension_scores = {}
+    low_visibility_sections = []
 
     for s_info in sections:
         sec = s_info["section"]
@@ -140,15 +144,21 @@ def calculate_scores(data: dict, conn) -> dict:
             result[f"{key}_score"] = "NA"
             result[f"{key}_level"] = "Not applicable"
             dimension_scores[key] = "NA"
-            section_scores.append((key, label, "NA", "Not applicable"))
+            section_scores.append((key, label, "NA", "Not applicable", False))
             continue
 
-        score = score_section(data, key, qs)
+        score, not_sure_count, n_applicable = score_section(data, key, qs)
         level = get_maturity_level(score)
+        
+        is_low_visibility = False
+        if n_applicable > 0 and not_sure_count >= (n_applicable / 2.0):
+            is_low_visibility = True
+            low_visibility_sections.append(key)
+
         result[f"{key}_score"] = score
         result[f"{key}_level"] = level
         dimension_scores[key] = score
-        section_scores.append((key, label, score, level))
+        section_scores.append((key, label, score, level, is_low_visibility))
 
     valid_scores = [s[2] for s in section_scores if s[2] != "NA"]
     overall_avg = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0
@@ -156,6 +166,7 @@ def calculate_scores(data: dict, conn) -> dict:
     result["overall_avg"] = overall_avg
     result["overall_level"] = overall_level
     result["dimension_scores"] = dimension_scores
+    result["low_visibility_sections"] = low_visibility_sections
 
     result["email_body"] = build_email(
         name=data.get("name", ""),
@@ -252,7 +263,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         )
 
     segment_cards = []
-    for key, label, score, level in section_scores:
+    for key, label, score, level, is_low_visibility in section_scores:
         if score == "NA":
             segment_cards.append(f"""
     <!-- SEGMENT: {label} -->
@@ -289,21 +300,27 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
             bar_tds = (f'<td width="{fill_w}%" height="4" style="background:#7F77DD;border-radius:3px 0 0 3px;font-size:0;">&nbsp;</td>'
                        f'<td width="{empty_w}%" height="4" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>')
 
-        if score <= 6:
-            badge_color = "#FFF0F0"
-            badge_text = "#C0392B"
-            badge_label = "Foundational"
-            commentary = DIMENSION_COMMENTARY.get(key, {}).get("low", "")
-        elif score <= 14:
-            badge_color = "#FFF8DC"
-            badge_text = "#8B6914"
-            badge_label = "Early Progress"
-            commentary = DIMENSION_COMMENTARY.get(key, {}).get("med", "")
+        if is_low_visibility:
+            badge_color = "#E0E0E0"
+            badge_text = "#555555"
+            badge_label = "Low Visibility"
+            commentary = "Responses in some areas indicate limited visibility into practices, which may suggest the need for greater communication or cross-functional awareness."
         else:
-            badge_color = "#EDFFD4"
-            badge_text = "#3A7A00"
-            badge_label = "Developing"
-            commentary = DIMENSION_COMMENTARY.get(key, {}).get("high", "")
+            if score <= 6:
+                badge_color = "#FFF0F0"
+                badge_text = "#C0392B"
+                badge_label = "Foundational"
+                commentary = DIMENSION_COMMENTARY.get(key, {}).get("low", "")
+            elif score <= 14:
+                badge_color = "#FFF8DC"
+                badge_text = "#8B6914"
+                badge_label = "Early Progress"
+                commentary = DIMENSION_COMMENTARY.get(key, {}).get("med", "")
+            else:
+                badge_color = "#EDFFD4"
+                badge_text = "#3A7A00"
+                badge_label = "Developing"
+                commentary = DIMENSION_COMMENTARY.get(key, {}).get("high", "")
 
         display_score = f"{score:g}" if isinstance(score, float) and score.is_integer() else f"{score:.1f}" if isinstance(score, float) else score
 

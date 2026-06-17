@@ -8,6 +8,7 @@
         <h2>Audit Submitted</h2>
         <p>Thank you for completing the Neuro-Inclusive Workplace Index <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
       </div>
+    </div>
     <div v-else-if="isLoading" class="success-wrap">
       <div class="success-box">
         <div class="loader-spinner"></div>
@@ -245,7 +246,7 @@
 
               <!-- Questions — only shown when gating is passed or section has no gating -->
               <template v-if="!currentSection.gatingQuestion || form[currentSection.gatingField] === 'Yes'">
-                <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block">
+                <div v-for="(q, qi) in currentSection.questions" :key="q.field" class="q-block" v-show="!q.depends_on_field || form[q.depends_on_field] === q.depends_on_value">
                   <div class="q-header-row">
                     <span class="q-number">Q{{ (currentStep - 3) * 5 + qi + 1 }}</span>
                     <span class="q-short">{{ q.short }}</span>
@@ -425,14 +426,19 @@ const currentPanel = computed(() => {
   };
 });
 
+const activeQuestions = computed(() => {
+  if (!currentSection.value) return [];
+  return currentSection.value.questions.filter(q => !q.depends_on_field || form[q.depends_on_field] === q.depends_on_value);
+});
+
 const sectionAnsweredCount = computed(() => {
   if (currentStep.value <= 2 || !currentSection.value) return 0;
-  return currentSection.value.questions.filter(q => form[q.field]).length;
+  return activeQuestions.value.filter(q => form[q.field]).length;
 });
 
 const sectionProgressPct = computed(() => {
   if (currentStep.value <= 2 || !currentSection.value) return 0;
-  const total = currentSection.value.questions.length;
+  const total = activeQuestions.value.length;
   if (total === 0) return 0;
   return (sectionAnsweredCount.value / total) * 100;
 });
@@ -475,7 +481,9 @@ onMounted(async () => {
         questions: sec.questions.map(q => ({
           field: q.field_name,
           short: q.short_title,
-          text: q.question_text
+          text: q.question_text,
+          depends_on_field: q.depends_on_field,
+          depends_on_value: q.depends_on_value
         }))
       }));
       // Initialise dynamic fields
@@ -544,8 +552,11 @@ function validateStep() {
       }
     }
 
-    // Validate all questions (NA is a valid answer)
-    section.questions.forEach(q => { if (!form[q.field]) errors[q.field] = true; });
+    // Validate active questions (NA is a valid answer)
+    section.questions.forEach(q => { 
+      if (q.depends_on_field && form[q.depends_on_field] !== q.depends_on_value) return;
+      if (!form[q.field]) errors[q.field] = true; 
+    });
   }
   return Object.keys(errors).length === 0;
 }

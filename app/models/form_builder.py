@@ -6,6 +6,8 @@ class QuestionBase(BaseModel):
     short_title: str
     question_text: str
     order_index: int = 0
+    depends_on_field: Optional[str] = None
+    depends_on_value: Optional[str] = None
     score_mapping: Dict[str, int] = Field(
         default_factory=lambda: {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0, "N/A": 0}
     )
