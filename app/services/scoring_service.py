@@ -1,6 +1,5 @@
 """
 scoring.py — NeuroMark Audit scoring logic
-Imported by function_app.py
 """
 
 import html as html_module
@@ -9,21 +8,9 @@ import json
 import os
 import urllib.parse
 from datetime import datetime, timezone, timedelta
+import psycopg2.extras
 
 IST = timezone(timedelta(hours=5, minutes=30))
-
-ANSWER_POINTS = {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}
-
-SECTIONS = {
-    "lc": {"label": "Leadership & Culture",              "questions": [f"q{i}" for i in range(5, 10)]},
-    "ro": {"label": "Recruitment & Onboarding",          "questions": [f"q{i}" for i in range(10, 15)]},
-    "we": {"label": "Work Environment & Adjustments",    "questions": [f"q{i}" for i in range(15, 20)]},
-    "be": {"label": "Built Environment & Sensory",       "questions": [f"q{i}" for i in range(20, 25)]},
-    "tm": {"label": "Talent Management & Development",   "questions": [f"q{i}" for i in range(25, 30)]},
-    "ca": {"label": "Communication & Accessibility",     "questions": [f"q{i}" for i in range(30, 35)]},
-    "pc": {"label": "Products & Customer Experience",    "questions": [f"q{i}" for i in range(35, 40)]},
-    "sp": {"label": "Suppliers & Procurement",           "questions": [f"q{i}" for i in range(40, 45)]},
-}
 
 DIMENSION_COMMENTARY = {
     "lc": {
@@ -76,107 +63,6 @@ def get_maturity_level(score: int) -> str:
     else:
         return "Level 3 — Developing"
 
-# Pre-written interpretations: section_key -> [level1_text, level2_text, level3_text]
-INTERPRETATIONS = {
-    "lc": [
-        "Your organisation is at the very beginning of its neurodiversity inclusion journey in leadership and culture. "
-        "There is limited awareness or commitment at a senior level, and neurodiversity is not yet embedded in your values or strategy. "
-        "We recommend starting with leadership education and awareness sessions to build the foundation.",
-
-        "Your organisation has begun to acknowledge neurodiversity within its leadership and culture, with some early initiatives in place. "
-        "However, these efforts are not yet consistent or fully embedded. "
-        "Focus on formalising commitments, creating visible role models, and building a culture where neurodivergent employees feel safe to disclose.",
-
-        "Your organisation demonstrates a strong and developing commitment to neurodiversity inclusion at a leadership and cultural level. "
-        "Senior leaders are engaged, and inclusion is becoming part of your organisational identity. "
-        "Continue to build on this by measuring impact, sharing success stories, and embedding inclusion into all strategic decisions.",
-    ],
-    "ro": [
-        "Your recruitment and onboarding processes are not yet designed with neurodivergent candidates in mind. "
-        "Standard processes may unintentionally exclude talented individuals. "
-        "We recommend reviewing job descriptions, interview formats, and onboarding materials to remove unnecessary barriers.",
-
-        "You have made some adjustments to your recruitment and onboarding to be more inclusive, but there is room to go further. "
-        "Consider offering alternative interview formats, providing information in advance, and ensuring onboarding is structured and clear for all new starters.",
-
-        "Your recruitment and onboarding practices show a strong commitment to neurodiversity inclusion. "
-        "You are actively removing barriers and creating a welcoming experience for neurodivergent candidates. "
-        "Keep reviewing and iterating based on feedback from neurodivergent employees.",
-    ],
-    "we": [
-        "Your work environment and adjustment processes are at an early stage. "
-        "Neurodivergent employees may be struggling without the support they need. "
-        "Prioritise creating a clear, accessible process for requesting adjustments and raise awareness among managers.",
-
-        "Some adjustments and flexible working options are available, but access may be inconsistent. "
-        "Ensure all employees know how to request support, and that managers are equipped to respond positively and promptly.",
-
-        "Your organisation provides a supportive and flexible work environment with clear adjustment processes. "
-        "Neurodivergent employees are more likely to thrive here. "
-        "Continue to gather feedback and ensure adjustments are reviewed regularly.",
-    ],
-    "be": [
-        "The physical and sensory environment has not yet been considered from a neurodiversity perspective. "
-        "Sensory overload, poor lighting, or open-plan noise may be significant barriers. "
-        "We recommend a sensory audit of your spaces and exploring low-cost adjustments.",
-
-        "Some consideration has been given to the built environment, but there are gaps. "
-        "Look at quiet spaces, lighting options, and signage to make your environment more accessible to neurodivergent individuals.",
-
-        "Your built environment demonstrates thoughtful design with neurodivergent needs in mind. "
-        "You are providing sensory-friendly spaces and clear navigation. "
-        "Continue to involve neurodivergent employees in future design decisions.",
-    ],
-    "tm": [
-        "Talent management and development processes do not yet account for neurodivergent strengths and needs. "
-        "Performance frameworks and career pathways may inadvertently disadvantage neurodivergent employees. "
-        "Review your appraisal and development processes for hidden barriers.",
-
-        "You are beginning to adapt talent management processes to be more inclusive, but consistency is needed. "
-        "Ensure that neurodivergent employees have equal access to development opportunities and that their strengths are recognised.",
-
-        "Your talent management and development approach is inclusive and strengths-based. "
-        "Neurodivergent employees are supported to grow and progress. "
-        "Share your approach internally and consider how it can be further embedded across the employee lifecycle.",
-    ],
-    "ca": [
-        "Communication and accessibility practices are not yet adapted for neurodivergent needs. "
-        "Information may be hard to process, and meetings or written communications may create unnecessary barriers. "
-        "Start by reviewing how information is shared and offering alternative formats.",
-
-        "Some accessible communication practices are in place, but they are not applied consistently. "
-        "Focus on plain language, clear structure, and offering multiple formats to ensure all employees can access information equally.",
-
-        "Your communication and accessibility practices are strong and inclusive. "
-        "You are proactively considering how information is shared and ensuring it works for everyone. "
-        "Continue to review and update practices as understanding of neurodiversity evolves.",
-    ],
-    "pc": [
-        "Neurodiversity inclusion has not yet been considered in your products or customer experience. "
-        "Neurodivergent customers may face barriers when interacting with your services. "
-        "We recommend an accessibility review of your customer-facing products and communications.",
-
-        "Some steps have been taken to make products and customer experiences more accessible, but there is more to do. "
-        "Involve neurodivergent users in testing and feedback to identify and remove barriers.",
-
-        "Your products and customer experience reflect a genuine commitment to accessibility and inclusion. "
-        "Neurodivergent customers are considered in your design and delivery. "
-        "Continue to co-design with neurodivergent users and stay current with accessibility standards.",
-    ],
-    "sp": [
-        "Neurodiversity inclusion is not yet part of your supplier or procurement criteria. "
-        "This is an opportunity to extend your inclusion values through your supply chain. "
-        "Consider adding neurodiversity inclusion questions to your supplier assessments.",
-
-        "You are beginning to consider neurodiversity in your supplier relationships, but this is not yet formalised. "
-        "Develop clear criteria and communicate your expectations to suppliers.",
-
-        "Your procurement and supplier processes actively promote neurodiversity inclusion. "
-        "You are using your purchasing power to drive positive change. "
-        "Continue to review supplier performance against inclusion criteria and share best practice.",
-    ],
-}
-
 OVERALL_SYNOPSIS = [
     "Your organisation is at the start of its neurodiversity inclusion journey. "
     "There is significant opportunity to build awareness, remove barriers, and create a more inclusive environment. "
@@ -194,77 +80,75 @@ OVERALL_SYNOPSIS = [
     "Orchvate can support you in reaching and sustaining best practice.",
 ]
 
+def score_section(data: dict, section_key: str, questions: list) -> float:
+    n_total = len(questions)
+    # Exclude questions answered with NA
+    applicable_questions = [q for q in questions if data.get(q["field_name"], "") != "NA"]
+    n_applicable = len(applicable_questions)
 
-def score_answer(answer: str) -> int:
-    return ANSWER_POINTS.get(answer, 0)
-
-
-def score_section(data: dict, section_key: str, question_keys: list) -> float:
-    """
-    Score a section, excluding any NA answers and rescaling to the full section maximum.
-
-    Rescaling formula:
-        If n_applicable questions are answered (non-NA), max possible = n_applicable * 4.
-        Rescaled score = (raw_score / (n_applicable * 4)) * (n_total * 4)
-
-    This ensures NA answers don't penalise the organisation — their score is
-    proportionally rescaled to the full section maximum.
-    Examples:
-        - Section 7 (pc), q37 = NA: 4 questions scored, max = 16.
-          If score is 10/16, rescaled to (10/16)*20 = 12.5
-        - Section 4 (be), 2 questions = NA: 3 questions scored, max = 12.
-          If score is 8/12, rescaled to (8/12)*20 = 13.33
-    """
-    n_total = len(question_keys)
-    applicable_keys = [k for k in question_keys if data.get(k, "") != "NA"]
-    n_applicable = len(applicable_keys)
-
-    # If all questions are NA (edge case), return 0
     if n_applicable == 0:
         return 0
 
-    raw_score = sum(score_answer(data.get(k, "")) for k in applicable_keys)
+    raw_score = 0
+    max_applicable = 0
+    max_total = 0
 
-    # If no NAs present, return the raw score directly (no rescaling needed)
+    for q in questions:
+        # Determine max score for this question based on its score_mapping
+        q_max = max(q["score_mapping"].values()) if q["score_mapping"] else 4
+        max_total += q_max
+
+        ans = data.get(q["field_name"], "")
+        if ans != "NA":
+            raw_score += q["score_mapping"].get(ans, 0)
+            max_applicable += q_max
+
     if n_applicable == n_total:
         return raw_score
 
-    # Rescale: raw_score / max_applicable * max_total
-    max_applicable = n_applicable * 4
-    max_total = n_total * 4
+    if max_applicable == 0:
+        return 0
+
+    # Rescale
     return round((raw_score / max_applicable) * max_total, 2)
 
 
-def calculate_scores(data: dict) -> dict:
-    """
-    Takes the raw form data dict (q5–q44 + respondent fields).
-    Returns a dict with all section scores, levels, overall avg, overall level,
-    and the generated email body.
-    """
+def calculate_scores(data: dict, conn) -> dict:
+    # Fetch dynamic sections and questions
+    sections = []
+    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute("SELECT * FROM form_sections ORDER BY order_index ASC")
+        sec_rows = cur.fetchall()
+        for sec in sec_rows:
+            cur.execute("SELECT * FROM form_questions WHERE section_id = %s ORDER BY order_index ASC", (sec["id"],))
+            q_rows = cur.fetchall()
+            sections.append({"section": dict(sec), "questions": [dict(q) for q in q_rows]})
+
     result = {}
     section_scores = []
     dimension_scores = {}
 
-    for key, section in SECTIONS.items():
-        if key == "be" and data.get("has_physical_workspace") == "No":
+    for s_info in sections:
+        sec = s_info["section"]
+        qs = s_info["questions"]
+        key = sec["section_code"]
+        label = sec["title"]
+
+        # Check gating
+        gating_field = sec.get("gating_field")
+        if gating_field and data.get(gating_field) == "No":
             result[f"{key}_score"] = "NA"
             result[f"{key}_level"] = "Not applicable"
             dimension_scores[key] = "NA"
-            section_scores.append((key, section["label"], "NA", "Not applicable"))
-            continue
-        if key == "sp" and data.get("has_suppliers") == "No":
-            result[f"{key}_score"] = "NA"
-            result[f"{key}_level"] = "Not applicable"
-            dimension_scores[key] = "NA"
-            section_scores.append((key, section["label"], "NA", "Not applicable"))
+            section_scores.append((key, label, "NA", "Not applicable"))
             continue
 
-        score = score_section(data, key, section["questions"])
+        score = score_section(data, key, qs)
         level = get_maturity_level(score)
         result[f"{key}_score"] = score
         result[f"{key}_level"] = level
         dimension_scores[key] = score
-        section_scores.append((key, section["label"], score, level))
+        section_scores.append((key, label, score, level))
 
     valid_scores = [s[2] for s in section_scores if s[2] != "NA"]
     overall_avg = round(sum(valid_scores) / len(valid_scores), 2) if valid_scores else 0
@@ -284,19 +168,16 @@ def calculate_scores(data: dict) -> dict:
 
     return result
 
-
 def _e(text: str) -> str:
     return html_module.escape(str(text))
 
-
 def build_email(name: str, designation: str, company_name: str, section_scores: list,
                 overall_avg: float, overall_level: str) -> str:
-    """Build a formatted HTML email body for the rich-text editor and ACS send."""
+    # Build email remains structurally the same
     frontend_url = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
     booking_url  = f"{frontend_url}/book-a-call"
     level_index = {"Level 1 — Foundational": 0, "Level 2 — Early Progress": 1, "Level 3 — Developing": 2}
 
-    # Extract dynamic level numbers and descriptions
     level_parts = overall_level.split(" — ")
     if len(level_parts) < 2:
         level_parts = overall_level.split(" - ")
@@ -314,11 +195,9 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     synopsis = OVERALL_SYNOPSIS[level_index.get(overall_level, 0)]
     month_year = datetime.now(IST).strftime("%B %Y")
 
-    # Calculate domains subtitle dynamically based on section scores
     valid_sections = [s for s in section_scores if s[2] != "NA"]
     levels_set = {s[3] for s in valid_sections}
     if len(levels_set) == 1:
-        # e.g., "Level 2 — Early Progress" -> "All at Level 2"
         common_level_parts = list(levels_set)[0].split(" — ")
         if len(common_level_parts) < 2:
             common_level_parts = list(levels_set)[0].split(" - ")
@@ -327,12 +206,11 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     else:
         domains_subtitle = f"{len(valid_sections)} domains assessed"
 
-    # Generate QuickChart URL for the radar chart
     labels = []
     scores = []
     for s in section_scores:
         if s[2] != "NA":
-            labels.append(s[1].replace(" & ", " &amp; ")) # Just simple replace, actual radar uses exact label
+            labels.append(s[1].replace(" & ", " &amp; "))
             scores.append(s[2])
 
     chart_config = {
@@ -352,26 +230,15 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         },
         "options": {
             "scale": {
-                "ticks": {
-                    "beginAtZero": True,
-                    "max": 20,
-                    "stepSize": 5,
-                    "display": False
-                },
-                "pointLabels": {
-                    "fontSize": 11,
-                    "fontColor": "#555",
-                    "fontFamily": "sans-serif"
-                }
+                "ticks": {"beginAtZero": True, "max": 20, "stepSize": 5, "display": False},
+                "pointLabels": {"fontSize": 11, "fontColor": "#555", "fontFamily": "sans-serif"}
             },
             "legend": {"display": False}
         }
     }
-    
     encoded_config = urllib.parse.quote(json.dumps(chart_config))
     quickchart_url = f"https://quickchart.io/chart?w=500&h=340&v=2&c={encoded_config}"
 
-    # Generate dynamic metric progress bar
     fill_pct = int((overall_avg / 20.0) * 100)
     empty_pct = 100 - fill_pct
     if fill_pct == 100:
@@ -384,7 +251,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
             f'<td width="{empty_pct}%" height="5" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>'
         )
 
-    # Generate dynamic segment cards
     segment_cards = []
     for key, label, score, level in section_scores:
         if score == "NA":
@@ -415,33 +281,29 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
 
         fill_w = int((score / 20.0) * 100)
         empty_w = 100 - fill_w
-        
         if fill_w >= 100:
             bar_tds = '<td width="100%" height="4" style="background:#7F77DD;border-radius:3px;font-size:0;">&nbsp;</td>'
         elif fill_w <= 0:
             bar_tds = '<td width="100%" height="4" style="background:#E0DDD8;border-radius:3px;font-size:0;">&nbsp;</td>'
         else:
-            bar_tds = (
-                f'<td width="{fill_w}%" height="4" style="background:#7F77DD;border-radius:3px 0 0 3px;font-size:0;">&nbsp;</td>'
-                f'<td width="{empty_w}%" height="4" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>'
-            )
+            bar_tds = (f'<td width="{fill_w}%" height="4" style="background:#7F77DD;border-radius:3px 0 0 3px;font-size:0;">&nbsp;</td>'
+                       f'<td width="{empty_w}%" height="4" style="background:#E0DDD8;border-radius:0 3px 3px 0;font-size:0;">&nbsp;</td>')
 
-        # Determine score color class and commentary — thresholds match framework: 0-6, 7-14, 15-20
         if score <= 6:
             badge_color = "#FFF0F0"
             badge_text = "#C0392B"
             badge_label = "Foundational"
-            commentary = DIMENSION_COMMENTARY[key]["low"]
+            commentary = DIMENSION_COMMENTARY.get(key, {}).get("low", "")
         elif score <= 14:
             badge_color = "#FFF8DC"
             badge_text = "#8B6914"
             badge_label = "Early Progress"
-            commentary = DIMENSION_COMMENTARY[key]["med"]
+            commentary = DIMENSION_COMMENTARY.get(key, {}).get("med", "")
         else:
             badge_color = "#EDFFD4"
             badge_text = "#3A7A00"
             badge_label = "Developing"
-            commentary = DIMENSION_COMMENTARY[key]["high"]
+            commentary = DIMENSION_COMMENTARY.get(key, {}).get("high", "")
 
         display_score = f"{score:g}" if isinstance(score, float) and score.is_integer() else f"{score:.1f}" if isinstance(score, float) else score
 
@@ -473,7 +335,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
     </td></tr>
 """)
 
-    # Generate maturity scale HTML — 3 levels per framework
     scale_levels = [
         {"num": 1, "name": "Foundational", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 1<br>Foundational"},
         {"num": 2, "name": "Early Progress", "color": "#D3D1C7", "text_color": "#888", "weight": "normal", "label": "Level 2<br>Early Progress"},
@@ -515,8 +376,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
   table {{ border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
   img {{ border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; display: block; }}
   a {{ color: #534AB7; text-decoration: none; }}
-
-  /* Radar chart */
   .radar-label {{ font-family: 'DM Sans', Arial, sans-serif; font-size: 10px; fill: #888; }}
   .radar-axis {{ stroke: #E0DDD8; stroke-width: 1; }}
   .radar-ring {{ fill: none; stroke: #E0DDD8; stroke-width: 0.8; }}
@@ -524,7 +383,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
   .radar-dot {{ fill: #7F77DD; stroke: #fff; stroke-width: 2; }}
   .bar-bg {{ fill: #EAE8E3; }}
   .bar-fill {{ fill: #7F77DD; }}
-
   @media only screen and (max-width: 620px) {{
     .email-wrapper {{ width: 100% !important; }}
     .metric-cell {{ display: block !important; width: 100% !important; margin-bottom: 10px; }}
@@ -534,33 +392,22 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
 </style>
 </head>
 <body style="margin:0;padding:0;background-color:#FFFFFF;">
-
-<!-- Preheader -->
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">Your NeuroMark Audit results for {_e(company_name)} — {_e(overall_level)} ({overall_avg_display}/20) &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
-
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#FFFFFF;">
 <tr><td align="center" style="padding: 24px 0 48px;">
-
-  <!-- Email wrapper -->
   <table class="email-wrapper" width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
-
-    <!-- ─── HEADER ─── -->
     <tr><td style="background:#1E1A4A;border-radius:16px 16px 0 0;padding:36px 40px 32px;">
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
         <tr>
           <td>
-            <!-- Logo / wordmark -->
             <p style="margin:0 0 20px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;color:#AFA9EC;text-transform:uppercase;">Orchvate</p>
             <h1 style="margin:0 0 6px;font-family:'DM Serif Display',Georgia,serif;font-size:28px;font-weight:400;color:#FFFFFF;line-height:1.2;">Neurodiversity<br>NeuroMark Audit</h1>
             <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#AFA9EC;">{_e(name)} &nbsp;·&nbsp; {_e(designation) + ' · ' if designation else ''}{_e(company_name)} &nbsp;·&nbsp; {month_year}</p>
           </td>
           <td width="100" align="right" valign="top">
-            <!-- Score circle -->
             <svg width="84" height="84" viewBox="0 0 84 84" xmlns="http://www.w3.org/2000/svg" aria-label="Score {overall_avg_display} out of 20">
               <circle cx="42" cy="42" r="36" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="6"/>
-              <circle cx="42" cy="42" r="36" fill="none" stroke="#7F77DD" stroke-width="6"
-                stroke-dasharray="{dash} 226.2" stroke-dashoffset="0"
-                stroke-linecap="round" transform="rotate(-90 42 42)"/>
+              <circle cx="42" cy="42" r="36" fill="none" stroke="#7F77DD" stroke-width="6" stroke-dasharray="{dash} 226.2" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 42 42)"/>
               <text x="42" y="38" text-anchor="middle" font-family="'DM Sans',Arial,sans-serif" font-size="18" font-weight="600" fill="#FFFFFF">{overall_avg_display}</text>
               <text x="42" y="52" text-anchor="middle" font-family="'DM Sans',Arial,sans-serif" font-size="10" fill="#AFA9EC">of 20</text>
             </svg>
@@ -568,13 +415,9 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         </tr>
       </table>
     </td></tr>
-
-    <!-- ─── GREETING ─── -->
     <tr><td style="background:#FFFFFF;padding:28px 40px 0;">
       <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#444;line-height:1.6;">Dear <strong style="color:#1E1A4A;">{_e(name)}</strong>{(' (' + _e(designation) + ')') if designation else ''},<br>Thank you for completing the NeuroMark Audit. Here is a summary of your results.</p>
     </td></tr>
-
-    <!-- ─── METRIC CARDS ─── -->
     <tr><td style="background:#FFFFFF;padding:20px 40px 24px;">
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
         <tr>
@@ -583,10 +426,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
               <tr><td style="background:#F4F2F0;border-radius:10px;padding:14px 16px;">
                 <p style="margin:0 0 4px;font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#888;letter-spacing:0.5px;text-transform:uppercase;">Overall score</p>
                 <p style="margin:0 0 8px;font-family:'DM Serif Display',Georgia,serif;font-size:24px;color:#1E1A4A;">{overall_avg_display} / 20</p>
-                <!-- mini bar -->
-                <table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>
-                  {overall_progress_tds}
-                </tr></table>
+                <table width="100%" cellpadding="0" cellspacing="0" role="presentation"><tr>{overall_progress_tds}</tr></table>
               </td></tr>
             </table>
           </td>
@@ -603,7 +443,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
             <table class="metric-table" width="100%" cellpadding="0" cellspacing="0" role="presentation">
               <tr><td style="background:#F4F2F0;border-radius:10px;padding:14px 16px;">
                 <p style="margin:0 0 4px;font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#888;letter-spacing:0.5px;text-transform:uppercase;">Segments assessed</p>
-                <p style="margin:0 0 4px;font-family:'DM Serif Display',Georgia,serif;font-size:24px;color:#1E1A4A;">8</p>
+                <p style="margin:0 0 4px;font-family:'DM Serif Display',Georgia,serif;font-size:24px;color:#1E1A4A;">{len(valid_sections)}</p>
                 <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#888;">{domains_subtitle}</p>
               </td></tr>
             </table>
@@ -611,8 +451,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         </tr>
       </table>
     </td></tr>
-
-    <!-- ─── SYNOPSIS ─── -->
     <tr><td style="background:#FFFFFF;padding:0 40px 28px;">
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
         <tr>
@@ -624,36 +462,24 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         </tr>
       </table>
     </td></tr>
-
-    <!-- ─── RADAR CHART ─── -->
     <tr><td style="background:#FFFFFF;padding:0 40px 32px;">
       <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#1E1A4A;letter-spacing:0.2px;">Scores by segment</p>
-
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
         <tr><td align="center">
           <img src="{quickchart_url}" width="500" height="340" style="max-width:100%;height:auto;display:block;margin:0 auto;" alt="Radar chart showing segment scores">
         </td></tr>
       </table>
     </td></tr>
-
-    <!-- ─── SEGMENT BREAKDOWN TITLE ─── -->
     <tr><td style="background:#FFFFFF;padding:0 40px 16px;">
       <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#1E1A4A;letter-spacing:0.2px;">Segment breakdown</p>
     </td></tr>
-
     {"".join(segment_cards)}
-
-    <!-- ─── MATURITY SCALE ─── -->
     <tr><td style="background:#FFFFFF;padding:0 40px 32px;">
       <p style="margin:0 0 12px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#1E1A4A;">Maturity scale</p>
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        <tr>
-          {scale_row_html}
-        </tr>
+        <tr>{scale_row_html}</tr>
       </table>
     </td></tr>
-
-    <!-- ─── CTA ─── -->
     <tr><td style="background:#FFFFFF;padding:0 40px 0;">
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F4F2F0;border-radius:12px;">
         <tr><td style="padding:24px 24px;">
@@ -663,8 +489,6 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         </td></tr>
       </table>
     </td></tr>
-
-    <!-- ─── FOOTER ─── -->
     <tr><td style="background:#FFFFFF;border-radius:0 0 16px 16px;padding:28px 40px 32px;">
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
         <tr>
@@ -678,15 +502,10 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
         </tr>
       </table>
     </td></tr>
-
-    <!-- Bottom gap -->
     <tr><td height="8" style="background:#FFFFFF;">&nbsp;</td></tr>
-
   </table>
-
 </td></tr>
 </table>
-
 </body>
 </html>"""
     return html_content

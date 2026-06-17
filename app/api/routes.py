@@ -93,7 +93,12 @@ def strip_html(html: str) -> str:
 async def submit(request: Request, payload: AuditSubmission, background_tasks: BackgroundTasks):
     data = payload.dict()
 
-    scores = calculate_scores(data)
+    conn = get_conn()
+    try:
+        scores = calculate_scores(data, conn)
+    except Exception as e:
+        conn.close()
+        raise e
 
     # 1. Extract optional org token
     organization_id = None
@@ -123,7 +128,7 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
             tm_score, tm_level, ca_score, ca_level,
             pc_score, pc_level, sp_score, sp_level,
             overall_avg, overall_level, email_body, status,
-            consent_given, consent_timestamp, organization_id, dimension_scores
+            consent_given, consent_timestamp, organization_id, dimension_scores, answers
         ) VALUES (
             %(name)s, %(designation)s, %(company_name)s, %(email)s, %(contact_number)s,
             %(has_physical_workspace)s, %(has_suppliers)s,
@@ -136,12 +141,17 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
             %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
             %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
             %(overall_avg)s, %(overall_level)s, %(email_body)s, 'pending',
-            %(consent_given)s, %(consent_timestamp)s, %(organization_id)s, %(dimension_scores)s
+            %(consent_given)s, %(consent_timestamp)s, %(organization_id)s, %(dimension_scores)s, %(answers)s
         ) RETURNING id
     """
 
     # Sanitize "NA" scores to None for PostgreSQL DECIMAL columns
     sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
+
+    # Extract answers dynamically, excluding known non-question fields
+    excluded_fields = {"name", "designation", "company_name", "email", "contact_number", 
+                       "has_physical_workspace", "has_suppliers", "consent_given", "draft_id", "organization_id"}
+    dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
 
     params = {
         **sanitized_scores,
@@ -157,6 +167,7 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
         "organization_id": organization_id,
         **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
         "dimension_scores": dimension_scores_json,
+        "answers": json.dumps(dynamic_answers),
     }
 
     crm_enabled = False
@@ -195,10 +206,13 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
                 cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
                 row = cur.fetchone()
                 crm_enabled = bool(row[0]) if row else False
-        conn.close()
+        # Conn closed later in the main flow or here if we don't use it anymore
+        # Note: conn is already created above and will be closed at the end of the view
     except Exception as e:
         logger.error("DB insert failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
+    finally:
+        conn.close()
     
     if crm_enabled:
         background_tasks.add_task(sync_to_hubspot, data, scores, str(submission_id))
@@ -341,7 +355,12 @@ async def regenerate_email(request: Request, submission_id: UUID):
         raise HTTPException(status_code=409, detail="Cannot regenerate sent email")
 
     data = dict(row)
-    scores = calculate_scores(data)
+    try:
+        conn = get_conn()
+        scores = calculate_scores(data, conn)
+    except Exception as e:
+        conn.close()
+        raise e
     new_email_body = scores.get("email_body")
 
     try:

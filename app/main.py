@@ -19,6 +19,7 @@ from slowapi.errors import RateLimitExceeded
 from azure.communication.email import EmailClient
 
 from app.api.routes import router
+from app.api.form_builder import router as form_builder_router
 from app.core.security import jwks_middleware
 from app.core.database import get_conn
 from app.core.limiter import limiter
@@ -57,6 +58,7 @@ async def add_security_headers(request: Request, call_next):
 
 # All routes are prefixed with /api to match nginx proxy_pass and frontend api.js
 app.include_router(router, prefix="/api")
+app.include_router(form_builder_router, prefix="/api/form")
 
 
 @app.get("/api/health")

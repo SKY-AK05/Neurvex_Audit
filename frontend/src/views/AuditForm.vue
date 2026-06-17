@@ -8,6 +8,11 @@
         <h2>Audit Submitted</h2>
         <p>Thank you for completing the Neuro-Inclusive Workplace Index <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
       </div>
+    <div v-else-if="isLoading" class="success-wrap">
+      <div class="success-box">
+        <div class="loader-spinner"></div>
+        <h2>Loading...</h2>
+      </div>
     </div>
 
     <div v-else class="form-inner">
@@ -375,157 +380,14 @@ const step0Panel = {
   tip: "This should take approximately 10 minutes to complete. The questionnaire is organised into 8 key segments, each with 5 statements. Please read each statement carefully and choose the option that best reflects your current reality (rather than intention). Your responses will only include details that you choose to share.",
 };
 
-const sections = [
-  {
-    id: "lc",
-    title: "Leadership & Culture",
-    icon: "◆",
-    summary: "Assesses how neurodiversity inclusion is led and modelled by senior leadership, including accountability, culture, and psychological safety.",
-    why: "Without visible executive commitment, neurodiversity initiatives often stall — employees notice when inclusion is only on paper.",
-    points: ["Executive sponsorship", "Policy & strategy alignment", "Visible role models"],
-    tip: "Look beyond policy documents — consider what leaders actually say and do in meetings and communications.",
-    questions: [
-      { field: "q5",  short: "Strategy & Direction", text: "We have a clearly defined neurodiversity inclusion strategy with specific, time-bound objectives (e.g., annual goals) that are actively reviewed." },
-      { field: "q6",  short: "Executive Accountability", text: "A senior leader (C-suite or equivalent) is explicitly accountable for neurodiversity inclusion, with visible ownership, cross-organisation coordination, and regular monitoring of progress." },
-      { field: "q7",  short: "Leadership Training & Modelling", text: "Senior leaders receive training on neuro-inclusion and actively model inclusive behaviors (e.g., valuing different thinking styles, encouraging psychological safety, celebrating differences)." },
-      { field: "q8",  short: "Employee Resource Group", text: "We have an active neurodiversity-focused employee resource group (ERG) or network that is supported, heard, and involved in shaping initiatives and decisions." },
-      { field: "q9",  short: "Public Commitment", text: "We publicly communicate our commitment to neuro-inclusion and demonstrate it through actions (e.g., campaigns, reporting, partnerships, inclusive employer branding)." },
-    ],
-  },
-  {
-    id: "ro",
-    title: "Recruitment & Onboarding",
-    icon: "◇",
-    summary: "Examines how inclusive hiring and onboarding practices are for neurodivergent candidates, from job design to early support and clarity.",
-    why: "Inclusive recruitment widens your talent pool and reduces early attrition from candidates who could thrive with small adjustments.",
-    points: ["Inclusive job design", "Flexible interviews", "Structured onboarding"],
-    tip: "Small changes — sharing interview questions in advance or offering written tasks — can make a big difference without lowering standards.",
-    questions: [
-      { field: "q10", short: "Inclusive Job Design", text: "We ensure our job descriptions are clear, concise, and aligned with the actual role (tasks, expectations, outcomes), minimising jargon, with a visible commitment to inclusion." },
-      { field: "q11", short: "Transparent Application Process", text: "Our application process is transparent and supportive, including clear timelines and stages, explanation of selection methods, a named contact person and multiple contact options (e.g., email, phone) to reduce uncertainty and anxiety for candidates." },
-      { field: "q12", short: "Skills-Based Assessment", text: "Our selection processes include practical or skills-based assessments (e.g., work samples, task-based evaluations, project submissions) and do not rely solely on traditional interviews." },
-      { field: "q13", short: "Flexible Interviews", text: "Our interviews are designed to be flexible and inclusive, with options such as providing accommodations, sharing questions in advance, allowing virtual formats or camera flexibility and being open to alternative or asynchronous responses and candidates are invited to share their preferred ways of working and need for reasonable adjustments if any." },
-      { field: "q14", short: "Structured Onboarding", text: "Before starting, new hires are supported with a clear point of contact within the team, simple, structured communication about their role and expectations and early conversations about adjustments, so these can be in place from day one where possible." },
-    ],
-  },
-  {
-    id: "we",
-    title: "Work Environment & Adjustments",
-    icon: "▣",
-    summary: "Focuses on how workplace support, flexibility, and adjustments are understood, accessed, and implemented across teams.",
-    why: "Clear adjustment pathways and manager confidence reduce friction, build trust, and improve retention.",
-    points: ["Adjustment requests", "Flexible working", "Manager capability"],
-    tip: "The best adjustments are often low-cost — noise-cancelling headphones, flexible hours, or written follow-ups after meetings.",
-    questions: [
-      { field: "q15", short: "Lifecycle Adjustments", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
-      { field: "q16", short: "Clear Adjustment Pathways", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
-      { field: "q17", short: "Manager & HR Training", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement appropriate workplace adjustments confidently and consistently." },
-      { field: "q18", short: "Built-In Inclusive Practices", text: "Where possible, inclusive practices are built into standard ways of working (e.g., flexible communication, clear documentation, meeting norms), reducing the need for individuals to request adjustments." },
-      { field: "q19", short: "Regular Policy Review", text: "Adjustment policies and processes are regularly reviewed, using employee and manager feedback as well as data (where available) to assess effectiveness and improve over time." },
-    ],
-  },
-  {
-    id: "be",
-    title: "Built Environment & Sensory",
-    icon: "◎",
-    summary: "Evaluates how physical workspaces are designed or adapted to support sensory needs and reduce environmental stress.",
-    why: "Environmental design is often overlooked in DEI work, yet it directly impacts productivity and whether people feel safe at work.",
-    points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
-    tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
-    gatingQuestion: "Does your organisation have physical workplace environments (e.g., offices, facilities, or on-site workspaces)?",
-    gatingField: "has_physical_workspace",
-    naAllowed: true,
-    questions: [
-      { field: "q20", short: "Universal Design Principles", text: "Workplace environments are designed or adapted using inclusive (universal design) principles to reduce sensory and accessibility barriers." },
-      { field: "q21", short: "Sensory Impact Consideration", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
-      { field: "q22", short: "Varied Workspaces", text: "Employees have access to different types of workspaces (e.g., quiet, low-stimulation, collaborative), rather than a one-size-fits-all environment." },
-      { field: "q23", short: "Quiet & Low-Stimulation Spaces", text: "There are designated quiet or low-stimulation spaces available for employees to focus, take breaks, or regulate when needed." },
-      { field: "q24", short: "Hybrid & Remote Balance", text: "Hybrid or remote work is not treated as the primary solution for inclusion; we also address barriers within the physical workplace and consider individual needs across different work settings." },
-    ],
-  },
-  {
-    id: "tm",
-    title: "Talent Management & Development",
-    icon: "↑",
-    summary: "Assesses how performance management, feedback, learning, and career progression support neurodivergent employees.",
-    why: "Fair talent processes ensure neurodivergent employees are developed and retained, not overlooked for roles they could excel in.",
-    points: ["Fair appraisals", "Equal development access", "Retention insight"],
-    tip: "Review whether performance criteria reward only one style of communication or collaboration.",
-    questions: [
-      { field: "q25", short: "Inclusive Leadership Training", text: "Managers and team leads are trained in inclusive leadership and are expected to apply these practices in their day-to-day management." },
-      { field: "q26", short: "Structured Feedback", text: "Managers provide regular, structured feedback that is specific, evidence-based, and balanced (recognising strengths as well as areas for development)." },
-      { field: "q27", short: "Wellbeing & Coaching Support", text: "Employees have access to appropriate support (e.g., coaching, wellbeing resources, or specialist support where needed) to help them work effectively and build on their strengths." },
-      { field: "q28", short: "Accessible Learning & Development", text: "Learning and development opportunities are designed to be accessible and inclusive by default (e.g., clear content, flexible formats, self-paced options, inclusive assessments)." },
-      { field: "q29", short: "Strengths-Based Development", text: "Regular career and development conversations take place, using a strengths-based approach, with clear development plans and appropriate support to help employees progress." },
-    ],
-  },
-  {
-    id: "ca",
-    title: "Communication & Accessibility",
-    icon: "◈",
-    summary: "Examines how clearly and accessibly information is shared, including inclusive communication practices and formats.",
-    why: "Accessible communication is a daily inclusion practice, not a one-off training — it benefits everyone, not only neurodivergent staff.",
-    points: ["Plain language", "Multi-format info", "Digital accessibility"],
-    tip: "Agendas sent 24 hours ahead and recordings of key meetings are simple wins with wide impact.",
-    questions: [
-      { field: "q30", short: "Neuro-Inclusive Communication", text: "Employees are trained to communicate in neuro-inclusive ways, including understanding different communication styles and how to adapt for internal and external audiences." },
-      { field: "q31", short: "Clear & Structured Communication", text: "Organisational communications are typically clear, concise, and well-structured (e.g., use of plain language, bullet points, logical flow), reducing ambiguity and cognitive load." },
-      { field: "q32", short: "Accessible Formats", text: "Information is available in accessible formats where needed (e.g., transcripts, captions, recordings, screen reader compatibility), and accessibility features are actively supported and encouraged." },
-      { field: "q33", short: "Inclusive Language", text: "We use inclusive, respectful language when communicating about neurodiversity, and aim to frame differences in a strengths-based and non-stigmatising way." },
-      { field: "q34", short: "Feedback & Improvement", text: "Employees and external stakeholders can give feedback on communication and accessibility, and there are clear mechanisms to review and improve based on that input." },
-    ],
-  },
-  {
-    id: "pc",
-    title: "Products & Customer Experience",
-    icon: "◉",
-    summary: "Reviews how products, services, and customer interactions are designed to be clear, accessible, and neuro-inclusive.",
-    why: "Neuroinclusive design improves usability for all users and reduces complaints, abandonment, and reputational risk.",
-    points: ["User-centred design", "Accessible digital products", "Trained support teams"],
-    tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
-    questions: [
-      { field: "q35", short: "Neuro-Inclusive Design", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
-      { field: "q36", short: "Multiple Contact Channels", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
-      { field: "q37", short: "Sensory-Aware Environments", text: "Physical customer environments are designed or adapted to reduce sensory overload where possible (e.g., managing noise, lighting, crowding, and visual stimuli)." },
-      { field: "q38", short: "Staff Neurodiversity Training", text: "Employees involved in product design and customer service are trained in neurodiversity awareness and inclusive practices." },
-      { field: "q39", short: "Regular Inclusivity Assessment", text: "We regularly assess the neuro-inclusivity of products and customer interactions (e.g., user testing, audits, feedback) and make improvements based on what we learn." },
-    ],
-  },
-  {
-    id: "sp",
-    title: "Suppliers & Procurement",
-    icon: "⬡",
-    summary: "Looks at how inclusion and accessibility are considered in supplier relationships, procurement practices, and partner engagement.",
-    why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
-    points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
-    tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
-    gatingQuestion: "Does your organisation have recurring engagement with external vendors, consultants, or partners?",
-    gatingField: "has_suppliers",
-    naAllowed: true,
-    questions: [
-      { field: "q40", short: "Neuro-Inclusive Supplier Comms", text: "Documents and communications with suppliers are clear, structured, and presented in neuro-inclusive formats across both digital and physical channels." },
-      { field: "q41", short: "Inclusive Procurement Criteria", text: "When assessing and selecting suppliers, we consider their commitment to inclusive practices, including neurodiversity where possible." },
-      { field: "q42", short: "Procurement Staff Training", text: "Employees involved in procurement and supply chain management are trained in neurodiversity awareness and inclusive practices." },
-      { field: "q43", short: "Multiple Supplier Contact Methods", text: "Suppliers and vendors are able to engage through a range of contact methods (e.g., email, phone, written communication), supporting different communication preferences." },
-      { field: "q44", short: "Supplier Feedback Mechanisms", text: "There are clear opportunities for suppliers and partners to provide feedback on our processes, and this feedback is used to improve inclusivity over time." },
-    ],
-  },
-];
+const sections = ref([]);
+const isLoading = ref(true);
 
-// All 8 sections always appear in the flow.
-// Gating questions are at the START of Sections 4 (be) and 8 (sp).
-// If the user answers "No", the section is shown as skipped but still
-// occupies a step — scores as "Not Applicable" on the backend.
-const visibleSections = computed(() => sections);
+const visibleSections = computed(() => sections.value);
 
 const totalSteps = computed(() => visibleSections.value.length + 3);
 const currentSection = computed(() => visibleSections.value[currentStep.value - 3]);
 const progressPct    = computed(() => ((currentStep.value) / (totalSteps.value - 1)) * 100);
-
-const sectionShortNames = [
-  "Leadership & Culture", "Recruitment & Onboarding", "Work Environment & Adjustments", "Built Environment & Sensory",
-  "Talent Management & Development", "Communication & Accessibility", "Products & Customer Experience", "Suppliers & Procurement",
-];
 
 const progressSteps = computed(() => [
   { id: "welcome", short: "Welcome",          label: "What is NIWI?" },
@@ -542,6 +404,7 @@ const progressPhase = computed(() => {
   if (currentStep.value === 0) return "What is NIWI?";
   if (currentStep.value === 1) return "Getting started";
   if (currentStep.value === 2) return "Before you begin";
+  if (!currentSection.value) return "";
   return `Section ${currentStep.value - 2} — ${currentSection.value.title}`;
 });
 
@@ -550,6 +413,7 @@ const currentPanel = computed(() => {
   if (currentStep.value === 1) return step0Panel;
   if (currentStep.value === 2) return step0Panel; // reuse welcome panel on instructions screen
   const s = currentSection.value;
+  if (!s) return {};
   return {
     icon: s.icon,
     tag: `Section ${currentStep.value - 2} of ${visibleSections.value.length}`,
@@ -562,13 +426,14 @@ const currentPanel = computed(() => {
 });
 
 const sectionAnsweredCount = computed(() => {
-  if (currentStep.value <= 2) return 0;
+  if (currentStep.value <= 2 || !currentSection.value) return 0;
   return currentSection.value.questions.filter(q => form[q.field]).length;
 });
 
 const sectionProgressPct = computed(() => {
-  if (currentStep.value <= 2) return 0;
+  if (currentStep.value <= 2 || !currentSection.value) return 0;
   const total = currentSection.value.questions.length;
+  if (total === 0) return 0;
   return (sectionAnsweredCount.value / total) * 100;
 });
 
@@ -582,17 +447,55 @@ watch(currentStep, async () => {
   questionsScroll.value?.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-const allQuestionFields = sections.flatMap(s => s.questions.map(q => q.field));
 const form = reactive({
   name: "", designation: "", company_name: "", email: "", contact_number: "", consent_given: false,
-  has_physical_workspace: "", has_suppliers: "",
-  ...Object.fromEntries(allQuestionFields.map(f => [f, ""])),
+  has_physical_workspace: "", has_suppliers: ""
 });
+
+const allQuestionFields = computed(() => sections.value.flatMap(s => s.questions.map(q => q.field)));
 
 const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useDraftSaving(form, currentStep);
 
-onMounted(() => {
-  restoreLocalDraft();
+onMounted(async () => {
+  try {
+    const res = await fetch("/api/form/sections");
+    if (res.ok) {
+      const data = await res.json();
+      sections.value = data.map(sec => ({
+        id: sec.section_code,
+        title: sec.title,
+        icon: sec.icon || "◆",
+        summary: sec.summary || "",
+        why: sec.why_it_matters || "",
+        points: [],
+        tip: sec.tip || "",
+        gatingQuestion: sec.gating_question,
+        gatingField: sec.gating_field,
+        naAllowed: !!sec.gating_question,
+        questions: sec.questions.map(q => ({
+          field: q.field_name,
+          short: q.short_title,
+          text: q.question_text
+        }))
+      }));
+      // Initialise dynamic fields
+      allQuestionFields.value.forEach(f => {
+        if (form[f] === undefined) form[f] = "";
+      });
+      sections.value.forEach(s => {
+        if (s.gatingField && form[s.gatingField] === undefined) {
+          form[s.gatingField] = "";
+        }
+      });
+    } else {
+      console.error("Failed to load sections from API");
+    }
+  } catch (e) {
+    console.error("Error loading sections", e);
+  } finally {
+    isLoading.value = false;
+    restoreLocalDraft();
+  }
 });
 
 watch(() => form, (newForm) => {
@@ -680,7 +583,7 @@ function resetForm() {
   form.consent_given = false;
   form.has_physical_workspace = "";
   form.has_suppliers = "";
-  allQuestionFields.forEach(f => {
+  allQuestionFields.value.forEach(f => {
     form[f] = "";
   });
 }
@@ -705,7 +608,7 @@ function autoFillTestData() {
   form.has_suppliers = rand(["Yes", "No"]);
 
   // Fill all questions with a random answer
-  allQuestionFields.forEach(f => {
+  allQuestionFields.value.forEach(f => {
     form[f] = rand(answers);
   });
 
@@ -765,6 +668,20 @@ async function submit() {
   border-radius: 32px;
   box-shadow: 0 12px 48px rgba(0,0,0,0.3);
   display: flex; flex-direction: column;
+}
+
+.loader-spinner {
+  border: 4px solid var(--c-border);
+  border-top: 4px solid var(--c-accent);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .form-inner {

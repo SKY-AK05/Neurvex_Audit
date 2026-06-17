@@ -14,6 +14,7 @@ import OrgVerify        from "../views/OrgVerify.vue";
 import OrgDashboard     from "../views/OrgDashboard.vue";
 import Organisations    from "../views/Organisations.vue";
 import BookCall         from "../views/BookCall.vue";
+import FormBuilder      from "../views/FormBuilder.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
@@ -28,6 +29,7 @@ const routes = [
   { path: "/admin/support",           component: Support,          meta: { requiresAuth: true } },
   { path: "/admin/users",             component: UserManagement,   meta: { requiresAuth: true, requiresSuper: true } },
   { path: "/admin/organisations",     component: Organisations,    meta: { requiresAuth: true } },
+  { path: "/admin/form-builder",      component: FormBuilder,      meta: { requiresAuth: true } },
 
   // Public / org routes
   { path: "/resume",                  component: ResumeDraft },
