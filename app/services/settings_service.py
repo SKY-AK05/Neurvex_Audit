@@ -57,13 +57,17 @@ def ensure_settings_table(cur):
                     low_visibility_threshold INT NOT NULL DEFAULT 50,
                     updated_at              TIMESTAMP DEFAULT NOW()
                 );
-                
-                -- Ensure columns exist for older installations
-                ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS crm_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE;
-                ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS hubspot_api_key TEXT NOT NULL DEFAULT '';
-                ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS low_visibility_threshold INT NOT NULL DEFAULT 50;
                 """
             )
+            
+        # Ensure columns exist for older installations
+        cur.execute(
+            """
+            ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS crm_sync_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+            ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS hubspot_api_key TEXT NOT NULL DEFAULT '';
+            ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS low_visibility_threshold INT NOT NULL DEFAULT 50;
+            """
+        )
         _app_settings_table_exists = True
     except Exception as e:
         logger.warning("Error ensuring app_settings table: %s", e)

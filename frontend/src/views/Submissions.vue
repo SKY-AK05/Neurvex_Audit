@@ -27,47 +27,49 @@
       <p v-if="loading" class="loading">Loading…</p>
       <p v-else-if="error" class="alert alert-error">{{ error }}</p>
       <template v-else>
-        <table class="sub-table">
-          <thead>
-            <tr>
-              <th>Organization Name</th>
-              <th>Recipient Email</th>
-              <th>Job Role</th>
-              <th>Sent Date &amp; Time</th>
-              <th>Status</th>
-              <th>Maturity Level</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="!paginated.length">
-              <td colspan="7" class="empty">No submissions found.</td>
-            </tr>
-            <tr v-for="s in paginated" :key="s.id" @click="$router.push(`/admin/submissions/${s.id}`)">
-              <td class="org-name">{{ s.company_name }}</td>
-              <td class="email-cell">{{ s.email }}</td>
-              <td class="designation-cell">{{ s.designation || '—' }}</td>
-              <td>{{ fmtDate(s.submitted_at) }}</td>
-              <td>
-                <span :class="`badge badge-${s.status === 'sent' ? 'delivered' : 'pending'}`">
-                  <span class="badge-dot"></span>
-                  {{ s.status === 'sent' ? 'Delivered' : 'Pending' }}
-                </span>
-              </td>
-              <td>{{ s.overall_level }}</td>
-              <td @click.stop>
-                <div class="action-group">
-                  <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)" title="View">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  </button>
-                  <button class="action-btn dl-btn" @click="downloadOne(s)" title="Download CSV">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-container">
+          <table class="sub-table">
+            <thead>
+              <tr>
+                <th>Organization Name</th>
+                <th>Recipient Email</th>
+                <th>Job Role</th>
+                <th>Sent Date &amp; Time</th>
+                <th>Status</th>
+                <th>Maturity Level</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="!paginated.length">
+                <td colspan="7" class="empty">No submissions found.</td>
+              </tr>
+              <tr v-for="s in paginated" :key="s.id" @click="$router.push(`/admin/submissions/${s.id}`)">
+                <td class="org-name">{{ s.company_name }}</td>
+                <td class="email-cell">{{ s.email }}</td>
+                <td class="designation-cell">{{ s.designation || '—' }}</td>
+                <td>{{ fmtDate(s.submitted_at) }}</td>
+                <td>
+                  <span :class="`badge badge-${s.status === 'sent' ? 'delivered' : 'pending'}`">
+                    <span class="badge-dot"></span>
+                    {{ s.status === 'sent' ? 'Delivered' : 'Pending' }}
+                  </span>
+                </td>
+                <td>{{ s.overall_level }}</td>
+                <td @click.stop>
+                  <div class="action-group">
+                    <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)" title="View">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </button>
+                    <button class="action-btn dl-btn" @click="downloadOne(s)" title="Download CSV">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <!-- Pagination -->
         <div class="pagination">
@@ -166,7 +168,8 @@ async function downloadAll() {
 .date-input:focus { outline: none; box-shadow: 4px 4px 0 var(--c-accent); transform: translate(-2px, -2px); }
 .date-sep { color: #bbb; font-size: 0.85rem; font-weight: 600; }
 
-.sub-table { width: 100%; border-collapse: collapse; }
+.table-container { width: 100%; overflow-x: auto; }
+.sub-table { width: 100%; border-collapse: collapse; min-width: 900px; }
 .sub-table th {
   text-align: left; padding: 0.75rem 1rem;
   font-size: 0.72rem; font-weight: 800; color: #aaa;

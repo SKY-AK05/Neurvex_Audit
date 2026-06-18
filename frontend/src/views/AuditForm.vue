@@ -35,15 +35,18 @@
 
       <!-- Step content -->
       <div class="step-wrap">
-        <div class="step-layout">
+        <div :class="['step-layout', currentStep === 0 ? 'step-layout--no-sidebar' : '']">
 
         <!-- Progress — left sidebar -->
-        <aside class="progress-sidebar">
+        <aside class="progress-sidebar" v-show="currentStep > 0">
           <div class="progress-wrap">
             <div class="progress-header">
               <span class="progress-phase">{{ progressPhase }}</span>
               <span class="progress-pct">{{ Math.round(progressPct) }}%</span>
               <span class="progress-count">{{ currentStep + 1 }} / {{ totalSteps }}</span>
+              <div class="progress-pct-bar">
+                <div class="progress-pct-fill" :style="{ width: progressPct + '%' }"></div>
+              </div>
             </div>
             <div class="progress-track progress-track--vertical">
               <div class="progress-rail">
@@ -115,12 +118,10 @@
               <p class="intro-body">The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neurodiversity inclusion. It covers key segments across the employee lifecycle and customer experience, providing a holistic view of current practices.</p>
               <p class="intro-body" style="margin-bottom: 2rem;">NIWI is not a ranking tool, but a reflection-based index to help organisations understand where they are in their neurodiversity inclusion journey.</p>
               
-              <hr style="border: 0; border-top: 1px solid var(--c-border); margin: 2rem 0;" />
-              
-              <h2 style="color: var(--c-accent); font-family: 'Fraunces', serif; font-size: 1.2rem; margin-bottom: 0.75rem;">Why this matters</h2>
-              <p class="intro-body">Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.</p>
-              
-              <hr style="border: 0; border-top: 1px solid var(--c-border); margin: 2rem 0;" />
+              <div class="intro-why-block">
+                <h2 style="color: var(--c-accent); font-family: 'Fraunces', serif; font-size: 1.2rem; margin-bottom: 0.75rem;">Why this matters</h2>
+                <p class="intro-body">Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.</p>
+              </div>
             </div>
 
             <!-- Person details form (step 1) -->
@@ -671,13 +672,7 @@ async function submit() {
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  background: var(--c-bg);
-  background-image:
-    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
-  background-size: 32px 32px;
-  border-radius: 32px;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  background: transparent;
   display: flex; flex-direction: column;
 }
 
@@ -757,6 +752,12 @@ async function submit() {
   min-height: 0;
   margin: 0 auto;
   align-items: stretch;
+  transition: grid-template-columns 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              gap 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.step-layout--no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1000px;
 }
 
 .step-center {
@@ -847,51 +848,67 @@ async function submit() {
   -ms-overflow-style: none;
   scrollbar-width: none;
   background: var(--c-white);
-  border: 2px solid var(--c-border);
+  border: 1px solid rgba(28, 26, 24, 0.08);
   border-radius: 16px;
-  box-shadow: 4px 4px 0 rgba(4, 144, 124, 0.15);
+  box-shadow: 0 2px 12px rgba(28, 26, 24, 0.07);
+  animation: sideSlide 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes sideSlide {
+  from { transform: translateX(-20px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 .progress-sidebar::-webkit-scrollbar { display: none; }
 .progress-wrap {
   display: flex;
   flex-direction: column;
-  padding: 1.15rem 0.85rem 1.25rem;
+  padding: 20px 16px 20px;
   min-height: 100%;
 }
 .progress-header {
-  display: flex; flex-direction: column; gap: 0.35rem;
-  margin-bottom: 1.1rem; padding-bottom: 1rem;
-  border-bottom: 1.5px solid #E2DDD4;
+  display: flex; flex-direction: column; gap: 4px;
+  margin-bottom: 16px; padding-bottom: 16px;
+  border-bottom: 1px solid rgba(28, 26, 24, 0.08);
 }
 .progress-phase {
-  font-size: 0.82rem; font-weight: 800; color: var(--c-accent);
-  font-family: 'Fraunces', serif; letter-spacing: -0.02em;
+  font-size: 10px; font-weight: 600; color: var(--ink2, #4a4540);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  opacity: 0.5;
   line-height: 1.3;
 }
 .progress-pct {
-  font-size: 1.1rem; font-weight: 800; color: var(--c-accent);
+  font-size: 28px; font-weight: 700; color: var(--c-accent);
   font-family: 'Fraunces', serif;
+  line-height: 1;
 }
 .progress-count {
-  font-size: 0.72rem; font-weight: 700; color: #888;
+  font-size: 12px; font-weight: 500; color: #888;
 }
+/* thin progress bar under header */
+.progress-pct-bar {
+  height: 4px; background: rgba(4,144,124,0.12);
+  border-radius: 99px; overflow: hidden; margin-top: 4px;
+}
+.progress-pct-fill {
+  height: 100%; background: var(--c-accent);
+  border-radius: 99px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 .progress-track--vertical {
-  --progress-dot: 24px;
-  --progress-rail: 4px;
-  --progress-pad: 0.35rem;
+  --progress-dot: 20px;
+  --progress-rail: 1.5px;
+  --progress-pad: 6px;
   position: relative;
   flex: 1;
 }
 .progress-track--vertical .progress-rail {
   position: absolute;
-  left: calc((var(--progress-dot) - var(--progress-rail)) / 2);
-  top: calc(var(--progress-pad) + var(--progress-dot) / 2);
-  bottom: calc(var(--progress-pad) + var(--progress-dot) / 2);
+  left: calc(var(--progress-dot) / 2 - var(--progress-rail) / 2);
+  top: calc(var(--progress-pad) + var(--progress-dot));
+  bottom: calc(var(--progress-pad) + var(--progress-dot));
   width: var(--progress-rail);
-  box-sizing: border-box;
-  background: #E2DDD4;
+  background: rgba(28, 26, 24, 0.1);
   border-radius: 99px;
-  border: 1px solid var(--c-border);
   overflow: hidden;
   z-index: 0;
   pointer-events: none;
@@ -900,66 +917,75 @@ async function submit() {
   width: 100%;
   height: 0;
   min-height: 0;
-  background: linear-gradient(180deg, var(--c-accent), #20C0B0);
+  background: var(--c-accent);
   border-radius: 99px;
-  transition: height 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .progress-track--vertical .progress-steps {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 2px;
   position: relative;
   z-index: 1;
   list-style: none;
 }
 .progress-track--vertical .progress-step {
-  display: grid;
-  grid-template-columns: var(--progress-dot) 1fr;
+  display: flex;
   align-items: center;
-  column-gap: 0.65rem;
+  gap: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--progress-pad) 0.35rem var(--progress-pad) 0;
+  padding: var(--progress-pad) 6px;
   text-align: left;
   width: 100%;
   border-radius: 8px;
-  transition: background 0.15s;
+  transition: background 0.15s ease;
 }
 .progress-track--vertical .progress-step:hover:not(:disabled) {
-  background: var(--c-bg);
+  background: rgba(28, 26, 24, 0.04);
 }
-.progress-step:disabled { cursor: not-allowed; opacity: 0.5; }
-.progress-step.done:not(:disabled), .progress-step.active { cursor: pointer; opacity: 1; }
+.progress-step:disabled { cursor: default; }
+.progress-step.done:not(:disabled), .progress-step.active { cursor: pointer; }
+
+/* The number dot */
 .progress-track--vertical .progress-step-dot {
   width: var(--progress-dot);
   height: var(--progress-dot);
   border-radius: 50%;
-  background: rgba(4, 144, 124, 0.08);
-  border: 2px solid var(--c-accent);
+  background: rgba(28, 26, 24, 0.06);
+  border: 1.5px solid rgba(28, 26, 24, 0.15);
   display: grid;
   place-items: center;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--c-accent);
-  transition: all 0.25s;
+  font-size: 9px;
+  font-weight: 700;
+  color: rgba(28, 26, 24, 0.5);
+  flex-shrink: 0;
+  transition: all 0.22s ease;
   position: relative;
   z-index: 1;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  letter-spacing: 0;
 }
 .progress-step.done .progress-step-dot {
-  background: var(--c-accent); color: #FFFFFF;
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+  color: #FFFFFF;
 }
 .progress-step.active .progress-step-dot {
-  background: var(--c-accent); color: #FFFFFF;
-  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.25);
+  background: #1c1a18;
+  border-color: #1c1a18;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(28, 26, 24, 0.25);
 }
-.step-check { font-size: 0.7rem; line-height: 1; }
+.step-check { font-size: 9px; line-height: 1; }
 .progress-step-label {
-  font-size: 0.65rem; font-weight: 700; color: #999;
-  line-height: 1.2;
+  font-size: 11px; font-weight: 500; color: rgba(28, 26, 24, 0.4);
+  line-height: 1.35;
+  transition: color 0.15s;
 }
-.progress-step.active .progress-step-label,
-.progress-step.done .progress-step-label { color: var(--c-accent); font-weight: 800; }
+.progress-step.active .progress-step-label { color: #1c1a18; font-weight: 600; opacity: 1; }
+.progress-step.done  .progress-step-label  { color: var(--c-accent); font-weight: 500; opacity: 1; }
 
 /* Aside panel */
 .step-aside {
