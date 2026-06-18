@@ -10,6 +10,8 @@ import urllib.parse
 from datetime import datetime, timezone, timedelta
 import psycopg2.extras
 
+from app.services.settings_service import get_settings
+
 IST = timezone(timedelta(hours=5, minutes=30))
 
 DIMENSION_COMMENTARY = {
@@ -117,6 +119,9 @@ def score_section(data: dict, section_key: str, questions: list) -> tuple[float,
 
 
 def calculate_scores(data: dict, conn) -> dict:
+    settings = get_settings(conn)
+    threshold = settings.get("low_visibility_threshold", 50)
+
     # Fetch dynamic sections and questions
     sections = []
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
@@ -151,7 +156,7 @@ def calculate_scores(data: dict, conn) -> dict:
         level = get_maturity_level(score)
         
         is_low_visibility = False
-        if n_applicable > 0 and not_sure_count >= (n_applicable / 2.0):
+        if n_applicable > 0 and not_sure_count >= (n_applicable * threshold / 100.0):
             is_low_visibility = True
             low_visibility_sections.append(key)
 

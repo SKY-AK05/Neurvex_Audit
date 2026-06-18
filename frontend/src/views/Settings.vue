@@ -56,6 +56,20 @@
         </div>
       </div>
 
+      <div class="card">
+        <h2>Scoring &amp; analysis</h2>
+        <p class="card-hint">
+          Configure how audit responses are analyzed and flagged in the report.
+        </p>
+        <div class="fields-row">
+          <div class="field">
+            <label for="low-visibility-threshold">Low Visibility Threshold (%)</label>
+            <input id="low-visibility-threshold" v-model.number="form.low_visibility_threshold" type="number" min="0" max="100" />
+            <p style="font-size: 0.75rem; color: #888; margin-top: 0.3rem;">If this percentage or more of answers in a section are "Not Sure", it is flagged as Low Visibility.</p>
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
         <button type="submit" class="btn btn-primary" :disabled="saving">
           {{ saving ? 'Saving…' : 'Save Settings' }}
@@ -83,6 +97,7 @@ const form = reactive({
   notification_cc_email: "",
   notifications_enabled: false,
   support_email: "",
+  low_visibility_threshold: 50,
 });
 
 onMounted(async () => {
@@ -94,6 +109,7 @@ onMounted(async () => {
     form.notification_cc_email = data.notification_cc_email || "";
     form.notifications_enabled = !!data.notifications_enabled;
     form.support_email = data.support_email || "";
+    form.low_visibility_threshold = data.low_visibility_threshold !== undefined ? data.low_visibility_threshold : 50;
   } catch (e) {
     loadError.value = e.message;
   } finally {
@@ -125,6 +141,7 @@ async function save() {
     form.notification_cc_email = data.notification_cc_email;
     form.notifications_enabled = data.notifications_enabled;
     form.support_email = data.support_email || "";
+    form.low_visibility_threshold = data.low_visibility_threshold;
     window.dispatchEvent(new CustomEvent("settings-updated", { detail: data }));
     msgType.value = "success";
     msg.value = "Settings saved.";
