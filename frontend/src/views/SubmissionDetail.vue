@@ -276,7 +276,7 @@ function getScoreClass(score) {
 
 const commentaries = {
   lc: {
-    low: "Your leadership has yet to prioritize neurodiversity inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
+    low: "Your leadership has yet to prioritize neuro-inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
     med: "Early culture changes are visible under committed leaders. Establish structured metrics and encourage senior sponsors to serve as public role models.",
     high: "Inclusion is deeply embedded in your culture and values. Maintain this maturity by scaling audit tracking and mentoring other sector peers."
   },

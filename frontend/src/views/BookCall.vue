@@ -1,21 +1,7 @@
 <template>
   <div class="form-page">
     <div class="form-inner">
-      <header class="form-header">
-        <div class="form-header-left">
-          <router-link to="/" class="form-logo">
-            <img src="/logonew1.png" alt="" class="form-logo-img" />
-            <span class="form-logo-name">Neuro-Inclusive Workplace Index</span>
-          </router-link>
-        </div>
-        <div class="form-header-right">
-          <div class="header-powered">
-            <span class="header-powered-label">Powered by</span>
-            <img src="/logo_orchvate.png" alt="Orchvate" class="header-powered-logo" />
-          </div>
-        </div>
-      </header>
-
+      
       <div v-if="submitted" class="success-wrap">
         <div class="success-box">
           <div class="success-icon">?</div>
@@ -35,7 +21,7 @@
             <h1>Book a Complimentary Call</h1>
             <p class="step-sub">
               We'd love to walk through your NIWI results, reflect on what they mean for your
-              organisation, and explore the next phase of your neurodiversity inclusion journey.
+              organisation, and explore the next phase of your neuro-inclusion journey.
             </p>
           </div>
 
@@ -66,9 +52,9 @@
                   <label>Preferred time to call</label>
                   <select v-model="form.preferred_time">
                     <option value="">No preference</option>
-                    <option>Morning (9 am – 12 pm IST)</option>
-                    <option>Afternoon (12 pm – 3 pm IST)</option>
-                    <option>Late afternoon (3 pm – 6 pm IST)</option>
+                    <option>Morning (9 am ï¿½ 12 pm IST)</option>
+                    <option>Afternoon (12 pm ï¿½ 3 pm IST)</option>
+                    <option>Late afternoon (3 pm ï¿½ 6 pm IST)</option>
                   </select>
                 </div>
                 <div class="field field--full">
@@ -76,7 +62,7 @@
                   <textarea
                     v-model="form.message"
                     rows="4"
-                    placeholder="e.g. specific areas from the audit you'd like to focus on…"
+                    placeholder="e.g. specific areas from the audit you'd like to focus onï¿½"
                   ></textarea>
                 </div>
               </div>
@@ -87,7 +73,7 @@
 
           <div class="book-actions">
             <button type="button" class="btn-submit" :disabled="loading" @click="submit">
-              {{ loading ? "Sending…" : "Request a call ?" }}
+              {{ loading ? "Sendingï¿½" : "Request a call ?" }}
             </button>
           </div>
         </div>

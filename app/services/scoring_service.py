@@ -16,7 +16,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 DIMENSION_COMMENTARY = {
     "lc": {
-        "low": "Your leadership has yet to prioritize neurodiversity inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
+        "low": "Your leadership has yet to prioritize neuro-inclusion. Initiating sponsor education and drafting basic DEI policy statements is highly recommended.",
         "med": "Early culture changes are visible under committed leaders. Establish structured metrics and encourage senior sponsors to serve as public role models.",
         "high": "Inclusion is deeply embedded in your culture and values. Maintain this maturity by scaling audit tracking and mentoring other sector peers."
     },
@@ -66,17 +66,17 @@ def get_maturity_level(score: int) -> str:
         return "Level 3 — Developing"
 
 OVERALL_SYNOPSIS = [
-    "Your organisation is at the start of its neurodiversity inclusion journey. "
+    "Your organisation is at the start of its neuro-inclusion journey. "
     "There is significant opportunity to build awareness, remove barriers, and create a more inclusive environment. "
     "We recommend beginning with leadership education and a structured inclusion plan. "
     "Orchvate is here to support you every step of the way.",
 
-    "Your organisation has made meaningful early progress on neurodiversity inclusion. "
+    "Your organisation has made meaningful early progress on neuro-inclusion. "
     "There are pockets of good practice, but consistency and embedding are the next steps. "
     "With focused effort across the key areas, you can build a genuinely inclusive culture. "
     "Orchvate can help you prioritise and accelerate your progress.",
 
-    "Your organisation is developing a strong foundation for neurodiversity inclusion. "
+    "Your organisation is developing a strong foundation for neuro-inclusion. "
     "You are ahead of many organisations and have much to be proud of. "
     "The focus now is on embedding, measuring impact, and continuing to improve. "
     "Orchvate can support you in reaching and sustaining best practice.",
@@ -506,7 +506,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
       <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F4F2F0;border-radius:12px;">
         <tr><td style="padding:24px 24px;">
           <p style="margin:0 0 8px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;font-weight:600;color:#1E1A4A;">Explore your next steps</p>
-          <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#555;line-height:1.6;">We would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neurodiversity inclusion journey could look like.</p>
+          <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#555;line-height:1.6;">We would be happy to offer a complimentary conversation to walk through these results in more detail, reflect on what they mean for your organisation, and explore what a possible next phase of your neuro-inclusion journey could look like.</p>
           <a href="{booking_url}" style="display:inline-block;background:#1E1A4A;color:#FFFFFF;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;padding:12px 24px;border-radius:8px;text-decoration:none;">Book a complimentary call →</a>
         </td></tr>
       </table>

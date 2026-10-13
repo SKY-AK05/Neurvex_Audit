@@ -267,9 +267,9 @@ async function logout() {
   --c-primary-dark: #161057; /* Legacy support if needed */
   --primary: #161057; /* Text and primary accents */
   --text-muted: #4A5A89;
-  --bg: #f0ebe3;
+  --bg: #FAFAF8; /* Milky white, replacing #f0ebe3 */
   --surface: #FFFFFF;
-  --border: rgba(22, 16, 87, 0.15); /* Softened from #0a0032 */
+  --border: rgba(22, 16, 87, 0.1); /* Softened border */
   --accent: #04907C;
   --accent-rgb: 4, 144, 124;
   --c-accent-retro: #FFF8F2; /* Legacy */
@@ -472,8 +472,8 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .main-rounded-container {
   background: var(--bg);
   background-image:
-    linear-gradient(to right, rgba(180,175,165,0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(180,175,165,0.25) 1px, transparent 1px);
+    linear-gradient(to right, rgba(22, 16, 87, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 16, 87, 0.04) 1px, transparent 1px);
   background-size: 32px 32px;
   border-radius: 32px;
   flex: 1;

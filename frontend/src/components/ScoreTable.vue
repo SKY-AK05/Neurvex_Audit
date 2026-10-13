@@ -128,10 +128,10 @@ const sections = [
     key: "lc",
     label: "Leadership & Culture",
     questions: [
-      { field: "q5",  text: "Does your organisation have a named senior leader or executive sponsor responsible for neurodiversity inclusion?" },
-      { field: "q6",  text: "Is neurodiversity inclusion explicitly referenced in your organisation's values, strategy, or DEI policy?" },
+      { field: "q5",  text: "Does your organisation have a named senior leader or executive sponsor responsible for neuro-inclusion?" },
+      { field: "q6",  text: "Is neuro-inclusion explicitly referenced in your organisation's values, strategy, or DEI policy?" },
       { field: "q7",  text: "Have senior leaders received education or training on neurodiversity in the past 12 months?" },
-      { field: "q8",  text: "Does your organisation publicly communicate its commitment to neurodiversity inclusion?" },
+      { field: "q8",  text: "Does your organisation publicly communicate its commitment to neuro-inclusion?" },
       { field: "q9",  text: "Are neurodivergent employees represented in leadership or decision-making roles?" }
     ]
   },
@@ -205,11 +205,11 @@ const sections = [
     key: "sp",
     label: "Suppliers & Procurement",
     questions: [
-      { field: "q40", text: "Does your procurement process include questions about suppliers' neurodiversity inclusion practices?" },
-      { field: "q41", text: "Are suppliers expected to meet minimum neurodiversity inclusion standards as part of your contracts?" },
+      { field: "q40", text: "Does your procurement process include questions about suppliers' neuro-inclusion practices?" },
+      { field: "q41", text: "Are suppliers expected to meet minimum neuro-inclusion standards as part of your contracts?" },
       { field: "q42", text: "Do you actively seek to work with neurodiversity-led or neurodiversity-friendly suppliers?" },
-      { field: "q43", text: "Is neurodiversity inclusion performance reviewed as part of supplier relationship management?" },
-      { field: "q44", text: "Does your organisation share neurodiversity inclusion best practice with its supply chain?" }
+      { field: "q43", text: "Is neuro-inclusion performance reviewed as part of supplier relationship management?" },
+      { field: "q44", text: "Does your organisation share neuro-inclusion best practice with its supply chain?" }
     ]
   }
 ];

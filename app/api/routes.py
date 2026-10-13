@@ -155,9 +155,9 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
 
     params = {
         **sanitized_scores,
-        "name": data.get("name"),
-        "designation": data.get("designation"),
-        "company_name": data.get("company_name"),
+        "name": data.get("name") or "",
+        "designation": data.get("designation") or data.get("role") or "",
+        "company_name": data.get("company_name", ""),
         "email": data.get("email"),
         "contact_number": data.get("contact_number", None),
         "has_physical_workspace": data.get("has_physical_workspace") or None,

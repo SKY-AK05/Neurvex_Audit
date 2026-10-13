@@ -20,7 +20,9 @@ const routes = [
   { path: "/",                        component: AuditForm },
   { path: "/book-a-call",             component: BookCall },
   { path: "/portal",                  component: AdminLogin },
-  { path: "/admin",                   redirect: "/portal" },
+  { path: "/admin",                   redirect: "/GPadmin" },
+  { path: "/GPadmin",                 component: AdminLogin },
+  { path: "/gpadmin",                 redirect: "/GPadmin" },
   { path: "/admin/dashboard",         component: Overview,         meta: { requiresAuth: true } },
   { path: "/admin/submissions",       component: Submissions,      meta: { requiresAuth: true } },
   { path: "/admin/submissions/:id([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})",   component: SubmissionDetail, meta: { requiresAuth: true } },
@@ -45,7 +47,7 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   if (to.meta.requiresAuth && !sessionStorage.getItem("nd_auth")) {
-    return "/portal";
+    return "/GPadmin";
   }
   if (to.meta.requiresSuper && sessionStorage.getItem("nd_role") !== "super") {
     return "/admin/dashboard";
