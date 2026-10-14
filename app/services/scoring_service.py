@@ -119,7 +119,9 @@ def score_section(data: dict, section_key: str, questions: list) -> tuple[float,
 
 
 def calculate_scores(data: dict, conn) -> dict:
-    settings = get_settings(conn)
+    # Create cursor for settings
+    with conn.cursor() as settings_cur:
+        settings = get_settings(settings_cur)
     threshold = settings.get("low_visibility_threshold", 50)
 
     # Fetch dynamic sections and questions
