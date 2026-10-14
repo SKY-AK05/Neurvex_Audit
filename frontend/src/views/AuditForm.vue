@@ -258,53 +258,59 @@
             </div>
 
             <div ref="questionsScroll" class="questions-scroll">
-            <!-- Tell Us About You (Step 2) - Paginated -->
+            <!-- Tell Us About You (Step 2) - Clean Professional Layout -->
             <div v-if="currentStep === 2" class="demographics-form">
               
-              <!-- Page 1: Basic Info + Role & Location -->
-              <div v-if="demoPage === 1" class="demo-page">
+              <!-- Section 1: About You -->
+              <div class="section-card">
+                <div class="section-header">
+                  <div class="section-number">1</div>
+                  <h2 class="section-title">About You</h2>
+                </div>
+                
                 <div class="fields-grid">
-                  <!-- A. Name (Half width) -->
-                  <div class="field half-width">
-                    <label for="demo_name">Name <span class="label-opt">(Optional)</span></label>
+                  <!-- Row 1: Name & Organization -->
+                  <div class="field-group">
+                    <label for="demo_name" class="field-label">Name <span class="optional-label">(Optional)</span></label>
                     <input
                       id="demo_name"
                       v-model="form.name"
                       type="text"
-                      placeholder="Enter your name (optional)"
+                      class="field-input"
+                      placeholder="Enter your name"
                     />
                   </div>
 
-                  <!-- B. Organization Name (Half width) -->
-                  <div class="field half-width">
-                    <label for="demo_company">Organization Name *</label>
+                  <div class="field-group">
+                    <label for="demo_company" class="field-label">Organization Name *</label>
                     <input
                       id="demo_company"
                       v-model="form.company_name"
                       type="text"
+                      class="field-input"
+                      :class="{ 'input-error': errors.company_name }"
                       placeholder="Enter your organization name"
-                      :class="{ error: errors.company_name }"
                     />
-                    <span v-if="errors.company_name" class="field-err">{{ errors.company_nameMsg || 'Required' }}</span>
+                    <span v-if="errors.company_name" class="error-message">{{ errors.company_nameMsg || 'Required' }}</span>
                   </div>
 
-                  <!-- C. Email ID -->
-                  <div class="field full-width">
-                    <label for="demo_email">Email ID *</label>
+                  <!-- Row 2: Email & Function -->
+                  <div class="field-group">
+                    <label for="demo_email" class="field-label">Email ID *</label>
                     <input
                       id="demo_email"
                       v-model="form.email"
                       type="email"
-                      placeholder="Enter your email (e.g. name@company.com)"
-                      :class="{ error: errors.email }"
+                      class="field-input"
+                      :class="{ 'input-error': errors.email }"
+                      placeholder="name@company.com"
                     />
-                    <span class="field-helper">Required solely to receive your personalized feedback.</span>
-                    <span v-if="errors.email" class="field-err">{{ errors.emailMsg || 'Required' }}</span>
+                    <span class="helper-text">Required solely to receive your personalized feedback.</span>
+                    <span v-if="errors.email" class="error-message">{{ errors.emailMsg || 'Required' }}</span>
                   </div>
 
-                  <!-- D. Function -->
-                  <div class="field full-width">
-                    <label for="demo_function">Which function do you primarily work in? *</label>
+                  <div class="field-group">
+                    <label for="demo_function" class="field-label">Which function do you primarily work in? *</label>
                     <AnimatedSelect
                       id="demo_function"
                       v-model="form.function"
@@ -313,49 +319,26 @@
                       :error="!!errors.function"
                       @change="() => {}"
                     />
-                    <span v-if="errors.function" class="field-err">{{ errors.functionMsg || 'Please select your function' }}</span>
-
-                    <!-- Conditional field if Other -->
-                    <div v-if="form.function === 'Other'" class="conditional-field mt-2">
-                      <label for="demo_function_other">Please specify your function *</label>
-                      <input
-                        id="demo_function_other"
-                        v-model="form.function_other"
-                        type="text"
-                        placeholder="Specify your function"
-                        :class="{ error: errors.function_other }"
-                      />
-                      <span v-if="errors.function_other" class="field-err">{{ errors.function_otherMsg || 'Please specify your function' }}</span>
-                    </div>
+                    <span v-if="errors.function" class="error-message">{{ errors.functionMsg || 'Please select your function' }}</span>
                   </div>
 
-                  <!-- E. Current Role -->
-                  <div class="field full-width">
-                    <label class="group-label">Which best describes your current role? *</label>
-                    <div class="radio-card-grid" :class="{ 'has-error': errors.role }">
-                      <label
-                        v-for="r in roleOptions"
-                        :key="r"
-                        class="radio-card"
-                        :class="{ selected: form.role === r }"
-                      >
-                        <input
-                          type="radio"
-                          name="demo_role"
-                          :value="r"
-                          v-model="form.role"
-                          class="sr-only"
-                        />
-                        <span class="radio-dot"></span>
-                        <span class="radio-label">{{ r }}</span>
-                      </label>
-                    </div>
-                    <span v-if="errors.role" class="field-err">{{ errors.roleMsg || 'Please select your current role' }}</span>
+                  <!-- Conditional: Other Function -->
+                  <div v-if="form.function === 'Other'" class="field-group full-width">
+                    <label for="demo_function_other" class="field-label">Please specify your function *</label>
+                    <input
+                      id="demo_function_other"
+                      v-model="form.function_other"
+                      type="text"
+                      class="field-input"
+                      :class="{ 'input-error': errors.function_other }"
+                      placeholder="Specify your function"
+                    />
+                    <span v-if="errors.function_other" class="error-message">{{ errors.function_otherMsg }}</span>
                   </div>
 
-                  <!-- F. Country of Work Location -->
-                  <div class="field full-width">
-                    <label for="demo_country">Country of Work Location *</label>
+                  <!-- Row 3: Country & State -->
+                  <div class="field-group">
+                    <label for="demo_country" class="field-label">Country of Work Location *</label>
                     <SearchableSelect
                       id="demo_country"
                       v-model="form.country"
@@ -364,167 +347,181 @@
                       :error="!!errors.country"
                       @change="onCountryChange"
                     />
-                    <span v-if="errors.country" class="field-err">{{ errors.countryMsg || 'Please select your country of work location' }}</span>
+                    <span v-if="errors.country" class="error-message">{{ errors.countryMsg }}</span>
+                  </div>
 
-                    <!-- Conditionally display State or UT if India -->
-                    <div v-if="form.country === 'India'" class="conditional-field mt-3">
-                      <label for="demo_state_ut">Which State or Union Territory are you currently based in? *</label>
-                      <AnimatedSelect
-                        id="demo_state_ut"
-                        v-model="form.state_ut"
-                        :options="[...indianStates, ...indianUTs]"
-                        placeholder="Select State or Union Territory"
-                        :error="!!errors.state_ut"
-                        @change="() => {}"
-                      />
-                      <span v-if="errors.state_ut" class="field-err">{{ errors.state_utMsg || 'Please select your State or Union Territory' }}</span>
+                  <div v-if="form.country === 'India'" class="field-group">
+                    <label for="demo_state_ut" class="field-label">(If India) Which State or Union Territory are you currently based in? *</label>
+                    <AnimatedSelect
+                      id="demo_state_ut"
+                      v-model="form.state_ut"
+                      :options="[...indianStates, ...indianUTs]"
+                      placeholder="Select your state / union territory"
+                      :error="!!errors.state_ut"
+                      @change="() => {}"
+                    />
+                    <span v-if="errors.state_ut" class="error-message">{{ errors.state_utMsg }}</span>
+                  </div>
+
+                  <!-- Row 4: Current Role -->
+                  <div class="field-group full-width">
+                    <label class="field-label">Which best describes your current role? *</label>
+                    <div class="radio-grid" :class="{ 'has-error': errors.role }">
+                      <label
+                        v-for="r in roleOptions"
+                        :key="r"
+                        class="radio-option"
+                        :class="{ 'radio-selected': form.role === r }"
+                      >
+                        <input
+                          type="radio"
+                          name="demo_role"
+                          :value="r"
+                          v-model="form.role"
+                          class="radio-input"
+                        />
+                        <span class="radio-circle"></span>
+                        <span class="radio-text">{{ r }}</span>
+                      </label>
                     </div>
+                    <span v-if="errors.role" class="error-message">{{ errors.roleMsg }}</span>
                   </div>
                 </div>
               </div>
 
-              <!-- Page 2: Gender Identity & PwD -->
-              <div v-else-if="demoPage === 2" class="demo-page">
-                <div class="identity-questions-list">
-                  <!-- A. Gender Identity -->
-                  <div class="demo-q-block">
-                    <label class="group-label">How do you describe your gender identity? *</label>
-                    <div class="radio-card-grid" :class="{ 'has-error': errors.gender }">
+              <!-- Section 2: Inclusion & Identity -->
+              <div class="section-card">
+                <div class="section-header">
+                  <div class="section-number">2</div>
+                  <h2 class="section-title">Inclusion & Identity</h2>
+                </div>
+                
+                <p class="section-description">
+                  The following questions help us understand representation and identify opportunities to improve accessibility, inclusion, and belonging. Responses will be analyzed in aggregate and treated confidentially.
+                </p>
+
+                <div class="questions-container">
+                  <!-- Gender Identity -->
+                  <div class="question-block">
+                    <label class="field-label">How do you describe your gender identity? *</label>
+                    <div class="radio-grid" :class="{ 'has-error': errors.gender }">
                       <label
                         v-for="g in genderOptions"
                         :key="g"
-                        class="radio-card"
-                        :class="{ selected: form.gender === g }"
+                        class="radio-option"
+                        :class="{ 'radio-selected': form.gender === g }"
                       >
                         <input
                           type="radio"
                           name="demo_gender"
                           :value="g"
                           v-model="form.gender"
-                          class="sr-only"
+                          class="radio-input"
                         />
-                        <span class="radio-dot"></span>
-                        <span class="radio-label">{{ g }}</span>
+                        <span class="radio-circle"></span>
+                        <span class="radio-text">{{ g }}</span>
                       </label>
                     </div>
-                    <span v-if="errors.gender" class="field-err">{{ errors.genderMsg || 'Please select your gender identity' }}</span>
+                    <span v-if="errors.gender" class="error-message">{{ errors.genderMsg }}</span>
 
-                    <!-- Optional self-describe text field if Other gender identity -->
-                    <div v-if="form.gender === 'Other gender identity'" class="conditional-field mt-2">
-                      <label for="demo_gender_other">Self-describe <span class="label-opt">(Optional)</span></label>
+                    <div v-if="form.gender === 'Other gender identity'" class="field-group mt-3">
                       <input
                         id="demo_gender_other"
                         v-model="form.gender_other"
                         type="text"
+                        class="field-input"
                         placeholder="Self-describe (optional)"
                       />
                     </div>
                   </div>
 
-                  <!-- B. Person with Disability -->
-                  <div class="demo-q-block">
-                    <label class="group-label">Do you identify as a Person with Disability (PwD)? *</label>
-                    <div class="radio-card-grid radio-card-grid--compact" :class="{ 'has-error': errors.is_pwd }">
+                  <!-- Person with Disability -->
+                  <div class="question-block">
+                    <label class="field-label">Do you identify as a Person with Disability (PwD)? *</label>
+                    <div class="radio-grid radio-grid-compact" :class="{ 'has-error': errors.is_pwd }">
                       <label
                         v-for="opt in pwdOptions"
                         :key="opt"
-                        class="radio-card"
-                        :class="{ selected: form.is_pwd === opt }"
+                        class="radio-option"
+                        :class="{ 'radio-selected': form.is_pwd === opt }"
                       >
                         <input
                           type="radio"
                           name="demo_pwd"
                           :value="opt"
                           v-model="form.is_pwd"
-                          class="sr-only"
+                          class="radio-input"
                         />
-                        <span class="radio-dot"></span>
-                        <span class="radio-label">{{ opt }}</span>
+                        <span class="radio-circle"></span>
+                        <span class="radio-text">{{ opt }}</span>
                       </label>
                     </div>
-                    <span v-if="errors.is_pwd" class="field-err">{{ errors.is_pwdMsg || 'Please select an option' }}</span>
+                    <span v-if="errors.is_pwd" class="error-message">{{ errors.is_pwdMsg }}</span>
                   </div>
-                </div>
-              </div>
 
-              <!-- Page 3: Neurodivergent & Marginalized + Consent -->
-              <div v-else-if="demoPage === 3" class="demo-page">
-                <div class="identity-questions-list">
-                  <div class="demo-q-block">
-                    <label class="group-label">Do you identify as neurodivergent? *</label>
-                    <p class="field-helper-block">
+                  <!-- Neurodivergent -->
+                  <div class="question-block">
+                    <label class="field-label">Do you identify as neurodivergent? *</label>
+                    <p class="question-helper">
                       Neurodivergent may include ADHD, autism, dyslexia, dyspraxia, and other cognitive or neurological differences.
                     </p>
-                    <div class="radio-card-grid" :class="{ 'has-error': errors.is_neurodivergent }">
+                    <div class="radio-grid" :class="{ 'has-error': errors.is_neurodivergent }">
                       <label
                         v-for="opt in neurodivergentOptions"
                         :key="opt"
-                        class="radio-card"
-                        :class="{ selected: form.is_neurodivergent === opt }"
+                        class="radio-option"
+                        :class="{ 'radio-selected': form.is_neurodivergent === opt }"
                       >
                         <input
                           type="radio"
                           name="demo_nd"
                           :value="opt"
                           v-model="form.is_neurodivergent"
-                          class="sr-only"
+                          class="radio-input"
                         />
-                        <span class="radio-dot"></span>
-                        <span class="radio-label">{{ opt }}</span>
+                        <span class="radio-circle"></span>
+                        <span class="radio-text">{{ opt }}</span>
                       </label>
                     </div>
-                    <span v-if="errors.is_neurodivergent" class="field-err">{{ errors.is_neurodivergentMsg || 'Please select an option' }}</span>
+                    <span v-if="errors.is_neurodivergent" class="error-message">{{ errors.is_neurodivergentMsg }}</span>
                   </div>
 
-                  <!-- D. Underrepresented / Historically Marginalized -->
-                  <div class="demo-q-block">
-                    <label class="group-label">Do you identify as belonging to an underrepresented or historically marginalized community? *</label>
-                    <p class="field-helper-block">
+                  <!-- Underrepresented / Marginalized -->
+                  <div class="question-block">
+                    <label class="field-label">Do you identify as belonging to an underrepresented or historically marginalized community? *</label>
+                    <p class="question-helper">
                       This may include economic, ethnic, religious, caste-based, LGBTQIA+, or other communities that have historically experienced exclusion or underrepresentation.
                     </p>
-                    <div class="radio-card-grid radio-card-grid--compact" :class="{ 'has-error': errors.is_marginalized }">
+                    <div class="radio-grid radio-grid-compact" :class="{ 'has-error': errors.is_marginalized }">
                       <label
                         v-for="opt in marginalizedOptions"
                         :key="opt"
-                        class="radio-card"
-                        :class="{ selected: form.is_marginalized === opt }"
+                        class="radio-option"
+                        :class="{ 'radio-selected': form.is_marginalized === opt }"
                       >
                         <input
                           type="radio"
                           name="demo_marg"
                           :value="opt"
                           v-model="form.is_marginalized"
-                          class="sr-only"
+                          class="radio-input"
                         />
-                        <span class="radio-dot"></span>
-                        <span class="radio-label">{{ opt }}</span>
+                        <span class="radio-circle"></span>
+                        <span class="radio-text">{{ opt }}</span>
                       </label>
                     </div>
-                    <span v-if="errors.is_marginalized" class="field-err">{{ errors.is_marginalizedMsg || 'Please select an option' }}</span>
+                    <span v-if="errors.is_marginalized" class="error-message">{{ errors.is_marginalizedMsg }}</span>
+                  </div>
+
+                  <!-- Consent Checkbox -->
+                  <div class="consent-block">
+                    <label class="consent-label">
+                      <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" />
+                      <span class="consent-text">I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
+                    </label>
+                    <span v-if="errors.consent_given" class="error-message">You must provide consent to proceed.</span>
                   </div>
                 </div>
-
-                <!-- Confidentiality Statement & Consent -->
-              <div class="confidentiality-card mt-4">
-                <div class="confidentiality-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#009070" stroke-width="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
-                  <span>Confidentiality & Data Privacy</span>
-                </div>
-                <p class="confidentiality-text">
-                  The demographic questions above help us understand how neuro-inclusion experiences vary across groups. Your responses will be analyzed in aggregate and treated confidentially. Individual demographic responses are never disclosed publicly or used to identify participants.
-                </p>
-
-                <div class="field full-width consent-wrapper">
-                  <label for="gdpr_consent" class="consent-label">
-                    <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" />
-                    <span>I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
-                  </label>
-                  <span v-if="errors.consent_given" class="field-err" style="margin-left: 2rem;">You must provide consent to proceed.</span>
-                </div>
-              </div>
               </div>
 
             </div>
@@ -640,13 +637,11 @@
 
           <!-- Bottom Navigation -->
           <div class="why-matters-footer">
-            <button v-if="currentStep === 2 && demoPage > 1" class="btn-back-compact" @click="demoPage--" type="button">← Back</button>
-            <button v-else-if="currentStep > 0" class="btn-back-compact" @click="currentStep--; demoPage = 1;" type="button">← Back</button>
+            <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
             <div v-else></div>
 
             <div class="step-nav-mid">
               <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-              <SaveContinueButton v-if="currentStep > 3" :onSave="syncToBackend" />
             </div>
 
             <button
@@ -721,7 +716,6 @@ const submitted       = ref(false);
 const submitting      = ref(false);
 const submitError     = ref("");
 const currentStep     = ref(0);
-const demoPage        = ref(1); // Pagination for demographics (step 2)
 const showMobileInfo  = ref(false);
 const questionsScroll = ref(null);
 const errors      = reactive({});
@@ -1057,78 +1051,6 @@ watch(() => form, (newForm) => {
   });
 }, { deep: true });
 
-function validateDemoPage() {
-  Object.keys(errors).forEach(k => delete errors[k]);
-  
-  if (demoPage.value === 1) {
-    // Page 1: Name (optional), Company, Email, Function, Role, Country
-    const comp = (form.company_name || "").trim();
-    if (!comp) {
-      errors.company_name = true;
-      errors.company_nameMsg = "Organization name is required";
-    }
-
-    const em = (form.email || "").trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!em) {
-      errors.email = true;
-      errors.emailMsg = "Email ID is required solely to receive your personalized feedback";
-    } else if (!emailRegex.test(em)) {
-      errors.email = true;
-      errors.emailMsg = "Please enter a valid email address (e.g. name@company.com)";
-    }
-
-    if (!form.function) {
-      errors.function = true;
-      errors.functionMsg = "Please select your primary function";
-    } else if (form.function === "Other" && !(form.function_other || "").trim()) {
-      errors.function_other = true;
-      errors.function_otherMsg = "Please specify your function";
-    }
-
-    if (!form.role) {
-      errors.role = true;
-      errors.roleMsg = "Please select your current role";
-    }
-
-    if (!form.country) {
-      errors.country = true;
-      errors.countryMsg = "Please select your country of work location";
-    } else if (form.country === "India" && !form.state_ut) {
-      errors.state_ut = true;
-      errors.state_utMsg = "Please select your State or Union Territory";
-    }
-  } else if (demoPage.value === 2) {
-    // Page 2: Gender, PwD
-    if (!form.gender) {
-      errors.gender = true;
-      errors.genderMsg = "Please select your gender identity";
-    }
-
-    if (!form.is_pwd) {
-      errors.is_pwd = true;
-      errors.is_pwdMsg = "Please select an answer";
-    }
-  } else if (demoPage.value === 3) {
-    // Page 3: Neurodivergent, Marginalized, Consent
-    if (!form.is_neurodivergent) {
-      errors.is_neurodivergent = true;
-      errors.is_neurodivergentMsg = "Please select an answer";
-    }
-
-    if (!form.is_marginalized) {
-      errors.is_marginalized = true;
-      errors.is_marginalizedMsg = "Please select an answer";
-    }
-
-    if (!form.consent_given) {
-      errors.consent_given = true;
-    }
-  }
-  
-  return Object.keys(errors).length === 0;
-}
-
 function validateStep() {
   Object.keys(errors).forEach(k => delete errors[k]);
   if (currentStep.value === 0) {
@@ -1136,7 +1058,7 @@ function validateStep() {
   } else if (currentStep.value === 1) {
     // Why This Matters — no validation needed
   } else if (currentStep.value === 2) {
-    // Tell Us About You validation
+    // Tell Us About You validation - all fields on one page
     // A. Name is optional
 
     // B. Organization Name (reject empty or whitespace-only)
@@ -1253,18 +1175,7 @@ function scrollToError() {
 }
 
 function nextStep() {
-  if (currentStep.value === 2 && demoPage.value < 3) {
-    // Demographics pagination - advance to next page within step 2 (3 pages total)
-    if (validateDemoPage()) {
-      demoPage.value++;
-    } else {
-      scrollToError();
-    }
-  } else if (validateStep()) {
-    // Move to next step and reset demo page
-    if (currentStep.value === 2) {
-      demoPage.value = 1;
-    }
+  if (validateStep()) {
     currentStep.value++;
   } else {
     scrollToError();
@@ -2628,333 +2539,328 @@ html {
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-flex; align-items: center; background: transparent; color: var(--c-accent); font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; border: 1.5px solid var(--c-accent); font-family: var(--font-body); }
+.step-tag { display: inline-flex; align-items: center; background: transparent; color: var(--c-accent); font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; border: 1.5px solid var(--c-accent); font-family: var(--font-body); }
 .step-head-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-.h1-green { font-size: 1.65rem; font-weight: 800; color: var(--c-accent); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.65rem; font-family: 'Fraunces', serif; }
-.h1-navy { font-size: 1.75rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.65rem; font-family: 'Fraunces', serif; cursor: pointer; }
-.step-sub { color: #64748B; font-size: 0.85rem; margin-bottom: 0; line-height: 1.45; }
+.h1-green { font-size: 1.5rem; font-weight: 800; color: var(--c-accent); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; }
+.h1-navy { font-size: 1.65rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; cursor: pointer; }
+.step-sub { color: #64748B; font-size: 0.8rem; margin-bottom: 0; line-height: 1.45; }
 .step-sub-inline { color: #64748B; font-size: 0.8rem; white-space: nowrap; margin-bottom: 0; align-self: flex-end; padding-bottom: 0.35rem; }
 
-/* Demographics Form Styles */
+/* =========================================================
+   DEMOGRAPHICS FORM - CLEAN PROFESSIONAL DESIGN
+   ========================================================= */
+
 .demographics-form {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
-  padding-bottom: 1.5rem;
-}
-
-/* Demographics Form - No Background Boxes, Paginated Content */
-.demographics-form {
+  gap: 1.5rem;
+  max-width: 100%;
   width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 2rem;
 }
 
-.demo-page {
-  width: 100%;
-  padding: 0;
-}
-
-/* Hide section styling - no boxes or headers */
-.demo-section {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-}
-
-.demo-section:focus-within {
-  border-color: transparent;
-}
-
-.demo-section-header {
-  display: none;
-}
-
-.demo-section-badge {
-  display: none;
-}
-
-.demo-section-badge.demo-badge-teal {
-  display: none;
-}
-
-.demo-section-title {
-  display: none;
-}
-
-.demo-section-desc {
-  display: none;
-}
-
-.label-opt {
-  color: #8C827A;
-  font-weight: 400;
-  font-size: 0.82em;
-  text-transform: none;
-}
-
-.field-helper {
-  display: block;
-  font-size: 0.75rem;
-  color: #007057;
-  margin-top: 0.25rem;
-  font-weight: 500;
-}
-
-.field-helper-block {
-  font-size: 0.78rem;
-  color: #4A5568;
-  margin: 0 0 0.6rem 0;
-  line-height: 1.45;
-  background: #FAF8F5;
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border-left: 2.5px solid #009070;
-}
-
-.select-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.select-wrapper::after {
-  content: '';
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 16px;
-  height: 16px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23555555' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: contain;
-  pointer-events: none;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.select-wrapper:has(.custom-select:focus)::after {
-  transform: translateY(-50%) rotate(180deg);
-}
-
-.custom-select {
-  width: 100%;
-  padding: 0.55rem 2.25rem 0.55rem 0.75rem;
-  background-color: #FFFFFF;
-  border: 1.5px solid var(--c-border);
+/* Section Cards with numbered headers */
+.section-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 0.85rem;
-  color: #120050;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 38px;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #E8F5F3 0%, #F0F9F7 100%);
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.section-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #047C69;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.section-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1F2937;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.section-description {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #6B7280;
+  margin: 0 0 1.25rem 0;
+  padding: 1.25rem 1.5rem 0 1.5rem;
+}
+
+/* Fields Grid - Two columns */
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+  width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
-.custom-select:hover {
-  border-color: #009070;
+.field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
-.custom-select:focus {
-  outline: none;
-  border-color: #009070;
-  box-shadow: 0 0 0 2px rgba(0, 144, 112, 0.12);
+.field-group.full-width {
+  grid-column: 1 / -1;
 }
 
-.custom-select.error {
-  border-color: #ff4444;
-  background-color: #FFF5F5;
-}
-
-.custom-select option {
-  padding: 0.6rem 0.75rem;
-  background: #FFFFFF;
-  color: #120050;
-  font-size: 0.85rem;
-}
-
-.custom-select option:hover,
-.custom-select option:checked {
-  background: #E6F4F1;
-  color: #007057;
-}
-
-.group-label {
+.field-label {
   display: block;
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: var(--c-primary-dark);
-  margin-bottom: 0.45rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: 'Fraunces', serif;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.375rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-.radio-card-grid {
+.optional-label {
+  font-weight: 400;
+  color: #6B7280;
+  font-style: italic;
+}
+
+.field-input,
+.field-select {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: #FFFFFF;
+  color: #1F2937;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  min-height: 40px;
+  box-sizing: border-box;
+}
+
+.field-input:hover,
+.field-select:hover {
+  border-color: #9CA3AF;
+}
+
+.field-input:focus,
+.field-select:focus {
+  outline: none;
+  border-color: #047C69;
+  box-shadow: 0 0 0 3px rgba(4, 124, 105, 0.1);
+}
+
+.field-input::placeholder {
+  color: #9CA3AF;
+}
+
+.field-input.input-error,
+.field-select.input-error {
+  border-color: #DC2626;
+  background-color: #FEF2F2;
+}
+
+.helper-text {
+  display: block;
+  font-size: 0.75rem;
+  color: #047C69;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+.error-message {
+  display: block;
+  color: #DC2626;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* Radio Options - Clean inline design */
+.radio-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-  gap: 0.5rem;
-  row-gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.625rem;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
-.radio-card-grid--compact {
-  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+.radio-grid-compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.radio-card-grid.has-error .radio-card {
-  border-color: rgba(255, 68, 68, 0.5);
+.radio-grid.has-error .radio-option {
+  border-color: #FCA5A5;
 }
 
-.radio-card {
+.radio-option {
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  padding: 0.6rem 0.75rem;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem;
   background: #FFFFFF;
-  border: 1.5px solid var(--c-border);
-  border-radius: 8px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
+  transition: all 0.2s ease;
   position: relative;
-  overflow: hidden;
-  min-height: 36px;
+  min-height: 40px;
+  box-sizing: border-box;
 }
 
-.radio-card::before {
-  content: '';
+.radio-option:hover {
+  border-color: #047C69;
+  background: #F9FAFB;
+}
+
+.radio-option.radio-selected {
+  border-color: #047C69;
+  background: #F0FDF4;
+  box-shadow: 0 0 0 1px #047C69;
+}
+
+.radio-input {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02));
   opacity: 0;
-  transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 0;
+  height: 0;
 }
 
-.radio-card:hover {
-  border-color: #3B82F6;
-  background: #FAF8F5;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-}
-
-.radio-card:hover::before {
-  opacity: 1;
-}
-
-.radio-card.selected {
-  border-color: #3B82F6;
-  background: #EFF6FF;
-  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
-  transform: translateY(-1px);
-}
-
-.radio-card.selected::before {
-  opacity: 1;
-}
-
-.radio-dot {
+.radio-circle {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1.5px solid #8C827A;
+  border: 2px solid #9CA3AF;
   background: #FFFFFF;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
   position: relative;
-  z-index: 1;
 }
 
-.radio-card:hover .radio-dot {
-  border-color: #3B82F6;
-  transform: scale(1.1);
+.radio-option:hover .radio-circle {
+  border-color: #047C69;
 }
 
-.radio-card.selected .radio-dot {
-  border-color: #3B82F6;
-  background: #3B82F6;
-  box-shadow: inset 0 0 0 2.5px #FFFFFF, 0 0 0 1.5px rgba(59, 130, 246, 0.2);
-  transform: scale(1.15);
+.radio-option.radio-selected .radio-circle {
+  border-color: #047C69;
+  background: #047C69;
 }
 
-.radio-label {
-  font-size: 0.84rem;
+.radio-option.radio-selected .radio-circle::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  position: absolute;
+}
+
+.radio-text {
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: #120050;
+  color: #374151;
   line-height: 1.3;
-  position: relative;
-  z-index: 1;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
-.radio-card:hover .radio-label {
-  color: #2563EB;
-}
-
-.radio-card.selected .radio-label {
+.radio-option.radio-selected .radio-text {
+  color: #047C69;
   font-weight: 600;
-  color: #2563EB;
 }
 
-.identity-questions-list {
+/* Questions Container */
+.questions-container {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 1.25rem;
+  padding: 0 1.5rem 1.5rem 1.5rem;
 }
 
-.demo-q-block {
-  padding-bottom: 0.85rem;
-  border-bottom: 1px solid #F0ECE4;
-}
-
-.demo-q-block:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.conditional-field {
-  background: #FAF8F5;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px dashed #009070;
-  margin-top: 0.75rem;
-  animation: fadeIn 0.2s ease-out;
-}
-
-.confidentiality-card {
-  background: #FAF8F5;
-  border: 1.5px solid #009070;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0, 144, 112, 0.08);
-}
-
-.confidentiality-header {
+.question-block {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.5rem;
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #120050;
-  margin-bottom: 0.5rem;
 }
 
-.confidentiality-text {
-  font-size: 0.88rem;
-  color: #555;
-  line-height: 1.6;
-  margin: 0 0 1rem 0;
+.question-helper {
+  font-size: 0.75rem;
+  color: #6B7280;
+  line-height: 1.4;
+  margin: 0 0 0.375rem 0;
+  font-style: italic;
 }
 
-.mt-2 { margin-top: 0.5rem; }
-.mt-3 { margin-top: 0.75rem; }
-.mt-4 { margin-top: 1.25rem; }
+/* Consent Block */
+.consent-block {
+  margin-top: 0.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.consent-checkbox {
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  border: 1px solid #D1D5DB;
+  border-radius: 4px;
+  accent-color: #047C69;
+}
+
+.consent-text {
+  flex: 1;
+}
+
+.mt-3 {
+  margin-top: 0.75rem;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -2967,81 +2873,96 @@ html {
   border: 0;
 }
 
-/* Details fields - Compact sizing with blue focus */
-.fields-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 0.75rem;
-  row-gap: 0.85rem;
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  .demographics-form {
+    gap: 1.25rem;
+  }
+
+  .section-header {
+    padding: 0.875rem 1.25rem;
+  }
+
+  .fields-grid {
+    padding: 1.25rem;
+    gap: 0.875rem;
+  }
+
+  .radio-grid {
+    gap: 0.5rem;
+  }
+
+  .questions-container {
+    padding: 0 1.25rem 1.25rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .section-description {
+    padding: 1rem 1.25rem 0 1.25rem;
+  }
 }
 
-.field.half-width {
-  grid-column: span 1;
+@media (max-width: 640px) {
+  .demographics-form {
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .section-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .section-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.8125rem;
+  }
+
+  .section-title {
+    font-size: 0.9375rem;
+  }
+
+  .fields-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .field-group.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .radio-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+
+  .radio-grid-compact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .radio-option {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .questions-container {
+    padding: 0 1rem 1rem 1rem;
+    gap: 1rem;
+  }
+
+  .section-description {
+    padding: 1rem;
+    margin-bottom: 0;
+  }
 }
 
-.field label { 
-  display: block; 
-  font-size: 0.68rem; 
-  font-weight: 800; 
-  color: var(--c-primary-dark); 
-  margin-bottom: 0.3rem; 
-  text-transform: uppercase; 
-  letter-spacing: 0.05em; 
-  font-family: 'Fraunces', serif; 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
-
-.field input:not([type="checkbox"]) {
-  width: 100%; 
-  max-width: 420px;
-  padding: 0.55rem 0.75rem;
-  border: 1.5px solid #3B82F6; 
-  border-radius: 8px;
-  font-size: 0.85rem; 
-  background: var(--c-white); 
-  color: var(--c-primary-dark);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-  font-family: inherit;
-  min-height: 38px;
-}
-.field input:not([type="checkbox"]):hover {
-  border-color: #2563EB;
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.1);
-}
-.field input:not([type="checkbox"]):focus { 
-  outline: none; 
-  border-color: #2563EB; 
-  background: var(--c-white);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-  transform: translateY(-1px);
-}
-.field input:not([type="checkbox"]).error { 
-  border-color: #ff4444; 
-  background-color: #FFF5F5;
-}
-.field-err { color: #ff4444; font-size: 0.72rem; margin-top: 0.2rem; display: block; }
 
 /* Consent Checkbox Styling */
-.consent-wrapper {
-  grid-column: 1 / -1;
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-.field label.consent-label {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  cursor: pointer;
-  font-size: 0.75rem;
-  line-height: 1.5;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--c-accent);
-  user-select: none;
-  margin-bottom: 0;
-}
 .consent-checkbox {
   appearance: none;
   -webkit-appearance: none;
@@ -3112,55 +3033,95 @@ html {
   display: none;
 }
 
-/* Questions */
-.questions-list { display: flex; flex-direction: column; gap: 1rem; padding-bottom: 0.5rem; }
-.section-liner { font-size: 0.9rem; color: #444; background: rgba(4, 144, 124, 0.05); padding: 1rem 1.25rem; border-radius: 8px; border-left: 3px solid var(--c-accent); font-style: italic; }
-.supplier-definition-banner { 
-  font-size: 0.85rem; 
-  color: #555; 
-  background: #F4F2F0; 
-  padding: 0.875rem 1.25rem; 
+/* Questions List - Clean Card Style */
+.questions-list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1rem; 
+  padding-bottom: 0.5rem; 
+}
+
+/* Helper banners and notices - Clean style */
+.section-liner { 
+  font-size: 0.8125rem; 
+  color: #6B7280; 
+  background: #F9FAFB; 
+  padding: 0.875rem 1.125rem; 
   border-radius: 8px; 
-  border: 1px solid #E2DDD4; 
+  border-left: 3px solid #047C69; 
   font-style: italic;
   line-height: 1.5;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
+
+.supplier-definition-banner { 
+  font-size: 0.8125rem; 
+  color: #374151; 
+  background: #F9FAFB; 
+  padding: 0.875rem 1.125rem; 
+  border-radius: 8px; 
+  border: 1px solid #E5E7EB; 
+  font-style: italic;
+  line-height: 1.5;
+  margin-bottom: 0.875rem;
+}
+
 .supplier-definition-banner strong {
-  color: var(--c-primary-dark);
+  color: #1F2937;
   font-weight: 700;
   font-style: normal;
 }
-.gating-block { background: #F9F8FF; padding: 1.25rem; border-radius: 12px; border: 1px solid #E2DDD4; }
-.leading-gating-block { border-color: var(--c-accent); border-width: 1.5px; background: rgba(4, 144, 124, 0.04); }
+
+/* Gating blocks - Clean card style */
+.gating-block { 
+  background: #FFFFFF; 
+  padding: 1.25rem 1.5rem; 
+  border-radius: 8px; 
+  border: 1px solid #E5E7EB;
+  margin-bottom: 1rem;
+}
+
+.leading-gating-block { 
+  border-color: #047C69; 
+  border-width: 2px; 
+  background: #F0FDF4;
+}
+
 .gating-eligibility-label {
-  font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
-  color: var(--c-accent); font-family: 'Fraunces', serif;
-  margin-bottom: 0.5rem;
+  font-size: 0.6875rem; 
+  font-weight: 800; 
+  text-transform: uppercase; 
+  letter-spacing: 0.1em;
+  color: #047C69; 
+  font-family: 'Fraunces', serif;
+  margin-bottom: 0.625rem;
 }
+
 .gating-guidance {
-  font-size: 0.8rem;
-  color: #777;
-  line-height: 1.55;
-  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: #6B7280;
+  line-height: 1.5;
+  margin: 0.875rem 0 0;
   font-style: italic;
-  border-top: 1px solid rgba(4, 144, 124, 0.15);
-  padding-top: 0.65rem;
+  border-top: 1px solid #E5E7EB;
+  padding-top: 0.875rem;
 }
+
 .gating-confirmed-badge {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  background: rgba(4, 144, 124, 0.06);
-  border: 1.5px solid rgba(4, 144, 124, 0.25);
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
+  gap: 0.75rem;
+  background: #F0FDF4;
+  border: 1.5px solid #86EFAC;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
 }
+
 .gating-confirmed-check {
   font-size: 0.75rem;
   font-weight: 800;
-  color: var(--c-white);
-  background: var(--c-accent);
+  color: #FFFFFF;
+  background: #047C69;
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -3168,68 +3129,185 @@ html {
   place-items: center;
   flex-shrink: 0;
 }
+
 .gating-confirmed-text {
-  font-size: 0.8rem;
-  color: var(--c-primary-dark);
+  font-size: 0.8125rem;
+  color: #1F2937;
   font-weight: 600;
   flex: 1;
   line-height: 1.4;
 }
+
 .gating-change-btn {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: var(--c-accent);
-  background: none;
-  border: 1.5px solid var(--c-accent);
-  border-radius: 99px;
-  padding: 0.2rem 0.65rem;
+  color: #047C69;
+  background: #FFFFFF;
+  border: 1.5px solid #047C69;
+  border-radius: 6px;
+  padding: 0.375rem 0.875rem;
   cursor: pointer;
   flex-shrink: 0;
-  transition: all 0.15s;
+  transition: all 0.2s ease;
 }
+
 .gating-change-btn:hover {
-  background: var(--c-accent);
-  color: var(--c-white);
+  background: #047C69;
+  color: #FFFFFF;
 }
+
 .section-skipped-notice {
-  display: flex; align-items: flex-start; gap: 1rem;
-  background: #F4F2F0; border: 1.5px solid #E2DDD4; border-radius: 12px;
-  padding: 1.25rem 1.5rem; color: #555;
+  display: flex; 
+  align-items: flex-start; 
+  gap: 1rem;
+  background: #F9FAFB; 
+  border: 1px solid #E5E7EB; 
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem; 
+  color: #6B7280;
 }
-.section-skipped-notice .skipped-heading { font-weight: 800; color: var(--c-primary-dark); display: block; margin-bottom: 0.25rem; }
-.section-skipped-notice p { margin: 0; font-size: 0.875rem; line-height: 1.55; color: #666; }
-.section-skipped-notice strong { color: var(--c-primary-dark); font-weight: 700; }
-.skipped-notice-icon { font-size: 1.5rem; color: #aaa; flex-shrink: 0; line-height: 1; margin-top: 0.1rem; }
+
+.section-skipped-notice .skipped-heading { 
+  font-weight: 700; 
+  color: #1F2937; 
+  display: block; 
+  margin-bottom: 0.375rem; 
+}
+
+.section-skipped-notice p { 
+  margin: 0; 
+  font-size: 0.8125rem; 
+  line-height: 1.5; 
+  color: #6B7280; 
+}
+
+.section-skipped-notice strong { 
+  color: #1F2937; 
+  font-weight: 700; 
+}
+
+.skipped-notice-icon { 
+  font-size: 1.5rem; 
+  color: #9CA3AF; 
+  flex-shrink: 0; 
+  line-height: 1; 
+  margin-top: 0.125rem; 
+}
+
 .how-to-intro {
-  background: var(--c-white);
-  border: 2px solid var(--c-border);
-  border-left: 4px solid var(--c-accent);
-  border-radius: 12px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 0.5rem;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-left: 3px solid #047C69;
+  border-radius: 8px;
+  padding: 1.125rem 1.375rem;
+  margin-bottom: 0.875rem;
 }
+
 .how-to-intro h3 {
-  font-size: 0.85rem; font-weight: 800; color: var(--c-accent);
-  text-transform: uppercase; letter-spacing: 0.06em;
-  margin-bottom: 0.5rem; font-family: 'Fraunces', serif;
+  font-size: 0.8125rem; 
+  font-weight: 800; 
+  color: #047C69;
+  text-transform: uppercase; 
+  letter-spacing: 0.06em;
+  margin-bottom: 0.625rem; 
+  font-family: 'Fraunces', serif;
 }
+
 .how-to-intro p {
-  font-size: 0.9rem; line-height: 1.6; color: #444;
+  font-size: 0.875rem; 
+  line-height: 1.5; 
+  color: #374151;
+  margin: 0;
 }
-.q-block:last-child { padding-bottom: 0.25rem; }
-.q-header-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
-.q-number { font-size: 0.68rem; font-weight: 800; color: var(--c-primary-dark); background: var(--c-bg); border: 1.5px solid var(--c-primary-dark); display: inline-block; padding: 0.15rem 0.55rem; border-radius: 5px; letter-spacing: 0.06em; font-family: 'Fraunces', serif; }
-.q-short { font-size: 0.78rem; font-weight: 700; color: var(--c-primary-dark); font-family: 'Fraunces', serif; letter-spacing: -0.01em; }
-.q-text { font-size: 0.95rem; font-weight: 500; color: var(--c-primary-dark); line-height: 1.55; margin-bottom: 0.75rem; }
-.options { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+.q-block {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease;
+}
+
+.q-block:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.q-block:last-child { 
+  padding-bottom: 1.25rem; 
+}
+
+.q-header-row { 
+  display: flex; 
+  align-items: center; 
+  gap: 0.625rem; 
+  margin-bottom: 0.625rem; 
+}
+
+.q-number { 
+  font-size: 0.6875rem; 
+  font-weight: 800; 
+  color: #047C69; 
+  background: #F0FDF4; 
+  border: 1.5px solid #047C69; 
+  display: inline-block; 
+  padding: 0.25rem 0.625rem; 
+  border-radius: 6px; 
+  letter-spacing: 0.06em; 
+  font-family: 'Fraunces', serif; 
+}
+
+.q-short { 
+  font-size: 0.8125rem; 
+  font-weight: 700; 
+  color: #1F2937; 
+  font-family: 'Fraunces', serif; 
+  letter-spacing: -0.01em; 
+}
+
+.q-text { 
+  font-size: 0.875rem; 
+  font-weight: 500; 
+  color: #374151; 
+  line-height: 1.5; 
+  margin-bottom: 0.875rem; 
+}
+
+.options { 
+  display: flex; 
+  gap: 0.625rem; 
+  flex-wrap: wrap; 
+}
+
 .opt-btn {
-  padding: 0.45rem 1rem; border-radius: 99px;
-  border: 1.5px solid #E2DDD4; background: var(--c-bg);
-  font-size: 0.85rem; font-weight: 500; cursor: pointer; color: #555;
-  transition: all 0.15s;
+  padding: 0.5rem 1rem; 
+  border-radius: 6px;
+  border: 1px solid #D1D5DB; 
+  background: #FFFFFF;
+  font-size: 0.8125rem; 
+  font-weight: 500; 
+  cursor: pointer; 
+  color: #374151;
+  transition: all 0.2s ease;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
-.opt-btn:hover { border-color: var(--c-primary-dark); color: var(--c-primary-dark); }
-.opt-btn.selected { background: var(--c-primary-dark); color: var(--c-white); border-color: var(--c-primary-dark); font-weight: 700; }
+
+.opt-btn:hover { 
+  border-color: #047C69; 
+  color: #047C69;
+  background: #F9FAFB;
+}
+
+.opt-btn.selected { 
+  background: #047C69; 
+  color: #FFFFFF; 
+  border-color: #047C69; 
+  font-weight: 600; 
+  box-shadow: 0 0 0 1px #047C69;
+}
 
 /* Navigation */
 .step-nav { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.5rem; }
@@ -3450,6 +3528,21 @@ html {
   .fields-grid { grid-template-columns: 1fr; }
   .radio-card-grid { grid-template-columns: 1fr; }
   .radio-card-grid--compact { grid-template-columns: 1fr; }
+}
+
+/* Tablet breakpoint for better two-column layout */
+@media (min-width: 601px) and (max-width: 900px) {
+  .fields-grid {
+    gap: 0.6rem;
+    row-gap: 0.7rem;
+  }
+  
+  .radio-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
   .demo-section { padding: 0; border-radius: 0; border: none; background: transparent; }
   .step-wrap { padding: 0.75rem 0.5rem 0.5rem; }
   .form-header { padding: 0.85rem 1rem; }
@@ -3801,14 +3894,14 @@ html {
 
 .step-card-head {
   flex-shrink: 0;
-  padding: 2rem 3rem 1.5rem;
+  padding: 1.5rem 3rem 1rem;
   background: var(--bg, #FAFAF8);
 }
 
 .questions-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 0 3rem 2rem;
+  padding: 0 1.5rem 1.5rem;
   background: var(--bg, #FAFAF8);
   min-height: 0;
 }
@@ -3816,21 +3909,21 @@ html {
 /* Responsive for unified layout */
 @media (max-width: 1080px) {
   .step-card-head {
-    padding: 1.5rem 2rem 1rem;
+    padding: 1.25rem 1.5rem 0.75rem;
   }
   
   .questions-scroll {
-    padding: 0 2rem 1.5rem;
+    padding: 0 1.5rem 1.25rem;
   }
 }
 
 @media (max-width: 640px) {
   .step-card-head {
-    padding: 1.25rem 1.5rem 1rem;
+    padding: 1rem 1.25rem 0.75rem;
   }
   
   .questions-scroll {
-    padding: 0 1.5rem 1.25rem;
+    padding: 0 1.25rem 1rem;
   }
 }
 
