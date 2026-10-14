@@ -1,5 +1,11 @@
 version: "3.9"
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# NOTE: This docker-compose.yml manages ONLY the orchvate-audit container (port 3600)
+# 
+# The "niwi" container (port 8080) is deployed MANUALLY - see DEPLOY-NIWI.md
+# ═══════════════════════════════════════════════════════════════════════════════
+
 services:
 
   # ── Single app container (nginx + uvicorn) ────────────────────────────────
