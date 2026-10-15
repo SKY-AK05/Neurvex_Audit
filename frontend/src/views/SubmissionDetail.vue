@@ -420,10 +420,12 @@ h2 {
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.dimension-scorecard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.dimension-score-card { padding: 1rem; border: 2px solid var(--c-primary-dark); border-radius: 12px; margin-bottom: 0.5rem; }
-.dim-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 0.5rem; color: var(--c-primary-dark); }
-.dim-commentary { font-size: 0.8rem; line-height: 1.4; color: #555; }
+.dimension-scorecard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.dimension-score-card { padding: 18px 20px; border: 1px solid var(--c-primary-dark); border-radius: 14px; margin-bottom: 0; }
+.dim-head { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px; color: var(--c-primary-dark); }
+.dim-label { font-size: 0.9rem; }
+.dim-val { font-size: 0.9rem; }
+.dim-commentary { font-size: 0.85rem; line-height: 1.5; color: #555; }
 .low-score { background: #FFF0F0; border-color: #C0392B; }
 .med-score { background: #FFF8DC; border-color: #8B6914; }
 .high-score { background: #EDFFD4; border-color: #3A7A00; }

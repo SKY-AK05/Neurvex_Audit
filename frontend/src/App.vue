@@ -367,28 +367,28 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .admin-layout {
   flex: 1; display: flex; flex-direction: row; height: 100vh;
   background: #2a2b2e;
-  padding: 1rem;
+  padding: 0.75rem;
   box-sizing: border-box;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 
 .sidebar {
-  width: 60px;
+  width: 64px;
   background: transparent;
   display: flex; flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   z-index: 50;
   flex-shrink: 0;
-  height: calc(100vh - 2rem);
+  height: calc(100vh - 1.5rem);
   position: sticky;
-  top: 1rem;
+  top: 0.75rem;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
 }
 .sidebar:hover {
-  width: 220px;
+  width: 240px;
   align-items: stretch;
 }
 
@@ -472,10 +472,10 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .main-rounded-container {
   background: var(--bg);
   background-image:
-    linear-gradient(to right, rgba(22, 16, 87, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(22, 16, 87, 0.04) 1px, transparent 1px);
-  background-size: 32px 32px;
-  border-radius: 32px;
+    linear-gradient(to right, rgba(22, 16, 87, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(22, 16, 87, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  border-radius: 28px;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -484,9 +484,9 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 }
 
 .main-header {
-  height: 48px;
+  height: 56px;
   display: flex; align-items: center; justify-content: flex-end;
-  padding: 8px 48px 0;
+  padding: 12px 64px 0;
   flex-shrink: 0;
 }
 .header-logo {
@@ -614,14 +614,14 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .logout-item:hover { background: #FFF0F0; }
 
 .page-content {
-  padding: 8px 48px 32px;
+  padding: 12px 64px 48px;
   flex: 1;
   width: 100%;
-  max-width: 960px;
+  max-width: 1400px;
   margin: 0 auto;
   overflow-y: auto; display: flex; flex-direction: column; }
-.page-header { margin-bottom: 32px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-.page-header h1 { font-size: 2rem; color: var(--primary); }
+.page-header { margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.page-header h1 { font-size: 2.25rem; color: var(--primary); }
 
 /* Animations */
 @keyframes fadeUp {
@@ -645,14 +645,14 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 
 /* Updated Card */
 .card {
-  background: var(--surface); border-radius: 12px;
-  padding: 24px; margin-bottom: 24px;
+  background: var(--surface); border-radius: 14px;
+  padding: 24px; margin-bottom: 20px;
   border: 1px solid var(--border);
   transition: box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .card:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
 }
 
 /* Global Form Fields */
@@ -805,5 +805,72 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   width: 34px;
   height: 34px;
   border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    position: relative;
+    top: 0;
+    padding: 8px;
+  }
+  
+  .sidebar:hover {
+    width: 100%;
+  }
+  
+  .sidebar-top {
+    flex-direction: row;
+    width: 100%;
+    gap: 12px;
+    justify-content: space-between;
+  }
+  
+  .sidebar-brand {
+    width: auto;
+  }
+  
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+  }
+  
+  .nav-item {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .nav-text {
+    display: none;
+  }
+  
+  .main-rounded-container {
+    border-radius: 20px;
+  }
+  
+  .main-header {
+    padding: 8px 24px 0;
+    height: auto;
+    flex-wrap: wrap;
+  }
+  
+  .header-powered {
+    padding-right: 12px;
+    margin-right: 12px;
+  }
+  
+  .page-content {
+    padding: 12px 24px 32px;
+    max-width: 100%;
+  }
 }
 </style>

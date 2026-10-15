@@ -293,43 +293,44 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 1.75rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
-.page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
-.loading { color: #aaa; padding: 3rem; text-align: center; font-size: 0.9rem; }
+.page-header { margin-bottom: 24px; }
+.page-header h1 { font-size: 2.25rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
+.page-header p  { color: #888; font-size: 0.9rem; margin-top: 0.35rem; }
+.loading { color: #aaa; padding: 48px; text-align: center; font-size: 0.9rem; }
 
-.charts-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
-.chart-card { padding: 1.5rem; }
-.chart-card-full { padding: 1.5rem; margin-bottom: 1rem; }
+.charts-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-card { padding: 24px; }
+.chart-card-full { padding: 24px; margin-bottom: 20px; }
 
-.chart-head { margin-bottom: 1.25rem; }
-.chart-title { display: block; font-size: 0.95rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Fraunces', serif; }
-.chart-sub { display: block; font-size: 0.78rem; color: #aaa; margin-top: 0.2rem; }
+.chart-head { margin-bottom: 20px; }
+.chart-title { display: block; font-size: 1rem; font-weight: 800; color: var(--c-primary-dark); font-family: 'Fraunces', serif; }
+.chart-sub { display: block; font-size: 0.8rem; color: #aaa; margin-top: 4px; }
 
-.radar-wrap { max-width: 340px; margin: 0 auto; }
-.donut-wrap { max-width: 200px; margin: 0 auto 1rem; }
+.radar-wrap { max-width: 380px; margin: 0 auto; }
+.donut-wrap { max-width: 220px; margin: 0 auto 20px; }
 
-.donut-legend { display: flex; flex-direction: column; gap: 0.4rem; }
-.legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
-.legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ddd; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 1px solid #ddd; }
 .legend-label { flex: 1; color: #555; }
 .legend-val { font-weight: 700; color: var(--c-primary-dark); }
 
 /* Rank lists */
-.rank-list { display: flex; flex-direction: column; gap: 0.6rem; }
-.rank-row { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 0.4rem 0.25rem; border-radius: 8px; transition: background 0.15s; }
+.rank-list { display: flex; flex-direction: column; gap: 10px; }
+.rank-row { display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 10px 8px; border-radius: 10px; transition: background 0.15s; }
 .rank-row:hover { background: var(--c-bg); }
-.rank-num { width: 22px; height: 22px; border-radius: 50%; background: var(--c-primary-dark); color: var(--c-accent); font-size: 0.7rem; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
+.rank-num { width: 28px; height: 28px; border-radius: 50%; background: var(--c-primary-dark); color: var(--c-accent); font-size: 0.75rem; font-weight: 800; display: grid; place-items: center; flex-shrink: 0; }
 .rank-num.low { background: #FFF0F0; color: #C0392B; }
 .rank-info { flex: 1; min-width: 0; }
-.rank-name { font-size: 0.85rem; font-weight: 700; color: var(--c-primary-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rank-meta { font-size: 0.72rem; color: #aaa; }
-.rank-score-bar { width: 60px; height: 6px; background: #E2DDD4; border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+.rank-name { font-size: 0.9rem; font-weight: 700; color: var(--c-primary-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-meta { font-size: 0.78rem; color: #aaa; margin-top: 2px; }
+.rank-score-bar { width: 70px; height: 8px; background: #E2DDD4; border-radius: 99px; overflow: hidden; flex-shrink: 0; }
 .rank-bar-fill { height: 100%; background: var(--c-primary-dark); border-radius: 99px; }
 .rank-bar-fill.low { background: #C0392B; }
-.rank-score { font-size: 0.78rem; font-weight: 700; color: var(--c-primary-dark); white-space: nowrap; }
+.rank-score { font-size: 0.82rem; font-weight: 700; color: var(--c-primary-dark); white-space: nowrap; }
 
 @media (max-width: 900px) {
-  .charts-row-2 { grid-template-columns: 1fr; }
+  .charts-row-2 { grid-template-columns: 1fr; gap: 12px; }
+  .chart-card, .chart-card-full { padding: 20px; }
 }
 </style>
