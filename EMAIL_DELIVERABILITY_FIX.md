@@ -65,7 +65,7 @@ TTL: 3600
    # In Azure Portal
    1. Go to ACS resource
    2. Email → Domains → Add custom domain
-   3. Enter: neuromark.orchvate.in or orchvate.com
+   3. Enter: niwi.orchvate.in or orchvate.com
    4. Copy verification TXT record
    5. Add to DNS
    6. Click "Verify"

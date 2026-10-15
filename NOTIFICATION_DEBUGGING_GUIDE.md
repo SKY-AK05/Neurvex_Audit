@@ -128,7 +128,7 @@ Then test it:
 ```bash
 curl -X POST http://localhost:8080/api/test-notification
 # OR
-curl -X POST https://neuromark.orchvate.in/api/test-notification
+curl -X POST https://niwi.orchvate.in/api/test-notification
 ```
 
 ### Step 5: Common Issues and Solutions

@@ -193,7 +193,7 @@ def _e(text: str) -> str:
 def build_email(name: str, designation: str, company_name: str, contact_number: str, section_scores: list,
                 overall_avg: float, overall_level: str) -> str:
     # Build email remains structurally the same
-    frontend_url = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
+    frontend_url = os.environ.get("FRONTEND_URL", "https://niwi.orchvate.in").rstrip("/")
     booking_url  = f"{frontend_url}/book-a-call"
     level_index = {"Level 1 — Foundational": 0, "Level 2 — Early Progress": 1, "Level 3 — Developing": 2}
 

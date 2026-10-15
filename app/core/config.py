@@ -16,9 +16,9 @@ ACS_SENDER_ADDRESS    = os.environ.get("ACS_SENDER_ADDRESS", "")
 JWT_SECRET   = os.environ.get("JWT_SECRET", "default_jwt_secret_key_change_me")
 CORS_ORIGINS = os.environ.get(
     "CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:3000,https://neuromark.orchvate.in"
+    "http://localhost:5173,http://localhost:3000,https://niwi.orchvate.in"
 ).split(",")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://niwi.orchvate.in").rstrip("/")
 
 # Microsoft Entra ID (public — exposed via GET /api/auth/config for browser MSAL)
 ENTRA_CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "")
