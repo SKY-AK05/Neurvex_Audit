@@ -770,6 +770,48 @@ async def admin_user_add(request: Request):
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
 
+
+# ---------------------------------------------------------------------------
+# POST /api/settings/delete-all-records
+# Deletes ALL submissions from the database (dangerous operation!)
+# ---------------------------------------------------------------------------
+
+@router.post("/settings/delete-all-records")
+@audit_log("delete_all_records")
+async def delete_all_records(request: Request):
+    try:
+        body = await request.json()
+        password = (body.get("password") or "").strip()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    # Verify password from environment variable
+    correct_password = os.environ.get("DELETE_ALL_PASSWORD", "")
+    if not correct_password:
+        raise HTTPException(status_code=500, detail="Delete password not configured")
+    
+    if password != correct_password:
+        raise HTTPException(status_code=403, detail="Incorrect password")
+
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor() as cur:
+                # Delete all submissions
+                cur.execute("DELETE FROM submissions")
+                deleted_count = cur.rowcount
+                
+                # Clear cache
+                if "dashboard" in dashboard_cache:
+                    del dashboard_cache["dashboard"]
+        conn.close()
+        
+        logger.info(f"All records deleted: {deleted_count} submissions removed")
+        return {"success": True, "deleted_count": deleted_count}
+    except Exception as e:
+        logger.error(f"Delete all records failed: {e}")
+        raise HTTPException(status_code=500, detail="Database error")TPException(status_code=400, detail="Email is required")
+
     try:
         conn = get_conn()
         new_user = add_user(conn, email, role)

@@ -131,3 +131,15 @@ export async function toggleNotifications() {
   });
   return handleResponse(res);
 }
+
+export async function deleteAllRecords(password) {
+  const res = await fetch(`${API_BASE}/settings/delete-all-records`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ password }),
+  });
+  return handleResponse(res);
+}

@@ -70,6 +70,34 @@
         </div>
       </div>
 
+      <div class="card danger-zone">
+        <h2 style="color: #C0392B;">⚠️ Danger Zone</h2>
+        <p class="card-hint">
+          <strong>Delete all submission records permanently.</strong> This action cannot be undone. All audit submissions, scores, and email drafts will be permanently deleted from the database.
+        </p>
+        <div class="delete-section">
+          <div class="field" style="max-width: 400px;">
+            <label for="delete-password">Enter password to confirm deletion</label>
+            <input 
+              id="delete-password" 
+              v-model="deletePassword" 
+              type="password" 
+              placeholder="Enter deletion password"
+              :disabled="deleting"
+            />
+          </div>
+          <button 
+            type="button" 
+            class="btn btn-danger" 
+            @click="confirmDeleteAll"
+            :disabled="!deletePassword || deleting"
+          >
+            {{ deleting ? 'Deleting...' : '🗑️ Delete All Records' }}
+          </button>
+        </div>
+        <div v-if="deleteMsg" :class="`alert alert-${deleteMsgType}`" style="margin-top: 1rem;">{{ deleteMsg }}</div>
+      </div>
+
       <div class="actions">
         <button type="submit" class="btn btn-primary" :disabled="saving">
           {{ saving ? 'Saving…' : 'Save Settings' }}
@@ -82,13 +110,18 @@
 
 <script setup>
 import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
-import { getSettings, saveSettings } from "../api";
+import { getSettings, saveSettings, deleteAllRecords } from "../api";
 
 const loading = ref(true);
 const saving = ref(false);
 const loadError = ref("");
 const msg = ref("");
 const msgType = ref("success");
+
+const deletePassword = ref("");
+const deleting = ref(false);
+const deleteMsg = ref("");
+const deleteMsgType = ref("success");
 
 const form = reactive({
   sender_name: "",
@@ -152,6 +185,54 @@ async function save() {
     saving.value = false;
   }
 }
+
+async function confirmDeleteAll() {
+  const confirmed = confirm(
+    "⚠️ WARNING: This will permanently delete ALL submission records from the database.\n\n" +
+    "This includes:\n" +
+    "• All audit submissions\n" +
+    "• All scores and analysis\n" +
+    "• All email drafts\n" +
+    "• All submission history\n\n" +
+    "This action CANNOT be undone.\n\n" +
+    "Are you absolutely sure you want to proceed?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  // Second confirmation
+  const secondConfirm = confirm(
+    "⚠️ FINAL WARNING\n\n" +
+    "You are about to delete ALL records permanently.\n\n" +
+    "Click OK to proceed with deletion, or Cancel to abort."
+  );
+
+  if (!secondConfirm) {
+    return;
+  }
+
+  deleting.value = true;
+  deleteMsg.value = "";
+
+  try {
+    const result = await deleteAllRecords(deletePassword.value);
+    deleteMsgType.value = "success";
+    deleteMsg.value = `✅ Successfully deleted ${result.deleted_count} submission record(s). All data has been permanently removed.`;
+    deletePassword.value = "";
+    
+    // Refresh the page after 3 seconds to clear any cached data
+    setTimeout(() => {
+      window.location.reload();
+    }, 3000);
+  } catch (e) {
+    deleteMsgType.value = "error";
+    deleteMsg.value = `❌ ${e.message}`;
+  } finally {
+    deleting.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -209,4 +290,28 @@ async function save() {
 }
 .msg-inline { margin: 0; padding: 0.6rem 1rem; }
 .loading { color: #aaa; padding: 2rem 0; }
+
+.danger-zone {
+  border: 2px solid #C0392B;
+  background: #FFF8F8;
+}
+
+.danger-zone h2 {
+  border-bottom: 1px solid #C0392B;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.delete-section {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.delete-section .field {
+  flex: 1;
+  min-width: 250px;
+}
 </style>
