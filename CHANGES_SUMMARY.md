@@ -89,7 +89,7 @@
 **Problem**: Page not accessible
 
 **Solution**: Page already exists and is fully functional!
-- **URL**: `https://neuromark.orchvate.in/book-a-call`
+- **URL**: `https://niwi.orchvate.in/book-a-call`
 - **Features**:
   - Full name, job title, organisation
   - Email and phone
@@ -103,7 +103,7 @@
 - `app/api/routes.py` (endpoint at line 630)
 
 **How to Test**:
-1. Go to: `https://neuromark.orchvate.in/book-a-call`
+1. Go to: `https://niwi.orchvate.in/book-a-call`
 2. Fill out the form
 3. Submit
 4. Admin should receive notification email
