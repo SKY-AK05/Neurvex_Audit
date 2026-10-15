@@ -179,6 +179,7 @@ def calculate_scores(data: dict, conn) -> dict:
         name=data.get("name", ""),
         designation=data.get("designation", ""),
         company_name=data.get("company_name", ""),
+        contact_number=data.get("contact_number", ""),
         section_scores=section_scores,
         overall_avg=overall_avg,
         overall_level=overall_level,
@@ -189,7 +190,7 @@ def calculate_scores(data: dict, conn) -> dict:
 def _e(text: str) -> str:
     return html_module.escape(str(text))
 
-def build_email(name: str, designation: str, company_name: str, section_scores: list,
+def build_email(name: str, designation: str, company_name: str, contact_number: str, section_scores: list,
                 overall_avg: float, overall_level: str) -> str:
     # Build email remains structurally the same
     frontend_url = os.environ.get("FRONTEND_URL", "https://neuromark.orchvate.in").rstrip("/")
@@ -426,7 +427,7 @@ def build_email(name: str, designation: str, company_name: str, section_scores: 
           <td>
             <p style="margin:0 0 20px;font-family:'DM Sans',Arial,sans-serif;font-size:13px;font-weight:600;letter-spacing:2px;color:#AFA9EC;text-transform:uppercase;">Orchvate</p>
             <h1 style="margin:0 0 6px;font-family:'DM Serif Display',Georgia,serif;font-size:28px;font-weight:400;color:#FFFFFF;line-height:1.2;">Neurodiversity<br>NeuroMark Audit</h1>
-            <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#AFA9EC;">{_e(name)} &nbsp;·&nbsp; {_e(designation) + ' · ' if designation else ''}{_e(company_name)} &nbsp;·&nbsp; {month_year}</p>
+            <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#AFA9EC;">{_e(name)} {(' (' + _e(designation) + ')') if designation else ''} &nbsp;·&nbsp; {_e(company_name)} {(' · ' + _e(contact_number)) if contact_number else ''} &nbsp;·&nbsp; {month_year}</p>
           </td>
           <td width="100" align="right" valign="top">
             <svg width="84" height="84" viewBox="0 0 84 84" xmlns="http://www.w3.org/2000/svg" aria-label="Score {overall_avg_display} out of 20">

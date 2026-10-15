@@ -45,8 +45,10 @@
           <tr>
             <th>#</th>
             <th>Name</th>
+            <th>Job Role</th>
             <th>Organisation</th>
             <th>Email</th>
+            <th>Contact</th>
             <th>Submitted</th>
             <th>Avg Score</th>
             <th>Maturity</th>
@@ -62,8 +64,10 @@
           >
             <td class="id-cell">{{ s.id }}</td>
             <td>{{ s.name }}</td>
+            <td>{{ s.designation || '—' }}</td>
             <td>{{ s.company_name }}</td>
             <td class="email-cell">{{ s.email }}</td>
+            <td>{{ s.contact_number || '—' }}</td>
             <td>{{ fmtDate(s.submitted_at) }}</td>
             <td><strong>{{ s.overall_avg }}</strong>/20</td>
             <td>{{ s.overall_level }}</td>
@@ -75,7 +79,7 @@
             </td>
           </tr>
           <tr v-if="!filtered.length">
-            <td colspan="9" class="empty-row">No submissions match the current filters.</td>
+            <td colspan="11" class="empty-row">No submissions match the current filters.</td>
           </tr>
         </tbody>
       </table>
