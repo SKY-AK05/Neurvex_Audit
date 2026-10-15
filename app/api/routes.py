@@ -769,6 +769,17 @@ async def admin_user_add(request: Request):
 
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
+    
+    try:
+        conn = get_conn()
+        new_user = add_user(conn, email, role)
+        conn.close()
+        if new_user.get("created_at"):
+            new_user["created_at"] = new_user["created_at"].isoformat()
+        return new_user
+    except Exception as e:
+        logger.error("Admin user add failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -810,34 +821,19 @@ async def delete_all_records(request: Request):
         return {"success": True, "deleted_count": deleted_count}
     except Exception as e:
         logger.error(f"Delete all records failed: {e}")
-        raise HTTPException(status_code=500, detail="Database error")TPException(status_code=400, detail="Email is required")
-
-    try:
-        conn = get_conn()
-        new_user = add_user(conn, email, role)
-        conn.close()
-        if new_user.get("created_at"):
-            new_user["created_at"] = new_user["created_at"].isoformat()
-        return new_user
-    except Exception as e:
-        logger.error("Admin user add failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Database error")
 
 
 @router.delete("/manage/users/{email}")
-@audit_log("delete_user")
-async def admin_user_delete(request: Request, email: str):
-    email = email.strip().lower()
-    if not email:
-        raise HTTPException(status_code=400, detail="Email is required")
-
+@audit_log("remove_user")
+async def admin_user_remove(request: Request, email: str):
     try:
         conn = get_conn()
-        deleted = remove_user(conn, email)
+        remove_user(conn, email.lower())
         conn.close()
-        return {"success": deleted}
+        return {"success": True}
     except Exception as e:
-        logger.error("Admin user delete failed: %s", e)
+        logger.error("Admin user remove failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
