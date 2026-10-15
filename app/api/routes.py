@@ -177,7 +177,16 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
             with conn.cursor() as cur:
                 cur.execute(insert_sql, params)
                 submission_id = cur.fetchone()[0]
-                notify_admin_new_submission(cur, submission_id, data.get("name", ""), data.get("company_name", ""))
+                
+                # Send admin notification
+                try:
+                    notification_sent = notify_admin_new_submission(cur, submission_id, data.get("name", ""), data.get("company_name", ""))
+                    if notification_sent:
+                        logger.info(f"Admin notification sent for submission {submission_id}")
+                    else:
+                        logger.warning(f"Admin notification not sent for submission {submission_id} - notifications may be disabled or not configured")
+                except Exception as e:
+                    logger.error(f"Failed to send admin notification for submission {submission_id}: {e}")
                 
                 # Update draft as submitted if draft_id is provided and is a valid UUID
                 draft_id = data.get("draft_id")
@@ -533,6 +542,7 @@ async def send_email_route(request: Request, submission_id: UUID, background_tas
         "plain": strip_html(row["email_body"]),
         "sender_address": sender_address,
         "sender_name": sender_name,
+        "submission_id": sub_id_str,
     }
 
     # Transition to 'sending' immediately

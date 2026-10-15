@@ -14,36 +14,73 @@
       <div class="card">
         <div class="card-header-row">
           <h2>Respondent</h2>
-          <button 
-            v-if="!editingRespondent" 
-            class="btn-edit-small" 
-            @click="enableEditRespondent"
-            type="button"
-          >
-            ✏️ Edit
-          </button>
+          <div class="header-actions">
+            <button 
+              v-if="hasChanges" 
+              class="btn-save-inline" 
+              @click="saveRespondent"
+              :disabled="savingRespondent"
+              type="button"
+            >
+              {{ savingRespondent ? 'Saving...' : '💾 Save Changes' }}
+            </button>
+            <span v-if="editMsg" :class="`inline-msg msg-${editMsgType}`">{{ editMsg }}</span>
+          </div>
         </div>
-        <div v-if="!editingRespondent" class="info-grid">
-          <div class="info-item">
+        <div class="info-grid">
+          <!-- Editable fields -->
+          <div class="info-item editable">
             <label>Name</label>
-            <span>{{ sub.name }}</span>
+            <input 
+              v-model="editForm.name" 
+              type="text" 
+              class="inline-edit-input"
+              placeholder="Enter name"
+              @input="onFieldChange"
+            />
           </div>
-          <div class="info-item">
+          <div class="info-item editable">
             <label>Organisation</label>
-            <span>{{ sub.company_name }}</span>
+            <input 
+              v-model="editForm.company_name" 
+              type="text" 
+              class="inline-edit-input"
+              placeholder="Enter organisation"
+              @input="onFieldChange"
+            />
           </div>
-          <div class="info-item">
+          <div class="info-item editable">
             <label>Job Role / Designation</label>
-            <span>{{ sub.designation || '—' }}</span>
+            <input 
+              v-model="editForm.designation" 
+              type="text" 
+              class="inline-edit-input"
+              placeholder="Enter designation"
+              @input="onFieldChange"
+            />
           </div>
-          <div class="info-item">
+          <div class="info-item editable">
             <label>Email</label>
-            <span>{{ sub.email }}</span>
+            <input 
+              v-model="editForm.email" 
+              type="email" 
+              class="inline-edit-input"
+              placeholder="Enter email"
+              @input="onFieldChange"
+            />
           </div>
-          <div class="info-item">
+          <div class="info-item editable">
             <label>Contact</label>
-            <span>{{ sub.contact_number || "—" }}</span>
+            <input 
+              v-model="editForm.contact_number" 
+              type="text" 
+              class="inline-edit-input"
+              placeholder="Enter contact number"
+              @input="onFieldChange"
+            />
           </div>
+          
+          <!-- Read-only fields -->
           <div class="info-item">
             <label>Submitted</label>
             <span>{{ fmtDate(sub.submitted_at) }}</span>
@@ -74,69 +111,6 @@
               <span v-if="sub.status === 'sent'" class="sent-time">Sent {{ fmtDate(sub.sent_at) }}</span>
             </div>
           </div>
-        </div>
-        
-        <!-- Edit Mode -->
-        <div v-else class="edit-form">
-          <div class="edit-grid">
-            <div class="edit-field">
-              <label for="edit_name">Name</label>
-              <input 
-                id="edit_name" 
-                v-model="editForm.name" 
-                type="text" 
-                class="edit-input"
-                placeholder="Enter name"
-              />
-            </div>
-            <div class="edit-field">
-              <label for="edit_company">Organisation</label>
-              <input 
-                id="edit_company" 
-                v-model="editForm.company_name" 
-                type="text" 
-                class="edit-input"
-                placeholder="Enter organisation name"
-              />
-            </div>
-            <div class="edit-field">
-              <label for="edit_designation">Job Role / Designation</label>
-              <input 
-                id="edit_designation" 
-                v-model="editForm.designation" 
-                type="text" 
-                class="edit-input"
-                placeholder="Enter designation"
-              />
-            </div>
-            <div class="edit-field">
-              <label for="edit_email">Email</label>
-              <input 
-                id="edit_email" 
-                v-model="editForm.email" 
-                type="email" 
-                class="edit-input"
-                placeholder="Enter email"
-              />
-            </div>
-            <div class="edit-field">
-              <label for="edit_contact">Contact</label>
-              <input 
-                id="edit_contact" 
-                v-model="editForm.contact_number" 
-                type="text" 
-                class="edit-input"
-                placeholder="Enter contact number"
-              />
-            </div>
-          </div>
-          <div class="edit-actions">
-            <button class="btn btn-secondary" @click="cancelEditRespondent" type="button">Cancel</button>
-            <button class="btn btn-lime" @click="saveRespondent" :disabled="savingRespondent" type="button">
-              {{ savingRespondent ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
-          <div v-if="editMsg" :class="`alert alert-${editMsgType}`">{{ editMsg }}</div>
         </div>
       </div>
 
@@ -258,7 +232,6 @@ const isInitialLoad = ref(true);
 let autoSaveTimeout = null;
 
 // Edit respondent state
-const editingRespondent = ref(false);
 const savingRespondent = ref(false);
 const editForm = ref({
   name: "",
@@ -267,6 +240,8 @@ const editForm = ref({
   contact_number: "",
   designation: ""
 });
+const originalForm = ref({});
+const hasChanges = ref(false);
 const editMsg = ref("");
 const editMsgType = ref("success");
 
@@ -290,6 +265,17 @@ onMounted(async () => {
   try {
     sub.value       = await getSubmission(route.params.id);
     emailBody.value = normalizeEmailHtml(sub.value.email_body || "");
+    
+    // Initialize edit form
+    editForm.value = {
+      name: sub.value.name || "",
+      email: sub.value.email || "",
+      company_name: sub.value.company_name || "",
+      contact_number: sub.value.contact_number || "",
+      designation: sub.value.designation || ""
+    };
+    originalForm.value = { ...editForm.value };
+    
     // Prevent watcher from triggering on this initial data population
     setTimeout(() => { isInitialLoad.value = false; }, 100);
   } catch (e) {
@@ -388,24 +374,14 @@ function showMsg(type, msg) {
   actionMsg.value     = msg;
 }
 
-function enableEditRespondent() {
-  editForm.value = {
-    name: sub.value.name || "",
-    email: sub.value.email || "",
-    company_name: sub.value.company_name || "",
-    contact_number: sub.value.contact_number || "",
-    designation: sub.value.designation || ""
-  };
-  editingRespondent.value = true;
-  editMsg.value = "";
-}
-
-function cancelEditRespondent() {
-  editingRespondent.value = false;
+function onFieldChange() {
+  hasChanges.value = JSON.stringify(editForm.value) !== JSON.stringify(originalForm.value);
   editMsg.value = "";
 }
 
 async function saveRespondent() {
+  if (!hasChanges.value) return;
+  
   savingRespondent.value = true;
   editMsg.value = "";
   try {
@@ -418,8 +394,12 @@ async function saveRespondent() {
     sub.value.contact_number = editForm.value.contact_number;
     sub.value.designation = editForm.value.designation;
     
-    editingRespondent.value = false;
-    showMsg("success", "Respondent information updated successfully.");
+    originalForm.value = { ...editForm.value };
+    hasChanges.value = false;
+    editMsgType.value = "success";
+    editMsg.value = "✓ Saved successfully";
+    
+    setTimeout(() => { editMsg.value = ""; }, 3000);
   } catch (e) {
     editMsgType.value = "error";
     editMsg.value = e.message;
@@ -525,17 +505,47 @@ h2 {
   margin: 0; padding: 0; border: none;
 }
 
-.btn-edit-small {
-  padding: 0.4rem 0.85rem; font-size: 0.8rem;
-  background: var(--c-bg); border: 1.5px solid var(--c-primary-dark);
+.header-actions {
+  display: flex; align-items: center; gap: 0.75rem;
+}
+
+.btn-save-inline {
+  padding: 0.5rem 1rem; font-size: 0.85rem;
+  background: var(--c-accent); border: 1.5px solid var(--c-primary-dark);
   border-radius: 8px; cursor: pointer;
   font-weight: 600; color: var(--c-primary-dark);
   font-family: 'Geist', monospace;
   transition: all 0.15s;
 }
 
-.btn-edit-small:hover {
-  background: var(--c-accent);
+.btn-save-inline:hover {
+  background: #C4F082;
+  transform: translateY(-1px);
+}
+
+.btn-save-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inline-msg {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'Geist', monospace;
+}
+
+.msg-success {
+  background: #EDFFD4;
+  color: #3A7A00;
+  border: 1px solid #3A7A00;
+}
+
+.msg-error {
+  background: #FFE8E8;
+  color: #C0392B;
+  border: 1px solid #C0392B;
 }
 
 /* Info grid */
@@ -543,7 +553,19 @@ h2 {
 .info-item {
   border: 1.5px solid var(--c-primary-dark); border-radius: 12px;
   padding: 0.75rem 1rem; background: var(--c-white);
+  transition: all 0.15s;
 }
+
+.info-item.editable {
+  background: var(--c-bg);
+}
+
+.info-item.editable:focus-within {
+  background: var(--c-white);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(196, 240, 130, 0.2);
+}
+
 .info-item label {
   font-size: 0.65rem; font-weight: 700; color: #aaa;
   display: block; margin-bottom: 0.3rem;
@@ -553,6 +575,22 @@ h2 {
 .info-item span {
   font-size: 0.92rem; font-weight: 500; color: var(--c-primary-dark);
   font-family: 'Geist', monospace;
+}
+
+.inline-edit-input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--c-primary-dark);
+  font-family: 'Geist', monospace;
+  padding: 0;
+  outline: none;
+}
+
+.inline-edit-input::placeholder {
+  color: #ccc;
 }
 .status-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .sent-time { font-size: 0.78rem; color: #aaa; font-family: 'Geist', monospace; }
@@ -628,54 +666,3 @@ h2 {
 .na-score .dim-label, .na-score .dim-val { color: #888; }
 .na-score .dim-commentary { color: #888; font-style: italic; }
 </style>
-
-/* Edit form styles */
-.edit-form {
-  padding: 0.5rem 0;
-}
-
-.edit-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.edit-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.edit-field label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #888;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  font-family: 'Geist', monospace;
-}
-
-.edit-input {
-  padding: 0.75rem 1rem;
-  border: 1.5px solid var(--c-primary-dark);
-  border-radius: 10px;
-  font-size: 0.92rem;
-  font-family: 'Geist', monospace;
-  color: var(--c-primary-dark);
-  background: var(--c-white);
-  transition: all 0.15s;
-}
-
-.edit-input:focus {
-  outline: none;
-  border-color: var(--c-accent);
-  background: var(--c-bg);
-}
-
-.edit-actions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  padding-top: 0.5rem;
-}

@@ -192,7 +192,7 @@ def get_sender_for_send(cur) -> Tuple[str, str]:
 
 
 def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to_name: str = "", cc_addresses: list[str] = None, subject: str, html: str, plain: str,
-                   sender_address: str, sender_name: str) -> None:
+                   sender_address: str, sender_name: str, submission_id: str = None) -> None:
     client = EmailClient.from_connection_string(os.environ["ACS_CONNECTION_STRING"])
     
     to_recipients = [{"address": a.strip()} for a in to_addresses if a.strip()] if to_addresses else [{"address": to_address, "displayName": to_name}]
@@ -201,7 +201,16 @@ def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to
         "recipients": {"to": to_recipients},
         "content": {"subject": subject, "html": html, "plainText": plain},
         "replyTo": [{"address": sender_address, "displayName": sender_name}],
+        "headers": {
+            "X-Priority": "3",
+            "Importance": "normal",
+            "X-Mailer": "NeuroMark Audit System",
+        }
     }
+    
+    # Add submission tracking header if provided
+    if submission_id:
+        message["headers"]["X-Entity-Ref-ID"] = f"submission-{submission_id}"
     
     if cc_addresses:
         cc_recipients = [{"address": c.strip()} for c in cc_addresses if c.strip()]
@@ -215,18 +224,21 @@ def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to
 def notify_admin_new_submission(cur, submission_id: int, name: str, company_name: str) -> bool:
     """Send admin alert if notifications are enabled. Returns True if email was sent."""
     settings = get_settings(cur)
+    
     if not settings["notifications_enabled"]:
+        logger.info(f"Notifications disabled - skipping admin alert for submission {submission_id}")
         return False
+        
     admin_emails = [e.strip() for e in (settings["notification_email"] or "").replace(";", ",").split(",") if e.strip()]
     if not admin_emails:
-        logger.warning("Notifications enabled but notification_email is empty")
+        logger.warning(f"Notifications enabled but notification_email is empty for submission {submission_id}")
         return False
         
     cc_emails = [e.strip() for e in (settings.get("notification_cc_email") or "").replace(";", ",").split(",") if e.strip()]
 
     sender_address, sender_name = get_sender_for_send(cur)
     if not sender_address:
-        logger.error("No sender address configured for admin notification")
+        logger.error(f"No sender address configured for admin notification (submission {submission_id})")
         return False
 
     frontend_base = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
@@ -245,30 +257,36 @@ def notify_admin_new_submission(cur, submission_id: int, name: str, company_name
         f"<p><strong>Organisation:</strong> {company_name}<br>"
         f"<strong>Respondent:</strong> {name}<br>"
         f"<strong>Submission ID:</strong> {submission_id}</p>"
-        f'<p><a href="{review_url}">Open submission in NeuroMark</a></p>'
+        f'<p><a href="{review_url}" style="display:inline-block;background:#1E1A4A;color:#FFFFFF;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">Open Submission →</a></p>'
     )
 
     try:
         import threading
         
+        logger.info(f"Attempting to send admin notification for submission {submission_id} to {', '.join(admin_emails)}")
+        
         def bg_send():
             try:
                 send_acs_email(
                     to_addresses=admin_emails,
-                    cc_addresses=cc_emails,
+                    cc_addresses=cc_emails if cc_emails else None,
                     subject=subject,
                     html=html,
                     plain=plain,
                     sender_address=sender_address,
                     sender_name=sender_name,
+                    submission_id=str(submission_id),
                 )
+                logger.info(f"Admin notification sent successfully for submission {submission_id}")
             except Exception as e:
-                logger.error("Background admin notification failed: %s", e)
+                logger.error(f"Background admin notification failed for submission {submission_id}: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 
-        threading.Thread(target=bg_send).start()
+        threading.Thread(target=bg_send, daemon=True).start()
         return True
     except Exception as e:
-        logger.error("Failed to start admin notification thread: %s", e)
+        logger.error(f"Failed to start admin notification thread for submission {submission_id}: {e}")
         return False
 
 
