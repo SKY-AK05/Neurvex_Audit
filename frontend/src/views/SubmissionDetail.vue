@@ -39,6 +39,22 @@
             <span>{{ fmtDate(sub.submitted_at) }}</span>
           </div>
           <div class="info-item">
+            <label>Function / Department</label>
+            <span>{{ sub.function || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Country</label>
+            <span>{{ sub.country || '—' }}</span>
+          </div>
+          <div class="info-item" v-if="sub.state_ut">
+            <label>State / UT (India)</label>
+            <span>{{ sub.state_ut }}</span>
+          </div>
+          <div class="info-item">
+            <label>Role Level</label>
+            <span>{{ sub.role || '—' }}</span>
+          </div>
+          <div class="info-item">
             <label>Status</label>
             <div class="status-row">
               <span :class="`badge badge-${sub.status === 'sent' ? 'delivered' : 'pending'}`">
@@ -47,6 +63,36 @@
               </span>
               <span v-if="sub.status === 'sent'" class="sent-time">Sent {{ fmtDate(sub.sent_at) }}</span>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Demographics & Identity -->
+      <div class="card">
+        <h2>Demographics & Identity</h2>
+        <p style="font-size: 0.85rem; color: #888; margin-bottom: 16px;">
+          This information helps understand representation and identify opportunities for inclusion.
+        </p>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Gender Identity</label>
+            <span>{{ sub.gender || '—' }}</span>
+          </div>
+          <div class="info-item" v-if="sub.gender_other">
+            <label>Gender (Self-Described)</label>
+            <span>{{ sub.gender_other }}</span>
+          </div>
+          <div class="info-item">
+            <label>Person with Disability (PwD)</label>
+            <span>{{ sub.is_pwd || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Neurodivergent</label>
+            <span>{{ sub.is_neurodivergent || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Underrepresented / Marginalized</label>
+            <span>{{ sub.is_marginalized || '—' }}</span>
           </div>
         </div>
       </div>
