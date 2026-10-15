@@ -12,8 +12,18 @@
 
       <!-- Respondent -->
       <div class="card">
-        <h2>Respondent</h2>
-        <div class="info-grid">
+        <div class="card-header-row">
+          <h2>Respondent</h2>
+          <button 
+            v-if="!editingRespondent" 
+            class="btn-edit-small" 
+            @click="enableEditRespondent"
+            type="button"
+          >
+            ✏️ Edit
+          </button>
+        </div>
+        <div v-if="!editingRespondent" class="info-grid">
           <div class="info-item">
             <label>Name</label>
             <span>{{ sub.name }}</span>
@@ -64,6 +74,69 @@
               <span v-if="sub.status === 'sent'" class="sent-time">Sent {{ fmtDate(sub.sent_at) }}</span>
             </div>
           </div>
+        </div>
+        
+        <!-- Edit Mode -->
+        <div v-else class="edit-form">
+          <div class="edit-grid">
+            <div class="edit-field">
+              <label for="edit_name">Name</label>
+              <input 
+                id="edit_name" 
+                v-model="editForm.name" 
+                type="text" 
+                class="edit-input"
+                placeholder="Enter name"
+              />
+            </div>
+            <div class="edit-field">
+              <label for="edit_company">Organisation</label>
+              <input 
+                id="edit_company" 
+                v-model="editForm.company_name" 
+                type="text" 
+                class="edit-input"
+                placeholder="Enter organisation name"
+              />
+            </div>
+            <div class="edit-field">
+              <label for="edit_designation">Job Role / Designation</label>
+              <input 
+                id="edit_designation" 
+                v-model="editForm.designation" 
+                type="text" 
+                class="edit-input"
+                placeholder="Enter designation"
+              />
+            </div>
+            <div class="edit-field">
+              <label for="edit_email">Email</label>
+              <input 
+                id="edit_email" 
+                v-model="editForm.email" 
+                type="email" 
+                class="edit-input"
+                placeholder="Enter email"
+              />
+            </div>
+            <div class="edit-field">
+              <label for="edit_contact">Contact</label>
+              <input 
+                id="edit_contact" 
+                v-model="editForm.contact_number" 
+                type="text" 
+                class="edit-input"
+                placeholder="Enter contact number"
+              />
+            </div>
+          </div>
+          <div class="edit-actions">
+            <button class="btn btn-secondary" @click="cancelEditRespondent" type="button">Cancel</button>
+            <button class="btn btn-lime" @click="saveRespondent" :disabled="savingRespondent" type="button">
+              {{ savingRespondent ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+          <div v-if="editMsg" :class="`alert alert-${editMsgType}`">{{ editMsg }}</div>
         </div>
       </div>
 
@@ -165,7 +238,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getSubmission, saveEmail, sendEmail, regenerateEmail } from "../api";
+import { getSubmission, saveEmail, sendEmail, regenerateEmail, updateRespondent } from "../api";
 import ScoreTable from "../components/ScoreTable.vue";
 import RichEditor from "../components/RichEditor.vue";
 import { normalizeEmailHtml } from "../utils/emailHtml.js";
@@ -183,6 +256,19 @@ const actionMsg     = ref("");
 const actionMsgType = ref("success");
 const isInitialLoad = ref(true);
 let autoSaveTimeout = null;
+
+// Edit respondent state
+const editingRespondent = ref(false);
+const savingRespondent = ref(false);
+const editForm = ref({
+  name: "",
+  email: "",
+  company_name: "",
+  contact_number: "",
+  designation: ""
+});
+const editMsg = ref("");
+const editMsgType = ref("success");
 
 const modalConfig = ref({
   show: false,
@@ -302,6 +388,46 @@ function showMsg(type, msg) {
   actionMsg.value     = msg;
 }
 
+function enableEditRespondent() {
+  editForm.value = {
+    name: sub.value.name || "",
+    email: sub.value.email || "",
+    company_name: sub.value.company_name || "",
+    contact_number: sub.value.contact_number || "",
+    designation: sub.value.designation || ""
+  };
+  editingRespondent.value = true;
+  editMsg.value = "";
+}
+
+function cancelEditRespondent() {
+  editingRespondent.value = false;
+  editMsg.value = "";
+}
+
+async function saveRespondent() {
+  savingRespondent.value = true;
+  editMsg.value = "";
+  try {
+    await updateRespondent(route.params.id, editForm.value);
+    
+    // Update local data
+    sub.value.name = editForm.value.name;
+    sub.value.email = editForm.value.email;
+    sub.value.company_name = editForm.value.company_name;
+    sub.value.contact_number = editForm.value.contact_number;
+    sub.value.designation = editForm.value.designation;
+    
+    editingRespondent.value = false;
+    showMsg("success", "Respondent information updated successfully.");
+  } catch (e) {
+    editMsgType.value = "error";
+    editMsg.value = e.message;
+  } finally {
+    savingRespondent.value = false;
+  }
+}
+
 const dimensions = [
   { key: "lc", label: "Leadership & Culture" },
   { key: "ro", label: "Recruitment & Onboarding" },
@@ -387,6 +513,29 @@ h2 {
   margin-bottom: 1.25rem; padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--c-bg);
   font-family: 'Fraunces', serif;
+}
+
+.card-header-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.25rem; padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--c-bg);
+}
+
+.card-header-row h2 {
+  margin: 0; padding: 0; border: none;
+}
+
+.btn-edit-small {
+  padding: 0.4rem 0.85rem; font-size: 0.8rem;
+  background: var(--c-bg); border: 1.5px solid var(--c-primary-dark);
+  border-radius: 8px; cursor: pointer;
+  font-weight: 600; color: var(--c-primary-dark);
+  font-family: 'Geist', monospace;
+  transition: all 0.15s;
+}
+
+.btn-edit-small:hover {
+  background: var(--c-accent);
 }
 
 /* Info grid */
@@ -479,3 +628,54 @@ h2 {
 .na-score .dim-label, .na-score .dim-val { color: #888; }
 .na-score .dim-commentary { color: #888; font-style: italic; }
 </style>
+
+/* Edit form styles */
+.edit-form {
+  padding: 0.5rem 0;
+}
+
+.edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.edit-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-family: 'Geist', monospace;
+}
+
+.edit-input {
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--c-primary-dark);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-family: 'Geist', monospace;
+  color: var(--c-primary-dark);
+  background: var(--c-white);
+  transition: all 0.15s;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  background: var(--c-bg);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding-top: 0.5rem;
+}

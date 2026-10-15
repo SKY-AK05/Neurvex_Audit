@@ -237,8 +237,8 @@ async def get_submissions():
         with conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("""
-                    SELECT id, name, designation, company_name, email, submitted_at,
-                           overall_avg, overall_level, status
+                    SELECT id, name, designation, company_name, email, contact_number, submitted_at,
+                           overall_avg, overall_level, status, answers
                     FROM submissions
                     ORDER BY submitted_at DESC
                 """)
@@ -255,6 +255,15 @@ async def get_submissions():
             r["submitted_at"] = to_iso_utc(r["submitted_at"])
         if r.get("id"):
             r["id"] = str(r["id"])
+        
+        # Extract demographic fields from answers JSONB to top-level
+        if r.get("answers"):
+            answers = r["answers"]
+            demographic_fields = ["function", "country", "role"]
+            for field in demographic_fields:
+                if field in answers:
+                    r[field] = answers[field]
+        
         result.append(r)
         
     dashboard_cache["dashboard"] = result
@@ -290,7 +299,61 @@ async def get_submission(submission_id: UUID):
     if r.get("id"):
         r["id"] = str(r["id"])
 
+    # Extract demographic fields from answers JSONB to top-level
+    if r.get("answers"):
+        answers = r["answers"]
+        demographic_fields = ["function", "function_other", "country", "state_ut", "role", 
+                            "gender", "gender_other", "is_pwd", "is_neurodivergent", "is_marginalized"]
+        for field in demographic_fields:
+            if field in answers and field not in r:
+                r[field] = answers[field]
+
     return r
+
+
+# ---------------------------------------------------------------------------
+# PATCH /api/submissions/{id}/respondent - Update respondent information
+# ---------------------------------------------------------------------------
+
+@router.patch("/submissions/{submission_id}/respondent")
+@audit_log("edit_respondent_info")
+async def update_respondent(request: Request, submission_id: UUID):
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    # Allowed fields to update
+    allowed_fields = ["name", "email", "company_name", "contact_number", "designation"]
+    updates = {k: v for k, v in body.items() if k in allowed_fields}
+    
+    if not updates:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    # Build SQL update statement
+    set_clause = ", ".join([f"{k} = %({k})s" for k in updates.keys()])
+    sql = f"UPDATE submissions SET {set_clause} WHERE id = %(submission_id)s"
+    
+    params = {**updates, "submission_id": str(submission_id)}
+    
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute(sql, params)
+                if cur.rowcount == 0:
+                    raise HTTPException(status_code=404, detail="Submission not found")
+        conn.close()
+        
+        # Clear dashboard cache
+        dashboard_cache.clear()
+        
+        return {"message": "Respondent information updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to update respondent: %s", e)
+        raise HTTPException(status_code=500, detail="Database error")
 
 
 # ---------------------------------------------------------------------------

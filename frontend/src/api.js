@@ -143,3 +143,15 @@ export async function deleteAllRecords(password) {
   });
   return handleResponse(res);
 }
+
+export async function updateRespondent(id, data) {
+  const res = await fetch(`${API_BASE}/submissions/${id}/respondent`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
