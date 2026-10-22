@@ -27,23 +27,23 @@
         ref="introStageRef"
         :class="['intro-fullpage', { 'anim-ready': isAnimReady, 'anim-done': isAnimDone }]"
       >
-        <!-- Discreet Orchvate Top Header -->
-        <header class="intro-topbar">
-          <div class="intro-branding">
-            <span class="powered-by-text">Powered by</span>
-            <img src="/logo_orchvate.png" alt="Orchvate" class="intro-orchvate-logo" />
-          </div>
-        </header>
-
         <!-- 2-Column Full Screen Hero Layout -->
         <div class="intro-hero-layout">
-          <!-- Left Column: Welcome & Assessment Details -->
-          <div class="intro-hero-left">
-            <!-- Phase 1 & 2: Welcome Pill + NIWI Brand -->
+          <!-- Top Branding Row - Logo and Orchvate -->
+          <div class="hero-top-branding">
             <div class="hero-badge-wrap">
               <img src="/logonew1.png" alt="NIWI Logo" class="niwi-brand-logo anim-hero-niwi" />
-              <span ref="welcomePillRef" class="welcome-pill">WELCOME TO</span>
             </div>
+            <div class="intro-branding">
+              <span class="powered-by-text">Powered by</span>
+              <img src="/logo_orchvate.png" alt="Orchvate" class="intro-orchvate-logo" />
+            </div>
+          </div>
+
+          <!-- Content and Image Grid -->
+          <div class="hero-content-wrapper">
+            <!-- Left Column: Assessment Details -->
+            <div class="intro-hero-left">
 
             <!-- Phase 3: Main Headline -->
             <h1 class="hero-title anim-hero-headline" @click="onLogoClick">
@@ -52,15 +52,33 @@
 
             <!-- Phase 4: Staggered Descriptions -->
             <p class="hero-desc anim-hero-p1">
-              Neuro-inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing valuable strengths such as creativity, innovation, and attention to detail.
+              Neuro-inclusion in the workplace is an emerging priority. Approximately 15% of people are neurodivergent (e.g., autistic, dyslexic, ADHD), bringing diverse perspectives and valuable strengths such as creativity, innovation, and attention to detail.
             </p>
 
             <p class="hero-desc anim-hero-p2">
-              The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neuro-inclusion. It covers key segments across the employee lifecycle and customer experience, providing a holistic view of current practices.
+              The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neuro-inclusion. It covers key segments across the employee lifecycle, customer experience and wider ecosystem, providing a holistic view of current practices.
             </p>
 
-            <p class="hero-desc anim-hero-p3">
-              NIWI is not a ranking tool, but a reflection-based index to help organisations understand where they are in their neuro-inclusion journey.
+            <div class="hero-highlight-box anim-hero-p3">
+              <p class="hero-desc-boxed">
+                <strong>NIWI is not a ranking tool.</strong> It is a reflection-based index designed to help organisations understand where they are today and identify priorities for meaningful action.
+              </p>
+            </div>
+
+            <!-- Time and perspective badges -->
+            <div class="hero-info-badges anim-hero-p4">
+              <div class="info-badge badge-time">
+                <span class="badge-icon">⏱</span>
+                <span class="badge-text">Approximately 20 minutes</span>
+              </div>
+              <div class="info-badge badge-perspective">
+                <span class="badge-icon">👥</span>
+                <span class="badge-text">Every perspective adds to the picture</span>
+              </div>
+            </div>
+
+            <p class="hero-note anim-hero-p5">
+              <em>Answer based on your organisation's current reality, not intention.</em>
             </p>
 
             <!-- Phase 4: Next Button -->
@@ -71,34 +89,20 @@
             </div>
           </div>
 
-          <!-- Right Column: Animated Clipart Video -->
+          <!-- Right Column: Illustration Image -->
           <div class="intro-hero-right anim-hero-visual">
             <div class="clipart-card">
-              <video
-                ref="heroVideoRef"
-                autoplay
-                muted
-                loop
-                playsinline
-                :autoplay="true"
-                :muted="true"
-                :loop="true"
-                :playsinline="true"
-                preload="auto"
-                poster="/niwi_video_preview.png"
-                src="/niwi_clipart_staggered_animation.mp4"
-                class="niwi-hero-animation hero-clipart-video"
-                aria-label="Animated hand-drawn illustration representing neuro-inclusion"
-                @loadedmetadata="playHeroVideo"
-                @canplay="playHeroVideo"
-                @ended="onVideoEnded"
-                @timeupdate="onVideoTimeUpdate"
-              >
-                <source src="/niwi_clipart_staggered_animation.mp4" type="video/mp4" />
-                <source src="/images/niwi_clipart_staggered_animation.mp4" type="video/mp4" />
-                Your browser does not support the video tag.
-              </video>
+              <img
+                src="/images/AI Brain Hub with Flowing Icon Streams.png"
+                alt="Neuro-inclusive workplace illustration showing AI brain hub with diverse organizational elements flowing"
+                class="niwi-hero-image"
+              />
             </div>
+            <div class="perspectives-box">
+              <div class="perspectives-label">MULTIPLE PERSPECTIVES</div>
+              <div class="perspectives-flow">Understand → Prioritise → Act</div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -121,106 +125,117 @@
           </div>
         </header>
 
-        <!-- Compact 2-Column Content -->
+        <!-- Three Section Layout -->
         <div class="why-matters-content">
-          <!-- Left Column: Text & Benefits -->
-          <div class="why-content-left">
-            <!-- Badge -->
-            <div class="why-badge-compact">WHY THIS MATTERS</div>
+          <!-- Top Row: Section 1 (Left) and Section 3 (Right) -->
+          <div class="why-top-row">
+            <!-- Section 1: Why This Matters (Top Left) -->
+            <div class="why-section-box section-1">
+              <h2 class="section-number-title">1. WHY THIS MATTERS</h2>
+              <p class="section-text">
+                Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.
+              </p>
+              <p class="section-text">
+                NIWI helps leaders move beyond isolated initiatives and examine inclusion across the organisation and its wider ecosystem. Designed for C-suite, HR, DEI and business leaders, it supports structured reflection and practical decision-making.
+              </p>
+            </div>
 
-            <!-- Headline -->
-            <h1 class="why-title-compact">Why This Matters</h1>
-
-            <!-- Description -->
-            <p class="why-desc-compact">
-              Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.
-            </p>
-
-            <!-- 2x2 Benefits Grid with Pastel Colors -->
-            <div class="benefits-grid-compact">
-              <!-- Card 1: Unlocks Potential - Pale Mint -->
-              <div class="benefit-card-compact benefit-mint">
-                <div class="benefit-icon-compact">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="5"></circle>
-                    <line x1="12" y1="1" x2="12" y2="3"></line>
-                    <line x1="12" y1="21" x2="12" y2="23"></line>
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-                    <line x1="1" y1="12" x2="3" y2="12"></line>
-                    <line x1="21" y1="12" x2="23" y2="12"></line>
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-                  </svg>
+            <!-- Section 3: Why Neuro-Inclusion Matters (Top Right) -->
+            <div class="why-section-box section-3">
+              <h2 class="section-number-title">3. WHY NEURO-INCLUSION MATTERS</h2>
+              <div class="benefits-horizontal">
+                <div class="benefit-item">
+                  <h4 class="benefit-title">Unlock Potential</h4>
+                  <p class="benefit-text">Tap into diverse talent, ideas and ways of thinking.</p>
                 </div>
-                <h3 class="benefit-title-compact">Unlocks Potential</h3>
-                <p class="benefit-text-compact">
-                  Neuro-inclusion helps organisations tap into diverse talent, ideas, and ways of thinking, driving innovation and better decision-making.
-                </p>
-              </div>
-
-              <!-- Card 2: Stronger Teams - Pale Cream/Yellow -->
-              <div class="benefit-card-compact benefit-cream">
-                <div class="benefit-icon-compact">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                  </svg>
+                <div class="benefit-item">
+                  <h4 class="benefit-title">Stronger Teams</h4>
+                  <p class="benefit-text">Support participation, collaboration and engagement.</p>
                 </div>
-                <h3 class="benefit-title-compact">Stronger Teams</h3>
-                <p class="benefit-text-compact">
-                  When everyone can participate fully, teams become more collaborative, engaged, and resilient.
-                </p>
-              </div>
-
-              <!-- Card 3: More Equitable Opportunities - Pale Blue -->
-              <div class="benefit-card-compact benefit-blue">
-                <div class="benefit-icon-compact">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="20" x2="12" y2="10"></line>
-                    <line x1="18" y1="20" x2="18" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="16"></line>
-                  </svg>
+                <div class="benefit-item">
+                  <h4 class="benefit-title">More Equitable Opportunities</h4>
+                  <p class="benefit-text">Identify and remove barriers across the employee lifecycle.</p>
                 </div>
-                <h3 class="benefit-title-compact">More Equitable Opportunities</h3>
-                <p class="benefit-text-compact">
-                  It helps identify and remove barriers, ensuring fair access to opportunities across the employee lifecycle.
-                </p>
-              </div>
-
-              <!-- Card 4: Lasting Impact - Pale Mint -->
-              <div class="benefit-card-compact benefit-mint">
-                <div class="benefit-icon-compact">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="22"></line>
-                  </svg>
+                <div class="benefit-item">
+                  <h4 class="benefit-title">Lasting Impact</h4>
+                  <p class="benefit-text">Build sustainable practices that enable people and organisations to thrive.</p>
                 </div>
-                <h3 class="benefit-title-compact">Lasting Impact</h3>
-                <p class="benefit-text-compact">
-                  Neuro-inclusive practices create workplaces where everyone can thrive, leading to sustainable business growth and positive social impact.
-                </p>
               </div>
             </div>
           </div>
 
-          <!-- Right Column: Illustration -->
-          <div class="why-content-right">
-            <img 
-              src="/why-matters-illustration.png" 
-              alt="Team collaboration illustration" 
-              class="why-illustration-compact"
-            />
+          <!-- Section 2: What NIWI Helps You Do (Middle, Full Width) -->
+          <div class="why-section-box section-2">
+            <h2 class="section-number-title">2. WHAT NIWI HELPS YOU DO</h2>
+            
+            <!-- 3 Horizontal Cards -->
+            <div class="process-cards-horizontal">
+              <!-- Card 1 -->
+              <div class="process-card-h card-1">
+                <div class="card-h-number">01</div>
+                <div class="card-h-content">
+                  <h3 class="card-h-title">See the Current State</h3>
+                  <p class="card-h-desc">Create a shared baseline based on what is happening today.</p>
+                </div>
+              </div>
+
+              <!-- Card 2 -->
+              <div class="process-card-h card-2">
+                <div class="card-h-number">02</div>
+                <div class="card-h-content">
+                  <h3 class="card-h-title">Surface Priorities</h3>
+                  <p class="card-h-desc">Identify strengths, inconsistencies and areas where focused action may be needed.</p>
+                </div>
+              </div>
+
+              <!-- Card 3 -->
+              <div class="process-card-h card-3">
+                <div class="card-h-number">03</div>
+                <div class="card-h-content">
+                  <h3 class="card-h-title">Shape the Roadmap</h3>
+                  <p class="card-h-desc">Use dimension-level insights to guide conversations, ownership and next steps.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Badges Row -->
+          <div class="info-badges-row">
+            <div class="info-badge-item badge-time">
+              <span class="badge-num">20</span>
+              <span class="badge-label">About 20 minutes</span>
+            </div>
+            <div class="info-badge-item badge-dimensions">
+              <span class="badge-num">08</span>
+              <span class="badge-label">8 dimensions</span>
+            </div>
+            <div class="info-badge-item badge-snapshot">
+              <span class="badge-num">01</span>
+              <span class="badge-label">One organisational snapshot</span>
+            </div>
+          </div>
+
+          <!-- Perspective Note -->
+          <div class="perspective-note">
+            <div class="note-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="note-content">
+              <h4 class="note-title">Every perspective adds to the picture</h4>
+              <p class="note-text">Views from across the organisation can help create a more complete understanding of current reality.</p>
+            </div>
           </div>
         </div>
 
         <!-- Bottom Navigation -->
         <div class="why-matters-footer">
           <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
-          <button class="btn-next-compact" @click="nextStep" type="button">Next →</button>
+          <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
         </div>
       </div>
 
@@ -724,38 +739,10 @@ const options     = ["Yes", "Partially", "No", "Not Sure"];
 // ── Cinematic Welcome Animation ──
 const welcomePillRef = ref(null);
 const introStageRef = ref(null);
-const heroVideoRef = ref(null);
 const isAnimReady = ref(false);
 const isAnimDone = ref(false);
 
-function playHeroVideo() {
-  if (heroVideoRef.value) {
-    heroVideoRef.value.muted = true;
-    heroVideoRef.value.defaultMuted = true;
-    heroVideoRef.value.playsInline = true;
-    heroVideoRef.value.loop = true;
-    heroVideoRef.value.play().catch(() => {});
-  }
-}
-
-function onVideoEnded() {
-  if (heroVideoRef.value) {
-    heroVideoRef.value.currentTime = 0;
-    heroVideoRef.value.play().catch(() => {});
-  }
-}
-
-function onVideoTimeUpdate() {
-  if (heroVideoRef.value && heroVideoRef.value.duration) {
-    if (heroVideoRef.value.currentTime >= heroVideoRef.value.duration - 0.1) {
-      heroVideoRef.value.currentTime = 0;
-      heroVideoRef.value.play().catch(() => {});
-    }
-  }
-}
-
 function setupWelcomeAnimation() {
-  playHeroVideo();
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const alreadyPlayed = sessionStorage.getItem('niwi_welcome_animated') === '1';
 
@@ -996,7 +983,6 @@ const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useD
 
 onMounted(async () => {
   setupWelcomeAnimation();
-  playHeroVideo();
   try {
     const res = await fetch("/api/form/sections");
     if (res.ok) {
@@ -1337,7 +1323,7 @@ async function submit() {
 /* ── Orchvate Top Branding ── */
 .intro-topbar {
   width: 100%;
-  padding: 1rem 4rem 0;
+  padding: 1rem 5% 0;
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -1351,6 +1337,15 @@ async function submit() {
   animation: contentGentleFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 1.8s forwards;
 }
 
+.hero-top-branding {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
 .intro-branding {
   display: inline-flex;
   align-items: center;
@@ -1362,6 +1357,7 @@ async function submit() {
   border: 1px solid rgba(22, 16, 87, 0.08);
   box-shadow: 0 2px 12px rgba(22, 16, 87, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex-shrink: 0;
 }
 
 .intro-branding:hover {
@@ -1389,36 +1385,52 @@ async function submit() {
 .intro-hero-layout {
   flex: 1;
   width: 100%;
-  max-width: 1600px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0.5rem 4rem 2rem;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  align-items: center;
+  padding: 0.75rem 5% 3rem;
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   min-height: 0;
+}
+
+.hero-top-branding {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 1.25rem;
+  gap: 2rem;
+}
+
+.hero-content-wrapper {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 3rem;
+  align-items: center;
+  width: 100%;
 }
 
 .intro-hero-left {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  max-width: 100%;
-  padding-right: 1rem;
+  max-width: 640px;
+  padding-right: 0;
+  width: 100%;
 }
 
 .hero-badge-wrap {
-  margin-bottom: 1rem;
+  margin-bottom: 0;
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .niwi-brand-logo {
-  height: 36px;
+  height: 40px;
   width: auto;
-  border-radius: 7px;
+  border-radius: 8px;
   display: block;
   object-fit: contain;
   box-shadow: 0 2px 8px rgba(22, 16, 87, 0.12);
@@ -1472,12 +1484,13 @@ async function submit() {
 }
 
 .hero-title {
-  font-size: clamp(2.1rem, 3vw, 3rem);
+  font-size: clamp(2rem, 2.75vw, 2.75rem);
   font-weight: 800;
   color: var(--c-primary-dark, #161057);
   letter-spacing: -0.025em;
-  line-height: 1.18;
-  margin: 0 0 1.25rem 0;
+  line-height: 1.15;
+  margin: 0.5rem 0 1.25rem 0;
+  max-width: 560px;
   font-family: 'Fraunces', serif;
   cursor: pointer;
   text-wrap: balance;
@@ -1501,11 +1514,79 @@ async function submit() {
 }
 
 .hero-desc {
-  font-size: 1.02rem;
+  font-size: 1rem;
   line-height: 1.7;
   color: #374151;
-  margin: 0 0 0.85rem 0;
+  margin: 0 0 0.875rem 0;
   font-family: var(--font-body);
+}
+
+.hero-desc:last-of-type {
+  margin-bottom: 0;
+}
+
+.hero-highlight-box {
+  background: rgba(241, 245, 249, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0 0 0;
+}
+
+.hero-desc-boxed {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #1e293b;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.hero-info-badges {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1.75rem 0 0.625rem 0;
+  flex-wrap: wrap;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+}
+
+.badge-time {
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  color: #92400e;
+}
+
+.badge-perspective {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #5b21b6;
+}
+
+.badge-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.badge-text {
+  line-height: 1.3;
+}
+
+.hero-note {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #6b7280;
+  margin: 0.5rem 0 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
 }
 
 /* ── Why This Matters Card (Step 1 - Next Page) ── */
@@ -1542,8 +1623,10 @@ async function submit() {
 .hero-btn-row {
   display: flex;
   justify-content: flex-start;
-  margin-top: 1.25rem;
+  margin-top: 1.75rem;
   padding-top: 0;
+  width: 100%;
+  align-self: stretch;
 }
 
 .hero-cta-btn {
@@ -1572,20 +1655,53 @@ async function submit() {
 /* ── Right Column: Clipart Video Illustration ── */
 .intro-hero-right {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
-  padding-top: 0;
+  padding: 0;
   height: 100%;
+  gap: 1.5rem;
+  margin-top: 12rem;
 }
 
 .clipart-card {
   width: 100%;
-  max-width: 680px;
+  max-width: 600px;
   display: flex;
   justify-content: center;
   align-items: center;
   position: relative;
+}
+
+.perspectives-box {
+  width: 100%;
+  max-width: 600px;
+  background: #FFFFFF;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.04);
+}
+
+.perspectives-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--c-accent, #04907C);
+  margin-bottom: 0.5rem;
+  font-family: var(--font-body);
+}
+
+.perspectives-flow {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
 }
 
 .hero-clipart-video {
@@ -1620,6 +1736,25 @@ async function submit() {
   border-radius: 16px;
 }
 
+.niwi-hero-image {
+  width: 100%;
+  height: auto;
+  max-height: 520px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 32px rgba(22, 16, 87, 0.08));
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  user-select: none;
+  border-radius: 12px;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.niwi-hero-image:hover {
+  transform: translateY(-2px) scale(1.01);
+}
+
 /* Phase 4: Staggered Content Reveal (1.8s–2.8s) */
 .intro-fullpage.anim-ready:not(.anim-done) .anim-hero-visual {
   opacity: 0;
@@ -1652,9 +1787,19 @@ async function submit() {
   animation: contentGentleFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.3s forwards;
 }
 
-.intro-fullpage.anim-ready:not(.anim-done) .anim-hero-cta {
+.intro-fullpage.anim-ready:not(.anim-done) .anim-hero-p4 {
   opacity: 0;
   animation: contentGentleFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.45s forwards;
+}
+
+.intro-fullpage.anim-ready:not(.anim-done) .anim-hero-p5 {
+  opacity: 0;
+  animation: contentGentleFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.6s forwards;
+}
+
+.intro-fullpage.anim-ready:not(.anim-done) .anim-hero-cta {
+  opacity: 0;
+  animation: contentGentleFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2.75s forwards;
 }
 
 @keyframes contentGentleFadeUp {
@@ -1675,6 +1820,8 @@ async function submit() {
 .intro-fullpage.anim-done .anim-hero-p1,
 .intro-fullpage.anim-done .anim-hero-p2,
 .intro-fullpage.anim-done .anim-hero-p3,
+.intro-fullpage.anim-done .anim-hero-p4,
+.intro-fullpage.anim-done .anim-hero-p5,
 .intro-fullpage.anim-done .anim-hero-cta,
 .intro-fullpage.anim-done .anim-hero-visual,
 .intro-fullpage.anim-done .intro-topbar,
@@ -1693,6 +1840,8 @@ async function submit() {
   .anim-hero-p1,
   .anim-hero-p2,
   .anim-hero-p3,
+  .anim-hero-p4,
+  .anim-hero-p5,
   .anim-hero-cta,
   .anim-hero-visual,
   .intro-topbar,
@@ -1706,50 +1855,132 @@ async function submit() {
 }
 
 /* Responsive adjustments */
+@media (max-width: 1200px) {
+  .hero-content-wrapper {
+    gap: 2rem;
+  }
+  .hero-title {
+    max-width: 100%;
+  }
+  .clipart-card {
+    max-width: 520px;
+  }
+}
+
 @media (max-width: 1080px) {
   .intro-topbar {
-    padding: 0.75rem 2rem 0.25rem;
+    padding: 1rem 4% 0;
   }
   .intro-hero-layout {
+    padding: 1.5rem 4% 3rem;
+  }
+  .hero-content-wrapper {
     grid-template-columns: 1fr;
     gap: 2.5rem;
-    padding: 1rem 2rem 2.5rem;
     align-items: flex-start;
   }
   .intro-hero-left {
+    max-width: 100%;
     padding-right: 0;
   }
   .intro-hero-right {
     order: 2;
-    padding-top: 0;
+    padding: 0;
     justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0;
   }
   .clipart-card {
     max-width: 480px;
     margin: 0 auto;
   }
+  .perspectives-box {
+    max-width: 480px;
+  }
+  .niwi-hero-image {
+    max-height: 420px;
+  }
+  .hero-btn-row {
+    justify-content: flex-start;
+  }
 }
 
 @media (max-width: 640px) {
   .intro-topbar {
-    padding: 0.75rem 1.25rem 0.25rem;
+    padding: 1rem 5% 0;
     justify-content: flex-end;
   }
   .intro-hero-layout {
-    padding: 0.75rem 1.25rem 2rem;
-    gap: 1.75rem;
+    padding: 1.5rem 5% 2.5rem;
+  }
+  .hero-top-branding {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    gap: 0.75rem;
+  }
+  .hero-content-wrapper {
+    gap: 2rem;
+  }
+  .hero-badge-wrap {
+    margin-bottom: 0;
+  }
+  .niwi-brand-logo {
+    height: 36px;
+  }
+  .welcome-pill {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.85rem;
+  }
+  .intro-branding {
+    align-self: flex-start;
   }
   .hero-title {
     font-size: 1.75rem;
+    margin: 1rem 0 1.25rem 0;
   }
   .hero-desc {
     font-size: 0.95rem;
+    margin-bottom: 0.875rem;
+  }
+  .hero-info-badges {
+    gap: 0.625rem;
+    margin-top: 1.5rem;
+  }
+  .info-badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.875rem;
+  }
+  .hero-note {
+    font-size: 0.875rem;
+  }
+  .hero-btn-row {
+    margin-top: 1.5rem;
+    justify-content: flex-start;
+  }
+  .hero-cta-btn {
+    padding: 0.75rem 2rem;
+    font-size: 0.95rem;
+  }
+  .intro-hero-right {
+    gap: 1.25rem;
+    margin-top: 0;
   }
   .clipart-card {
     max-width: 100%;
   }
-  .hero-clipart-video {
-    max-height: 350px;
+  .perspectives-box {
+    max-width: 100%;
+    padding: 1.25rem 1.5rem;
+  }
+  .perspectives-label {
+    font-size: 0.7rem;
+  }
+  .perspectives-flow {
+    font-size: 1.1rem;
+  }
+  .niwi-hero-image {
+    max-height: 320px;
   }
 }
 
@@ -1818,141 +2049,244 @@ async function submit() {
   width: auto;
 }
 
-/* ── Compact Content Area ── */
+/* ── Three Section Layout ── */
 .why-matters-content {
   flex: 1;
-  display: grid;
-  grid-template-columns: 55fr 45fr;
-  gap: 3rem;
-  padding: 1.5rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 3.5rem 0.5rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
+  gap: 1rem;
 }
 
-.why-content-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-height: 0;
+/* Top Row: Section 1 (Left) & Section 3 (Right) */
+.why-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  width: 100%;
 }
 
-.why-badge-compact {
-  display: inline-flex;
-  align-items: center;
-  background: transparent;
+.why-section-box {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.1);
+  border-radius: 12px;
+  padding: 0.875rem 1.125rem;
+  text-align: left;
+}
+
+.section-number-title {
+  font-size: 0.75rem;
+  font-weight: 800;
   color: var(--c-accent, #04907C);
-  border: 1.5px solid var(--c-accent, #04907C);
-  border-radius: 99px;
-  padding: 0.25rem 0.75rem;
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-family: var(--font-body);
-  width: fit-content;
-}
-
-.why-title-compact {
-  font-size: 1.65rem;
-  font-weight: 800;
-  color: var(--c-primary-dark, #161057);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0;
-  font-family: 'Fraunces', serif;
-}
-
-.why-desc-compact {
-  font-size: 0.875rem;
-  line-height: 1.6;
-  color: #374151;
+  letter-spacing: 0.08em;
   margin: 0 0 0.5rem 0;
   font-family: var(--font-body);
+  text-transform: uppercase;
 }
 
-/* ── 2x2 Benefits Grid with Pastel Colors ── */
-.benefits-grid-compact {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-  margin-top: 0.25rem;
+.section-text {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: #374151;
+  margin: 0 0 0.625rem 0;
+  font-family: var(--font-body);
 }
 
-.benefit-card-compact {
+.section-text:last-child {
+  margin-bottom: 0;
+}
+
+/* Section 3: Benefits Horizontal */
+.section-3 {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 1rem;
-  border-radius: 10px;
-  border: none;
-  box-shadow: none;
+  gap: 0.625rem;
 }
 
-.benefit-card-compact:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.benefits-horizontal {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
 }
 
-/* Pastel Background Colors */
-.benefit-mint {
-  background: #EAF7F1;
-}
-
-.benefit-cream {
-  background: #FFF5D9;
-}
-
-.benefit-blue {
-  background: #EDF5FC;
-}
-
-.benefit-icon-compact {
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.6);
+.benefit-item {
+  background: rgba(241, 245, 249, 0.5);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 8px;
-  color: var(--c-primary-dark, #161057);
-  flex-shrink: 0;
+  padding: 0.625rem 0.75rem;
 }
 
-.benefit-title-compact {
-  font-size: 0.875rem;
+.benefit-title {
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--c-primary-dark, #161057);
+  margin: 0 0 0.3rem 0;
   font-family: 'Fraunces', serif;
-  line-height: 1.3;
-  margin: 0;
+  line-height: 1.2;
 }
 
-.benefit-text-compact {
-  font-size: 0.75rem;
-  line-height: 1.5;
+.benefit-text {
+  font-size: 0.7rem;
+  line-height: 1.4;
   color: #4B5563;
   margin: 0;
   font-family: var(--font-body);
 }
 
-/* ── Right Column: Compact Illustration ── */
-.why-content-right {
+/* Section 2: What NIWI Helps You Do (Full Width) */
+.section-2 {
+  width: 100%;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #F0FDFA 0%, #FFFFFF 100%);
+  border: 2px solid #99F6E4;
+}
+
+.process-cards-horizontal {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.process-card-h {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(22, 16, 87, 0.12);
+  border-radius: 10px;
+  padding: 1rem 1.125rem;
+  text-align: left;
+}
+
+.card-h-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(4, 144, 124, 0.1);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-accent, #04907C);
+  font-family: 'Fraunces', serif;
+  flex-shrink: 0;
+}
+
+.card-h-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.card-h-title {
+  font-size: 0.925rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  font-family: 'Fraunces', serif;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.card-h-desc {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: #4B5563;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+
+/* Info Badges Row */
+.info-badges-row {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin: 0.75rem 0 0.5rem 0;
+  flex-wrap: wrap;
+}
+
+.info-badge-item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  background: #FFFFFF;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.badge-num {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: 'Fraunces', serif;
+}
+
+.badge-label {
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #1F2937;
+  font-family: var(--font-body);
+}
+
+.badge-time .badge-num { color: #D97706; }
+.badge-dimensions .badge-num { color: #DC2626; }
+.badge-snapshot .badge-num { color: #DC2626; }
+
+/* Perspective Note */
+.perspective-note {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.375rem;
+  background: #EDF5FC;
+  border-radius: 10px;
+  text-align: left;
+  max-width: 750px;
+  margin: 0;
+}
+
+.note-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 0;
+  background: #FFFFFF;
+  border-radius: 50%;
+  color: var(--c-primary-dark, #161057);
 }
 
-.why-illustration-compact {
-  width: 100%;
-  max-width: 450px;
-  height: auto;
-  max-height: 500px;
-  object-fit: contain;
-  display: block;
+.note-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.note-content {
+  flex: 1;
+}
+
+.note-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  font-family: 'Fraunces', serif;
+  margin: 0 0 0.15rem 0;
+}
+
+.note-text {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: #4B5563;
+  margin: 0;
+  font-family: var(--font-body);
 }
 
 /* ── Footer Navigation ── */
@@ -1960,11 +2294,45 @@ async function submit() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 3rem;
+  padding: 0.75rem 2.5rem;
   border-top: 1px solid rgba(22, 16, 87, 0.08);
   flex-shrink: 0;
   background: var(--bg, #FAFAF8);
   gap: 1rem;
+}
+
+.btn-back-compact {
+  background: transparent;
+  border: 1.5px solid rgba(22, 16, 87, 0.15);
+  border-radius: 99px;
+  padding: 0.55rem 1.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--c-primary-dark, #161057);
+  font-family: var(--font-body);
+}
+
+.btn-back-compact:hover {
+  background: rgba(22, 16, 87, 0.05);
+}
+
+.btn-next-compact {
+  background: var(--c-primary-dark, #161057);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 99px;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
+}
+
+.btn-next-compact:hover {
+  background: #0f0a42;
+  transform: translateY(-1px);
 }
 
 .step-nav-mid {
@@ -2070,25 +2438,30 @@ async function submit() {
   }
 }
 
-/* ── Responsive Design ── */
+/* ── Responsive Design for Three Sections ── */
 @media (max-width: 1080px) {
   .why-matters-header {
     padding: 0.75rem 2rem;
   }
   
   .why-matters-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
     padding: 1.25rem 2rem;
   }
   
-  .why-content-right {
-    order: -1;
+  .why-top-row {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
   
-  .why-illustration-compact {
-    max-width: 350px;
-    max-height: 350px;
+  .process-cards-horizontal {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .benefits-horizontal {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
   }
 }
 
@@ -2103,37 +2476,39 @@ async function submit() {
   
   .why-matters-content {
     padding: 1rem;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
   
-  .why-title-compact {
-    font-size: 1.5rem;
+  .why-section-box {
+    padding: 1rem 1.125rem;
   }
   
-  .why-desc-compact {
+  .section-number-title {
+    font-size: 0.75rem;
+  }
+  
+  .section-text {
     font-size: 0.8rem;
   }
   
-  .benefits-grid-compact {
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
+  .benefit-title {
+    font-size: 0.75rem;
   }
   
-  .benefit-card-compact {
-    padding: 0.875rem;
-  }
-  
-  .benefit-title-compact {
-    font-size: 0.8rem;
-  }
-  
-  .benefit-text-compact {
+  .benefit-text {
     font-size: 0.7rem;
   }
   
-  .why-illustration-compact {
-    max-width: 280px;
-    max-height: 280px;
+  .section-2 {
+    padding: 1.125rem 1.25rem;
+  }
+  
+  .card-h-title {
+    font-size: 0.85rem;
+  }
+  
+  .card-h-desc {
+    font-size: 0.7rem;
   }
   
   .why-matters-footer {
