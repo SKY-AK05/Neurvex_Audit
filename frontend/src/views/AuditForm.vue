@@ -112,6 +112,8 @@
         v-else-if="currentStep === 1"
         key="step-1"
         class="why-matters-page"
+        ref="whyMattersPageRef"
+        @scroll="onPageScroll"
       >
         <!-- Compact Top Header with Logo and Progress -->
         <header class="why-matters-header">
@@ -127,120 +129,195 @@
 
         <!-- Three Section Layout -->
         <div class="why-matters-content">
-          <!-- Top Row: Section 1 (Left) and Section 3 (Right) -->
-          <div class="why-top-row">
-            <!-- Section 1: Why This Matters (Top Left) -->
-            <div class="why-section-box section-1">
-              <h2 class="section-number-title">1. WHY THIS MATTERS</h2>
-              <p class="section-text">
-                Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.
-              </p>
-              <p class="section-text">
-                NIWI helps leaders move beyond isolated initiatives and examine inclusion across the organisation and its wider ecosystem. Designed for C-suite, HR, DEI and business leaders, it supports structured reflection and practical decision-making.
-              </p>
-            </div>
-
-            <!-- Section 3: Why Neuro-Inclusion Matters (Top Right) -->
-            <div class="why-section-box section-3">
-              <h2 class="section-number-title">3. WHY NEURO-INCLUSION MATTERS</h2>
-              <div class="benefits-horizontal">
-                <div class="benefit-item">
-                  <h4 class="benefit-title">Unlock Potential</h4>
-                  <p class="benefit-text">Tap into diverse talent, ideas and ways of thinking.</p>
-                </div>
-                <div class="benefit-item">
-                  <h4 class="benefit-title">Stronger Teams</h4>
-                  <p class="benefit-text">Support participation, collaboration and engagement.</p>
-                </div>
-                <div class="benefit-item">
-                  <h4 class="benefit-title">More Equitable Opportunities</h4>
-                  <p class="benefit-text">Identify and remove barriers across the employee lifecycle.</p>
-                </div>
-                <div class="benefit-item">
-                  <h4 class="benefit-title">Lasting Impact</h4>
-                  <p class="benefit-text">Build sustainable practices that enable people and organisations to thrive.</p>
-                </div>
+          <!-- Section 1: Why This Matters (Full Width) -->
+          <div class="why-section-box section-1">
+            <div class="flow-header-area">
+              <div class="flow-badge-wrapper">
+                <span class="flow-category-tag tag-purple">WHY THIS MATTERS</span>
               </div>
+              <h2 class="flow-main-heading">Understanding current realities to drive change</h2>
+              <p class="flow-subtitle">NIWI helps leaders move beyond isolated initiatives and examine inclusion across the organisation.</p>
+            </div>
+            <div class="section-1-paragraphs">
+              <p class="section-text">
+                <strong>Building neuro-inclusive workplaces</strong> is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.
+              </p>
+              <p class="section-text">
+                <strong>Designed for C-suite, HR, DEI and business leaders</strong>, NIWI supports structured reflection and practical decision-making across the organisation and its wider ecosystem.
+              </p>
             </div>
           </div>
 
-          <!-- Section 2: What NIWI Helps You Do (Middle, Full Width) -->
+          <!-- Section 2: What NIWI Helps You Do (Full Width Process Flow UI) -->
           <div class="why-section-box section-2">
-            <h2 class="section-number-title">2. WHAT NIWI HELPS YOU DO</h2>
-            
-            <!-- 3 Horizontal Cards -->
-            <div class="process-cards-horizontal">
-              <!-- Card 1 -->
-              <div class="process-card-h card-1">
-                <div class="card-h-number">01</div>
-                <div class="card-h-content">
-                  <h3 class="card-h-title">See the Current State</h3>
-                  <p class="card-h-desc">Create a shared baseline based on what is happening today.</p>
+            <div class="flow-header-area">
+              <div class="flow-badge-wrapper">
+                <span class="flow-category-tag tag-teal">WHAT NIWI HELPS YOU DO</span>
+              </div>
+              <h2 class="flow-main-heading">From organisational insight to focused action</h2>
+              <p class="flow-subtitle">NIWI turns responses into a clear pathway for reflection, prioritisation and practical next steps.</p>
+            </div>
+
+            <div class="process-flow-container">
+              <!-- Card 1 (Purple) -->
+              <div class="process-flow-card card-purple">
+                <div class="flow-card-top">
+                  <div class="flow-circle-badge badge-purple">01</div>
+                  <h3 class="flow-card-heading">See the<br/>Current State</h3>
                 </div>
+                <p class="flow-card-body">Create a shared baseline using responses that reflect what happens today.</p>
+                <div class="flow-card-accent-bar bar-purple"></div>
               </div>
 
-              <!-- Card 2 -->
-              <div class="process-card-h card-2">
-                <div class="card-h-number">02</div>
-                <div class="card-h-content">
-                  <h3 class="card-h-title">Surface Priorities</h3>
-                  <p class="card-h-desc">Identify strengths, inconsistencies and areas where focused action may be needed.</p>
-                </div>
+              <!-- Connector 1 -->
+              <div class="flow-connector" aria-hidden="true">
+                <div class="connector-line"></div>
+                <svg class="connector-arrowhead navy-head" width="18" height="24" viewBox="0 0 18 24" fill="none">
+                  <path d="M4 3L13 12L4 21" stroke="#161057" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
               </div>
 
-              <!-- Card 3 -->
-              <div class="process-card-h card-3">
-                <div class="card-h-number">03</div>
-                <div class="card-h-content">
-                  <h3 class="card-h-title">Shape the Roadmap</h3>
-                  <p class="card-h-desc">Use dimension-level insights to guide conversations, ownership and next steps.</p>
+              <!-- Card 2 (Teal) -->
+              <div class="process-flow-card card-teal">
+                <div class="flow-card-top">
+                  <div class="flow-circle-badge badge-teal">02</div>
+                  <h3 class="flow-card-heading">Surface<br/>Priorities</h3>
                 </div>
+                <p class="flow-card-body">Identify strengths, inconsistencies and areas where focused action may be needed.</p>
+                <div class="flow-card-accent-bar bar-teal"></div>
+              </div>
+
+              <!-- Connector 2 -->
+              <div class="flow-connector" aria-hidden="true">
+                <div class="connector-line"></div>
+                <svg class="connector-arrowhead navy-head" width="18" height="24" viewBox="0 0 18 24" fill="none">
+                  <path d="M4 3L13 12L4 21" stroke="#161057" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+
+              <!-- Card 3 (Amber) -->
+              <div class="process-flow-card card-amber">
+                <div class="flow-card-top">
+                  <div class="flow-circle-badge badge-amber">03</div>
+                  <h3 class="flow-card-heading">Shape the<br/>Roadmap</h3>
+                </div>
+                <p class="flow-card-body">Use dimension-level insights to guide conversations, ownership and next steps.</p>
+                <div class="flow-card-accent-bar bar-amber"></div>
               </div>
             </div>
           </div>
 
-          <!-- Info Badges Row -->
-          <div class="info-badges-row">
-            <div class="info-badge-item badge-time">
-              <span class="badge-num">20</span>
-              <span class="badge-label">About 20 minutes</span>
+          <!-- Section 3: Why Neuro-Inclusion Matters (Full Width) -->
+          <div class="why-section-box section-3">
+            <div class="flow-header-area">
+              <div class="flow-badge-wrapper">
+                <span class="flow-category-tag tag-amber">WHY NEURO-INCLUSION MATTERS</span>
+              </div>
+              <h2 class="flow-main-heading">Creating lasting impact across the organisation</h2>
+              <p class="flow-subtitle">Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day.</p>
             </div>
-            <div class="info-badge-item badge-dimensions">
-              <span class="badge-num">08</span>
-              <span class="badge-label">8 dimensions</span>
-            </div>
-            <div class="info-badge-item badge-snapshot">
-              <span class="badge-num">01</span>
-              <span class="badge-label">One organisational snapshot</span>
+            <div class="benefits-cards-grid">
+              <!-- Benefit 1: Mint -->
+              <div class="benefit-card benefit-mint">
+                <div class="benefit-icon-badge">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#161057" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"/>
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+                  </svg>
+                </div>
+                <h4 class="benefit-title">Unlocks Potential</h4>
+                <p class="benefit-text">Neuro-inclusion helps organisations tap into diverse talent, ideas, and ways of thinking, driving innovation and better decision-making.</p>
+              </div>
+
+              <!-- Benefit 2: Amber -->
+              <div class="benefit-card benefit-amber">
+                <div class="benefit-icon-badge">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#161057" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                </div>
+                <h4 class="benefit-title">Stronger Teams</h4>
+                <p class="benefit-text">When everyone can participate fully, teams become more collaborative, engaged, and resilient.</p>
+              </div>
+
+              <!-- Benefit 3: Blue -->
+              <div class="benefit-card benefit-blue">
+                <div class="benefit-icon-badge">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#161057" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/>
+                    <line x1="12" y1="20" x2="12" y2="4"/>
+                    <line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                </div>
+                <h4 class="benefit-title">More Equitable Opportunities</h4>
+                <p class="benefit-text">It helps identify and remove barriers, ensuring fair access to opportunities across the employee lifecycle.</p>
+              </div>
+
+              <!-- Benefit 4: Mint -->
+              <div class="benefit-card benefit-mint">
+                <div class="benefit-icon-badge">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#161057" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 22v-9"/>
+                    <path d="M12 13a5 5 0 0 0 5-5c0-3-5-6-5-6s-5 3-5 6a5 5 0 0 0 5 5z"/>
+                    <path d="M12 13a5 5 0 0 1-5-5"/>
+                  </svg>
+                </div>
+                <h4 class="benefit-title">Lasting Impact</h4>
+                <p class="benefit-text">Neuro-inclusive practices create workplaces where everyone can thrive, leading to sustainable business growth and positive social impact.</p>
+              </div>
             </div>
           </div>
 
-          <!-- Perspective Note -->
-          <div class="perspective-note">
-            <div class="note-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                <circle cx="9" cy="7" r="4"></circle>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          <!-- Info Badges Row (Pill Bar) -->
+          <div class="info-badges-pill-bar">
+            <div class="info-pill-item">
+              <span class="pill-badge-circle circle-amber">20</span>
+              <span class="pill-badge-label">About 20 minutes</span>
+            </div>
+            <div class="info-pill-item">
+              <span class="pill-badge-circle circle-amber">08</span>
+              <span class="pill-badge-label">8 dimensions</span>
+            </div>
+            <div class="info-pill-item">
+              <span class="pill-badge-circle circle-red">01</span>
+              <span class="pill-badge-label">One organisational snapshot</span>
+            </div>
+          </div>
+
+          <!-- Perspective Note (Rounded Pill Banner) -->
+          <div class="perspective-note-pill">
+            <div class="perspective-eye-icon" aria-hidden="true">
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+                <circle cx="18" cy="18" r="16.5" stroke="#A5B4FC" stroke-width="2.2" fill="#FFFFFF"/>
+                <circle cx="21" cy="14" r="5" fill="#161057"/>
               </svg>
             </div>
-            <div class="note-content">
-              <h4 class="note-title">Every perspective adds to the picture</h4>
-              <p class="note-text">Views from across the organisation can help create a more complete understanding of current reality.</p>
+            <div class="perspective-pill-content">
+              <h4 class="perspective-pill-title">Every perspective adds to the picture</h4>
+              <p class="perspective-pill-desc">Views from across the organisation can help create a more complete understanding of current reality.</p>
             </div>
           </div>
         </div>
 
-        <!-- Bottom Navigation -->
-        <div class="why-matters-footer">
+        <!-- Bottom Navigation Drawer (Slides up when user reaches end) -->
+        <div :class="['why-matters-footer', 'why-drawer', { 'drawer-visible': isDrawerVisible }]">
+          <div class="drawer-handle" aria-hidden="true"></div>
           <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
           <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
         </div>
       </div>
 
       <!-- Step content (Step 2+) with Consistent Header/Footer -->
-      <div v-else key="step-other" class="unified-page">
+      <div
+        v-else
+        key="step-other"
+        class="unified-page"
+        ref="unifiedPageRef"
+        @scroll="onPageScroll"
+      >
         <!-- Top Header -->
         <header class="why-matters-header">
           <div class="why-header-left" @click="onDevModeClick" style="cursor: pointer;" title="Click 5 times for developer mode">
@@ -256,20 +333,18 @@
         <!-- Main Content Area -->
         <div class="unified-content">
           <div class="unified-card">
-            <div class="step-card-head">
+            <div v-if="currentStep !== 3" class="step-card-head">
               <div class="step-head-meta">
                 <div v-if="currentStep === 2" class="step-tag">Getting Started</div>
-                <div v-else-if="currentStep === 3"></div>
                 <div v-else class="step-tag">Section {{ currentStep - 3 }} of {{ visibleSections.length }}</div>
               </div>
               <div class="step-head-row">
-                <h1 :class="currentStep === 2 ? 'h1-navy' : currentStep === 3 ? 'h1-navy' : 'h1-green'" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : currentStep === 3 ? 'Before you begin' : (currentSection?.title || '') }}</h1>
+                <h1 :class="currentStep === 2 ? 'h1-navy' : 'h1-green'" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentSection?.title || '') }}</h1>
                 <p v-if="currentStep > 3" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
               </div>
               <p v-if="currentStep === 2" class="step-sub">
                 The following demographic questions help us understand how neuro-inclusion experiences may vary across groups. Your responses will be analyzed in aggregate and treated confidentially.
               </p>
-              <p v-if="currentStep === 3" class="step-sub">Here's what to expect before you begin the audit.</p>
             </div>
 
             <div ref="questionsScroll" class="questions-scroll">
@@ -544,35 +619,110 @@
             <!-- Instructions screen (step 3) -->
             <div v-else-if="currentStep === 3" class="instructions-screen">
               <div class="instr-layout">
-                <!-- Left: how to complete -->
-                <div class="instr-left">
-                  <p class="instr-body">This should take approximately <strong>10 minutes</strong> to complete. The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.</p>
-                  <p class="instr-body">Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> (rather than intention).</p>
-                  <div class="instr-options">
-                    <span class="instr-opt">Yes</span>
-                    <span class="instr-opt">Partially</span>
-                    <span class="instr-opt">No</span>
-                    <span class="instr-opt">Not Sure</span>
-                  </div>
-                  <p class="instr-note">Your responses will only include details that you choose to share.</p>
-                  <div class="instr-divider"></div>
-                  <p class="instr-segments-label">The segments covered:</p>
-                  <div class="instr-segments-list">
-                    <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-row">
-                      <span class="instr-seg-num">{{ i + 1 }}</span>
-                      <span class="instr-seg-name">{{ s.title }}</span>
+                <!-- Left: Guide card -->
+                <div class="instr-left-card">
+                  <div class="instr-accent-dash"></div>
+                  <h2 class="instr-card-title">Before you begin</h2>
+                  <p class="instr-card-subtitle">Here's what to expect before you begin the audit.</p>
+
+                  <div class="instr-points-list">
+                    <div class="instr-point-item">
+                      <div class="instr-point-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </div>
+                      <p class="instr-point-text">
+                        This should take approximately <strong>10 minutes</strong> to complete.
+                      </p>
+                    </div>
+
+                    <div class="instr-point-divider"></div>
+
+                    <div class="instr-point-item">
+                      <div class="instr-point-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                      </div>
+                      <p class="instr-point-text">
+                        The questionnaire covers up to <strong>8 key segments</strong>, each with <strong>5 statements</strong>.
+                      </p>
+                    </div>
+
+                    <div class="instr-point-divider"></div>
+
+                    <div class="instr-point-item">
+                      <div class="instr-point-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                          <circle cx="9" cy="7" r="4"></circle>
+                          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                      </div>
+                      <p class="instr-point-text">
+                        Please read each statement carefully and choose the option that best reflects your <strong>current reality</strong> rather than intention.
+                      </p>
                     </div>
                   </div>
+
+                  <!-- Example response options box -->
+                  <div class="instr-example-box">
+                    <span class="instr-example-label">Example response options</span>
+                    <div class="instr-example-options">
+                      <span class="instr-example-opt opt-yes">Yes</span>
+                      <span class="instr-example-opt opt-partially">Partially</span>
+                      <span class="instr-example-opt opt-no">No</span>
+                      <span class="instr-example-opt opt-not-sure">Not Sure</span>
+                    </div>
+                    <div class="instr-privacy-note">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                      </svg>
+                      <span>Your responses will only include details that you choose to share.</span>
+                    </div>
+                  </div>
+
+                  <!-- Decorative background botanical element -->
+                  <div class="instr-botanical-bg" aria-hidden="true">
+                    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M140 200C140 140 180 110 200 100C170 140 180 180 140 200Z" fill="#04907C" fill-opacity="0.12"/>
+                      <path d="M110 200C110 130 160 90 190 70C150 120 160 170 110 200Z" fill="#04907C" fill-opacity="0.08"/>
+                      <path d="M80 200C80 150 120 120 150 100C120 150 130 180 80 200Z" fill="#04907C" fill-opacity="0.05"/>
+                    </svg>
+                  </div>
                 </div>
+
                 <!-- Right: section descriptions -->
                 <div class="instr-right">
-                  <p class="instr-right-label">What each segment covers</p>
-                  <div class="instr-desc-list">
-                    <div v-for="(s, i) in sections" :key="s.id" class="instr-desc-row">
-                      <div class="instr-desc-num">{{ i + 1 }}</div>
-                      <div>
-                        <span class="instr-desc-title">{{ s.title }}</span>
-                        <p class="instr-desc-body">{{ s.summary }}</p>
+                  <div class="instr-right-header">
+                    <div class="instr-right-header-left">
+                      <span class="instr-right-badge">WHAT EACH SEGMENT COVERS</span>
+                      <h3 class="instr-right-title">The Segments Covered</h3>
+                    </div>
+                    <p class="instr-right-meta">
+                      The audit is organised into 8 key segments, each with 5 statements covering different aspects of neuro-inclusion in the workplace.
+                    </p>
+                  </div>
+
+                  <div class="instr-desc-grid">
+                    <div v-for="(s, i) in sections" :key="s.id" class="instr-segment-card">
+                      <div class="instr-seg-badge">{{ String(i + 1).padStart(2, '0') }}</div>
+                      <div class="instr-seg-content">
+                        <h4 class="instr-seg-title">{{ s.title }}</h4>
+                        <p class="instr-seg-summary">{{ s.summary }}</p>
+                      </div>
+                      <div class="instr-seg-arrow">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
                       </div>
                     </div>
                   </div>
@@ -648,35 +798,36 @@
               </template>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Bottom Navigation Drawer (Slides up when user reaches end) -->
+        <div :class="['why-matters-footer', 'why-drawer', { 'drawer-visible': isDrawerVisible }]">
+          <div class="drawer-handle" aria-hidden="true"></div>
+          <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
+          <div v-else></div>
+
+          <div class="step-nav-mid">
+            <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
           </div>
 
-          <!-- Bottom Navigation -->
-          <div class="why-matters-footer">
-            <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
-            <div v-else></div>
-
-            <div class="step-nav-mid">
-              <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-            </div>
-
-            <button
-              v-if="currentStep < visibleSections.length + 3"
-              class="btn-next-compact"
-              @click="nextStep"
-              type="button"
-            >
-              {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
-            </button>
-            <button
-              v-else
-              class="btn-submit"
-              @click="submit"
-              :disabled="submitting"
-              type="button"
-            >
-              {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
-            </button>
-          </div>
+          <button
+            v-if="currentStep < visibleSections.length + 3"
+            class="btn-next-compact"
+            @click="nextStep"
+            type="button"
+          >
+            {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
+          </button>
+          <button
+            v-else
+            class="btn-submit"
+            @click="submit"
+            :disabled="submitting"
+            type="button"
+          >
+            {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
+          </button>
         </div>
       </div>
 
@@ -735,6 +886,44 @@ const showMobileInfo  = ref(false);
 const questionsScroll = ref(null);
 const errors      = reactive({});
 const options     = ["Yes", "Partially", "No", "Not Sure"];
+
+// ── Universal Scroll-Activated Bottom Navigation Drawer ──
+const isDrawerVisible = ref(false);
+const whyMattersPageRef = ref(null);
+const unifiedPageRef = ref(null);
+
+function checkScrollBottom(el) {
+  if (!el) return;
+  const { scrollTop, scrollHeight, clientHeight } = el;
+  // If the page content is not tall enough to require scrolling (fits within viewport)
+  if (scrollHeight <= clientHeight + 40) {
+    isDrawerVisible.value = true;
+    return;
+  }
+  // Reveal drawer as soon as user scrolls down (> 40px) or reaches the bottom area
+  isDrawerVisible.value = (scrollTop > 40 || scrollTop + clientHeight >= scrollHeight - 200);
+}
+
+function onPageScroll(e) {
+  checkScrollBottom(e.target);
+}
+
+let scrollResizeObserver = null;
+function attachScrollObserver(el) {
+  if (scrollResizeObserver) {
+    scrollResizeObserver.disconnect();
+    scrollResizeObserver = null;
+  }
+  if (!el || typeof ResizeObserver === 'undefined') return;
+  scrollResizeObserver = new ResizeObserver(() => {
+    checkScrollBottom(el);
+  });
+  scrollResizeObserver.observe(el);
+  const content = el.querySelector('.why-matters-content, .unified-content');
+  if (content) {
+    scrollResizeObserver.observe(content);
+  }
+}
 
 // ── Cinematic Welcome Animation ──
 const welcomePillRef = ref(null);
@@ -858,10 +1047,21 @@ function goToStep(i) {
   if (i <= currentStep.value) currentStep.value = i;
 }
 
-watch(currentStep, async () => {
+watch(currentStep, async (step) => {
   showMobileInfo.value = false;
+  isDrawerVisible.value = false;
   await nextTick();
   questionsScroll.value?.scrollTo({ top: 0, behavior: "smooth" });
+
+  const el = step === 1 ? whyMattersPageRef.value : unifiedPageRef.value;
+  if (el) {
+    el.scrollTop = 0;
+    attachScrollObserver(el);
+    checkScrollBottom(el);
+    setTimeout(() => {
+      if (el) checkScrollBottom(el);
+    }, 120);
+  }
 });
 
 const form = reactive({
@@ -1026,6 +1226,13 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
     restoreLocalDraft();
+    nextTick(() => {
+      const el = currentStep.value === 1 ? whyMattersPageRef.value : unifiedPageRef.value;
+      if (el) {
+        attachScrollObserver(el);
+        checkScrollBottom(el);
+      }
+    });
   }
 });
 
@@ -1147,9 +1354,9 @@ function validateStep() {
 
 function scrollToError() {
   nextTick(() => {
-    const firstError = document.querySelector('.field-err');
+    const firstError = document.querySelector('.field-err, .error-message');
     if (firstError) {
-      const block = firstError.closest('.q-block') || firstError.closest('.demo-q-block') || firstError.closest('.field') || firstError.closest('.confidentiality-card');
+      const block = firstError.closest('.q-block') || firstError.closest('.question-block') || firstError.closest('.demo-q-block') || firstError.closest('.field') || firstError.closest('.confidentiality-card');
       if (block) {
         block.scrollIntoView({ behavior: 'smooth', block: 'center' });
         block.classList.remove('shake-animation');
@@ -1995,7 +2202,9 @@ async function submit() {
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 /* ── Compact Header with Logo, Progress, and Orchvate ── */
@@ -2049,256 +2258,584 @@ async function submit() {
   width: auto;
 }
 
-/* ── Three Section Layout ── */
+/* ── Three Horizontal Sections Layout (One after another) ── */
 .why-matters-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 3.5rem 0.5rem;
+  padding: 0.75rem 3rem 7.5rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
-  gap: 1rem;
-}
-
-/* Top Row: Section 1 (Left) & Section 3 (Right) */
-.why-top-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  width: 100%;
+  gap: 0.875rem;
 }
 
 .why-section-box {
   background: #FFFFFF;
-  border: 1px solid rgba(22, 16, 87, 0.1);
-  border-radius: 12px;
-  padding: 0.875rem 1.125rem;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 14px;
+  padding: 1.15rem 1.5rem 1.25rem;
   text-align: left;
-}
-
-.section-number-title {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: var(--c-accent, #04907C);
-  letter-spacing: 0.08em;
-  margin: 0 0 0.5rem 0;
-  font-family: var(--font-body);
-  text-transform: uppercase;
-}
-
-.section-text {
-  font-size: 0.8rem;
-  line-height: 1.55;
-  color: #374151;
-  margin: 0 0 0.625rem 0;
-  font-family: var(--font-body);
-}
-
-.section-text:last-child {
-  margin-bottom: 0;
-}
-
-/* Section 3: Benefits Horizontal */
-.section-3 {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.benefits-horizontal {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.625rem;
-}
-
-.benefit-item {
-  background: rgba(241, 245, 249, 0.5);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 8px;
-  padding: 0.625rem 0.75rem;
-}
-
-.benefit-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--c-primary-dark, #161057);
-  margin: 0 0 0.3rem 0;
-  font-family: 'Fraunces', serif;
-  line-height: 1.2;
-}
-
-.benefit-text {
-  font-size: 0.7rem;
-  line-height: 1.4;
-  color: #4B5563;
-  margin: 0;
-  font-family: var(--font-body);
-}
-
-/* Section 2: What NIWI Helps You Do (Full Width) */
-.section-2 {
   width: 100%;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, #F0FDFA 0%, #FFFFFF 100%);
-  border: 2px solid #99F6E4;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.03);
 }
 
-.process-cards-horizontal {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-top: 1rem;
-}
-
-.process-card-h {
+/* Section Card Header Matching Page 1 Typography & Vibe */
+.section-card-header {
   display: flex;
-  align-items: flex-start;
-  gap: 0.875rem;
-  background: #FFFFFF;
-  border: 1.5px solid rgba(22, 16, 87, 0.12);
-  border-radius: 10px;
-  padding: 1rem 1.125rem;
-  text-align: left;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.625rem;
 }
 
-.card-h-number {
+.section-idx-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(4, 144, 124, 0.1);
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--c-accent, #04907C);
   font-family: 'Fraunces', serif;
-  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 0.775rem;
+  color: var(--c-accent, #04907C);
+  background: rgba(4, 144, 124, 0.08);
+  border: 1px solid rgba(4, 144, 124, 0.22);
+  border-radius: 6px;
+  padding: 0.18rem 0.45rem;
+  letter-spacing: 0.03em;
+  line-height: 1;
 }
 
-.card-h-content {
+.section-card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  letter-spacing: -0.015em;
+  line-height: 1.25;
+  margin: 0;
+}
+
+/* ── Section 1: Why This Matters ── */
+.section-1 {
+  background: #FFFFFF;
+}
+
+.section-1-paragraphs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem;
+}
+
+.section-text {
+  font-size: 0.825rem;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.section-text strong {
+  color: var(--c-primary-dark, #161057);
+  font-weight: 600;
+}
+
+/* ── Section 2: What NIWI Helps You Do (Process Flow UI) ── */
+.section-2 {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 14px;
+  padding: 1.1rem 1.5rem 1.25rem;
+}
+
+.flow-header-area {
+  margin-bottom: 1.1rem;
+  text-align: left;
+}
+
+.flow-badge-wrapper {
+  margin-bottom: 0.35rem;
+}
+
+.flow-category-tag {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.22rem 0.65rem;
+  border-radius: 99px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-family: var(--font-body);
+}
+
+.flow-category-tag.tag-purple {
+  background: #EDE9FE;
+  color: #6D28D9;
+}
+
+.flow-category-tag.tag-teal {
+  background: #CCFBF1;
+  color: #0F766E;
+}
+
+.flow-category-tag.tag-amber {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.flow-main-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--c-primary-dark, #161057);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0 0 0.35rem 0;
+}
+
+.flow-subtitle {
+  font-size: 0.825rem;
+  line-height: 1.45;
+  color: #64748B;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.process-flow-container {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
+}
+
+.process-flow-card {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 16px;
+  padding: 1.25rem 1.25rem 1.2rem;
+  text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  justify-content: space-between;
+  box-shadow: 0 2px 6px rgba(22, 16, 87, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.card-h-title {
-  font-size: 0.925rem;
-  font-weight: 700;
-  color: var(--c-primary-dark, #161057);
-  font-family: 'Fraunces', serif;
-  line-height: 1.2;
-  margin: 0;
+.process-flow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(22, 16, 87, 0.07);
 }
 
-.card-h-desc {
-  font-size: 0.75rem;
-  line-height: 1.45;
-  color: #4B5563;
-  margin: 0;
-  font-family: var(--font-body);
+.card-purple {
+  background: #FAF8FF;
+  border: 1.5px solid #C4B5FD;
 }
 
-
-/* Info Badges Row */
-.info-badges-row {
-  display: flex;
-  justify-content: center;
-  gap: 1.25rem;
-  margin: 0.75rem 0 0.5rem 0;
-  flex-wrap: wrap;
+.card-teal {
+  background: #F0FDFA;
+  border: 1.5px solid #5EEAD4;
 }
 
-.info-badge-item {
+.card-amber {
+  background: #FFFDF5;
+  border: 1.5px solid #FDE68A;
+}
+
+.flow-card-top {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  background: #FFFFFF;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
-.badge-num {
-  font-size: 1.25rem;
-  font-weight: 700;
-  font-family: 'Fraunces', serif;
-}
-
-.badge-label {
-  font-size: 0.775rem;
-  font-weight: 600;
-  color: #1F2937;
-  font-family: var(--font-body);
-}
-
-.badge-time .badge-num { color: #D97706; }
-.badge-dimensions .badge-num { color: #DC2626; }
-.badge-snapshot .badge-num { color: #DC2626; }
-
-/* Perspective Note */
-.perspective-note {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1rem 1.375rem;
-  background: #EDF5FC;
-  border-radius: 10px;
-  text-align: left;
-  max-width: 750px;
-  margin: 0;
-}
-
-.note-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #FFFFFF;
+.flow-circle-badge {
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
+  background: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.badge-purple {
+  border: 1.5px solid #8B5CF6;
+  color: #7C3AED;
+}
+
+.badge-teal {
+  border: 1.5px solid #0D9488;
+  color: #0F766E;
+}
+
+.badge-amber {
+  border: 1.5px solid #D97706;
+  color: #B45309;
+}
+
+.flow-card-heading {
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--c-primary-dark, #161057);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.flow-card-body {
+  font-size: 0.775rem;
+  line-height: 1.45;
+  color: #475569;
+  margin: 0;
+  font-family: var(--font-body);
+  flex-grow: 1;
+}
+
+.flow-card-accent-bar {
+  height: 2.5px;
+  border-radius: 99px;
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
+.bar-purple {
+  background: #A78BFA;
+}
+
+.bar-teal {
+  background: #2DD4BF;
+}
+
+.bar-amber {
+  background: #FBBF24;
+}
+
+/* Arrow Connectors */
+.flow-connector {
+  display: flex;
+  align-items: center;
+  align-self: center;
+  flex: 0 0 auto;
+  width: 50px;
+  padding: 0 2px;
+}
+
+.connector-line {
+  flex: 1;
+  height: 5px;
+  background: #7FE3D4;
+  border-radius: 3px 0 0 3px;
+}
+
+.connector-arrowhead {
+  flex-shrink: 0;
+  margin-left: -3px;
+}
+
+.trailing-connector {
+  width: 42px;
+}
+
+/* ── Section 3: Why Neuro-Inclusion Matters ── */
+.section-3 {
+  background: #FFFFFF;
+}
+
+.section-desc-lead {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0.35rem 0 1.1rem 0;
+  font-family: var(--font-body);
+  text-align: left;
+}
+
+.benefits-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.875rem;
+  align-items: stretch;
+}
+
+.benefit-card {
+  border-radius: 14px;
+  padding: 1.15rem 1.15rem 1.1rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(22, 16, 87, 0.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.benefit-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(22, 16, 87, 0.06);
+}
+
+.benefit-mint {
+  background: #EBF8F4;
+  border: 1px solid #CCFBF1;
+}
+
+.benefit-amber {
+  background: #FEF9E7;
+  border: 1px solid #FEF3C7;
+}
+
+.benefit-blue {
+  background: #EEF4FF;
+  border: 1px solid #DBEAFE;
+}
+
+.benefit-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 1px 4px rgba(22, 16, 87, 0.05);
+  flex-shrink: 0;
+}
+
+.benefit-title {
+  font-family: 'Fraunces', serif;
+  font-size: 0.975rem;
+  font-weight: 800;
+  color: var(--c-primary-dark, #161057);
+  line-height: 1.25;
+  margin: 0 0 0.45rem 0;
+  letter-spacing: -0.01em;
+}
+
+.benefit-text {
+  font-size: 0.775rem;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+/* ── Info Badges Row (Pill Bar) ── */
+.info-badges-pill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #FFFDF5;
+  border: 1.5px solid #FEF3C7;
+  border-radius: 9999px;
+  padding: 0.65rem 2rem;
+  width: 100%;
+  max-width: 820px;
+  margin: 0.25rem auto 0;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.04);
+}
+
+.info-pill-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.pill-badge-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.circle-amber {
+  border: 1.5px solid #F59E0B;
+  color: #D97706;
+}
+
+.circle-red {
+  border: 1.5px solid #EF4444;
+  color: #DC2626;
+}
+
+.pill-badge-label {
+  font-family: 'Fraunces', serif;
+  font-weight: 700;
+  font-size: 0.925rem;
   color: var(--c-primary-dark, #161057);
 }
 
-.note-icon svg {
-  width: 24px;
-  height: 24px;
+/* ── Perspective Note (Pill Banner) ── */
+.perspective-note-pill {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1.5rem;
+  background: #F1F4FD;
+  border-radius: 14px;
+  text-align: left;
+  max-width: 720px;
+  margin: 0.25rem auto 0;
 }
 
-.note-content {
+.perspective-eye-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.perspective-pill-content {
   flex: 1;
 }
 
-.note-title {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: var(--c-primary-dark, #161057);
+.perspective-pill-title {
   font-family: 'Fraunces', serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--c-primary-dark, #161057);
   margin: 0 0 0.15rem 0;
+  letter-spacing: -0.01em;
 }
 
-.note-text {
-  font-size: 0.75rem;
-  line-height: 1.35;
-  color: #4B5563;
+.perspective-pill-desc {
+  font-size: 0.735rem;
+  line-height: 1.4;
+  color: #475569;
   margin: 0;
   font-family: var(--font-body);
 }
 
-/* ── Footer Navigation ── */
-.why-matters-footer {
+/* ── Responsive Styles for Step 1 ── */
+@media (max-width: 1080px) {
+  .why-matters-content {
+    padding: 0.75rem 1.75rem 0.5rem;
+    gap: 0.75rem;
+  }
+  .benefits-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.625rem;
+  }
+  .flow-connector {
+    width: 24px;
+  }
+  .flow-card-heading {
+    font-size: 0.95rem;
+  }
+  .flow-card-body {
+    font-size: 0.725rem;
+  }
+  .info-badges-pill-bar {
+    padding: 0.55rem 1.25rem;
+  }
+  .pill-badge-label {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .why-matters-content {
+    padding: 0.75rem 1.25rem 0.5rem;
+    overflow-y: auto;
+  }
+  .section-1-paragraphs {
+    grid-template-columns: 1fr;
+    gap: 0.625rem;
+  }
+  .process-flow-container {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .flow-connector {
+    display: none;
+  }
+  .process-flow-card {
+    width: 100%;
+  }
+  .info-badges-pill-bar {
+    flex-direction: column;
+    gap: 0.65rem;
+    border-radius: 14px;
+    align-items: flex-start;
+    padding: 0.75rem 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .why-matters-page {
+    height: auto;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+  .why-matters-header {
+    padding: 0.625rem 1rem;
+  }
+  .why-matters-content {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+    overflow: visible;
+  }
+  .benefits-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .perspective-note-pill {
+    padding: 0.75rem 1rem;
+    max-width: 100%;
+  }
+  .why-matters-footer.why-drawer {
+    padding: 0.75rem 1.25rem 0.85rem;
+    border-radius: 14px 14px 0 0;
+  }
+}
+
+/* ── Bottom Navigation Drawer (Slides up when user reaches end) ── */
+.why-matters-footer.why-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FFFFFF;
+  border-top: 1px solid rgba(22, 16, 87, 0.12);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -8px 28px rgba(22, 16, 87, 0.12);
+  padding: 0.95rem 3rem 1.05rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 2.5rem;
-  border-top: 1px solid rgba(22, 16, 87, 0.08);
-  flex-shrink: 0;
-  background: var(--bg, #FAFAF8);
   gap: 1rem;
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.why-matters-footer.why-drawer.drawer-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawer-handle {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  background: #CBD5E1;
+  border-radius: 99px;
 }
 
 .btn-back-compact {
@@ -2438,92 +2975,6 @@ async function submit() {
   }
 }
 
-/* ── Responsive Design for Three Sections ── */
-@media (max-width: 1080px) {
-  .why-matters-header {
-    padding: 0.75rem 2rem;
-  }
-  
-  .why-matters-content {
-    gap: 1.5rem;
-    padding: 1.25rem 2rem;
-  }
-  
-  .why-top-row {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-  
-  .process-cards-horizontal {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-  
-  .benefits-horizontal {
-    grid-template-columns: 1fr;
-    gap: 0.625rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .why-matters-header {
-    padding: 0.75rem 1rem;
-  }
-  
-  .why-niwi-text {
-    font-size: 0.65rem;
-  }
-  
-  .why-matters-content {
-    padding: 1rem;
-    gap: 1.25rem;
-  }
-  
-  .why-section-box {
-    padding: 1rem 1.125rem;
-  }
-  
-  .section-number-title {
-    font-size: 0.75rem;
-  }
-  
-  .section-text {
-    font-size: 0.8rem;
-  }
-  
-  .benefit-title {
-    font-size: 0.75rem;
-  }
-  
-  .benefit-text {
-    font-size: 0.7rem;
-  }
-  
-  .section-2 {
-    padding: 1.125rem 1.25rem;
-  }
-  
-  .card-h-title {
-    font-size: 0.85rem;
-  }
-  
-  .card-h-desc {
-    font-size: 0.7rem;
-  }
-  
-  .why-matters-footer {
-    padding: 0.875rem 1rem;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  .btn-back-compact,
-  .btn-next-compact {
-    width: 100%;
-    justify-content: center;
-    display: flex;
-  }
-}
 
 /* Step layout — progress left | form + aside right */
 .step-wrap {
@@ -2604,12 +3055,8 @@ async function submit() {
 .questions-scroll {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
+  overflow: visible;
   padding: 0.75rem 3.5rem 2rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(4, 144, 124, 0.3) rgba(4, 144, 124, 0.08);
 }
 
 /* No scrolling for demographics (step 2) - use pagination instead */
@@ -2932,7 +3379,7 @@ html {
   max-width: 100%;
   width: 100%;
   box-sizing: border-box;
-  padding-bottom: 2rem;
+  padding-bottom: 4rem;
 }
 
 /* Section Cards with numbered headers */
@@ -4091,143 +4538,337 @@ html {
 
 .instructions-screen {
   width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 0.5rem 0 2rem;
 }
+
 .instr-layout {
   display: grid;
-  grid-template-columns: minmax(320px, 480px) 1fr;
+  grid-template-columns: 370px 1fr;
   gap: 2rem;
   align-items: start;
 }
-.instr-left {
+
+/* Left Guide Card */
+.instr-left-card {
+  background: linear-gradient(180deg, #F6FAF9 0%, #EDF6F4 100%);
+  border: 1.5px solid #DFEDE9;
+  border-radius: 18px;
+  padding: 1.75rem 1.6rem;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  padding: 1.5rem;
-  background: rgba(4, 144, 124, 0.04);
-  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(4, 144, 124, 0.04);
 }
-.instr-right {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+
+.instr-accent-dash {
+  width: 28px;
+  height: 3px;
+  background: var(--c-accent, #04907C);
+  border-radius: 99px;
+  margin-bottom: 1.1rem;
 }
-.instr-right-label {
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--c-accent);
+
+.instr-card-title {
   font-family: 'Fraunces', serif;
-  margin: 0 0 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
-.instr-desc-list {
+
+.instr-card-subtitle {
+  font-size: 0.88rem;
+  color: #64748B;
+  margin: 0 0 1.5rem;
+  line-height: 1.45;
+}
+
+.instr-points-list {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  position: relative;
+  z-index: 2;
 }
-.instr-desc-row {
+
+.instr-point-item {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.9rem;
   align-items: flex-start;
-  padding: 0.65rem 0.85rem;
-  background: var(--c-white);
-  border: 1.5px solid #E2DDD4;
-  border-radius: 10px;
 }
-.instr-desc-num {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--c-white);
-  background: var(--c-accent);
-  width: 20px;
-  height: 20px;
+
+.instr-point-icon {
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
+  background: #E6F7F5;
+  border: 1.5px solid rgba(4, 144, 124, 0.25);
+  color: var(--c-accent, #04907C);
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  margin-top: 1px;
-  font-family: 'Fraunces', serif;
+  margin-top: 2px;
 }
-.instr-desc-title {
-  font-size: 0.8rem;
-  font-weight: 800;
-  color: var(--c-primary-dark);
-  display: block;
-  margin-bottom: 0.2rem;
-  font-family: 'Fraunces', serif;
-}
-.instr-desc-body {
-  font-size: 0.78rem;
-  color: #666;
-  line-height: 1.5;
+
+.instr-point-text {
+  font-size: 0.88rem;
+  color: #334155;
+  line-height: 1.55;
   margin: 0;
+  flex: 1;
 }
-.instr-body {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: #444;
-  margin: 0;
+
+.instr-point-text strong {
+  color: #0F172A;
+  font-weight: 700;
 }
-.instr-options {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  margin: 0.1rem 0;
-}
-.instr-opt {
-  padding: 0.3rem 1rem;
-  border-radius: 99px;
-  border: 1.5px solid #C8C3BA;
-  background: var(--c-white);
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #555;
-}
-.instr-note {
-  font-size: 0.8rem;
-  color: #aaa;
-  margin: 0;
-  font-style: italic;
-}
-.instr-divider {
+
+.instr-point-divider {
   height: 1px;
-  background: #E2DDD4;
-  margin: 0.4rem 0;
+  background: #E1EBE7;
+  margin: 0.9rem 0;
 }
-.instr-segments-label {
+
+/* Response options example box */
+.instr-example-box {
+  margin-top: 1.25rem;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #DCECE7;
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(4, 144, 124, 0.04);
+}
+
+.instr-example-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748B;
+  margin-bottom: 0.6rem;
+  letter-spacing: 0.01em;
+}
+
+.instr-example-options {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.instr-example-opt {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.28rem 0.75rem;
+  border-radius: 99px;
+  border: 1.5px solid;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.instr-example-opt.opt-yes {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #166534;
+}
+
+.instr-example-opt.opt-partially {
+  background: #FFFBEB;
+  border-color: #FCD34D;
+  color: #92400E;
+}
+
+.instr-example-opt.opt-no {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+  color: #991B1B;
+}
+
+.instr-example-opt.opt-not-sure {
+  background: #F5F3FF;
+  border-color: #C4B5FD;
+  color: #5B21B6;
+}
+
+.instr-privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+.instr-privacy-note svg {
+  flex-shrink: 0;
+  color: #64748B;
+}
+
+.instr-botanical-bg {
+  position: absolute;
+  right: -15px;
+  bottom: -20px;
+  width: 140px;
+  height: 140px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Right Section */
+.instr-right {
+  display: flex;
+  flex-direction: column;
+}
+
+.instr-right-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.15rem;
+  gap: 1.5rem;
+}
+
+.instr-right-header-left {
+  flex: 1;
+}
+
+.instr-right-badge {
   font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--c-accent);
+  letter-spacing: 0.09em;
+  color: var(--c-accent, #04907C);
+  display: block;
+  margin-bottom: 0.25rem;
   font-family: 'Fraunces', serif;
+}
+
+.instr-right-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  margin: 0;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+.instr-right-meta {
+  font-size: 0.78rem;
+  color: #64748B;
+  line-height: 1.45;
+  max-width: 320px;
+  text-align: right;
   margin: 0;
 }
-.instr-segments-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+
+/* 8 Segments 2-Column Grid */
+.instr-desc-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 0.95rem;
 }
-.instr-segment-row {
+
+.instr-segment-card {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.95rem;
+  background: var(--c-white, #FFFFFF);
+  border: 1.5px solid #EDE8E1;
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  position: relative;
+  cursor: default;
 }
-.instr-seg-num {
-  font-size: 0.7rem;
-  font-weight: 800;
-  color: var(--c-accent);
+
+.instr-segment-card:hover {
+  border-color: var(--c-accent, #04907C);
+  box-shadow: 0 4px 14px rgba(4, 144, 124, 0.08);
+  transform: translateY(-1px);
+}
+
+.instr-seg-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #E8F7F5;
+  color: var(--c-accent, #04907C);
   font-family: 'Fraunces', serif;
-  min-width: 1rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
 }
-.instr-seg-name {
-  font-size: 0.875rem;
-  color: var(--c-primary-dark);
-  font-weight: 500;
-  line-height: 1.35;
+
+.instr-seg-content {
+  flex: 1;
+  min-width: 0;
 }
-@media (max-width: 600px) {
-  .instr-segments-list { grid-template-columns: 1fr; }
+
+.instr-seg-title {
+  font-family: 'Fraunces', serif;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  margin: 0 0 0.2rem;
+  line-height: 1.3;
+}
+
+.instr-seg-summary {
+  font-size: 0.74rem;
+  color: #64748B;
+  margin: 0;
+  line-height: 1.42;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.instr-seg-arrow {
+  color: #94A3B8;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.instr-segment-card:hover .instr-seg-arrow {
+  color: var(--c-accent, #04907C);
+  transform: translateX(2px);
+}
+
+@media (max-width: 1140px) {
+  .instr-layout {
+    grid-template-columns: 1fr;
+    gap: 1.75rem;
+  }
+  .instr-right-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .instr-right-meta {
+    text-align: left;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .instr-desc-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* =========================================================
@@ -4241,16 +4882,18 @@ html {
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
 .unified-content {
   flex: 1;
-  padding: 0;
+  padding: 0 0 9rem;
   max-width: 100%;
   margin: 0;
   width: 100%;
-  overflow-y: auto;
+  overflow: visible;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -4275,7 +4918,7 @@ html {
 
 .questions-scroll {
   flex: 1;
-  overflow-y: auto;
+  overflow: visible !important;
   padding: 0 1.5rem 1.5rem;
   background: var(--bg, #FAFAF8);
   min-height: 0;
