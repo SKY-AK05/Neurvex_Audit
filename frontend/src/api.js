@@ -155,3 +155,43 @@ export async function updateRespondent(id, data) {
   });
   return handleResponse(res);
 }
+
+export async function filterSubmissions(payload) {
+  const res = await fetch(`${API_BASE}/submissions/filter`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function getSavedFilters() {
+  const res = await fetch(`${API_BASE}/submissions/saved-filters`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function createSavedFilter(data) {
+  const res = await fetch(`${API_BASE}/submissions/saved-filters`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteSavedFilter(filterId) {
+  const res = await fetch(`${API_BASE}/submissions/saved-filters/${filterId}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+

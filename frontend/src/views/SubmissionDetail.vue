@@ -87,7 +87,7 @@
           </div>
           <div class="info-item">
             <label>Function / Department</label>
-            <span>{{ sub.function || '—' }}</span>
+            <span>{{ sub.function || '—' }}{{ sub.function_other ? ` (${sub.function_other})` : '' }}</span>
           </div>
           <div class="info-item">
             <label>Country</label>
@@ -147,7 +147,7 @@
       <!-- Score Breakdown -->
       <div class="card">
         <h2>Score Breakdown</h2>
-        <ScoreTable :data="sub" />
+        <ScoreTable :data="sub" :dbSections="formSections" />
       </div>
 
       <!-- Dimension Breakdown & Commentary -->
@@ -231,6 +231,9 @@ const actionMsgType = ref("success");
 const isInitialLoad = ref(true);
 let autoSaveTimeout = null;
 
+// Dynamic sections from Form Builder DB (for Q&A drill-down in ScoreTable)
+const formSections = ref(null);
+
 // Edit respondent state
 const savingRespondent = ref(false);
 const editForm = ref({
@@ -263,7 +266,28 @@ function closeModal() {
 
 onMounted(async () => {
   try {
-    sub.value       = await getSubmission(route.params.id);
+    // Parallel fetch: submission data + form sections for dynamic Q&A
+    const [subData] = await Promise.all([
+      getSubmission(route.params.id),
+      fetch("/api/form/sections")
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (Array.isArray(data) && data.length > 0) {
+            // Map DB sections to the shape ScoreTable expects
+            formSections.value = data.map(sec => ({
+              key: sec.section_code,
+              label: sec.title,
+              questions: (sec.questions || []).map(q => ({
+                field: q.field_name,
+                text: q.question_text,
+              }))
+            }));
+          }
+        })
+        .catch(() => { /* graceful: ScoreTable will use fallback hardcoded sections */ })
+    ]);
+
+    sub.value       = subData;
     emailBody.value = normalizeEmailHtml(sub.value.email_body || "");
     
     // Initialize edit form
@@ -284,6 +308,7 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+
 
 watch(emailBody, (newVal) => {
   if (isInitialLoad.value || !sub.value || sub.value.status === 'sent') return;

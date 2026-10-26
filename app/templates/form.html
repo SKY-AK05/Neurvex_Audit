@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -523,7 +523,7 @@
       const json = await res.json();
       if (res.ok && json.success) {
         form.style.display = "none";
-        showMsg("success", "Your audit has been submitted. You will receive your results by email shortly.");
+        showMsg("success", "<p>Your audit has been submitted.</p><p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p><p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organisational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>");
       } else {
         throw new Error(json.error || "Submission failed");
       }
@@ -537,7 +537,7 @@
   function showMsg(type, text) {
     const el = document.getElementById("status-msg");
     el.className = type;
-    el.textContent = text;
+    el.innerHTML = text;
     el.style.display = "block";
   }
   function hideMsg() {

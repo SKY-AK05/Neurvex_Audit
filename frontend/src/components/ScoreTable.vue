@@ -55,8 +55,8 @@
                 </div>
                 <div class="qa-answer-row">
                   <span class="qa-label">Response:</span>
-                  <span class="badge" :class="getAnswerBadgeClass(data[q.field])">
-                    {{ data[q.field] || 'Not answered' }}
+                  <span class="badge" :class="getAnswerBadgeClass(getAnswerValue(q.field))">
+                    {{ getAnswerValue(q.field) || 'Not answered' }}
                   </span>
                 </div>
               </div>
@@ -97,9 +97,14 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
-defineProps({ data: Object });
+const props = defineProps({
+  data: Object,
+  // Optional: dynamic sections from DB (array of {key, label, questions:[{field, text}]})
+  // Falls back to hardcoded FALLBACK_SECTIONS if not provided
+  dbSections: { type: Array, default: null },
+});
 
 const expandedSection = ref(null);
 
@@ -123,7 +128,8 @@ function getMaturityClass(score) {
   return 'badge-yes';
 }
 
-const sections = [
+// ─── Hardcoded fallback sections (original standard NIWI questions) ─────────
+const FALLBACK_SECTIONS = [
   {
     key: "lc",
     label: "Leadership & Culture",
@@ -213,6 +219,23 @@ const sections = [
     ]
   }
 ];
+
+// Prefer dynamic DB sections if provided by parent (e.g. SubmissionDetail loads /api/form/sections)
+const sections = computed(() =>
+  props.dbSections && props.dbSections.length > 0 ? props.dbSections : FALLBACK_SECTIONS
+);
+
+/**
+ * Get a question's answer from the submission data.
+ * Checks top-level column first (q5…q44) then falls back to the
+ * `answers` JSONB object for dynamic / renamed question fields.
+ */
+function getAnswerValue(field) {
+  if (!props.data) return null;
+  if (props.data[field] != null && props.data[field] !== "") return props.data[field];
+  if (props.data.answers && props.data.answers[field] != null) return props.data.answers[field];
+  return null;
+}
 </script>
 
 <style scoped>

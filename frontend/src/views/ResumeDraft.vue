@@ -39,7 +39,8 @@ onMounted(async () => {
     // Store state in LocalStorage for AuditForm to fetch
     localStorage.setItem("nd_draft_state", JSON.stringify({
       formData: data.form_state,
-      currentStep: data.current_step
+      currentStep: data.current_step,
+      draftId: data.draft_id,          // ← required so save-and-continue updates rather than creates
     }));
     localStorage.setItem("nd_draft_id", data.draft_id);
     // Signal to AuditForm that this is a legitimate resume — not a fresh visit

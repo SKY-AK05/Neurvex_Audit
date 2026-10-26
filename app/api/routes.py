@@ -43,12 +43,16 @@ router.include_router(drafts_router)
 router.include_router(org_router)
 router.include_router(orgs_router)
 
+import math
+import uuid as uuid_pkg
+from app.services.filter_service import build_filter_query, ALLOWED_FILTER_FIELDS, ALLOWED_SORT_FIELDS
 from app.core.config import JWT_SECRET
 from app.utils.helpers import to_iso_utc
 
 logger = logging.getLogger(__name__)
 
 dashboard_cache = TTLCache(maxsize=100, ttl=60)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -265,12 +269,17 @@ async def get_submissions():
         if r.get("id"):
             r["id"] = str(r["id"])
         
-        # Extract demographic fields from answers JSONB to top-level
+        # Extract ALL demographic fields from answers JSONB to top-level
+        # so the admin table, filter builder, and analytics can consume them
         if r.get("answers"):
             answers = r["answers"]
-            demographic_fields = ["function", "country", "role"]
+            demographic_fields = [
+                "function", "function_other", "country", "state_ut",
+                "role", "gender", "gender_other",
+                "is_pwd", "is_neurodivergent", "is_marginalized"
+            ]
             for field in demographic_fields:
-                if field in answers:
+                if field in answers and field not in r:
                     r[field] = answers[field]
         
         result.append(r)
@@ -281,16 +290,293 @@ async def get_submissions():
 
 
 # ---------------------------------------------------------------------------
-# GET /api/submissions/{id}
+# POST /api/submissions/filter — ServiceNow-Style Advanced Filter Execution
 # ---------------------------------------------------------------------------
 
-@router.get("/submissions/{submission_id}")
-async def get_submission(submission_id: UUID):
+@router.post("/submissions/filter")
+async def filter_submissions(request: Request):
+    """
+    Execute server-side dynamic filtering with parameterized SQL.
+    Supports AND / OR condition groups, multi-column sorting, and server pagination.
+    """
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    filter_groups = body.get("filter_groups", [])
+    sort_by = body.get("sort_by", [])
+    page = body.get("page", 1)
+    per_page = body.get("per_page", 10)
+
+    # Optional organization isolation if user is an org member
+    organization_id = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        try:
+            token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            if token_payload.get("role") == "org_member":
+                organization_id = token_payload.get("org_id")
+        except Exception:
+            pass
+
+    try:
+        data_sql, count_sql, params, summary = build_filter_query(
+            filter_groups=filter_groups,
+            sort_by=sort_by,
+            page=page,
+            per_page=per_page,
+            organization_id=organization_id,
+        )
+    except ValueError as val_err:
+        raise HTTPException(status_code=400, detail=str(val_err))
+
     try:
         conn = get_conn()
         with conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT * FROM submissions WHERE id = %s", (str(submission_id),))
+                # Count total matching records
+                cur.execute(count_sql, params)
+                count_row = cur.fetchone()
+                total = count_row["count"] if count_row else 0
+
+                # Fetch page items
+                cur.execute(data_sql, params)
+                rows = cur.fetchall()
+        conn.close()
+    except Exception as e:
+        logger.error("Filter query failed: %s", e)
+        raise HTTPException(status_code=500, detail="Database query error")
+
+    items = []
+    for row in rows:
+        r = dict(row)
+        if r.get("submitted_at"):
+            r["submitted_at"] = to_iso_utc(r["submitted_at"])
+        if r.get("id"):
+            r["id"] = str(r["id"])
+        if r.get("overall_avg") is not None:
+            r["overall_avg"] = float(r["overall_avg"])
+        for score_key in ("lc_score", "ro_score", "we_score", "be_score", "tm_score", "ca_score", "pc_score", "sp_score"):
+            if r.get(score_key) is not None:
+                r[score_key] = float(r[score_key])
+
+        # Extract demographic fields from answers JSONB
+        if r.get("answers"):
+            answers = r["answers"]
+            demographic_fields = ["function", "country", "role", "gender", "is_neurodivergent"]
+            for field in demographic_fields:
+                if field in answers and field not in r:
+                    r[field] = answers[field]
+
+        items.append(r)
+
+    limit = max(1, min(100, int(per_page)))
+    total_pages = max(1, math.ceil(total / limit))
+
+    return {
+        "items": items,
+        "total": total,
+        "page": int(page),
+        "per_page": limit,
+        "total_pages": total_pages,
+        "summary": summary,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Saved Filters API: CRUD for reusable ServiceNow-style filters
+# ---------------------------------------------------------------------------
+
+DEFAULT_SYSTEM_SAVED_FILTERS = [
+    {
+        "id": "11111111-1111-1111-1111-111111111111",
+        "name": "All Submissions",
+        "description": "Default view showing all submissions ordered by date",
+        "filter_config": {"filter_groups": [], "sort_by": [{"field": "submitted_at", "direction": "desc"}]},
+        "created_by": "system",
+        "is_shared": True,
+    },
+    {
+        "id": "22222222-2222-2222-2222-222222222222",
+        "name": "Pending Review",
+        "description": "Submissions pending email review and delivery",
+        "filter_config": {"filter_groups": [{"logical_operator": "AND", "conditions": [{"field": "status", "operator": "is", "value": "pending"}]}], "sort_by": [{"field": "submitted_at", "direction": "desc"}]},
+        "created_by": "system",
+        "is_shared": True,
+    },
+    {
+        "id": "33333333-3333-3333-3333-333333333333",
+        "name": "Delivered Reports",
+        "description": "Submissions with delivered audit reports",
+        "filter_config": {"filter_groups": [{"logical_operator": "AND", "conditions": [{"field": "status", "operator": "is", "value": "sent"}]}], "sort_by": [{"field": "submitted_at", "direction": "desc"}]},
+        "created_by": "system",
+        "is_shared": True,
+    },
+    {
+        "id": "44444444-4444-4444-4444-444444444444",
+        "name": "High Maturity (Developing)",
+        "description": "Organisations achieving developing maturity stage (score >= 15)",
+        "filter_config": {"filter_groups": [{"logical_operator": "AND", "conditions": [{"field": "overall_avg", "operator": "greater_than_or_equal", "value": "15"}]}], "sort_by": [{"field": "overall_avg", "direction": "desc"}]},
+        "created_by": "system",
+        "is_shared": True,
+    },
+    {
+        "id": "55555555-5555-5555-5555-555555555555",
+        "name": "Foundational Priority",
+        "description": "Organisations in foundational stage needing support (score <= 6)",
+        "filter_config": {"filter_groups": [{"logical_operator": "AND", "conditions": [{"field": "overall_avg", "operator": "less_than_or_equal", "value": "6"}]}], "sort_by": [{"field": "overall_avg", "direction": "asc"}]},
+        "created_by": "system",
+        "is_shared": True,
+    },
+]
+
+@router.get("/submissions/saved-filters")
+async def list_saved_filters(request: Request):
+    """List saved filter presets and user filters."""
+    admin_email = getattr(request.state, "admin_email", "system")
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                # Check if saved_filters table exists
+                cur.execute("""
+                    SELECT EXISTS (
+                        SELECT 1 FROM information_schema.tables WHERE table_name = 'saved_filters'
+                    )
+                """)
+                table_exists = cur.fetchone()["exists"]
+                if not table_exists:
+                    conn.close()
+                    return DEFAULT_SYSTEM_SAVED_FILTERS
+
+                cur.execute("""
+                    SELECT id, name, description, filter_config, created_by, is_shared, created_at, updated_at
+                    FROM saved_filters
+                    WHERE is_shared = TRUE OR LOWER(created_by) = LOWER(%s)
+                    ORDER BY (created_by = 'system') DESC, name ASC
+                """, (admin_email,))
+                rows = cur.fetchall()
+        conn.close()
+        
+        result = []
+        for r in rows:
+            item = dict(r)
+            if item.get("id"):
+                item["id"] = str(item["id"])
+            if item.get("created_at"):
+                item["created_at"] = to_iso_utc(item["created_at"])
+            if item.get("updated_at"):
+                item["updated_at"] = to_iso_utc(item["updated_at"])
+            result.append(item)
+        return result if result else DEFAULT_SYSTEM_SAVED_FILTERS
+    except Exception as e:
+        logger.warning("Could not fetch saved filters from DB (%s); returning presets", e)
+        return DEFAULT_SYSTEM_SAVED_FILTERS
+
+
+@router.post("/submissions/saved-filters")
+async def create_saved_filter(request: Request):
+    """Save a new filter configuration."""
+    admin_email = getattr(request.state, "admin_email", "admin")
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    name = (body.get("name") or "").strip()
+    if not name:
+        raise HTTPException(status_code=400, detail="Filter name is required")
+
+    filter_config = body.get("filter_config") or {}
+    description = (body.get("description") or "").strip()
+    is_shared = bool(body.get("is_shared", True))
+
+    import json
+    filter_config_json = json.dumps(filter_config)
+
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                # Ensure table exists
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS saved_filters (
+                        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                        name          VARCHAR(255) NOT NULL,
+                        description   TEXT,
+                        filter_config JSONB NOT NULL,
+                        created_by    VARCHAR(255) NOT NULL DEFAULT 'admin',
+                        is_shared     BOOLEAN NOT NULL DEFAULT TRUE,
+                        created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                        updated_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    )
+                """)
+                cur.execute("""
+                    INSERT INTO saved_filters (name, description, filter_config, created_by, is_shared)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, name, description, filter_config, created_by, is_shared, created_at
+                """, (name, description, filter_config_json, admin_email, is_shared))
+                new_row = dict(cur.fetchone())
+        conn.close()
+
+        if new_row.get("id"):
+            new_row["id"] = str(new_row["id"])
+        if new_row.get("created_at"):
+            new_row["created_at"] = to_iso_utc(new_row["created_at"])
+        return new_row
+    except Exception as e:
+        logger.error("Failed to save filter: %s", e)
+        raise HTTPException(status_code=500, detail="Database error saving filter")
+
+
+@router.delete("/submissions/saved-filters/{filter_id}")
+async def delete_saved_filter(request: Request, filter_id: str):
+    """Delete a saved filter."""
+    admin_email = getattr(request.state, "admin_email", "admin")
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    DELETE FROM saved_filters
+                    WHERE id = %s AND (created_by = %s OR created_by != 'system')
+                """, (filter_id, admin_email))
+                deleted = cur.rowcount > 0
+        conn.close()
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Saved filter not found or cannot be deleted")
+        return {"success": True, "message": "Saved filter deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to delete saved filter: %s", e)
+        raise HTTPException(status_code=500, detail="Database error")
+
+
+# ---------------------------------------------------------------------------
+# GET /api/submissions/{id} — Safely fetch single submission with IDOR validation
+# ---------------------------------------------------------------------------
+
+@router.get("/submissions/{submission_id}")
+async def get_submission(request: Request, submission_id: str):
+    sub_id = str(submission_id).strip()
+    
+    # Safe ID format validation (accepts standard UUID or digits)
+    is_uuid = False
+    try:
+        uuid_pkg.UUID(sub_id)
+        is_uuid = True
+    except (ValueError, AttributeError):
+        if not sub_id.isdigit():
+            raise HTTPException(status_code=400, detail="Invalid submission ID format. Must be a valid UUID or integer.")
+
+    try:
+        conn = get_conn()
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT * FROM submissions WHERE id = %s", (sub_id,))
                 row = cur.fetchone()
         conn.close()
     except Exception as e:
@@ -298,7 +584,21 @@ async def get_submission(submission_id: UUID):
         raise HTTPException(status_code=500, detail="Database error")
 
     if not row:
-        raise HTTPException(status_code=404, detail="Not found")
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    # IDOR Protection: If caller is authenticated as an org_member, enforce tenant ownership
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        try:
+            token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+            if token_payload.get("role") == "org_member":
+                user_org_id = str(token_payload.get("org_id", ""))
+                sub_org_id = str(row.get("organization_id") or "")
+                if not user_org_id or user_org_id != sub_org_id:
+                    raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this submission.")
+        except jwt.PyJWTError:
+            pass  # Let admin JWKS middleware handle admin tokens
 
     r = dict(row)
     for ts_field in ("submitted_at", "sent_at", "consent_timestamp"):
@@ -320,13 +620,15 @@ async def get_submission(submission_id: UUID):
     return r
 
 
+
 # ---------------------------------------------------------------------------
 # PATCH /api/submissions/{id}/respondent - Update respondent information
 # ---------------------------------------------------------------------------
 
 @router.patch("/submissions/{submission_id}/respondent")
 @audit_log("edit_respondent_info")
-async def update_respondent(request: Request, submission_id: UUID):
+async def update_respondent(request: Request, submission_id: str):
+    sub_id = str(submission_id).strip()
     try:
         body = await request.json()
     except Exception:
@@ -343,7 +645,7 @@ async def update_respondent(request: Request, submission_id: UUID):
     set_clause = ", ".join([f"{k} = %({k})s" for k in updates.keys()])
     sql = f"UPDATE submissions SET {set_clause} WHERE id = %(submission_id)s"
     
-    params = {**updates, "submission_id": str(submission_id)}
+    params = {**updates, "submission_id": sub_id}
     
     try:
         conn = get_conn()
@@ -371,7 +673,8 @@ async def update_respondent(request: Request, submission_id: UUID):
 
 @router.put("/submissions/{submission_id}/email")
 @audit_log("edit_email_draft")
-async def update_email(request: Request, submission_id: UUID):
+async def update_email(request: Request, submission_id: str):
+    sub_id = str(submission_id).strip()
     try:
         body = await request.json()
     except Exception:
@@ -387,7 +690,7 @@ async def update_email(request: Request, submission_id: UUID):
             with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE submissions SET email_body = %s WHERE id = %s",
-                    (email_body, str(submission_id)),
+                    (email_body, sub_id),
                 )
                 if cur.rowcount == 0:
                     conn.close()
@@ -408,12 +711,13 @@ async def update_email(request: Request, submission_id: UUID):
 
 @router.post("/submissions/{submission_id}/regenerate-email")
 @audit_log("regenerate_email_draft")
-async def regenerate_email(request: Request, submission_id: UUID):
+async def regenerate_email(request: Request, submission_id: str):
+    sub_id = str(submission_id).strip()
     try:
         conn = get_conn()
         with conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT * FROM submissions WHERE id = %s", (str(submission_id),))
+                cur.execute("SELECT * FROM submissions WHERE id = %s", (sub_id,))
                 row = cur.fetchone()
         conn.close()
     except Exception as e:
@@ -441,7 +745,7 @@ async def regenerate_email(request: Request, submission_id: UUID):
             with conn.cursor() as cur:
                 cur.execute(
                     "UPDATE submissions SET email_body = %s WHERE id = %s",
-                    (new_email_body, str(submission_id)),
+                    (new_email_body, sub_id),
                 )
         conn.close()
     except Exception as e:
@@ -501,8 +805,8 @@ def process_email_dispatch(submission_id: str, payload: dict):
 
 @router.post("/submissions/{submission_id}/send")
 @audit_log("send_audit_report")
-async def send_email_route(request: Request, submission_id: UUID, background_tasks: BackgroundTasks):
-    sub_id_str = str(submission_id)
+async def send_email_route(request: Request, submission_id: str, background_tasks: BackgroundTasks):
+    sub_id_str = str(submission_id).strip()
     try:
         conn = get_conn()
         with conn:

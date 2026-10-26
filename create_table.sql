@@ -4,7 +4,7 @@
 -- Then connect to nd_audit and run:
 
 CREATE TABLE IF NOT EXISTS submissions (
-    id                SERIAL PRIMARY KEY,
+    id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     submitted_at      TIMESTAMP DEFAULT NOW(),
     name              VARCHAR(255) NOT NULL,
     company_name      VARCHAR(255) NOT NULL,

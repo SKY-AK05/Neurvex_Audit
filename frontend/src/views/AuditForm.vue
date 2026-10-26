@@ -636,7 +636,7 @@
                         </svg>
                       </div>
                       <p class="instr-point-text">
-                        This should take approximately <strong>10 minutes</strong> to complete.
+                        This should take approximately <strong>20 minutes</strong> to complete.
                       </p>
                     </div>
 
@@ -977,7 +977,7 @@ const step0Panel = {
   points: [
     "Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.",
   ],
-  tip: "This should take approximately 10 minutes to complete. The questionnaire is organised into 8 key segments, each with 5 statements. Please read each statement carefully and choose the option that best reflects your current reality (rather than intention). Your responses will only include details that you choose to share.",
+  tip: "This should take approximately 20 minutes to complete. The questionnaire is organised into 8 key segments, each with 5 statements. Please read each statement carefully and choose the option that best reflects your current reality (rather than intention). Your responses will only include details that you choose to share.",
 };
 
 const sections = ref(DEFAULT_SECTIONS);

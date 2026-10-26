@@ -102,10 +102,14 @@ async def jwks_middleware(request: Request, call_next):
         "/api/auth/config",
         "/api/health",
         "/api/support",
-    ):
+        "/api/book-call",
+    ) or request.url.path.startswith("/api/org/") or request.url.path.startswith("/api/drafts"):
         return await call_next(request)
-        
-    is_protected = any(request.url.path.startswith(p) for p in protected_paths)
+
+    # Form builder modifications (POST, PUT, DELETE) must require admin auth
+    is_form_mutation = request.url.path.startswith("/api/form") and request.method not in ("GET", "HEAD", "OPTIONS")
+    is_protected = any(request.url.path.startswith(p) for p in protected_paths) or is_form_mutation
+    
     if is_protected:
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
@@ -113,22 +117,56 @@ async def jwks_middleware(request: Request, call_next):
         
         token = auth_header.split(" ")[1]
         try:
-            # Check for local developer login bypass
-            if (TENANT_ID == "YOUR_TENANT_ID" or os.environ.get("ENABLE_DEV_BYPASS") == "true") and token.startswith("local_bypass:"):
+            # Check for local developer login bypass — ONLY when explicitly enabled in dev/test environment
+            app_env = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
+            is_dev_env = app_env in ("development", "dev", "test", "testing") or os.environ.get("TESTING") == "true"
+            enable_dev_bypass = os.environ.get("ENABLE_DEV_BYPASS", "").lower() in ("true", "1")
+
+            if is_dev_env and enable_dev_bypass and token.startswith("local_bypass:"):
                 email = token.split("local_bypass:")[1].lower()
                 from app.core.database import get_conn
                 conn = get_conn()
-                with conn.cursor() as cur:
-                    cur.execute("SELECT role FROM admin_users WHERE email = %s", (email,))
-                    row = cur.fetchone()
-                conn.close()
-                if not row:
-                    return JSONResponse(status_code=401, content={"detail": "Unauthorized developer email"})
-                request.state.admin_email = email
+                try:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT role FROM admin_users WHERE LOWER(email) = %s", (email,))
+                        row = cur.fetchone()
+                    if not row:
+                        return JSONResponse(status_code=401, content={"detail": "Unauthorized developer email"})
+                    request.state.admin_email = email
+                    request.state.admin_role = row[0] if row else "admin"
+                finally:
+                    conn.close()
             else:
+                # Microsoft Entra ID verification
                 payload = verify_jwt(token)
-                # Store the admin email in the request state for the audit logger
-                request.state.admin_email = payload.get("preferred_username") or payload.get("unique_name") or "unknown"
+                admin_email = (
+                    payload.get("preferred_username")
+                    or payload.get("unique_name")
+                    or payload.get("email")
+                    or "unknown"
+                ).lower()
+                
+                # Verify that the Entra ID user is an authorized admin in admin_users
+                from app.core.database import get_conn
+                try:
+                    conn = get_conn()
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT role FROM admin_users WHERE LOWER(email) = %s", (admin_email,))
+                        row = cur.fetchone()
+                    conn.close()
+                    if not row:
+                        # User authenticated with Entra ID but not authorized in the app
+                        return JSONResponse(
+                            status_code=403,
+                            content={"detail": "Forbidden: You are not an authorized administrator"}
+                        )
+                    request.state.admin_role = row[0]
+                except Exception as db_err:
+                    logger.warning("Could not verify admin role in DB: %s", db_err)
+                    request.state.admin_role = "admin"
+
+                request.state.admin_email = admin_email
+
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
         except Exception as e:

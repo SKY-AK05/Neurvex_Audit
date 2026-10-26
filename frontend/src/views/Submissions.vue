@@ -1,30 +1,45 @@
-]jnb<template>
+<template>
   <div>
     <div class="page-header">
       <div>
         <h1>Submission History</h1>
-        <p>Review and manage all finalized inclusion audit reports sent to organizations.</p>
+        <p>Review, filter, and manage all inclusion audit reports across organizations.</p>
       </div>
     </div>
 
+    <!-- ServiceNow-Style Dynamic Filter Builder Section -->
+    <ServiceNowFilterBuilder
+      ref="filterBuilderRef"
+      :total-count="totalRecords"
+      :readable-summary="filterSummary"
+      @run-filter="handleRunFilter"
+    />
+
     <div class="card">
-      <!-- Filters -->
-      <div class="filters">
-        <div class="search-box">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input v-model="search" type="text" placeholder="Search organization..." />
+      <!-- Quick Action Toolbar -->
+      <div class="table-toolbar">
+        <div class="toolbar-left">
+          <span class="active-summary-label">Showing results for:</span>
+          <span class="active-summary-text">{{ filterSummary }}</span>
         </div>
-        <input v-model="dateFrom" type="date" class="date-input" />
-        <span class="date-sep">to</span>
-        <input v-model="dateTo" type="date" class="date-input" />
-        <button class="btn btn-outline">⇅ More Filters</button>
-        <button class="btn-download" :disabled="!filtered.length" @click="downloadAll" title="Download filtered results">
-          ⬇ Download CSV <span class="dl-count">({{ filtered.length }})</span>
-        </button>
+        <div class="toolbar-right">
+          <button
+            class="btn-download"
+            :disabled="!submissions.length"
+            @click="downloadCurrentPage"
+            title="Download CSV"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download CSV <span class="dl-count">({{ totalRecords }})</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Table -->
-      <p v-if="loading" class="loading">Loading…</p>
+      <!-- Table Section -->
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>Loading submissions...</p>
+      </div>
       <p v-else-if="error" class="alert alert-error">{{ error }}</p>
       <template v-else>
         <div class="table-container">
@@ -34,6 +49,7 @@
                 <th>Organization Name</th>
                 <th>Recipient Email</th>
                 <th>Job Role</th>
+                <th>Overall Score</th>
                 <th>Sent Date &amp; Time</th>
                 <th>Status</th>
                 <th>Maturity Level</th>
@@ -41,28 +57,37 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!paginated.length">
-                <td colspan="7" class="empty">No submissions found.</td>
+              <tr v-if="!submissions.length">
+                <td colspan="8" class="empty">
+                  No submissions found matching the active filter criteria.
+                </td>
               </tr>
-              <tr v-for="s in paginated" :key="s.id" @click="$router.push(`/admin/submissions/${s.id}`)">
+              <tr
+                v-for="s in submissions"
+                :key="s.id"
+                @click="$router.push(`/admin/submissions/${s.id}`)"
+              >
                 <td class="org-name">{{ s.company_name }}</td>
                 <td class="email-cell">{{ s.email }}</td>
                 <td class="designation-cell">{{ s.designation || '—' }}</td>
+                <td class="score-cell">
+                  <strong>{{ s.overall_avg !== undefined && s.overall_avg !== null ? s.overall_avg : '—' }}</strong><span class="score-max">/20</span>
+                </td>
                 <td>{{ fmtDate(s.submitted_at) }}</td>
                 <td>
                   <span :class="`badge badge-${s.status === 'sent' ? 'delivered' : 'pending'}`">
                     <span class="badge-dot"></span>
-                    {{ s.status === 'sent' ? 'Delivered' : 'Pending' }}
+                    {{ s.status === 'sent' ? 'Delivered' : (s.status === 'sending' ? 'Sending' : 'Pending') }}
                   </span>
                 </td>
-                <td>{{ s.overall_level }}</td>
+                <td>{{ s.overall_level || '—' }}</td>
                 <td @click.stop>
                   <div class="action-group">
-                    <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)" title="View">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    <button class="action-btn" @click="$router.push(`/admin/submissions/${s.id}`)" title="View Details">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
                     <button class="action-btn dl-btn" @click="downloadOne(s)" title="Download CSV">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     </button>
                   </div>
                 </td>
@@ -71,17 +96,22 @@
           </table>
         </div>
 
-        <!-- Pagination -->
+        <!-- Server-Side Pagination -->
         <div class="pagination">
-          <span class="page-info">Showing {{ pageStart }} to {{ pageEnd }} of {{ filtered.length }} entries</span>
+          <span class="page-info">
+            Showing {{ pageStart }} to {{ pageEnd }} of {{ totalRecords }} entries
+          </span>
           <div class="page-btns">
-            <button class="page-btn" :disabled="page === 1" @click="page--">‹</button>
+            <button class="page-btn" :disabled="currentPage <= 1" @click="changePage(currentPage - 1)">‹</button>
             <button
-              v-for="p in totalPages" :key="p"
-              :class="['page-btn', { active: p === page }]"
-              @click="page = p"
-            >{{ p }}</button>
-            <button class="page-btn" :disabled="page === totalPages" @click="page++">›</button>
+              v-for="p in visiblePages"
+              :key="p"
+              :class="['page-btn', { active: p === currentPage }]"
+              @click="changePage(p)"
+            >
+              {{ p }}
+            </button>
+            <button class="page-btn" :disabled="currentPage >= totalPages" @click="changePage(currentPage + 1)">›</button>
           </div>
         </div>
       </template>
@@ -91,42 +121,85 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { getSubmissions, getSubmission } from "../api";
-import { formatDateTime as fmtDate, toISTDateString } from "../utils/datetime";
+import { filterSubmissions, getSubmission } from "../api";
+import { formatDateTime as fmtDate } from "../utils/datetime";
 import { downloadSingleSubmission, downloadFilteredSubmissions } from "../utils/csvExport";
+import ServiceNowFilterBuilder from "../components/ServiceNowFilterBuilder.vue";
 
-const submissions = ref([]);
-const loading     = ref(true);
-const error       = ref("");
-const search      = ref("");
-const dateFrom    = ref("");
-const dateTo      = ref("");
-const page        = ref(1);
-const perPage     = 10;
+const filterBuilderRef = ref(null);
+const submissions    = ref([]);
+const totalRecords   = ref(0);
+const totalPages     = ref(1);
+const currentPage    = ref(1);
+const perPage        = ref(10);
+const loading        = ref(true);
+const error          = ref("");
+const filterSummary  = ref("All");
+
+// Stored filter payload for pagination
+const currentFilterPayload = ref({
+  filter_groups: [],
+  sort_by: [{ field: "submitted_at", direction: "desc" }],
+});
 
 onMounted(async () => {
-  try { submissions.value = await getSubmissions(); }
-  catch (e) { error.value = e.message; }
-  finally { loading.value = false; }
+  await fetchFilteredSubmissions(1);
 });
 
-const filtered = computed(() => {
-  return submissions.value.filter(s => {
-    const matchSearch = !search.value ||
-      s.company_name?.toLowerCase().includes(search.value.toLowerCase()) ||
-      s.email?.toLowerCase().includes(search.value.toLowerCase()) ||
-      s.designation?.toLowerCase().includes(search.value.toLowerCase());
-    const subDay = toISTDateString(s.submitted_at);
-    const matchFrom = !dateFrom.value || subDay >= dateFrom.value;
-    const matchTo   = !dateTo.value   || subDay <= dateTo.value;
-    return matchSearch && matchFrom && matchTo;
-  });
+async function handleRunFilter(payload) {
+  currentFilterPayload.value = payload;
+  await fetchFilteredSubmissions(1);
+}
+
+async function fetchFilteredSubmissions(page = 1) {
+  loading.value = true;
+  error.value = "";
+  try {
+    const payload = {
+      ...currentFilterPayload.value,
+      page: page,
+      per_page: perPage.value,
+    };
+    const response = await filterSubmissions(payload);
+    submissions.value = response.items || [];
+    totalRecords.value = response.total || 0;
+    totalPages.value = response.total_pages || 1;
+    currentPage.value = response.page || 1;
+    filterSummary.value = response.summary || "All";
+  } catch (err) {
+    error.value = err.message || "Failed to load submissions";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function changePage(p) {
+  if (p < 1 || p > totalPages.value || p === currentPage.value) return;
+  await fetchFilteredSubmissions(p);
+}
+
+const pageStart = computed(() => {
+  if (!totalRecords.value) return 0;
+  return (currentPage.value - 1) * perPage.value + 1;
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / perPage)));
-const pageStart  = computed(() => filtered.value.length ? (page.value - 1) * perPage + 1 : 0);
-const pageEnd    = computed(() => Math.min(page.value * perPage, filtered.value.length));
-const paginated  = computed(() => filtered.value.slice((page.value - 1) * perPage, page.value * perPage));
+const pageEnd = computed(() => {
+  return Math.min(currentPage.value * perPage.value, totalRecords.value);
+});
+
+const visiblePages = computed(() => {
+  const pages = [];
+  const maxButtons = 5;
+  let start = Math.max(1, currentPage.value - Math.floor(maxButtons / 2));
+  let end = Math.min(totalPages.value, start + maxButtons - 1);
+  if (end - start + 1 < maxButtons) {
+    start = Math.max(1, end - maxButtons + 1);
+  }
+  for (let i = start; i <= end; i++) {
+    pages.push(i);
+  }
+  return pages;
+});
 
 async function downloadOne(s) {
   try {
@@ -137,11 +210,14 @@ async function downloadOne(s) {
   }
 }
 
-async function downloadAll() {
+async function downloadCurrentPage() {
+  if (!submissions.value.length) return;
   loading.value = true;
   try {
-    const full = await Promise.all(filtered.value.map(s => getSubmission(s.id)));
-    downloadFilteredSubmissions(full, dateFrom.value, dateTo.value);
+    const fullRecords = await Promise.all(
+      submissions.value.map(s => getSubmission(s.id))
+    );
+    downloadFilteredSubmissions(fullRecords);
   } catch (e) {
     alert("Export failed: " + e.message);
   } finally {
@@ -151,72 +227,194 @@ async function downloadAll() {
 </script>
 
 <style scoped>
-.page-header { margin-bottom: 1.5rem; }
-.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
-.page-header p  { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
+.page-header { margin-bottom: 1.25rem; }
+.page-header h1 { font-size: 2rem; font-weight: 800; color: var(--c-primary-dark, #161057); letter-spacing: -0.03em; font-family: 'Fraunces', serif; }
+.page-header p  { color: #64748B; font-size: 0.875rem; margin-top: 0.3rem; }
 
-.filters { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
-.search-box {
-  display: flex; align-items: center; gap: 0.5rem;
-  border: 2px solid var(--c-primary-dark); border-radius: 8px;
-  padding: 0.6rem 1rem; background: var(--c-white); flex: 1; min-width: 200px;
-  box-shadow: 2px 2px 0 rgba(0,0,0,0.1); transition: all 0.15s;
+.card {
+  background: var(--c-white, #FFFFFF);
+  border: 1px solid var(--c-border, rgba(22, 16, 87, 0.12));
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-.search-box:focus-within { box-shadow: 4px 4px 0 var(--c-accent); transform: translate(-2px, -2px); }
-.search-box input { border: none; outline: none; font-size: 0.95rem; width: 100%; background: transparent; color: var(--c-primary-dark); font-family: 'Inter', sans-serif; }
-.date-input { border: 2px solid var(--c-primary-dark); border-radius: 8px; padding: 0.6rem 1rem; font-size: 0.95rem; color: var(--c-primary-dark); background: var(--c-white); font-family: 'Inter', sans-serif; box-shadow: 2px 2px 0 rgba(0,0,0,0.1); transition: all 0.15s; }
-.date-input:focus { outline: none; box-shadow: 4px 4px 0 var(--c-accent); transform: translate(-2px, -2px); }
-.date-sep { color: #bbb; font-size: 0.85rem; font-weight: 600; }
+
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--c-border, rgba(22, 16, 87, 0.1));
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.active-summary-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.active-summary-text {
+  color: #1E293B;
+  font-weight: 600;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: var(--c-accent, #04907C);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.48rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-download:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.btn-download:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+.dl-count { font-weight: 500; opacity: 0.85; }
 
 .table-container { width: 100%; overflow-x: auto; }
-.sub-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.sub-table { width: 100%; border-collapse: collapse; min-width: 950px; }
 .sub-table th {
   text-align: left; padding: 0.75rem 1rem;
-  font-size: 0.72rem; font-weight: 800; color: #aaa;
-  border-bottom: 2px solid var(--c-primary-dark); text-transform: uppercase; letter-spacing: 0.07em;
+  font-size: 0.72rem; font-weight: 800; color: #64748B;
+  border-bottom: 2px solid var(--c-primary-dark, #161057);
+  text-transform: uppercase; letter-spacing: 0.07em;
 }
-.sub-table td { padding: 1rem; font-size: 0.875rem; border-bottom: 1px solid var(--c-bg); vertical-align: middle; color: #333; }
+.sub-table td { padding: 0.9rem 1rem; font-size: 0.875rem; border-bottom: 1px solid #F1F5F9; vertical-align: middle; color: #1E293B; }
 .sub-table tbody tr { cursor: pointer; transition: background 0.1s; }
-.sub-table tbody tr:hover { background: #FDFAF0; }
-.org-name { font-weight: 700; color: var(--c-primary-dark); }
-.email-cell { color: #888; }
-.designation-cell { color: #555; font-style: italic; }
-.empty { text-align: center; color: #ccc; padding: 3rem; font-family: 'Fraunces', serif; font-weight: 700; }
+.sub-table tbody tr:hover { background: #F8FAFC; }
+
+.org-name { font-weight: 700; color: var(--c-primary-dark, #161057); }
+.email-cell { color: #64748B; }
+.designation-cell { color: #475569; font-style: italic; }
+.score-cell { font-family: monospace; font-size: 0.95rem; }
+.score-max { color: #94A3B8; font-size: 0.78rem; }
+.empty { text-align: center; color: #94A3B8; padding: 3rem; font-family: inherit; font-size: 0.92rem; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.badge-delivered {
+  background: #DCFCE7;
+  color: #166534;
+}
+.badge-delivered .badge-dot {
+  background: #16A34A;
+}
+.badge-pending {
+  background: #FEF3C7;
+  color: #92400E;
+}
+.badge-pending .badge-dot {
+  background: #D97706;
+}
 
 .action-group { display: flex; gap: 0.4rem; align-items: center; }
 .action-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 2px solid var(--c-primary-dark); background: var(--c-bg);
-  display: grid; place-items: center; cursor: pointer; color: var(--c-primary-dark);
+  width: 32px; height: 32px; border-radius: 6px;
+  border: 1px solid #CBD5E0; background: #FFFFFF;
+  display: grid; place-items: center; cursor: pointer; color: #475569;
   transition: all 0.15s;
 }
-.action-btn:hover { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
-.dl-btn { border-color: var(--c-accent); color: var(--c-accent); }
-.dl-btn:hover { background: var(--c-accent); color: #fff; }
+.action-btn:hover { background: #F1F5F9; color: var(--c-primary-dark, #161057); border-color: #94A3B8; }
+.dl-btn { color: var(--c-accent, #04907C); }
+.dl-btn:hover { background: #E6F4F1; border-color: var(--c-accent, #04907C); }
 
-.btn-download {
-  display: flex; align-items: center; gap: 0.4rem;
-  background: var(--c-accent); color: #fff;
-  border: 2px solid var(--c-accent); border-radius: 8px;
-  padding: 0.55rem 1rem; font-size: 0.875rem; font-weight: 700;
-  cursor: pointer; transition: all 0.15s; white-space: nowrap;
-  box-shadow: 3px 3px 0 rgba(4,144,124,0.3);
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #64748B;
+  font-size: 0.9rem;
 }
-.btn-download:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 rgba(4,144,124,0.3); }
-.btn-download:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
-.dl-count { font-weight: 400; opacity: 0.85; font-size: 0.82rem; }
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid #E2E8F0;
+  border-top-color: var(--c-accent, #04907C);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 0.75rem;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
-.pagination { display: flex; align-items: center; justify-content: space-between; padding-top: 1rem; margin-top: 0.5rem; border-top: 2px solid var(--c-primary-dark); }
-.page-info { font-size: 0.82rem; color: #bbb; font-weight: 600; }
-.page-btns { display: flex; gap: 0.4rem; }
+.alert-error {
+  background: #FEE2E2;
+  color: #991B1B;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid #E2E8F0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.page-info { font-size: 0.82rem; color: #64748B; font-weight: 500; }
+.page-btns { display: flex; gap: 0.3rem; }
 .page-btn {
-  width: 34px; height: 34px; border-radius: 50%;
-  border: 2px solid var(--c-primary-dark); background: var(--c-white);
-  font-size: 0.85rem; cursor: pointer; color: var(--c-primary-dark); font-weight: 700;
+  min-width: 32px; height: 32px; padding: 0 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #CBD5E0; background: #FFFFFF;
+  font-size: 0.82rem; cursor: pointer; color: #334155; font-weight: 600;
   display: grid; place-items: center; transition: all 0.15s;
-  font-family: 'Fraunces', serif;
+  font-family: inherit;
 }
-.page-btn:hover:not(:disabled) { background: var(--c-bg); }
-.page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-.page-btn.active { background: var(--c-primary-dark); color: var(--c-accent); }
+.page-btn:hover:not(:disabled) { background: #F1F5F9; }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.page-btn.active {
+  background: var(--c-primary-dark, #161057);
+  color: #FFFFFF;
+  border-color: var(--c-primary-dark, #161057);
+}
 </style>

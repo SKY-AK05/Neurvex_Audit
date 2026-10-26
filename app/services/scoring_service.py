@@ -118,21 +118,48 @@ def score_section(data: dict, section_key: str, questions: list) -> tuple[float,
     return round((raw_score / max_applicable) * max_total, 2), not_sure_count, n_applicable
 
 
-def calculate_scores(data: dict, conn) -> dict:
-    # Create cursor for settings
-    with conn.cursor() as settings_cur:
-        settings = get_settings(settings_cur)
-    threshold = settings.get("low_visibility_threshold", 50)
+DEFAULT_STANDARD_SECTIONS = [
+    {"section": {"section_code": "lc", "title": "Leadership & Culture", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(5, 10)]},
+    {"section": {"section_code": "ro", "title": "Recruitment & Onboarding", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(10, 15)]},
+    {"section": {"section_code": "we", "title": "Work Environment", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(15, 20)]},
+    {"section": {"section_code": "be", "title": "Built Environment", "gating_field": "has_physical_workspace"},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(20, 25)]},
+    {"section": {"section_code": "tm", "title": "Talent Management", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(25, 30)]},
+    {"section": {"section_code": "ca", "title": "Communication & Accessibility", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(30, 35)]},
+    {"section": {"section_code": "pc", "title": "Products & Customer Service", "gating_field": None},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(35, 40)]},
+    {"section": {"section_code": "sp", "title": "Supply Chain & Procurement", "gating_field": "has_suppliers"},
+     "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(40, 45)]},
+]
 
-    # Fetch dynamic sections and questions
+def calculate_scores(data: dict, conn=None) -> dict:
+    threshold = 50
     sections = []
-    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        cur.execute("SELECT * FROM form_sections ORDER BY order_index ASC")
-        sec_rows = cur.fetchall()
-        for sec in sec_rows:
-            cur.execute("SELECT * FROM form_questions WHERE section_id = %s ORDER BY order_index ASC", (sec["id"],))
-            q_rows = cur.fetchall()
-            sections.append({"section": dict(sec), "questions": [dict(q) for q in q_rows]})
+
+    if conn is not None:
+        try:
+            with conn.cursor() as settings_cur:
+                settings = get_settings(settings_cur)
+            threshold = settings.get("low_visibility_threshold", 50)
+
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT * FROM form_sections ORDER BY order_index ASC")
+                sec_rows = cur.fetchall()
+                for sec in sec_rows:
+                    cur.execute("SELECT * FROM form_questions WHERE section_id = %s ORDER BY order_index ASC", (sec["id"],))
+                    q_rows = cur.fetchall()
+                    sections.append({"section": dict(sec), "questions": [dict(q) for q in q_rows]})
+        except Exception:
+            sections = []
+
+    if not sections:
+        sections = DEFAULT_STANDARD_SECTIONS
+
 
     result = {}
     section_scores = []
