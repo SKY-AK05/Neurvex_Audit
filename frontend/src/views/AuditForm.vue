@@ -205,6 +205,22 @@
                 <div class="flow-card-accent-bar bar-amber"></div>
               </div>
             </div>
+
+            <!-- Info Badges Row (Pill Bar) -->
+            <div class="info-badges-pill-bar">
+              <div class="info-pill-item">
+                <span class="pill-badge-circle circle-amber">20</span>
+                <span class="pill-badge-label">About 20 minutes</span>
+              </div>
+              <div class="info-pill-item">
+                <span class="pill-badge-circle circle-amber">08</span>
+                <span class="pill-badge-label">8 dimensions</span>
+              </div>
+              <div class="info-pill-item">
+                <span class="pill-badge-circle circle-red">01</span>
+                <span class="pill-badge-label">One organisational snapshot</span>
+              </div>
+            </div>
           </div>
 
           <!-- Section 3: Why Neuro-Inclusion Matters (Full Width) -->
@@ -271,21 +287,7 @@
             </div>
           </div>
 
-          <!-- Info Badges Row (Pill Bar) -->
-          <div class="info-badges-pill-bar">
-            <div class="info-pill-item">
-              <span class="pill-badge-circle circle-amber">20</span>
-              <span class="pill-badge-label">About 20 minutes</span>
-            </div>
-            <div class="info-pill-item">
-              <span class="pill-badge-circle circle-amber">08</span>
-              <span class="pill-badge-label">8 dimensions</span>
-            </div>
-            <div class="info-pill-item">
-              <span class="pill-badge-circle circle-red">01</span>
-              <span class="pill-badge-label">One organisational snapshot</span>
-            </div>
-          </div>
+
 
           <!-- Perspective Note (Rounded Pill Banner) -->
           <div class="perspective-note-pill">
