@@ -4544,13 +4544,13 @@ html {
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  padding: 0.5rem 0 2rem;
+  padding: 1.5rem 0 1.25rem;
 }
 
 .instr-layout {
   display: grid;
-  grid-template-columns: 370px 1fr;
-  gap: 2rem;
+  grid-template-columns: 380px 1fr;
+  gap: 2.25rem;
   align-items: start;
 }
 
@@ -4559,7 +4559,7 @@ html {
   background: linear-gradient(180deg, #F6FAF9 0%, #EDF6F4 100%);
   border: 1.5px solid #DFEDE9;
   border-radius: 18px;
-  padding: 1.75rem 1.6rem;
+  padding: 2.1rem 1.85rem;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -4570,18 +4570,18 @@ html {
 
 .instr-card-title {
   font-family: 'Fraunces', serif;
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 700;
   color: var(--c-primary-dark, #161057);
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.45rem;
   letter-spacing: -0.015em;
   line-height: 1.2;
 }
 
 .instr-card-subtitle {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: #64748B;
-  margin: 0 0 1.5rem;
+  margin: 0 0 1.75rem;
   line-height: 1.45;
 }
 
@@ -4594,13 +4594,13 @@ html {
 
 .instr-point-item {
   display: flex;
-  gap: 0.9rem;
+  gap: 1rem;
   align-items: flex-start;
 }
 
 .instr-point-icon {
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: #E6F7F5;
   border: 1.5px solid rgba(4, 144, 124, 0.25);
@@ -4612,7 +4612,7 @@ html {
 }
 
 .instr-point-text {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: #334155;
   line-height: 1.55;
   margin: 0;
@@ -4627,16 +4627,16 @@ html {
 .instr-point-divider {
   height: 1px;
   background: #E1EBE7;
-  margin: 0.9rem 0;
+  margin: 1.15rem 0;
 }
 
 /* Response options example box */
 .instr-example-box {
-  margin-top: 1.25rem;
+  margin-top: 1.6rem;
   background: rgba(255, 255, 255, 0.92);
   border: 1px solid #DCECE7;
   border-radius: 12px;
-  padding: 0.95rem 1rem;
+  padding: 1.15rem 1.15rem;
   position: relative;
   z-index: 2;
   backdrop-filter: blur(8px);
@@ -4645,24 +4645,24 @@ html {
 
 .instr-example-label {
   display: block;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: #64748B;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
   letter-spacing: 0.01em;
 }
 
 .instr-example-options {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.9rem;
 }
 
 .instr-example-opt {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  padding: 0.28rem 0.75rem;
+  padding: 0.32rem 0.85rem;
   border-radius: 99px;
   border: 1.5px solid;
   display: inline-flex;
@@ -4697,10 +4697,10 @@ html {
 .instr-privacy-note {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  font-size: 0.72rem;
+  gap: 0.5rem;
+  font-size: 0.75rem;
   color: #64748B;
-  line-height: 1.35;
+  line-height: 1.4;
 }
 
 .instr-privacy-note svg {
@@ -4728,7 +4728,7 @@ html {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 1.15rem;
+  margin-bottom: 1.35rem;
   gap: 1.5rem;
 }
 
@@ -4737,19 +4737,19 @@ html {
 }
 
 .instr-right-badge {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.09em;
   color: var(--c-accent, #04907C);
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.3rem;
   font-family: 'Fraunces', serif;
 }
 
 .instr-right-title {
   font-family: 'Fraunces', serif;
-  font-size: 1.65rem;
+  font-size: 1.85rem;
   font-weight: 700;
   color: var(--c-primary-dark, #161057);
   margin: 0;
@@ -4758,10 +4758,10 @@ html {
 }
 
 .instr-right-meta {
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: #64748B;
-  line-height: 1.45;
-  max-width: 320px;
+  line-height: 1.5;
+  max-width: 340px;
   text-align: right;
   margin: 0;
 }
@@ -4770,18 +4770,18 @@ html {
 .instr-desc-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem 0.95rem;
+  gap: 1rem 1.15rem;
 }
 
 .instr-segment-card {
   display: flex;
   align-items: center;
-  gap: 0.95rem;
+  gap: 1rem;
   background: var(--c-white, #FFFFFF);
   border: 1.5px solid #EDE8E1;
-  border-radius: 12px;
-  padding: 0.85rem 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+  padding: 1.15rem 1.2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
   position: relative;
   cursor: default;
@@ -4794,8 +4794,8 @@ html {
 }
 
 .instr-seg-badge {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: #E8F7F5;
   color: var(--c-accent, #04907C);
@@ -4814,18 +4814,18 @@ html {
 
 .instr-seg-title {
   font-family: 'Fraunces', serif;
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--c-primary-dark, #161057);
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.25rem;
   line-height: 1.3;
 }
 
 .instr-seg-summary {
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   color: #64748B;
   margin: 0;
-  line-height: 1.42;
+  line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
