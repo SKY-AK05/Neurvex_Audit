@@ -303,13 +303,13 @@
               <p class="perspective-pill-desc">Views from across the organisation can help create a more complete understanding of current reality.</p>
             </div>
           </div>
-        </div>
 
-        <!-- Bottom Navigation Drawer (Slides up when user reaches end) -->
-        <div :class="['why-matters-footer', 'why-drawer', { 'drawer-visible': isDrawerVisible }]">
-          <div class="drawer-handle" aria-hidden="true"></div>
-          <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
-          <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
+          <!-- Inline Navigation Buttons (end of page content) -->
+          <div class="inline-nav-bar">
+            <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
+            <div></div>
+            <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
+          </div>
         </div>
       </div>
 
@@ -342,7 +342,7 @@
                 <div v-else class="step-tag">Section {{ currentStep - 3 }} of {{ visibleSections.length }}</div>
               </div>
               <div class="step-head-row">
-                <h1 :class="currentStep === 2 ? 'h1-navy' : 'h1-green'" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentSection?.title || '') }}</h1>
+                <h1 class="h1-navy" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentSection?.title || '') }}</h1>
                 <p v-if="currentStep > 3" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
               </div>
               <p v-if="currentStep === 2" class="step-sub">
@@ -624,7 +624,6 @@
               <div class="instr-layout">
                 <!-- Left: Guide card -->
                 <div class="instr-left-card">
-                  <div class="instr-accent-dash"></div>
                   <h2 class="instr-card-title">Before you begin</h2>
                   <p class="instr-card-subtitle">Here's what to expect before you begin the audit.</p>
 
@@ -799,40 +798,39 @@
                   <span v-if="errors[q.field]" class="field-err">Please select an answer</span>
                 </div>
               </template>
+            </div><!-- end questions-list -->
+
+            <!-- Inline Navigation Buttons (at end of question content) -->
+            <div class="inline-nav-bar">
+              <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
+              <div v-else></div>
+
+              <div class="step-nav-mid">
+                <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
+              </div>
+
+              <button
+                v-if="currentStep < visibleSections.length + 3"
+                class="btn-next-compact"
+                @click="nextStep"
+                type="button"
+              >
+                {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
+              </button>
+              <button
+                v-else
+                class="btn-submit"
+                @click="submit"
+                :disabled="submitting"
+                type="button"
+              >
+                {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
+              </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Navigation Drawer (Slides up when user reaches end) -->
-        <div :class="['why-matters-footer', 'why-drawer', { 'drawer-visible': isDrawerVisible }]">
-          <div class="drawer-handle" aria-hidden="true"></div>
-          <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
-          <div v-else></div>
-
-          <div class="step-nav-mid">
-            <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-          </div>
-
-          <button
-            v-if="currentStep < visibleSections.length + 3"
-            class="btn-next-compact"
-            @click="nextStep"
-            type="button"
-          >
-            {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
-          </button>
-          <button
-            v-else
-            class="btn-submit"
-            @click="submit"
-            :disabled="submitting"
-            type="button"
-          >
-            {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
-          </button>
-        </div>
-      </div>
+            </div><!-- end questions-scroll -->
+          </div><!-- end unified-card -->
+        </div><!-- end unified-content -->
+      </div><!-- end unified-page -->
 
       </transition>
     </div>
@@ -1893,6 +1891,7 @@ async function submit() {
   padding: 1.5rem 2rem;
   text-align: center;
   box-shadow: 0 2px 8px rgba(22, 16, 87, 0.04);
+  margin-top: 1.5rem;
 }
 
 .perspectives-label {
@@ -2266,7 +2265,7 @@ async function submit() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 3rem 7.5rem;
+  padding: 0.75rem 3rem 2rem;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
@@ -2796,49 +2795,17 @@ async function submit() {
     padding: 0.75rem 1rem;
     max-width: 100%;
   }
-  .why-matters-footer.why-drawer {
-    padding: 0.75rem 1.25rem 0.85rem;
-    border-radius: 14px 14px 0 0;
-  }
 }
 
-/* ── Bottom Navigation Drawer (Slides up when user reaches end) ── */
-.why-matters-footer.why-drawer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background: #FFFFFF;
-  border-top: 1px solid rgba(22, 16, 87, 0.12);
-  border-radius: 18px 18px 0 0;
-  box-shadow: 0 -8px 28px rgba(22, 16, 87, 0.12);
-  padding: 0.95rem 3rem 1.05rem;
+/* ── Inline Navigation Bar (at end of question content) ── */
+.inline-nav-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  transform: translateY(100%);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
-}
-
-.why-matters-footer.why-drawer.drawer-visible {
-  transform: translateY(0);
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.drawer-handle {
-  position: absolute;
-  top: 7px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 4px;
-  background: #CBD5E1;
-  border-radius: 99px;
+  padding: 1.75rem 0 1.5rem;
+  margin-top: 2rem;
+  border-top: 1px solid rgba(22, 16, 87, 0.10);
 }
 
 .btn-back-compact {
@@ -3364,9 +3331,9 @@ html {
   border-radius: 99px; transition: width 0.3s ease;
 }
 
-.step-tag { display: inline-flex; align-items: center; background: transparent; color: var(--c-accent); font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; border: 1.5px solid var(--c-accent); font-family: var(--font-body); }
+.step-tag { display: inline-flex; align-items: center; background: transparent; color: var(--c-primary-dark); font-size: 0.68rem; font-weight: 800; padding: 0.25rem 0.75rem; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem; border: 1.5px solid rgba(22, 16, 87, 0.3); font-family: var(--font-body); }
 .step-head-row { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-.h1-green { font-size: 1.5rem; font-weight: 800; color: var(--c-accent); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; }
+.h1-green { font-size: 1.5rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; }
 .h1-navy { font-size: 1.65rem; font-weight: 800; color: var(--c-primary-dark); letter-spacing: -0.025em; line-height: 1.2; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; cursor: pointer; }
 .step-sub { color: #64748B; font-size: 0.8rem; margin-bottom: 0; line-height: 1.45; }
 .step-sub-inline { color: #64748B; font-size: 0.8rem; white-space: nowrap; margin-bottom: 0; align-self: flex-end; padding-bottom: 0.35rem; }
@@ -4223,11 +4190,45 @@ html {
 .dev-btn--fresh:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 
 /* Success */
-.success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-.success-box { background: var(--c-white); border-radius: 16px; padding: 3rem 2.5rem; text-align: center; border: 1px solid #E2DDD4; max-width: 560px; width: 100%; }
-.success-icon { width: 64px; height: 64px; background: var(--c-accent-secondary); border-radius: 50%; display: inline-grid; place-items: center; font-size: 1.8rem; margin-bottom: 1.25rem; }
-.success-box h2 { font-size: 1.5rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.75rem; }
-.success-box p  { color: #666; line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem; }
+.success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; background: var(--bg, #FAFAF8); }
+.success-box {
+  background: var(--c-white, #FFFFFF);
+  border-radius: 16px;
+  padding: 3.5rem 3rem;
+  text-align: center;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  box-shadow: 0 8px 32px rgba(22, 16, 87, 0.05);
+  max-width: 580px;
+  width: 100%;
+}
+.success-icon {
+  width: 64px;
+  height: 64px;
+  background: #E6F4F1;
+  color: var(--c-accent, #04907C);
+  border: 2px solid var(--c-accent, #04907C);
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+.success-box h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--c-primary-dark, #161057);
+  margin-bottom: 0.85rem;
+  font-family: 'Fraunces', serif;
+  letter-spacing: -0.02em;
+}
+.success-box p {
+  color: #475569;
+  line-height: 1.65;
+  font-size: 0.95rem;
+  margin-bottom: 1.25rem;
+  font-family: var(--font-body);
+}
 
 .alert { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 0.75rem; word-break: break-word; }
 .alert-error { background: #FFF0F0; color: #C0392B; border: 1px solid #FFCACA; }
@@ -4566,13 +4567,6 @@ html {
   box-shadow: 0 4px 20px rgba(4, 144, 124, 0.04);
 }
 
-.instr-accent-dash {
-  width: 28px;
-  height: 3px;
-  background: var(--c-accent, #04907C);
-  border-radius: 99px;
-  margin-bottom: 1.1rem;
-}
 
 .instr-card-title {
   font-family: 'Fraunces', serif;
@@ -4892,7 +4886,7 @@ html {
 
 .unified-content {
   flex: 1;
-  padding: 0 0 9rem;
+  padding: 0 0 2rem;
   max-width: 100%;
   margin: 0;
   width: 100%;

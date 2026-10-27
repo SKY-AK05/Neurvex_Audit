@@ -238,66 +238,81 @@ async function confirmDeleteAll() {
 <style scoped>
 .page-header { margin-bottom: 1.5rem; }
 .page-header h1 {
-  font-size: 1.7rem; font-weight: 700; color: var(--c-primary-dark);
-  letter-spacing: -0.02em; font-family: 'Fraunces', serif;
+  font-size: 2.25rem; font-weight: 800; color: var(--c-primary-dark, #161057);
+  letter-spacing: -0.03em; font-family: 'Fraunces', serif;
 }
-.page-header p { color: #888; font-size: 0.875rem; margin-top: 0.3rem; }
+.page-header p { color: #64748B; font-size: 0.9rem; margin-top: 0.35rem; }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
   max-width: 100%;
 }
 
+.card {
+  background: var(--c-white, #FFFFFF);
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(22, 16, 87, 0.03);
+}
+
 .card h2 {
-  font-size: 1rem; font-weight: 700; color: var(--c-primary-dark);
+  font-size: 1.15rem; font-weight: 800; color: var(--c-primary-dark, #161057);
   margin-bottom: 0.35rem;
   border: none; font-family: 'Fraunces', serif;
+  letter-spacing: -0.015em;
 }
 .card-hint {
-  font-size: 0.82rem; color: #888; line-height: 1.5;
-  margin-bottom: 1rem;
+  font-size: 0.85rem; color: #64748B; line-height: 1.5;
+  margin-bottom: 1.25rem;
 }
 
 .fields-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
 }
 
 .notify-status {
   display: flex; align-items: flex-start; gap: 0.6rem;
   padding: 0.75rem 1rem; border-radius: 10px;
-  background: var(--c-bg); border: 1.5px solid #E2DDD4;
-  font-size: 0.85rem; color: #666; line-height: 1.45;
+  background: #FAFAF8; border: 1px solid rgba(22, 16, 87, 0.08);
+  font-size: 0.85rem; color: #475569; line-height: 1.45;
   margin-top: 0.5rem;
 }
 .notify-status.on {
-  background: #EDFFD4; border-color: var(--c-accent); color: #3A5A00;
+  background: #DCFCE7; border-color: #86EFAC; color: #166534; font-weight: 600;
 }
 .notify-dot {
   width: 10px; height: 10px; border-radius: 50%;
-  background: #ccc; flex-shrink: 0; margin-top: 0.25em;
+  background: #94A3B8; flex-shrink: 0; margin-top: 0.25em;
 }
-.notify-status.on .notify-dot { background: var(--c-accent); }
+.notify-status.on .notify-dot { background: #16A34A; }
 
 .actions {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding-top: 0.25rem;
+  padding-top: 0.5rem;
 }
-.msg-inline { margin: 0; padding: 0.6rem 1rem; }
-.loading { color: #aaa; padding: 2rem 0; }
+.actions .btn-primary {
+  border-radius: 99px;
+  padding: 0.65rem 1.6rem;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.2);
+}
+.msg-inline { margin: 0; padding: 0.6rem 1rem; border-radius: 8px; }
+.loading { color: #94A3B8; padding: 2rem 0; }
 
 .danger-zone {
-  border: 2px solid #C0392B;
-  background: #FFF8F8;
+  border: 1px solid #FECACA;
+  background: #FFFDFD;
 }
 
 .danger-zone h2 {
-  border-bottom: 1px solid #C0392B;
+  border-bottom: 1px solid rgba(192, 57, 43, 0.12);
   padding-bottom: 0.5rem;
   margin-bottom: 0.5rem;
 }
@@ -313,5 +328,10 @@ async function confirmDeleteAll() {
 .delete-section .field {
   flex: 1;
   min-width: 250px;
+}
+.delete-section .btn-danger {
+  border-radius: 99px;
+  padding: 0.65rem 1.5rem;
+  font-weight: 700;
 }
 </style>

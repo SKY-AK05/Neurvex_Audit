@@ -233,19 +233,19 @@ async function downloadCurrentPage() {
 
 .card {
   background: var(--c-white, #FFFFFF);
-  border: 1px solid var(--c-border, rgba(22, 16, 87, 0.12));
-  border-radius: 8px;
-  padding: 1.25rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px rgba(22, 16, 87, 0.03);
 }
 
 .table-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--c-border, rgba(22, 16, 87, 0.1));
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(22, 16, 87, 0.06);
   flex-wrap: wrap;
   gap: 0.75rem;
 }
@@ -276,21 +276,23 @@ async function downloadCurrentPage() {
 .btn-download {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.5rem;
   background: var(--c-accent, #04907C);
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 0.48rem 0.9rem;
-  font-size: 0.82rem;
+  border-radius: 99px;
+  padding: 0.55rem 1.2rem;
+  font-size: 0.825rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(4, 144, 124, 0.2);
 }
 .btn-download:hover:not(:disabled) {
-  opacity: 0.92;
+  background: #037A69;
   transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(4, 144, 124, 0.28);
 }
 .btn-download:disabled {
   opacity: 0.45;
@@ -302,13 +304,13 @@ async function downloadCurrentPage() {
 .table-container { width: 100%; overflow-x: auto; }
 .sub-table { width: 100%; border-collapse: collapse; min-width: 950px; }
 .sub-table th {
-  text-align: left; padding: 0.75rem 1rem;
+  text-align: left; padding: 0.85rem 1rem;
   font-size: 0.72rem; font-weight: 800; color: #64748B;
-  border-bottom: 2px solid var(--c-primary-dark, #161057);
+  border-bottom: 1.5px solid rgba(22, 16, 87, 0.12);
   text-transform: uppercase; letter-spacing: 0.07em;
 }
-.sub-table td { padding: 0.9rem 1rem; font-size: 0.875rem; border-bottom: 1px solid #F1F5F9; vertical-align: middle; color: #1E293B; }
-.sub-table tbody tr { cursor: pointer; transition: background 0.1s; }
+.sub-table td { padding: 0.95rem 1rem; font-size: 0.875rem; border-bottom: 1px solid #F1F5F9; vertical-align: middle; color: #1E293B; }
+.sub-table tbody tr { cursor: pointer; transition: background 0.12s; }
 .sub-table tbody tr:hover { background: #F8FAFC; }
 
 .org-name { font-weight: 700; color: var(--c-primary-dark, #161057); }
@@ -322,8 +324,8 @@ async function downloadCurrentPage() {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.25rem 0.6rem;
-  border-radius: 12px;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: capitalize;
@@ -350,12 +352,12 @@ async function downloadCurrentPage() {
 
 .action-group { display: flex; gap: 0.4rem; align-items: center; }
 .action-btn {
-  width: 32px; height: 32px; border-radius: 6px;
-  border: 1px solid #CBD5E0; background: #FFFFFF;
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid rgba(22, 16, 87, 0.12); background: #FFFFFF;
   display: grid; place-items: center; cursor: pointer; color: #475569;
   transition: all 0.15s;
 }
-.action-btn:hover { background: #F1F5F9; color: var(--c-primary-dark, #161057); border-color: #94A3B8; }
+.action-btn:hover { background: #F8FAFC; color: var(--c-primary-dark, #161057); border-color: rgba(22, 16, 87, 0.24); }
 .dl-btn { color: var(--c-accent, #04907C); }
 .dl-btn:hover { background: #E6F4F1; border-color: var(--c-accent, #04907C); }
 
@@ -385,7 +387,7 @@ async function downloadCurrentPage() {
   background: #FEE2E2;
   color: #991B1B;
   padding: 0.75rem 1rem;
-  border-radius: 6px;
+  border-radius: 8px;
   margin-bottom: 1rem;
   font-size: 0.85rem;
 }
@@ -394,23 +396,23 @@ async function downloadCurrentPage() {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 1rem;
+  padding-top: 1.25rem;
   margin-top: 0.75rem;
-  border-top: 1px solid #E2E8F0;
+  border-top: 1px solid rgba(22, 16, 87, 0.06);
   flex-wrap: wrap;
   gap: 0.5rem;
 }
 .page-info { font-size: 0.82rem; color: #64748B; font-weight: 500; }
-.page-btns { display: flex; gap: 0.3rem; }
+.page-btns { display: flex; gap: 0.35rem; }
 .page-btn {
-  min-width: 32px; height: 32px; padding: 0 0.4rem;
-  border-radius: 4px;
-  border: 1px solid #CBD5E0; background: #FFFFFF;
-  font-size: 0.82rem; cursor: pointer; color: #334155; font-weight: 600;
+  min-width: 34px; height: 34px; padding: 0 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(22, 16, 87, 0.12); background: #FFFFFF;
+  font-size: 0.825rem; cursor: pointer; color: #334155; font-weight: 600;
   display: grid; place-items: center; transition: all 0.15s;
   font-family: inherit;
 }
-.page-btn:hover:not(:disabled) { background: #F1F5F9; }
+.page-btn:hover:not(:disabled) { background: #F8FAFC; border-color: rgba(22, 16, 87, 0.2); }
 .page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .page-btn.active {
   background: var(--c-primary-dark, #161057);

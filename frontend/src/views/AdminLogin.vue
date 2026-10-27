@@ -27,8 +27,14 @@
         <span>{{ loading ? 'Connecting to Microsoft...' : 'Sign in with Microsoft' }}</span>
       </button>
 
-      <!-- Local Dev Bypass hidden in production -->
-      <div v-if="false" class="dev-bypass-wrap"></div>
+      <!-- Powered by Orchvate footer -->
+      <div class="login-footer">
+        <div class="powered-by-wrap">
+          <span class="powered-label">Powered by</span>
+          <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
+        </div>
+        <router-link to="/" class="back-link">← Back to Self-Assessment</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -135,85 +141,78 @@ async function login() {
 <style scoped>
 .login-wrap {
   min-height: 100vh;
-  display: flex; align-items: center; justify-content: center;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
   overflow: hidden;
-  /* Ensure the grid background from App.vue shines through, but we add our own ambient layer */
+  background: var(--bg, #FAFAF8);
+  padding: 1.5rem;
+  box-sizing: border-box;
 }
 
 .glow-orb {
   position: absolute;
-  width: 700px;
-  height: 700px;
-  background: radial-gradient(circle, rgba(200, 241, 53, 0.45) 0%, rgba(200, 241, 53, 0) 60%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(4, 144, 124, 0.08) 0%, rgba(22, 16, 87, 0.04) 40%, transparent 70%);
   border-radius: 50%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 0;
-  animation: pulse 5s infinite alternate ease-in-out;
   pointer-events: none;
-}
-
-@keyframes pulse {
-  0% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-  100% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
 }
 
 .login-box {
   position: relative;
   z-index: 1;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  padding: 3.5rem 3rem;
-  border-radius: 24px;
-  width: 440px;
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  box-shadow: 0 16px 48px rgba(22, 16, 87, 0.06);
+  padding: 3rem 2.5rem;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 440px;
   text-align: center;
-  border: 2px solid var(--c-primary-dark);
-  box-shadow: 12px 12px 0px var(--c-accent);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .login-box:hover {
-  transform: translate(-4px, -4px);
-  box-shadow: 16px 16px 0px var(--c-accent);
+  box-shadow: 0 20px 56px rgba(22, 16, 87, 0.09);
 }
 
 .login-logo {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
   display: flex;
   justify-content: center;
 }
 
 .login-logo-img {
-  height: 64px;
-  width: 64px;
+  height: 56px;
+  width: auto;
   object-fit: contain;
   border-radius: 8px;
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-6px); }
-  100% { transform: translateY(0px); }
+  box-shadow: 0 4px 12px rgba(22, 16, 87, 0.08);
 }
 
 h2 {
   font-size: 1.85rem;
   font-weight: 800;
-  margin-bottom: 0.25rem;
-  color: var(--c-primary-dark);
+  margin-bottom: 0.35rem;
+  color: var(--primary, #161057);
   font-family: 'Fraunces', serif;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
 }
 
 .login-sub {
-  color: #666;
-  font-size: 1rem;
-  margin-bottom: 2.5rem;
+  color: #64748B;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
   font-weight: 500;
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
 }
 
 .error-msg {
@@ -221,14 +220,14 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  background: #FFF0F0;
-  color: #C0392B;
-  padding: 0.85rem;
+  background: #FEE2E2;
+  color: #991B1B;
+  padding: 0.75rem 1rem;
   border-radius: 10px;
-  border: 2px solid #C0392B;
+  border: 1px solid #FCA5A5;
   font-size: 0.85rem;
   margin-bottom: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
   text-align: left;
 }
 
@@ -238,48 +237,91 @@ h2 {
   align-items: center;
   justify-content: center;
   gap: 0.85rem;
-  padding: 1.1rem;
-  font-size: 1.05rem;
-  background: var(--c-primary-dark);
-  color: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
-  border-radius: 14px;
+  padding: 0.85rem 1.5rem;
+  font-size: 0.95rem;
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 99px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-  font-family: 'Inter', sans-serif;
-  box-shadow: 4px 4px 0px rgba(26, 26, 26, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.2);
 }
 
 .ms-login-btn:hover:not(:disabled) {
-  background: #2a2a2a;
+  background: #0f0a42;
   transform: translateY(-2px);
-  box-shadow: 4px 8px 0px rgba(26, 26, 26, 0.25);
+  box-shadow: 0 6px 20px rgba(22, 16, 87, 0.28);
 }
 
 .ms-login-btn:active:not(:disabled) {
   transform: translateY(1px);
-  box-shadow: 2px 2px 0px rgba(26, 26, 26, 0.3);
+  box-shadow: 0 1px 4px rgba(22, 16, 87, 0.12);
 }
 
 .ms-login-btn:disabled {
-  opacity: 0.75;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
 .ms-logo {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
-/* Simple loading spinner */
+.login-footer {
+  margin-top: 2.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(22, 16, 87, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.powered-by-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.powered-label {
+  font-size: 0.65rem;
+  color: #94A3B8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+}
+
+.powered-logo {
+  height: 18px;
+  width: auto;
+  object-fit: contain;
+}
+
+.back-link {
+  font-size: 0.825rem;
+  color: #64748B;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.15s;
+}
+
+.back-link:hover {
+  color: var(--primary, #161057);
+}
+
+/* Loading spinner */
 .spinner {
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 2.5px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
-  border-top-color: var(--c-accent);
-  animation: spin 1s ease-in-out infinite;
+  border-top-color: #FFFFFF;
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {

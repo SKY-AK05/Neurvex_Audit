@@ -1,82 +1,127 @@
 <template>
-  <div class="form-page">
-    <div class="form-inner">
-      
+  <div class="book-page">
+    <!-- Compact Top Header matching Reference Page 2 -->
+    <header class="book-header">
+      <router-link to="/" class="header-brand">
+        <img src="/logonew1.png" alt="NIWI" class="niwi-logo" />
+        <span class="niwi-brand-text">Neuro-Inclusive<br/>Workplace Index</span>
+      </router-link>
+      <div class="header-powered">
+        <span class="powered-label">POWERED BY</span>
+        <img src="/logo_orchvate.png" alt="Orchvate" class="orchvate-logo" />
+      </div>
+    </header>
+
+    <div class="book-container">
+      <!-- Success State -->
       <div v-if="submitted" class="success-wrap">
-        <div class="success-box">
-          <div class="success-icon">?</div>
-          <h2>Request received</h2>
-          <p>
+        <div class="success-card">
+          <div class="success-icon">✓</div>
+          <h2>Request Received</h2>
+          <p class="success-desc">
             Thank you, <strong>{{ form.name }}</strong>. We'll be in touch at
             <strong>{{ form.email }}</strong> to confirm your call.
           </p>
-          <router-link to="/" class="btn-back">Back to audit</router-link>
+          <router-link to="/" class="btn-primary-pill">Back to Self-Assessment →</router-link>
         </div>
       </div>
 
-      <div v-else class="book-wrap">
-        <div class="book-card">
-          <div class="step-card-head">
-            <div class="step-tag">Orchvate</div>
-            <h1>Book a Complimentary Call</h1>
-            <p class="step-sub">
-              We'd love to walk through your NIWI results, reflect on what they mean for your
-              organisation, and explore the next phase of your neuro-inclusion journey.
-            </p>
+      <!-- Booking Form -->
+      <div v-else class="book-card">
+        <div class="card-head">
+          <div class="card-tag">Orchvate Advisory</div>
+          <h1 class="card-title">Book a Complimentary Call</h1>
+          <p class="card-subtitle">
+            We'd love to walk through your NIWI results, reflect on what they mean for your
+            organisation, and explore the next phase of your neuro-inclusion journey.
+          </p>
+        </div>
+
+        <form @submit.prevent="submit" class="book-form">
+          <div class="fields-grid">
+            <div class="field-group">
+              <label class="field-label">Full Name *</label>
+              <input
+                v-model="form.name"
+                type="text"
+                class="field-input"
+                placeholder="Jane Smith"
+                required
+              />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Job Title</label>
+              <input
+                v-model="form.designation"
+                type="text"
+                class="field-input"
+                placeholder="HR Director"
+              />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Organisation *</label>
+              <input
+                v-model="form.company"
+                type="text"
+                class="field-input"
+                placeholder="Acme Ltd"
+                required
+              />
+            </div>
+
+            <div class="field-group">
+              <label class="field-label">Work Email *</label>
+              <input
+                v-model="form.email"
+                type="email"
+                class="field-input"
+                placeholder="jane@acme.com"
+                required
+              />
+            </div>
+
+            <div class="field-group full-width">
+              <label class="field-label">Phone Number</label>
+              <input
+                v-model="form.phone"
+                type="tel"
+                class="field-input"
+                placeholder="+44 7700 900000"
+              />
+            </div>
+
+            <div class="field-group full-width">
+              <label class="field-label">Preferred Time to Call</label>
+              <select v-model="form.preferred_time" class="field-select">
+                <option value="">No preference</option>
+                <option>Morning (9 am – 12 pm IST)</option>
+                <option>Afternoon (12 pm – 3 pm IST)</option>
+                <option>Late afternoon (3 pm – 6 pm IST)</option>
+              </select>
+            </div>
+
+            <div class="field-group full-width">
+              <label class="field-label">Anything you'd like us to know?</label>
+              <textarea
+                v-model="form.message"
+                rows="4"
+                class="field-textarea"
+                placeholder="e.g. specific areas from the audit you'd like to focus on…"
+              ></textarea>
+            </div>
           </div>
 
-          <div class="book-scroll">
-            <form @submit.prevent="submit" class="book-form">
-              <div class="fields-grid">
-                <div class="field">
-                  <label>Full name *</label>
-                  <input v-model="form.name" type="text" placeholder="Jane Smith" required />
-                </div>
-                <div class="field">
-                  <label>Job title</label>
-                  <input v-model="form.designation" type="text" placeholder="HR Director" />
-                </div>
-                <div class="field">
-                  <label>Organisation *</label>
-                  <input v-model="form.company" type="text" placeholder="Acme Ltd" required />
-                </div>
-                <div class="field">
-                  <label>Work email *</label>
-                  <input v-model="form.email" type="email" placeholder="jane@acme.com" required />
-                </div>
-                <div class="field field--full">
-                  <label>Phone number</label>
-                  <input v-model="form.phone" type="tel" placeholder="+44 7700 900000" />
-                </div>
-                <div class="field field--full">
-                  <label>Preferred time to call</label>
-                  <select v-model="form.preferred_time">
-                    <option value="">No preference</option>
-                    <option>Morning (9 am � 12 pm IST)</option>
-                    <option>Afternoon (12 pm � 3 pm IST)</option>
-                    <option>Late afternoon (3 pm � 6 pm IST)</option>
-                  </select>
-                </div>
-                <div class="field field--full">
-                  <label>Anything you'd like us to know?</label>
-                  <textarea
-                    v-model="form.message"
-                    rows="4"
-                    placeholder="e.g. specific areas from the audit you'd like to focus on�"
-                  ></textarea>
-                </div>
-              </div>
+          <p v-if="errorMsg" class="alert-error">{{ errorMsg }}</p>
 
-              <p v-if="errorMsg" class="alert alert-error">{{ errorMsg }}</p>
-            </form>
-          </div>
-
-          <div class="book-actions">
-            <button type="button" class="btn-submit" :disabled="loading" @click="submit">
-              {{ loading ? "Sending�" : "Request a call ?" }}
+          <div class="card-footer">
+            <router-link to="/" class="btn-ghost-pill">← Cancel</router-link>
+            <button type="submit" class="btn-primary-pill" :disabled="loading">
+              {{ loading ? "Sending…" : "Request a Call →" }}
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   </div>
@@ -128,372 +173,309 @@ async function submit() {
 </script>
 
 <style scoped>
-.form-page {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-  background: var(--c-bg);
-  background-image:
-    linear-gradient(to right, rgba(180, 175, 165, 0.25) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(180, 175, 165, 0.25) 1px, transparent 1px);
-  background-size: 32px 32px;
-  border-radius: 32px;
-  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+.book-page {
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  background: var(--bg, #FAFAF8);
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+  color: var(--primary, #161057);
+  overflow-y: auto;
 }
 
-.form-inner {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  width: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.form-header {
+/* Header */
+.book-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.6rem 2rem;
-  border-bottom: 2px solid var(--c-primary-dark);
-  background: var(--c-bg);
+  padding: 0.75rem 2.5rem;
+  border-bottom: 1px solid rgba(22, 16, 87, 0.08);
+  background: #FFFFFF;
   flex-shrink: 0;
-  z-index: 10;
 }
 
-.form-header-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.form-header-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-left: auto;
-}
-
-.form-logo {
+.header-brand {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   text-decoration: none;
-  color: inherit;
 }
 
-.form-logo-img {
-  height: 36px;
+.niwi-logo {
+  height: 32px;
   width: auto;
-  display: block;
-  object-fit: contain;
   border-radius: 6px;
-  flex-shrink: 0;
 }
 
-.form-logo-name {
-  font-size: 0.95rem;
-  font-weight: 800;
-  color: var(--c-primary-dark);
-  font-family: "Fraunces", serif;
+.niwi-brand-text {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--primary, #161057);
+  line-height: 1.2;
 }
 
 .header-powered {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
-.header-powered-label {
-  font-size: 0.7rem;
-  color: #aaa;
-  font-weight: 600;
+.powered-label {
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  color: #9CA3AF;
 }
 
-.header-powered-logo {
-  height: 22px;
+.orchvate-logo {
+  height: 20px;
   width: auto;
-  object-fit: contain;
-  opacity: 0.65;
 }
 
-.book-wrap {
+/* Container */
+.book-container {
   flex: 1;
-  min-height: 0;
-  overflow: hidden;
   display: flex;
   justify-content: center;
-  padding: 0.75rem 2rem 1rem;
+  align-items: flex-start;
+  padding: 2.5rem 1.5rem 4rem;
+  max-width: 820px;
+  margin: 0 auto;
   width: 100%;
-  box-sizing: border-box;
 }
 
 .book-card {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  max-height: 100%;
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 16px;
+  padding: 2.5rem 2.5rem;
+  box-shadow: 0 4px 24px rgba(22, 16, 87, 0.04);
   width: 100%;
-  max-width: 720px;
-  overflow: hidden;
-  background: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
-  border-radius: 20px;
-  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
 }
 
-.step-card-head {
-  flex-shrink: 0;
-  padding: 2rem 2.5rem 0;
+.card-head {
+  margin-bottom: 2rem;
 }
 
-.step-tag {
+.card-tag {
   display: inline-block;
-  background: transparent;
-  color: #161057;
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 0.2rem 0.7rem;
+  background: #EDE9FE;
+  color: #6D28D9;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.22rem 0.65rem;
   border-radius: 99px;
-  text-transform: uppercase;
   letter-spacing: 0.06em;
-  margin-bottom: 0.85rem;
-  border: 1.5px solid #161057;
-  font-family: "Fraunces", serif;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
 }
 
-.step-card-head h1 {
-  font-size: 1.8rem;
+.card-title {
+  font-family: 'Fraunces', serif;
+  font-size: 1.85rem;
   font-weight: 800;
-  color: var(--c-primary-dark);
-  letter-spacing: -0.03em;
-  margin-bottom: 0.35rem;
-  font-family: "Fraunces", serif;
+  color: var(--primary, #161057);
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
 }
 
-.step-sub {
-  color: #999;
-  font-size: 0.875rem;
-  margin-bottom: 0;
-  line-height: 1.55;
+.card-subtitle {
+  color: #64748B;
+  font-size: 0.925rem;
+  line-height: 1.6;
 }
 
-.book-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  padding: 1.25rem 2.5rem 1rem;
-  -webkit-overflow-scrolling: touch;
-}
-
+/* Form */
 .book-form {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
 }
 
 .fields-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
-.field--full {
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.field-group.full-width {
   grid-column: 1 / -1;
 }
 
-.field label {
-  display: block;
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--c-primary-dark);
-  margin-bottom: 0.35rem;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-family: "Fraunces", serif;
+.field-label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #1E293B;
+  letter-spacing: 0.01em;
 }
 
-.field input,
-.field select,
-.field textarea {
+.field-input,
+.field-select,
+.field-textarea {
   width: 100%;
-  padding: 0.7rem 0.9rem;
-  border: 2px solid var(--c-primary-dark);
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgba(22, 16, 87, 0.16);
   border-radius: 10px;
   font-size: 0.9rem;
-  background: var(--c-white);
-  color: var(--c-primary-dark);
-  transition: border-color 0.15s, box-shadow 0.15s;
   font-family: inherit;
+  color: #1E293B;
+  background: #FFFFFF;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
   box-sizing: border-box;
 }
 
-.field textarea {
+.field-input:focus,
+.field-select:focus,
+.field-textarea:focus {
+  border-color: var(--accent, #04907C);
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.15);
+}
+
+.field-textarea {
   resize: vertical;
-  min-height: 100px;
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: var(--c-primary-dark);
-  box-shadow: 3px 3px 0 var(--c-accent);
-}
-
-.book-actions {
-  flex-shrink: 0;
-  padding: 1rem 2.5rem 1.5rem;
-  border-top: 1px solid #e2ddd4;
-}
-
-.btn-submit {
-  background: var(--c-primary-dark);
-  color: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
-  border-radius: 99px;
-  padding: 0.7rem 1.75rem;
-  font-size: 0.9rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: "Fraunces", serif;
-  box-shadow: 3px 3px 0 rgba(22, 16, 87, 0.3);
-}
-
-.btn-submit:hover:not(:disabled) {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 rgba(22, 16, 87, 0.3);
-}
-
-.btn-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.alert {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  margin-top: 0.75rem;
+  min-height: 90px;
 }
 
 .alert-error {
-  background: #fff0f0;
-  color: #c0392b;
-  border: 1px solid #ffcaca;
+  background: #FEE2E2;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.5rem;
 }
 
-.success-wrap {
-  flex: 1;
-  min-height: 0;
+.card-footer {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  overflow-y: auto;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(22, 16, 87, 0.08);
 }
 
-.success-box {
-  background: var(--c-white);
-  border-radius: 16px;
-  padding: 3rem 2.5rem;
-  text-align: center;
-  border: 2px solid var(--c-primary-dark);
-  max-width: 440px;
+.btn-primary-pill {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 99px;
+  padding: 0.75rem 2rem;
+  font-size: 0.925rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.2);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.btn-primary-pill:hover:not(:disabled) {
+  background: #0f0a42;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(22, 16, 87, 0.28);
+}
+
+.btn-primary-pill:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost-pill {
+  background: transparent;
+  color: #64748B;
+  border: 1px solid rgba(22, 16, 87, 0.14);
+  border-radius: 99px;
+  padding: 0.72rem 1.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-ghost-pill:hover {
+  background: rgba(22, 16, 87, 0.04);
+  color: var(--primary, #161057);
+}
+
+/* Success Card */
+.success-wrap {
   width: 100%;
-  box-shadow: 4px 4px 0 rgba(22, 16, 87, 0.15);
+  display: flex;
+  justify-content: center;
+}
+
+.success-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 16px;
+  padding: 3.5rem 3rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(22, 16, 87, 0.05);
+  max-width: 580px;
+  width: 100%;
 }
 
 .success-icon {
   width: 64px;
   height: 64px;
-  background: var(--c-accent);
+  background: #E6F4F1;
+  color: var(--accent, #04907C);
+  border: 2px solid var(--accent, #04907C);
   border-radius: 50%;
   display: inline-grid;
   place-items: center;
   font-size: 1.8rem;
-  margin-bottom: 1.25rem;
-  color: var(--c-primary-dark);
-  font-weight: 800;
-}
-
-.success-box h2 {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--c-primary-dark);
-  margin-bottom: 0.75rem;
-  font-family: "Fraunces", serif;
-}
-
-.success-box p {
-  color: #666;
-  line-height: 1.6;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
-}
-
-.btn-back {
-  display: inline-block;
-  background: var(--c-white);
-  border: 2px solid var(--c-primary-dark);
-  border-radius: 99px;
-  padding: 0.65rem 1.4rem;
-  font-size: 0.875rem;
   font-weight: 700;
-  cursor: pointer;
-  color: var(--c-primary-dark);
-  text-decoration: none;
-  font-family: "Fraunces", serif;
-  box-shadow: 3px 3px 0 var(--c-primary-dark);
-  transition: all 0.15s;
+  margin: 0 auto 1.5rem;
 }
 
-.btn-back:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 var(--c-primary-dark);
+.success-card h2 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--primary, #161057);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.85rem;
 }
 
-@media (max-width: 640px) {
-  .form-header {
-    padding: 0.6rem 1rem;
-  }
+.success-desc {
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
 
-  .form-logo-name {
-    font-size: 0.8rem;
+@media (max-width: 680px) {
+  .book-header {
+    padding: 0.75rem 1.25rem;
   }
-
-  .book-wrap {
-    padding: 0.5rem 1rem 0.75rem;
+  .book-container {
+    padding: 1.5rem 1rem 3rem;
   }
-
-  .step-card-head {
-    padding: 1.25rem 1.25rem 0;
+  .book-card {
+    padding: 1.75rem 1.5rem;
   }
-
-  .book-scroll {
-    padding: 1rem 1.25rem 0.75rem;
-  }
-
-  .book-actions {
-    padding: 0.85rem 1.25rem 1.25rem;
-  }
-
   .fields-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
-
-  .step-card-head h1 {
-    font-size: 1.45rem;
+  .card-title {
+    font-size: 1.5rem;
   }
 }
 </style>

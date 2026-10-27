@@ -145,7 +145,7 @@ const pageTitles = {
   "/admin/support":       "Support",
   "/admin/organisations": "Organisations",
 };
-const pageTitle = computed(() => pageTitles[route.path] || "NIWI � Neuro-Inclusive Workplace Index");
+const pageTitle = computed(() => pageTitles[route.path] || "NIWI – Neuro-Inclusive Workplace Index");
 
 const notificationsEnabled = ref(false);
 const notificationEmail = ref("");
@@ -263,23 +263,33 @@ async function logout() {
 
 <style>
 :root {
-  /* Updated Palette as Semantic Tokens */
-  --c-primary-dark: #161057; /* Legacy support if needed */
-  --primary: #161057; /* Text and primary accents */
-  --text-muted: #4A5A89;
-  --bg: #FAFAF8; /* Milky white, replacing #f0ebe3 */
+  /* Updated Palette as Semantic Tokens based on Reference Pages */
+  --c-primary-dark: #161057;
+  --primary: #161057;
+  --primary-hover: #0F0A42;
+  --text-main: #1E293B;
+  --text-muted: #64748B;
+  --text-subtle: #94A3B8;
+  --bg: #FAFAF8;
   --surface: #FFFFFF;
-  --border: rgba(22, 16, 87, 0.1); /* Softened border */
+  --border: rgba(22, 16, 87, 0.08);
+  --border-strong: rgba(22, 16, 87, 0.16);
   --accent: #04907C;
+  --accent-hover: #037A69;
   --accent-rgb: 4, 144, 124;
-  --c-accent-retro: #FFF8F2; /* Legacy */
+  --accent-soft: rgba(4, 144, 124, 0.08);
   --c-bg: var(--bg);
   --c-white: var(--surface);
   --c-accent: var(--accent);
   --c-border: var(--border);
-  
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(22, 16, 87, 0.04);
+  --shadow-md: 0 4px 14px rgba(22, 16, 87, 0.05);
+  --shadow-lg: 0 8px 24px rgba(22, 16, 87, 0.08);
+
   /* Typography */
-  --font-body: 'Geist', 'Inter', sans-serif;
+  --font-body: 'Geist', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: 'Fraunces', serif;
   --line-height-body: 1.6;
   --line-height-heading: 1.2;
@@ -471,16 +481,13 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 
 .main-rounded-container {
   background: var(--bg);
-  background-image:
-    linear-gradient(to right, rgba(22, 16, 87, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(22, 16, 87, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
-  border-radius: 28px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12);
 }
 
 .main-header {
@@ -874,3 +881,4 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   }
 }
 </style>
+
