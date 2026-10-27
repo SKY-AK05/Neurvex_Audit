@@ -6,7 +6,8 @@
       <div class="success-box">
         <div class="success-icon">✓</div>
         <h2>Audit Submitted</h2>
-        <p>Thank you for completing the Neuro-Inclusive Workplace Index <strong>{{ form.company_name }}</strong>.<br/>You will receive your results by email shortly.</p>
+        <p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p>
+        <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>
       </div>
     </div>
     <div v-else-if="isLoading && currentStep > 0" class="success-wrap">
@@ -4223,7 +4224,7 @@ html {
 
 /* Success */
 .success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; }
-.success-box { background: var(--c-white); border-radius: 16px; padding: 3rem 2.5rem; text-align: center; border: 1px solid #E2DDD4; max-width: 440px; width: 100%; }
+.success-box { background: var(--c-white); border-radius: 16px; padding: 3rem 2.5rem; text-align: center; border: 1px solid #E2DDD4; max-width: 560px; width: 100%; }
 .success-icon { width: 64px; height: 64px; background: var(--c-accent-secondary); border-radius: 50%; display: inline-grid; place-items: center; font-size: 1.8rem; margin-bottom: 1.25rem; }
 .success-box h2 { font-size: 1.5rem; font-weight: 800; color: var(--c-primary-dark); margin-bottom: 0.75rem; }
 .success-box p  { color: #666; line-height: 1.6; font-size: 0.9rem; margin-bottom: 1.5rem; }
