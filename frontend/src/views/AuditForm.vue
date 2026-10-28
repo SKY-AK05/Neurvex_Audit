@@ -4654,20 +4654,23 @@ html {
 
 .instr-example-options {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
   margin-bottom: 0.9rem;
+  justify-content: space-between;
 }
 
 .instr-example-opt {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 0.32rem 0.85rem;
+  padding: 0.32rem 0.65rem;
   border-radius: 99px;
   border: 1.5px solid;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .instr-example-opt.opt-yes {
