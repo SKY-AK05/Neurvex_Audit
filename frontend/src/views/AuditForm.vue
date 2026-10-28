@@ -708,10 +708,10 @@
                     <div class="instr-right-header-left">
                       <span class="instr-right-badge">WHAT EACH SEGMENT COVERS</span>
                       <h3 class="instr-right-title">The Segments Covered</h3>
+                      <p class="instr-right-meta">
+                        The audit is organised into 8 key segments, each with 5 statements covering different aspects of neuro-inclusion in the workplace.
+                      </p>
                     </div>
-                    <p class="instr-right-meta">
-                      The audit is organised into 8 key segments, each with 5 statements covering different aspects of neuro-inclusion in the workplace.
-                    </p>
                   </div>
 
                   <div class="instr-desc-grid">
@@ -1870,7 +1870,7 @@ async function submit() {
   padding: 0;
   height: 100%;
   gap: 1.5rem;
-  margin-top: 14.5rem;
+  margin-top: 20.5rem;
 }
 
 .clipart-card {
@@ -4722,6 +4722,7 @@ html {
 .instr-right {
   display: flex;
   flex-direction: column;
+  margin-top: 1.5rem;
 }
 
 .instr-right-header {
@@ -4758,12 +4759,13 @@ html {
 }
 
 .instr-right-meta {
-  font-size: 0.82rem;
-  color: #64748B;
-  line-height: 1.5;
-  max-width: 340px;
-  text-align: right;
-  margin: 0;
+  font-size: 0.88rem;
+  color: #334155;
+  line-height: 1.55;
+  max-width: 100%;
+  text-align: left;
+  margin: 0.5rem 0 0 0;
+  font-weight: 500;
 }
 
 /* 8 Segments 2-Column Grid */
