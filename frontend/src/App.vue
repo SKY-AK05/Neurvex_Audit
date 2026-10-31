@@ -1,114 +1,161 @@
 <template>
   <div id="app-shell">
-    <div :class="isAdmin ? 'admin-layout' : 'public-shell'">
-      <!-- Dark Slim Sidebar -->
-      <aside v-if="isAdmin" class="sidebar">
-        <div class="sidebar-top">
-          <div class="sidebar-brand">
-            <img src="/logonew.png" alt="NIWI" class="brand-logo-icon" />
-            <span class="brand-text">NIWI</span>
-          </div>
+    <div v-if="isAdmin" class="admin-layout">
+      <!-- High-End Sticky Top Navbar matching Reference Image -->
+      <header class="top-navbar">
+        <div class="topbar-inner">
+          <!-- Logo & Brand on Left -->
+          <router-link to="/admin/dashboard" class="topbar-brand" title="NIWI Admin Dashboard">
+            <img src="/logonew.png" alt="NIWI" class="topbar-logo" />
+            <span class="topbar-brand-title">NIWI</span>
+          </router-link>
 
-          <nav class="sidebar-nav">
-            <router-link to="/admin/dashboard" class="nav-item" :class="{ active: route.path === '/admin/dashboard' }" title="Dashboard">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-              <span class="nav-text">Dashboard</span>
+          <!-- Centered Primary Navigation Links -->
+          <nav class="topbar-nav" aria-label="Main Navigation">
+            <router-link to="/admin/dashboard" class="top-nav-link" :class="{ active: route.path === '/admin/dashboard' }">
+              Dashboard
             </router-link>
-            <router-link to="/admin/analytics" class="nav-item" :class="{ active: route.path === '/admin/analytics' }" title="Analytics">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-              <span class="nav-text">Analytics</span>
+            <router-link to="/admin/submissions" class="top-nav-link" :class="{ active: route.path.includes('submissions') }">
+              Submissions
             </router-link>
-            <router-link to="/admin/submissions" class="nav-item" :class="{ active: route.path.includes('submissions') }" title="Submissions">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-              <span class="nav-text">Submissions</span>
+            <router-link to="/admin/analytics" class="top-nav-link" :class="{ active: route.path === '/admin/analytics' }">
+              Analytics
             </router-link>
-            <router-link to="/admin/organisations" class="nav-item" :class="{ active: route.path === '/admin/organisations' }" title="Organisations">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-              <span class="nav-text">Organisations</span>
+            <router-link to="/admin/organisations" class="top-nav-link" :class="{ active: route.path === '/admin/organisations' }">
+              Organisations
             </router-link>
-            <router-link to="/admin/form-builder" class="nav-item" :class="{ active: route.path === '/admin/form-builder' }" title="Form Builder">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="nav-icon"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-              <span class="nav-text">Form Builder</span>
+            <router-link to="/admin/form-builder" class="top-nav-link" :class="{ active: route.path === '/admin/form-builder' }">
+              Form Builder
             </router-link>
           </nav>
-        </div>
-      </aside>
 
-      <!-- Main App Content wrapped in floating rounded container -->
-      <div v-if="isAdmin" class="main-container-wrapper">
-        <div class="main-rounded-container">
-          <!-- Internal Top Header -->
-          <header class="main-header">
-            <div class="header-right">
-              <div class="header-powered">
-                <span class="powered-label">Powered by</span>
-                <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
-              </div>
+          <!-- Right Controls: Powered by, Notification Alerts, User Profile, Mobile Menu -->
+          <div class="topbar-right">
+            <div class="header-powered">
+              <span class="powered-label">Powered by</span>
+              <img src="/logo_orchvate.png" alt="Orchvate" class="powered-logo" />
+            </div>
 
-              <div class="bell-wrap" ref="bellWrap">
-                <button
-                  type="button"
-                  class="icon-btn"
-                  :class="{ 'bell-on': notificationsEnabled }"
-                  title="Submission email alerts"
-                  @click.stop="onBellClick"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                  <span v-if="notificationsEnabled" class="bell-badge"></span>
-                </button>
-                <div v-if="bellOpen" class="bell-popover">
-                  <p class="bell-pop-title">Submission alerts</p>
-                  <p class="bell-pop-text">
-                    {{ notificationsEnabled
-                      ? 'You will receive an email when a new audit is submitted.'
-                      : 'Turn on to get emailed when someone submits an audit.' }}
-                  </p>
-                  <p v-if="notificationEmail" class="bell-pop-email">→ {{ notificationEmail }}</p>
-                  <p v-else class="bell-pop-warn">Add a notification email in Settings first.</p>
-                  <router-link to="/admin/settings" class="bell-pop-link" @click="bellOpen = false">
-                    Email settings →
-                  </router-link>
-                  <p v-if="bellMsg" :class="['bell-pop-msg', bellMsgType]">{{ bellMsg }}</p>
-                </div>
-              </div>
-
-              <div class="profile-wrap" ref="profileWrap">
-                <div class="avatar" @click.stop="profileOpen = !profileOpen">{{ userInitials }}</div>
-                <div v-if="profileOpen" class="profile-popover">
-                  <div class="profile-header">
-                    <div class="profile-name">{{ userName }}</div>
-                    <div class="profile-role">{{ isSuper ? 'Super Admin' : 'Admin' }}</div>
-                  </div>
-                  <router-link to="/admin/settings" class="profile-item" @click="profileOpen = false">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    Settings
-                  </router-link>
-                  <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    User Management
-                  </router-link>
-                  <router-link to="/admin/support" class="profile-item" @click="profileOpen = false">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    Support
-                  </router-link>
-                  <a href="#" class="profile-item logout-item" @click.prevent="logout(); profileOpen = false;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sign Out
-                  </a>
-                </div>
+            <!-- Bell Alert -->
+            <div class="bell-wrap" ref="bellWrap">
+              <button
+                type="button"
+                class="icon-btn bell-btn"
+                :class="{ 'bell-on': notificationsEnabled }"
+                title="Submission email alerts"
+                @click.stop="onBellClick"
+                aria-label="Submission notifications"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span v-if="notificationsEnabled" class="bell-badge"></span>
+              </button>
+              <div v-if="bellOpen" class="bell-popover">
+                <p class="bell-pop-title">Submission alerts</p>
+                <p class="bell-pop-text">
+                  {{ notificationsEnabled
+                    ? 'You will receive an email when a new audit is submitted.'
+                    : 'Turn on to get emailed when someone submits an audit.' }}
+                </p>
+                <p v-if="notificationEmail" class="bell-pop-email">→ {{ notificationEmail }}</p>
+                <p v-else class="bell-pop-warn">Add a notification email in Settings first.</p>
+                <router-link to="/admin/settings" class="bell-pop-link" @click="bellOpen = false">
+                  Email settings →
+                </router-link>
+                <p v-if="bellMsg" :class="['bell-pop-msg', bellMsgType]">{{ bellMsg }}</p>
               </div>
             </div>
-          </header>
 
-          <main class="page-content">
-            <router-view />
-          </main>
+            <!-- Profile Avatar & Popover -->
+            <div class="profile-wrap" ref="profileWrap">
+              <div
+                class="avatar"
+                @click.stop="profileOpen = !profileOpen"
+                role="button"
+                tabindex="0"
+                aria-label="User profile menu"
+                :aria-expanded="profileOpen"
+              >
+                {{ userInitials }}
+              </div>
+              <div v-if="profileOpen" class="profile-popover">
+                <div class="profile-header">
+                  <div class="profile-name">{{ userName }}</div>
+                  <div class="profile-role">{{ isSuper ? 'Super Admin' : 'Admin' }}</div>
+                </div>
+                <router-link to="/admin/settings" class="profile-item" @click="profileOpen = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Settings
+                </router-link>
+                <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  User Management
+                </router-link>
+                <router-link to="/admin/support" class="profile-item" @click="profileOpen = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Support
+                </router-link>
+                <a href="#" class="profile-item logout-item" @click.prevent="logout(); profileOpen = false;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sign Out
+                </a>
+              </div>
+            </div>
+
+            <!-- Hamburger Button for Mobile -->
+            <button
+              class="mobile-nav-toggle"
+              @click="mobileNavOpen = !mobileNavOpen"
+              aria-label="Toggle navigation menu"
+              :aria-expanded="mobileNavOpen"
+            >
+              <svg v-if="!mobileNavOpen" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              <svg v-else width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
         </div>
-      </div>
-      
-      <router-view v-else />
-      
 
+        <!-- Mobile Nav Menu Drawer -->
+        <div v-if="mobileNavOpen" class="mobile-nav-menu">
+          <router-link to="/admin/dashboard" class="mobile-nav-link" :class="{ active: route.path === '/admin/dashboard' }" @click="mobileNavOpen = false">
+            Dashboard
+          </router-link>
+          <router-link to="/admin/submissions" class="mobile-nav-link" :class="{ active: route.path.includes('submissions') }" @click="mobileNavOpen = false">
+            Submissions
+          </router-link>
+          <router-link to="/admin/analytics" class="mobile-nav-link" :class="{ active: route.path === '/admin/analytics' }" @click="mobileNavOpen = false">
+            Analytics
+          </router-link>
+          <router-link to="/admin/organisations" class="mobile-nav-link" :class="{ active: route.path === '/admin/organisations' }" @click="mobileNavOpen = false">
+            Organisations
+          </router-link>
+          <router-link to="/admin/form-builder" class="mobile-nav-link" :class="{ active: route.path === '/admin/form-builder' }" @click="mobileNavOpen = false">
+            Form Builder
+          </router-link>
+          <div class="mobile-nav-divider"></div>
+          <router-link to="/admin/settings" class="mobile-nav-link" @click="mobileNavOpen = false">
+            Settings
+          </router-link>
+          <router-link v-if="isSuper" to="/admin/users" class="mobile-nav-link" @click="mobileNavOpen = false">
+            User Management
+          </router-link>
+          <router-link to="/admin/support" class="mobile-nav-link" @click="mobileNavOpen = false">
+            Support
+          </router-link>
+          <a href="#" class="mobile-nav-link mobile-logout" @click.prevent="logout(); mobileNavOpen = false;">
+            Sign Out
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Admin Content Area -->
+      <main class="page-content">
+        <router-view />
+      </main>
+    </div>
+
+    <!-- Public / Non-Admin views -->
+    <div v-else class="public-shell">
+      <router-view />
     </div>
   </div>
 </template>
@@ -157,6 +204,7 @@ const bellToggling = ref(false);
 
 const profileOpen = ref(false);
 const profileWrap = ref(null);
+const mobileNavOpen = ref(false);
 
 // Share audit link
 const shareCopied = ref(false);
@@ -375,12 +423,142 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 
 /* Main area */
 .admin-layout {
-  flex: 1; display: flex; flex-direction: row; height: 100vh;
-  background: #2a2b2e;
-  padding: 0.75rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg);
   box-sizing: border-box;
-  gap: 0.75rem;
 }
+
+/* High-End Sticky Top Navbar */
+.top-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  width: 100%;
+  background: #FAF9F5;
+  border-bottom: 1.5px solid rgba(22, 16, 87, 0.12);
+  box-shadow: 0 2px 10px rgba(22, 16, 87, 0.03);
+}
+
+.topbar-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.topbar-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+.topbar-brand-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--primary);
+  letter-spacing: -0.02em;
+}
+
+.topbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.top-nav-link {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 99px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.top-nav-link:hover {
+  color: var(--primary);
+  background: rgba(22, 16, 87, 0.05);
+}
+
+.top-nav-link.active {
+  color: var(--primary);
+  background: rgba(22, 16, 87, 0.1);
+  font-weight: 700;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+
+.mobile-nav-toggle {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.mobile-nav-menu {
+  display: flex;
+  flex-direction: column;
+  background: #FFFFFF;
+  border-bottom: 1.5px solid var(--border);
+  padding: 16px 24px;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.mobile-nav-link {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background: rgba(22, 16, 87, 0.06);
+  color: var(--primary);
+}
+
+.mobile-nav-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 6px 0;
+}
+
+.mobile-logout {
+  color: #C0392B !important;
+}
+
 
 
 .sidebar {
@@ -621,12 +799,15 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 .logout-item:hover { background: #FFF0F0; }
 
 .page-content {
-  padding: 12px 64px 48px;
+  padding: 24px 32px 48px;
   flex: 1;
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  overflow-y: auto; display: flex; flex-direction: column; }
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
 .page-header { margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
 .page-header h1 { font-size: 2.25rem; color: var(--primary); }
 
@@ -814,70 +995,36 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   border-radius: 50%;
 }
 
-@media (max-width: 768px) {
-  .admin-layout {
-    flex-direction: column;
-    padding: 0.5rem;
-    gap: 0.5rem;
-  }
-  
-  .sidebar {
-    width: 100%;
-    height: auto;
-    flex-direction: row;
-    position: relative;
-    top: 0;
-    padding: 8px;
-  }
-  
-  .sidebar:hover {
-    width: 100%;
-  }
-  
-  .sidebar-top {
-    flex-direction: row;
-    width: 100%;
-    gap: 12px;
-    justify-content: space-between;
-  }
-  
-  .sidebar-brand {
-    width: auto;
-  }
-  
-  .sidebar-nav {
-    flex-direction: row;
-    gap: 8px;
-    overflow-x: auto;
-  }
-  
-  .nav-item {
-    width: 44px;
-    height: 44px;
-  }
-  
-  .nav-text {
+@media (max-width: 1200px) {
+  .header-powered {
     display: none;
   }
-  
-  .main-rounded-container {
-    border-radius: 20px;
+  .topbar-right {
+    gap: 12px;
   }
-  
-  .main-header {
-    padding: 8px 24px 0;
-    height: auto;
-    flex-wrap: wrap;
+  .top-nav-link {
+    padding: 7px 11px;
+    font-size: 0.86rem;
   }
-  
-  .header-powered {
-    padding-right: 12px;
-    margin-right: 12px;
+  .topbar-inner {
+    padding: 0 16px;
+    gap: 10px;
   }
-  
+}
+
+@media (max-width: 1024px) {
+  .topbar-nav {
+    display: none;
+  }
+  .mobile-nav-toggle {
+    display: inline-flex;
+  }
+  .topbar-inner {
+    padding: 0 16px;
+    height: 64px;
+  }
   .page-content {
-    padding: 12px 24px 32px;
-    max-width: 100%;
+    padding: 20px 16px 36px;
   }
 }
 </style>

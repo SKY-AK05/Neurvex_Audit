@@ -29,10 +29,13 @@ LEVEL_THRESHOLDS = [
 
 
 def _level(score: float) -> str:
-    for lo, hi, label in LEVEL_THRESHOLDS:
-        if lo <= score <= hi:
-            return label
-    return "Level 3 — Developing"
+    r = round(score)
+    if r <= 6:
+        return "Level 1 — Foundational"
+    elif r <= 14:
+        return "Level 2 — Early Progress"
+    else:
+        return "Level 3 — Developing"
 
 
 def calc_weighted_org_score(links: list[dict[str, Any]]) -> dict[str, Any] | None:

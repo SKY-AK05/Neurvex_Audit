@@ -36,9 +36,13 @@ def test_get_settings_table_exists():
             "Custom Sender",
             "custom@orchvate.com",
             "admin@orchvate.com",
+            "admin-cc@orchvate.com",
             True,
             "custom-support@orchvate.com",
             None,
+            False,
+            "",
+            50
         )  # select settings row
     ]
 
@@ -47,5 +51,9 @@ def test_get_settings_table_exists():
     assert settings["sender_name"] == "Custom Sender"
     assert settings["sender_address"] == "custom@orchvate.com"
     assert settings["notification_email"] == "admin@orchvate.com"
+    assert settings["notification_cc_email"] == "admin-cc@orchvate.com"
     assert settings["notifications_enabled"] is True
     assert settings["support_email"] == "custom-support@orchvate.com"
+    assert settings["crm_sync_enabled"] is False
+    assert settings["hubspot_api_key"] == ""
+    assert settings["low_visibility_threshold"] == 50

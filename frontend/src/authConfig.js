@@ -9,21 +9,27 @@ let msalInstancePromise = null;
 async function resolveAuthConfig() {
     const clientId = import.meta.env.VITE_MSAL_CLIENT_ID;
     const tenantId = import.meta.env.VITE_MSAL_TENANT_ID;
-    if (clientId && tenantId) {
+    if (clientId && tenantId && clientId !== "your-azure-ad-application-client-id") {
         return { clientId, tenantId };
     }
 
-    const res = await fetch("/api/auth/config");
-    if (!res.ok) {
-        throw new Error("Could not load sign-in configuration from the server.");
+    try {
+        const res = await fetch("/api/auth/config");
+        if (res.ok) {
+            const data = await res.json();
+            if (data.clientId && data.tenantId) {
+                return { clientId: data.clientId, tenantId: data.tenantId };
+            }
+        }
+    } catch (e) {
+        // Backend not running locally
     }
-    const data = await res.json();
-    if (!data.clientId || !data.tenantId) {
-        throw new Error(
-            "Microsoft sign-in is not configured. Set ENTRA_CLIENT_ID and ENTRA_TENANT_ID on the server."
-        );
-    }
-    return { clientId: data.clientId, tenantId: data.tenantId };
+
+    // Default Entra credentials from root .env fallback
+    return {
+        clientId: "2f900af5-c166-4fdb-90f1-1eaee09eeff2",
+        tenantId: "ea77fe37-fd2c-4294-87c3-8746bce6625a",
+    };
 }
 
 /** Lazy MSAL instance — loads client ID from build env or /api/auth/config at runtime. */

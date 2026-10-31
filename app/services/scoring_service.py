@@ -85,7 +85,7 @@ OVERALL_SYNOPSIS = [
 def score_section(data: dict, section_key: str, questions: list) -> tuple[float, int, int]:
     n_total = len(questions)
     # Exclude questions answered with NA
-    applicable_questions = [q for q in questions if data.get(q["field_name"], "") != "NA"]
+    applicable_questions = [q for q in questions if data.get(q["field_name"], "") not in ("NA", "N/A")]
     n_applicable = len(applicable_questions)
 
     if n_applicable == 0:
@@ -102,7 +102,7 @@ def score_section(data: dict, section_key: str, questions: list) -> tuple[float,
         max_total += q_max
 
         ans = data.get(q["field_name"], "")
-        if ans != "NA":
+        if ans not in ("NA", "N/A"):
             if ans == "Not Sure":
                 not_sure_count += 1
             raw_score += q["score_mapping"].get(ans, 0)

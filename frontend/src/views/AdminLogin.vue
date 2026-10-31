@@ -27,6 +27,26 @@
         <span>{{ loading ? 'Connecting to Microsoft...' : 'Sign in with Microsoft' }}</span>
       </button>
 
+      <!-- Localhost Dev Mode Quick Entry -->
+      <div v-if="isLocalhost" style="margin-top: 16px; width: 100%; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin: 4px 0;">
+          <div style="flex: 1; height: 1px; background: rgba(22, 16, 87, 0.15);"></div>
+          <span style="font-size: 0.7rem; font-weight: 700; color: #64748B; letter-spacing: 0.05em;">LOCAL DEV ACCESS</span>
+          <div style="flex: 1; height: 1px; background: rgba(22, 16, 87, 0.15);"></div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-outline"
+          style="width: 100%; justify-content: center; font-size: 0.875rem; font-weight: 700; border: 1.5px solid var(--primary); background: #FAF9F5; padding: 10px 16px; border-radius: 8px;"
+          @click="quickDevLogin"
+        >
+          ⚡ Enter Dashboard (Dev Mode Bypass)
+        </button>
+        <p style="font-size: 0.725rem; color: #64748B; text-align: center; margin: 0; line-height: 1.4;">
+          Instant access without requiring Azure AD setup or local backend.
+        </p>
+      </div>
+
       <!-- Powered by Orchvate footer -->
       <div class="login-footer">
         <div class="powered-by-wrap">
@@ -51,6 +71,16 @@ const router   = useRouter();
 
 const isLocalhost = ref(window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 const devEmail = ref("");
+
+function quickDevLogin() {
+  const email = "aakash.padyachi@orchvate.com";
+  sessionStorage.setItem("nd_auth", "1");
+  sessionStorage.setItem("nd_user_name", "Aakash Padyachi");
+  sessionStorage.setItem("nd_role", "super");
+  sessionStorage.setItem("nd_auth_token", "local_bypass:" + email);
+  sessionStorage.removeItem("nd_auth_error");
+  router.push("/admin/dashboard");
+}
 
 async function handleDevLogin() {
   if (!devEmail.value) {
