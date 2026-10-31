@@ -99,7 +99,7 @@ async function handleSubmit() {
   background: #FFFFFF;
   border: 1px solid rgba(22, 16, 87, 0.08);
   border-radius: 20px;
-  padding: 3rem 2.5rem;
+  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 2.5rem);
   box-shadow: 0 16px 48px rgba(22, 16, 87, 0.06);
   max-width: 440px;
   width: 100%;

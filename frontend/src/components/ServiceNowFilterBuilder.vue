@@ -967,17 +967,21 @@ defineExpose({
 }
 
 .sn-field-select {
-  width: 210px;
+  flex: 1 1 180px;
+  min-width: 140px;
+  max-width: 100%;
 }
 .sn-operator-select {
-  width: 170px;
+  flex: 1 1 150px;
+  min-width: 130px;
+  max-width: 100%;
 }
 
 /* Value Input Container */
 .sn-value-input-container {
-  min-width: 230px;
-  flex: 1;
-  max-width: 360px;
+  min-width: 160px;
+  flex: 1.5 1 200px;
+  max-width: 100%;
 }
 
 .sn-empty-placeholder {
@@ -1093,12 +1097,15 @@ defineExpose({
   align-items: center;
   gap: 0.45rem;
   margin-bottom: 0.35rem;
+  flex-wrap: wrap;
 }
 .sn-sort-select {
-  width: 210px;
+  flex: 1 1 180px;
+  min-width: 140px;
 }
 .sn-sort-dir {
-  width: 220px;
+  flex: 1 1 180px;
+  min-width: 140px;
 }
 
 /* Breadcrumb bar */
@@ -1189,5 +1196,42 @@ defineExpose({
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 1.25rem;
+}
+
+@media (max-width: 640px) {
+  .sn-topbar-left {
+    gap: 0.35rem;
+  }
+  .sn-btn {
+    padding: 0.35rem 0.55rem;
+    font-size: 0.76rem;
+  }
+  .sn-condition-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 8px;
+  }
+  .sn-cond-prefix {
+    width: 100%;
+    text-align: left;
+  }
+  .sn-row-actions {
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .sn-breadcrumb-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .sn-modal-card {
+    width: 95%;
+    padding: 1rem;
+  }
 }
 </style>

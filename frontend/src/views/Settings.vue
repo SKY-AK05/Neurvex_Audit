@@ -271,7 +271,7 @@ async function confirmDeleteAll() {
 
 .fields-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1rem;
 }
 
@@ -296,11 +296,13 @@ async function confirmDeleteAll() {
   align-items: center;
   gap: 1rem;
   padding-top: 0.5rem;
+  flex-wrap: wrap;
 }
 .actions .btn-primary {
   border-radius: 99px;
-  padding: 0.65rem 1.6rem;
+  padding: 0.75rem 1.75rem;
   font-weight: 700;
+  min-height: 44px;
   box-shadow: 0 4px 14px rgba(22, 16, 87, 0.2);
 }
 .msg-inline { margin: 0; padding: 0.6rem 1rem; border-radius: 8px; }
@@ -331,7 +333,34 @@ async function confirmDeleteAll() {
 }
 .delete-section .btn-danger {
   border-radius: 99px;
-  padding: 0.65rem 1.5rem;
+  padding: 0.75rem 1.5rem;
   font-weight: 700;
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: clamp(14px, 4vw, 20px);
+    border-radius: 12px;
+  }
+  .fields-row {
+    grid-template-columns: 1fr;
+  }
+  .actions .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .delete-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .delete-section .field {
+    min-width: 100%;
+    max-width: 100% !important;
+  }
+  .delete-section .btn-danger {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>

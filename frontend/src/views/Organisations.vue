@@ -51,78 +51,97 @@
             <h2 class="osc-title">Organisations</h2>
             <span class="osc-subtitle">{{ filteredOrgs.length }} organisations found</span>
           </div>
-          <span class="osc-badge">{{ orgFilter === 'all' ? 'All' : orgFilter }}</span>
+          <div class="osc-header-right">
+            <span class="osc-badge">{{ orgFilter === 'all' ? 'All' : orgFilter }}</span>
+            <button
+              type="button"
+              class="mobile-dir-toggle-btn"
+              @click="mobileDirectoryOpen = !mobileDirectoryOpen"
+              :aria-expanded="mobileDirectoryOpen"
+            >
+              {{ mobileDirectoryOpen ? 'Hide Directory ▲' : 'Switch Org ▼' }}
+            </button>
+          </div>
         </div>
 
-        <!-- Filter Chips in Sidebar -->
-        <div class="sidebar-filter-pills">
-          <button
-            class="s-pill"
-            :class="{ active: orgFilter === 'all' }"
-            @click="orgFilter = 'all'"
-          >All</button>
-          <button
-            class="s-pill"
-            :class="{ active: orgFilter === 'with_submissions' }"
-            @click="orgFilter = 'with_submissions'"
-          >With Audits</button>
-          <button
-            class="s-pill"
-            :class="{ active: orgFilter === 'linked' }"
-            @click="orgFilter = 'linked'"
-          >Linked</button>
-          <button
-            class="s-pill"
-            :class="{ active: orgFilter === 'unlinked' }"
-            @click="orgFilter = 'unlinked'"
-          >Pools</button>
+        <!-- Mobile Quick Summary when collapsed -->
+        <div class="osc-mobile-selected" v-if="selectedOrg && !mobileDirectoryOpen">
+          <span class="oms-label">Active:</span>
+          <strong class="oms-name">{{ selectedOrg.name }}</strong>
+          <span class="oms-badge">{{ selectedOrg.org_avg != null ? selectedOrg.org_avg + '/20' : '—' }}</span>
         </div>
 
-        <!-- Scrollable Organisations List -->
-        <div v-if="loading" class="sidebar-loading">
-          <div class="spinner"></div>
-          <span>Loading organisations…</span>
-        </div>
+        <div class="osc-collapsible-body" :class="{ 'mobile-open': mobileDirectoryOpen }">
+          <!-- Filter Chips in Sidebar -->
+          <div class="sidebar-filter-pills">
+            <button
+              class="s-pill"
+              :class="{ active: orgFilter === 'all' }"
+              @click="orgFilter = 'all'"
+            >All</button>
+            <button
+              class="s-pill"
+              :class="{ active: orgFilter === 'with_submissions' }"
+              @click="orgFilter = 'with_submissions'"
+            >With Audits</button>
+            <button
+              class="s-pill"
+              :class="{ active: orgFilter === 'linked' }"
+              @click="orgFilter = 'linked'"
+            >Linked</button>
+            <button
+              class="s-pill"
+              :class="{ active: orgFilter === 'unlinked' }"
+              @click="orgFilter = 'unlinked'"
+            >Pools</button>
+          </div>
 
-        <div v-else-if="filteredOrgs.length === 0" class="sidebar-empty">
-          <p>No matching organisations</p>
-          <button class="btn-reset-filter" @click="orgSearch = ''; orgFilter = 'all'">Reset</button>
-        </div>
+          <!-- Scrollable Organisations List -->
+          <div v-if="loading" class="sidebar-loading">
+            <div class="spinner"></div>
+            <span>Loading organisations…</span>
+          </div>
 
-        <div v-else class="sidebar-orgs-list" role="tablist">
-          <button
-            v-for="org in filteredOrgs"
-            :key="org.id"
-            role="tab"
-            :aria-selected="selectedOrg?.id === org.id"
-            class="sidebar-org-item"
-            :class="{
-              'active': selectedOrg?.id === org.id,
-              'virtual': org.is_virtual,
-              'has-subs': org.respondent_count > 0
-            }"
-            @click="selectOrg(org)"
-          >
-            <div class="soi-left">
-              <div class="soi-monogram" :style="{ backgroundColor: getMonogramColor(org.name) }">
-                {{ getMonogram(org.name) }}
+          <div v-else-if="filteredOrgs.length === 0" class="sidebar-empty">
+            <p>No matching organisations</p>
+            <button class="btn-reset-filter" @click="orgSearch = ''; orgFilter = 'all'">Reset</button>
+          </div>
+
+          <div v-else class="sidebar-orgs-list" role="tablist">
+            <button
+              v-for="org in filteredOrgs"
+              :key="org.id"
+              role="tab"
+              :aria-selected="selectedOrg?.id === org.id"
+              class="sidebar-org-item"
+              :class="{
+                'active': selectedOrg?.id === org.id,
+                'virtual': org.is_virtual,
+                'has-subs': org.respondent_count > 0
+              }"
+              @click="selectOrg(org)"
+            >
+              <div class="soi-left">
+                <div class="soi-monogram" :style="{ backgroundColor: getMonogramColor(org.name) }">
+                  {{ getMonogram(org.name) }}
+                </div>
+                <div class="soi-text">
+                  <span class="soi-name" :title="org.name">{{ org.name }}</span>
+                  <span class="soi-count">
+                    {{ org.respondent_count }} {{ org.respondent_count === 1 ? 'submission' : 'submissions' }}
+                  </span>
+                </div>
               </div>
-              <div class="soi-text">
-                <span class="soi-name" :title="org.name">{{ org.name }}</span>
-                <span class="soi-count">
-                  {{ org.respondent_count }} {{ org.respondent_count === 1 ? 'submission' : 'submissions' }}
+
+              <div class="soi-right">
+                <span class="soi-score" :class="getScoreColorClass(org.org_avg)">
+                  {{ org.org_avg != null ? org.org_avg + '/20' : '—' }}
                 </span>
+                <span v-if="org.is_virtual" class="soi-tag-pool">Pool</span>
+                <span v-else class="soi-tag-linked">Linked</span>
               </div>
-            </div>
-
-            <div class="soi-right">
-              <span class="soi-score" :class="getScoreColorClass(org.org_avg)">
-                {{ org.org_avg != null ? org.org_avg + '/20' : '—' }}
-              </span>
-              <span v-if="org.is_virtual" class="soi-tag-pool">Pool</span>
-              <span v-else class="soi-tag-linked">Linked</span>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -867,6 +886,7 @@ const orgFilter = ref('all');
 const selectedSegmentKey = ref('function');
 const selectedInputPillar = ref('all');
 const inputSearchQuery = ref('');
+const mobileDirectoryOpen = ref(false);
 
 // Toast
 const toast = reactive({ show: false, message: '', type: 'success' });
@@ -1296,6 +1316,7 @@ async function fetchPreview(orgId) {
 }
 
 async function selectOrg(org) {
+  mobileDirectoryOpen.value = false;
   if (selectedOrg.value?.id === org.id) return;
   selectedOrg.value = org;
   expandedRespondentId.value = null;
@@ -1666,6 +1687,63 @@ onMounted(fetchOrgs);
   align-items: flex-start;
   padding-bottom: 10px;
   border-bottom: 1.5px solid #F1F5F9;
+  gap: 8px;
+}
+
+.osc-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-dir-toggle-btn {
+  display: none;
+  align-items: center;
+  padding: 6px 12px;
+  background: #FAF9F5;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  cursor: pointer;
+  min-height: 38px;
+}
+
+.osc-mobile-selected {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #FAF9F5;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+}
+
+.oms-label {
+  color: #64748B;
+  font-size: 0.78rem;
+}
+
+.oms-name {
+  color: var(--primary, #161057);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.oms-badge {
+  font-weight: 800;
+  color: #04907C;
+  font-family: monospace;
+}
+
+.osc-collapsible-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .osc-title {
@@ -3064,5 +3142,108 @@ onMounted(fetchOrgs);
 @keyframes toastSlide {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .main-orgs-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .org-sidebar-card {
+    position: static;
+    top: auto;
+    max-height: none;
+    padding: 14px 16px;
+  }
+  .mobile-dir-toggle-btn {
+    display: inline-flex;
+  }
+  .osc-mobile-selected {
+    display: flex;
+  }
+  .osc-collapsible-body {
+    display: none;
+  }
+  .osc-collapsible-body.mobile-open {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+    max-height: 400px;
+  }
+  .sidebar-orgs-list {
+    max-height: 280px;
+  }
+  .search-banner-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .search-divider {
+    display: none;
+  }
+  .search-filter-group select {
+    width: 100%;
+    padding: 6px 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-title {
+    font-size: clamp(1.4rem, 5vw, 1.85rem);
+  }
+  .org-hero-card {
+    padding: 16px 14px;
+  }
+  .org-hero-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .org-hero-left {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .org-hero-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .org-hero-actions {
+    width: 100%;
+  }
+  .org-hero-actions .btn {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .pillars-cards-grid {
+    grid-template-columns: 1fr;
+  }
+  .highlights-grid {
+    grid-template-columns: 1fr;
+  }
+  .qac-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .modal-card {
+    width: 95%;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .org-hero-actions {
+    flex-direction: column;
+  }
+  .org-hero-actions .btn {
+    width: 100%;
+  }
+  .hero-score-stat {
+    align-items: flex-start;
+    text-align: left;
+  }
 }
 </style>

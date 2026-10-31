@@ -477,5 +477,13 @@ async function submit() {
   .card-title {
     font-size: 1.5rem;
   }
+  .card-footer {
+    justify-content: stretch;
+  }
+  .btn-primary-pill {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
 }
 </style>

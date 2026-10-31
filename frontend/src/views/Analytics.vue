@@ -344,6 +344,19 @@ onMounted(async () => {
 
 @media (max-width: 900px) {
   .charts-row-2 { grid-template-columns: 1fr; gap: 12px; }
-  .chart-card, .chart-card-full { padding: 20px; }
+  .chart-card, .chart-card-full { padding: clamp(14px, 4vw, 20px); }
+}
+
+@media (max-width: 480px) {
+  .rank-row {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+  .rank-score-bar {
+    width: 45px;
+  }
+  .rank-name {
+    font-size: 0.825rem;
+  }
 }
 </style>

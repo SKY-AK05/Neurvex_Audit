@@ -4072,19 +4072,20 @@ html {
 }
 
 .opt-btn {
-  padding: 0.5rem 1rem; 
-  border-radius: 6px;
+  padding: 0.6rem 1rem; 
+  border-radius: 8px;
   border: 1px solid #D1D5DB; 
   background: #FFFFFF;
-  font-size: 0.8125rem; 
+  font-size: 0.85rem; 
   font-weight: 500; 
   cursor: pointer; 
   color: #374151;
   transition: all 0.2s ease;
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  touch-action: manipulation;
 }
 
 .opt-btn:hover { 
@@ -4419,9 +4420,10 @@ html {
   }
   .btn-back, .btn-next, .btn-submit, .save-continue-container :deep(.btn),
   .save-continue-container :deep(.btn-green) {
-    height: 38px;
-    padding: 0.4rem 0.7rem;
-    font-size: 0.8rem;
+    min-height: 44px;
+    height: auto;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
     font-weight: 700;
     border-radius: 8px;
     border: 1.5px solid var(--c-border);
@@ -4433,14 +4435,15 @@ html {
   }
   .btn-back {
     flex: 1;
-    min-width: 60px;
-    max-width: 75px;
+    min-width: 70px;
+    max-width: 90px;
   }
   .btn-start-fresh {
     flex: 1;
-    height: 38px;
-    padding: 0.4rem 0.7rem;
-    font-size: 0.8rem;
+    min-height: 44px;
+    height: auto;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.85rem;
     border-radius: 8px;
     border: 1.5px solid var(--c-border);
     box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
@@ -4452,10 +4455,11 @@ html {
   }
   .save-continue-container :deep(.btn) {
     width: 100%;
+    min-height: 44px;
   }
   .btn-next, .btn-submit {
-    flex: 1;
-    min-width: 80px;
+    flex: 1.4;
+    min-width: 95px;
     box-shadow: 2px 2px 0 rgba(4, 144, 124, 0.3);
   }
 
@@ -4465,9 +4469,42 @@ html {
     align-items: center;
   }
   .dev-btn {
-    height: 32px;
+    min-height: 36px;
     padding: 0 0.75rem;
     font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .options {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+  .opt-btn {
+    min-height: 44px;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.85rem;
+    text-align: center;
+    width: 100%;
+  }
+  .step-actions {
+    padding: 0.65rem 0.85rem;
+  }
+  .step-nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .step-nav-mid {
+    order: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .btn-back, .btn-next, .btn-submit, .btn-start-fresh, .save-continue-container {
+    width: 100%;
+    max-width: 100%;
+    min-height: 44px;
   }
 }
 /* ── Intro screen (step 0) ─────────────────────────────── */

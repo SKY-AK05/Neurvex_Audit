@@ -42,7 +42,8 @@
       </div>
       <p v-else-if="error" class="alert alert-error">{{ error }}</p>
       <template v-else>
-        <div class="table-container">
+        <!-- Desktop / Tablet Table View (769px+) -->
+        <div class="table-container desktop-table-view">
           <table class="sub-table">
             <thead>
               <tr>
@@ -94,6 +95,58 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <!-- Mobile Adaptive Card View (<= 768px) -->
+        <div class="mobile-submissions-feed">
+          <div v-if="!submissions.length" class="empty-mobile-card">
+            No submissions found matching the active filter criteria.
+          </div>
+          <div
+            v-for="s in submissions"
+            :key="'mob-' + s.id"
+            class="sub-card-mobile"
+            @click="$router.push(`/admin/submissions/${s.id}`)"
+          >
+            <div class="scm-header">
+              <span class="scm-org">{{ s.company_name }}</span>
+              <span :class="`badge badge-${s.status === 'sent' ? 'delivered' : 'pending'}`">
+                <span class="badge-dot"></span>
+                {{ s.status === 'sent' ? 'Delivered' : (s.status === 'sending' ? 'Sending' : 'Pending') }}
+              </span>
+            </div>
+            
+            <div class="scm-body">
+              <div class="scm-row">
+                <span class="scm-label">Recipient:</span>
+                <span class="scm-value email">{{ s.email }}</span>
+              </div>
+              <div class="scm-row" v-if="s.designation">
+                <span class="scm-label">Role:</span>
+                <span class="scm-value">{{ s.designation }}</span>
+              </div>
+              <div class="scm-row">
+                <span class="scm-label">Score &amp; Level:</span>
+                <div class="scm-score-badge">
+                  <strong>{{ s.overall_avg != null ? s.overall_avg : '—' }}</strong>/20
+                  <span class="scm-level" v-if="s.overall_level">({{ s.overall_level }})</span>
+                </div>
+              </div>
+              <div class="scm-row">
+                <span class="scm-label">Date:</span>
+                <span class="scm-value">{{ fmtDate(s.submitted_at) }}</span>
+              </div>
+            </div>
+
+            <div class="scm-footer" @click.stop>
+              <button class="scm-btn scm-btn-view" @click="$router.push(`/admin/submissions/${s.id}`)">
+                View Full Audit →
+              </button>
+              <button class="scm-btn-icon" @click="downloadOne(s)" title="Download CSV" aria-label="Download CSV">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Server-Side Pagination -->
@@ -418,5 +471,214 @@ async function downloadCurrentPage() {
   background: var(--c-primary-dark, #161057);
   color: #FFFFFF;
   border-color: var(--c-primary-dark, #161057);
+}
+
+/* Mobile Submissions Cards (<= 768px) */
+.mobile-submissions-feed {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.sub-card-mobile {
+  background: #FFFFFF;
+  border: 1.5px solid rgba(22, 16, 87, 0.12);
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.sub-card-mobile:hover {
+  border-color: var(--c-primary-dark, #161057);
+  transform: translateY(-1px);
+}
+
+.scm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.scm-org {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+}
+
+.scm-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.scm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.scm-label {
+  color: #64748B;
+  font-weight: 600;
+  font-size: 0.78rem;
+}
+
+.scm-value {
+  color: #1E293B;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.scm-value.email {
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.scm-score-badge {
+  font-family: monospace;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.scm-score-badge strong {
+  color: var(--c-primary-dark, #161057);
+  font-size: 1.05rem;
+}
+
+.scm-level {
+  font-size: 0.75rem;
+  color: var(--c-accent, #04907C);
+  font-family: var(--font-body, sans-serif);
+  font-weight: 700;
+}
+
+.scm-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #F1F5F9;
+  margin-top: 2px;
+}
+
+.scm-btn-view {
+  flex: 1;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #FAF9F5;
+  border: 1.5px solid var(--c-primary-dark, #161057);
+  color: var(--c-primary-dark, #161057);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scm-btn-view:hover {
+  background: var(--c-primary-dark, #161057);
+  color: #FFFFFF;
+}
+
+.scm-btn-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1.5px solid var(--c-accent, #04907C);
+  background: #E6F4F1;
+  color: var(--c-accent, #04907C);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.scm-btn-icon:hover {
+  background: var(--c-accent, #04907C);
+  color: #FFFFFF;
+}
+
+.empty-mobile-card {
+  text-align: center;
+  padding: 32px 16px;
+  color: #94A3B8;
+  font-size: 0.9rem;
+  background: #F8FAFC;
+  border: 1px dashed #CBD5E1;
+  border-radius: 10px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 768px) {
+  .desktop-table-view {
+    display: none;
+  }
+  .mobile-submissions-feed {
+    display: flex;
+  }
+  .table-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .toolbar-right {
+    width: 100%;
+  }
+  .btn-download {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+  .card {
+    padding: clamp(14px, 3vw, 20px);
+  }
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .page-btn {
+    min-width: 38px;
+    height: 38px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .scm-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+  .scm-value {
+    text-align: left;
+  }
+  .page-btns {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 </style>

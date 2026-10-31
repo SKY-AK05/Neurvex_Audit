@@ -145,4 +145,12 @@ async function submit() {
   .support-layout { grid-template-columns: 1fr; }
   .info-card { order: -1; }
 }
+
+@media (max-width: 600px) {
+  .support-card .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
 </style>

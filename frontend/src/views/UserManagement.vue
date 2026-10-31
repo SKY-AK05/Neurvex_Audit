@@ -205,6 +205,7 @@ onMounted(() => {
   align-items: flex-end;
   gap: 1.5rem;
   margin-top: 1.5rem;
+  flex-wrap: wrap;
 }
 
 .form-group {
@@ -326,5 +327,21 @@ onMounted(() => {
   color: #10B981;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .add-user-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  .add-user-form .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .card {
+    padding: clamp(14px, 4vw, 20px);
+  }
 }
 </style>

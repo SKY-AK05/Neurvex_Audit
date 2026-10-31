@@ -80,7 +80,7 @@ onMounted(async () => {
   background: #FFFFFF;
   border: 1px solid rgba(22, 16, 87, 0.08);
   border-radius: 18px;
-  padding: 3rem 2.5rem;
+  padding: clamp(1.75rem, 5vw, 3rem) clamp(1.25rem, 5vw, 2.5rem);
   box-shadow: 0 12px 36px rgba(22, 16, 87, 0.05);
   text-align: center;
   max-width: 440px;

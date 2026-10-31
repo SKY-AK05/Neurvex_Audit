@@ -330,13 +330,14 @@ async function deleteQuestion(id, shortTitle) {
 .section-header {
   display: flex; justify-content: space-between; align-items: center;
   border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem;
+  flex-wrap: wrap; gap: 0.75rem;
 }
-.section-info { display: flex; align-items: center; gap: 0.75rem; }
+.section-info { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
 .section-icon { font-size: 1.5rem; color: var(--c-accent); }
 .section-title { font-size: 1.25rem; font-weight: 800; color: var(--c-primary-dark); margin: 0; font-family: 'Fraunces', serif; }
 .section-code { color: #888; font-size: 0.9rem; }
-.section-actions { display: flex; gap: 0.5rem; }
-.btn-sm { padding: 0.3rem 0.8rem; font-size: 0.75rem; }
+.section-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.btn-sm { padding: 0.4rem 0.85rem; font-size: 0.78rem; min-height: 38px; display: inline-flex; align-items: center; }
 .btn-danger-outline { color: #c0392b; border-color: #c0392b; }
 .btn-danger-outline:hover { background: #fff0f0; color: #c0392b; }
 
@@ -346,9 +347,12 @@ async function deleteQuestion(id, shortTitle) {
 .question-row {
   display: flex; justify-content: space-between; align-items: center;
   padding: 1rem; background: #faf9f6; border: 1px solid #ddd; border-radius: 8px;
+  flex-wrap: wrap; gap: 0.75rem;
 }
+.q-left { flex: 1; min-width: 220px; }
 .q-title { font-size: 0.95rem; color: var(--c-primary-dark); margin-bottom: 0.3rem; }
 .q-text { font-size: 0.85rem; color: #666; }
+.q-right { display: flex; gap: 0.5rem; }
 
 .empty-questions { color: #888; font-size: 0.9rem; font-style: italic; }
 
@@ -356,19 +360,20 @@ async function deleteQuestion(id, shortTitle) {
 .modal-overlay {
   position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(0,0,0,0.5); z-index: 1000;
-  display: grid; place-items: center; padding: 2rem;
+  display: grid; place-items: center; padding: 1rem;
 }
 .modal-content {
   background: var(--c-white); border-radius: 12px;
-  width: 100%; max-width: 500px;
+  width: min(94vw, 500px); max-width: 500px;
   max-height: 90vh; overflow-y: auto;
-  padding: 1.5rem; border: 2px solid var(--c-primary-dark);
+  padding: clamp(1rem, 3vw, 1.5rem); border: 2px solid var(--c-primary-dark);
   box-shadow: 6px 6px 0 var(--c-primary-dark);
 }
-.modal-large { max-width: 700px; }
+.modal-large { width: min(94vw, 700px); max-width: 700px; }
 .modal-content h2 { font-size: 1.5rem; margin-bottom: 1rem; font-family: 'Fraunces', serif; }
 .modal-body { display: flex; flex-direction: column; gap: 1rem; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.modal-footer .btn { min-height: 44px; }
 
 .score-mapping {
   background: #f5f5f5; padding: 1rem; border-radius: 8px;
@@ -379,4 +384,34 @@ async function deleteQuestion(id, shortTitle) {
 }
 .score-key { font-weight: 600; font-size: 0.9rem; }
 .score-input { width: 80px; padding: 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .header-actions {
+    width: 100%;
+  }
+  .header-actions .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+  .section-card {
+    padding: 1rem;
+  }
+  .section-actions {
+    width: 100%;
+  }
+  .section-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+  .q-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
 </style>

@@ -40,49 +40,51 @@
       <p v-else-if="error" class="alert alert-error">{{ error }}</p>
       <p v-else-if="!submissions.length" class="loading">No submissions yet.</p>
 
-      <table v-else class="data-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Name</th>
-            <th>Job Role</th>
-            <th>Organisation</th>
-            <th>Email</th>
-            <th>Contact</th>
-            <th>Submitted</th>
-            <th>Avg Score</th>
-            <th>Maturity</th>
-            <th>Status</th>
-            <th>Export</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="s in filtered"
-            :key="s.id"
-            @click="$router.push(`/admin/submissions/${s.id}`)"
-          >
-            <td class="id-cell">{{ s.id }}</td>
-            <td>{{ s.name }}</td>
-            <td>{{ s.designation || '—' }}</td>
-            <td>{{ s.company_name }}</td>
-            <td class="email-cell">{{ s.email }}</td>
-            <td>{{ s.contact_number || '—' }}</td>
-            <td>{{ fmtDate(s.submitted_at) }}</td>
-            <td><strong>{{ s.overall_avg }}</strong>/20</td>
-            <td>{{ s.overall_level }}</td>
-            <td><span :class="`badge badge-${s.status}`">{{ cap(s.status) }}</span></td>
-            <td @click.stop>
-              <button class="row-dl-btn" @click="downloadOne(s)" title="Download this submission">
-                ⬇
-              </button>
-            </td>
-          </tr>
-          <tr v-if="!filtered.length">
-            <td colspan="11" class="empty-row">No submissions match the current filters.</td>
-          </tr>
-        </tbody>
-      </table>
+      <div v-else class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Job Role</th>
+              <th>Organisation</th>
+              <th>Email</th>
+              <th>Contact</th>
+              <th>Submitted</th>
+              <th>Avg Score</th>
+              <th>Maturity</th>
+              <th>Status</th>
+              <th>Export</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="s in filtered"
+              :key="s.id"
+              @click="$router.push(`/admin/submissions/${s.id}`)"
+            >
+              <td class="id-cell">{{ s.id }}</td>
+              <td>{{ s.name }}</td>
+              <td>{{ s.designation || '—' }}</td>
+              <td>{{ s.company_name }}</td>
+              <td class="email-cell">{{ s.email }}</td>
+              <td>{{ s.contact_number || '—' }}</td>
+              <td>{{ fmtDate(s.submitted_at) }}</td>
+              <td><strong>{{ s.overall_avg }}</strong>/20</td>
+              <td>{{ s.overall_level }}</td>
+              <td><span :class="`badge badge-${s.status}`">{{ cap(s.status) }}</span></td>
+              <td @click.stop>
+                <button class="row-dl-btn" @click="downloadOne(s)" title="Download this submission">
+                  ⬇
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!filtered.length">
+              <td colspan="11" class="empty-row">No submissions match the current filters.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -220,7 +222,11 @@ h1 { font-size: 1.4rem; font-weight: 600; }
 .dl-count { font-weight: 400; opacity: 0.85; font-size: 0.82rem; }
 .filter-hint { font-size: 0.8rem; color: #aaa; margin-top: 12px; }
 
-.data-table { width: 100%; border-collapse: collapse; }
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+.data-table { width: 100%; border-collapse: collapse; min-width: 800px; }
 .data-table th {
   text-align: left; padding: 14px 16px;
   font-size: 0.7rem; font-weight: 800; color: #aaa;

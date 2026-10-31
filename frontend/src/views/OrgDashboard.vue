@@ -507,4 +507,32 @@ const chartPath = computed(() => {
     padding: 1.5rem 1.25rem 3rem;
   }
 }
+
+@media (max-width: 600px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .header-titles h1 {
+    font-size: clamp(1.4rem, 5vw, 1.75rem);
+  }
+  .actions {
+    width: 100%;
+    flex-direction: column;
+  }
+  .btn-primary-pill, .btn-ghost-pill {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .dashboard-content {
+    padding: 1rem 0.75rem 2.5rem;
+  }
+  .card {
+    padding: 1.25rem 1rem;
+  }
+}
 </style>

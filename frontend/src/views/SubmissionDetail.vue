@@ -695,4 +695,29 @@ h2 {
 .na-score { background: #F8FAFC; border-color: #E2E8F0; }
 .na-score .dim-label, .na-score .dim-val { color: #94A3B8; }
 .na-score .dim-commentary { color: #94A3B8; font-style: italic; }
+
+@media (max-width: 680px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  .dimension-scorecard-grid {
+    grid-template-columns: 1fr;
+  }
+  .card-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .card {
+    padding: clamp(14px, 4vw, 20px);
+  }
+  .modal-content {
+    width: 95%;
+    padding: 1.5rem 1.25rem;
+  }
+}
 </style>

@@ -2288,7 +2288,7 @@ onMounted(async () => {
 
 @media (max-width: 860px) {
   .hero-title {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 5vw, 2rem);
   }
   .search-banner-card {
     flex-direction: column;
@@ -2302,6 +2302,7 @@ onMounted(async () => {
   .hero-search-btn {
     width: 100%;
     text-align: center;
+    min-height: 44px;
   }
   .main-dashboard-grid {
     grid-template-columns: 1fr;
@@ -2315,14 +2316,19 @@ onMounted(async () => {
   .results-header-bar {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
   .results-header-right {
     width: 100%;
-    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: flex-start;
   }
   .card-header-row {
     flex-direction: column;
     align-items: flex-start;
+    gap: 8px;
   }
   .card-action-row {
     flex-direction: column;
@@ -2330,14 +2336,55 @@ onMounted(async () => {
     gap: 12px;
   }
   .card-buttons {
-    justify-content: space-between;
+    display: flex;
+    gap: 8px;
+    width: 100%;
   }
   .card-action-btn {
     flex: 1;
     text-align: center;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card-csv-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
   .kpi-metric-strip {
     grid-template-columns: 1fr;
+  }
+  .sort-wrapper {
+    width: 100%;
+  }
+  .sort-select {
+    flex: 1;
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 420px) {
+  .card-buttons {
+    flex-direction: column;
+  }
+  .card-csv-btn {
+    width: 100%;
+  }
+  .view-toggle-group {
+    width: 100%;
+  }
+  .view-btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 40px;
+  }
+  .btn-outline-retro, .btn-primary-retro {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
   }
 }
 </style>
