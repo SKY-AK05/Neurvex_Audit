@@ -81,13 +81,6 @@
             <p class="hero-note anim-hero-p5">
               <em>Answer based on your organisation's current reality, not intention.</em>
             </p>
-
-            <!-- Phase 4: Next Button -->
-            <div class="hero-btn-row anim-hero-cta">
-              <button class="btn-next hero-cta-btn" @click="nextStep" type="button">
-                Next &rarr;
-              </button>
-            </div>
           </div>
 
           <!-- Right Column: Illustration Image -->
@@ -103,6 +96,13 @@
               <div class="perspectives-label">MULTIPLE PERSPECTIVES</div>
               <div class="perspectives-flow">Understand → Prioritise → Act</div>
             </div>
+          </div>
+
+          <!-- Phase 4: Next Button (placed after visual on mobile, row 2 col 1 on desktop) -->
+          <div class="hero-btn-row anim-hero-cta">
+            <button class="btn-next hero-cta-btn" @click="nextStep" type="button">
+              Next &rarr;
+            </button>
           </div>
           </div>
         </div>
@@ -1054,7 +1054,7 @@ watch(currentStep, async (step) => {
   await nextTick();
   questionsScroll.value?.scrollTo({ top: 0, behavior: "smooth" });
 
-  const el = step === 1 ? whyMattersPageRef.value : unifiedPageRef.value;
+  const el = step === 0 ? introStageRef.value : (step === 1 ? whyMattersPageRef.value : unifiedPageRef.value);
   if (el) {
     el.scrollTop = 0;
     attachScrollObserver(el);
@@ -1502,6 +1502,7 @@ async function submit() {
 .form-inner {
   display: flex; flex-direction: column;
   flex: 1; width: 100%;
+  height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -1513,8 +1514,8 @@ async function submit() {
 .intro-fullpage {
   flex: 1;
   width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
@@ -1522,6 +1523,7 @@ async function submit() {
   position: relative;
   overflow-y: auto;
   overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .intro-fullpage:not(.anim-ready):not(.anim-done) {
@@ -1614,12 +1616,15 @@ async function submit() {
 .hero-content-wrapper {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 3rem;
-  align-items: center;
+  grid-template-rows: auto auto;
+  gap: 0 3rem;
+  align-items: start;
   width: 100%;
 }
 
 .intro-hero-left {
+  grid-column: 1;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1829,6 +1834,8 @@ async function submit() {
 }
 
 .hero-btn-row {
+  grid-column: 1;
+  grid-row: 2;
   display: flex;
   justify-content: flex-start;
   margin-top: 1.75rem;
@@ -1862,6 +1869,8 @@ async function submit() {
 
 /* ── Right Column: Clipart Video Illustration ── */
 .intro-hero-right {
+  grid-column: 2;
+  grid-row: 1 / span 2;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -2084,11 +2093,13 @@ async function submit() {
     padding: 1.5rem 4% 3rem;
   }
   .hero-content-wrapper {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     gap: 2.5rem;
-    align-items: flex-start;
+    align-items: stretch;
   }
   .intro-hero-left {
+    order: 1;
     max-width: 100%;
     padding-right: 0;
   }
@@ -2110,7 +2121,11 @@ async function submit() {
     max-height: 420px;
   }
   .hero-btn-row {
+    order: 3;
+    display: flex;
     justify-content: flex-start;
+    margin-top: 1rem;
+    width: 100%;
   }
 }
 
@@ -2120,7 +2135,7 @@ async function submit() {
     justify-content: flex-end;
   }
   .intro-hero-layout {
-    padding: 1.5rem 5% 2.5rem;
+    padding: 1.25rem 5% max(3.5rem, calc(env(safe-area-inset-bottom, 24px) + 2rem));
   }
   .hero-top-branding {
     flex-direction: column;
@@ -2129,7 +2144,10 @@ async function submit() {
     gap: 0.75rem;
   }
   .hero-content-wrapper {
-    gap: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    align-items: stretch;
   }
   .hero-badge-wrap {
     margin-bottom: 0;
@@ -2163,17 +2181,30 @@ async function submit() {
   .hero-note {
     font-size: 0.875rem;
   }
-  .hero-btn-row {
-    margin-top: 1.5rem;
-    justify-content: flex-start;
-  }
-  .hero-cta-btn {
-    padding: 0.75rem 2rem;
-    font-size: 0.95rem;
+  .intro-hero-left {
+    order: 1;
+    max-width: 100%;
   }
   .intro-hero-right {
+    order: 2;
     gap: 1.25rem;
     margin-top: 0;
+  }
+  .hero-btn-row {
+    order: 3;
+    margin-top: 1.25rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+  .hero-cta-btn {
+    width: 100%;
+    max-width: 420px;
+    min-height: 48px;
+    padding: 0.85rem 2rem;
+    font-size: 1rem;
+    justify-content: center;
   }
   .clipart-card {
     max-width: 100%;
@@ -2199,14 +2230,17 @@ async function submit() {
 
 .why-matters-page {
   width: 100%;
-  height: 100vh;
-  max-height: 100vh;
+  flex: 1;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Compact Header with Logo, Progress, and Orchvate ── */
@@ -2265,7 +2299,7 @@ async function submit() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 3rem 2rem;
+  padding: 0.75rem 3rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
@@ -2721,7 +2755,7 @@ async function submit() {
 /* ── Responsive Styles for Step 1 ── */
 @media (max-width: 1080px) {
   .why-matters-content {
-    padding: 0.75rem 1.75rem 0.5rem;
+    padding: 0.75rem 1.75rem max(4rem, calc(env(safe-area-inset-bottom, 24px) + 2.5rem));
     gap: 0.75rem;
   }
   .benefits-cards-grid {
@@ -2747,8 +2781,8 @@ async function submit() {
 
 @media (max-width: 768px) {
   .why-matters-content {
-    padding: 0.75rem 1.25rem 0.5rem;
-    overflow-y: auto;
+    padding: 0.75rem 1.25rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
+    overflow: visible;
   }
   .section-1-paragraphs {
     grid-template-columns: 1fr;
@@ -2775,15 +2809,18 @@ async function submit() {
 
 @media (max-width: 640px) {
   .why-matters-page {
-    height: auto;
-    min-height: 100vh;
+    height: 100%;
+    max-height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   .why-matters-header {
     padding: 0.625rem 1rem;
   }
   .why-matters-content {
-    padding: 0.875rem 1rem;
+    padding: 0.875rem 1rem max(5.5rem, calc(env(safe-area-inset-bottom, 24px) + 4rem));
     gap: 0.75rem;
     overflow: visible;
   }
@@ -2803,9 +2840,10 @@ async function submit() {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 1.75rem 0 1.5rem;
+  padding: 1.75rem 0 2rem;
   margin-top: 2rem;
   border-top: 1px solid rgba(22, 16, 87, 0.10);
+  width: 100%;
 }
 
 .btn-back-compact {
@@ -2840,6 +2878,25 @@ async function submit() {
 .btn-next-compact:hover {
   background: #0f0a42;
   transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .inline-nav-bar {
+    padding: 1.25rem 0 1.5rem;
+    margin-top: 1.5rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .btn-back-compact,
+  .btn-next-compact,
+  .btn-submit {
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .step-nav-mid {
@@ -4916,19 +4973,22 @@ html {
 
 .unified-page {
   width: 100%;
-  height: 100vh;
-  max-height: 100vh;
+  flex: 1;
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
   overflow-y: auto;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 .unified-content {
   flex: 1;
-  padding: 0 0 2rem;
+  padding: 0;
   max-width: 100%;
   margin: 0;
   width: 100%;
@@ -4958,7 +5018,7 @@ html {
 .questions-scroll {
   flex: 1;
   overflow: visible !important;
-  padding: 0 1.5rem 1.5rem;
+  padding: 0 1.5rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
   background: var(--bg, #FAFAF8);
   min-height: 0;
 }
@@ -4970,7 +5030,7 @@ html {
   }
   
   .questions-scroll {
-    padding: 0 1.5rem 1.25rem;
+    padding: 0 1.5rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
   }
 }
 
@@ -4980,7 +5040,7 @@ html {
   }
   
   .questions-scroll {
-    padding: 0 1.25rem 1rem;
+    padding: 0 1.25rem max(5.5rem, calc(env(safe-area-inset-bottom, 24px) + 4rem));
   }
 }
 
