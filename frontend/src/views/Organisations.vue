@@ -1198,6 +1198,30 @@ const report = reactive({
   loadingPreview: false,
 });
 
+// Invitations State
+const invitations = ref([]);
+const submissionSourceFilter = ref('all');
+const showCreateInviteModal = ref(false);
+const inviteForm = reactive({
+  email: '',
+  role: 'respondent',
+  expires_days: 30,
+});
+const creatingInviteSaving = ref(false);
+const generatedInviteLink = ref('');
+
+// Organisation Management Modals
+const showCreateOrgModal = ref(false);
+const createOrgName = ref('');
+const creatingOrgSaving = ref(false);
+
+const showEditOrgModal = ref(false);
+const editOrgName = ref('');
+const editingOrgSaving = ref(false);
+
+const showDeleteOrgModal = ref(false);
+const deletingOrgSaving = ref(false);
+
 // Direct Message State
 const msgPanel = reactive({
   open: false,
@@ -1791,6 +1815,141 @@ function copyOrgInviteLink() {
     showToast('Assessment URL copied to clipboard!');
   });
 }
+
+// Invitations Management
+async function fetchInvitations(orgId) {
+  if (!orgId) return;
+  try {
+    const data = await getOrgInvitations(orgId);
+    invitations.value = data || [];
+  } catch (e) {
+    console.error('Failed to fetch invitations:', e);
+    invitations.value = [];
+  }
+}
+
+async function handleCreateInvite() {
+  if (!selectedOrg.value || selectedOrg.value.is_virtual) return;
+  creatingInviteSaving.value = true;
+  try {
+    const data = await createOrgInvitation(selectedOrg.value.id, inviteForm);
+    generatedInviteLink.value = data.invite_url || '';
+    await fetchInvitations(selectedOrg.value.id);
+    showToast('Invitation created successfully!');
+    inviteForm.email = '';
+    inviteForm.role = 'respondent';
+    inviteForm.expires_days = 30;
+  } catch (e) {
+    showToast(e.message || 'Failed to create invitation', 'error');
+  } finally {
+    creatingInviteSaving.value = false;
+  }
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('Copied to clipboard!');
+  }).catch(() => {
+    showToast('Failed to copy', 'error');
+  });
+}
+
+// Organisation Lifecycle Management
+function openCreateOrgModal() {
+  showCreateOrgModal.value = true;
+  createOrgName.value = '';
+}
+
+async function handleCreateOrg() {
+  if (!createOrgName.value.trim()) return;
+  creatingOrgSaving.value = true;
+  try {
+    await createOrganisation(createOrgName.value.trim());
+    showToast('Organisation created successfully!');
+    showCreateOrgModal.value = false;
+    createOrgName.value = '';
+    await fetchOrgs();
+  } catch (e) {
+    showToast(e.message || 'Failed to create organisation', 'error');
+  } finally {
+    creatingOrgSaving.value = false;
+  }
+}
+
+function openEditOrgModal(org) {
+  showEditOrgModal.value = true;
+  editOrgName.value = org.name;
+}
+
+async function handleUpdateOrg() {
+  if (!selectedOrg.value || !editOrgName.value.trim()) return;
+  editingOrgSaving.value = true;
+  try {
+    await updateOrganisation(selectedOrg.value.id, editOrgName.value.trim());
+    showToast('Organisation updated successfully!');
+    showEditOrgModal.value = false;
+    editOrgName.value = '';
+    await fetchOrgs();
+  } catch (e) {
+    showToast(e.message || 'Failed to update organisation', 'error');
+  } finally {
+    editingOrgSaving.value = false;
+  }
+}
+
+function openDeleteOrgModal(org) {
+  showDeleteOrgModal.value = true;
+}
+
+async function handleDeleteOrg() {
+  if (!selectedOrg.value) return;
+  deletingOrgSaving.value = true;
+  try {
+    await deleteOrganisation(selectedOrg.value.id);
+    showToast('Organisation deleted successfully!');
+    showDeleteOrgModal.value = false;
+    selectedOrg.value = null;
+    await fetchOrgs();
+  } catch (e) {
+    showToast(e.message || 'Failed to delete organisation', 'error');
+  } finally {
+    deletingOrgSaving.value = false;
+  }
+}
+
+async function toggleOrgStatus(org) {
+  try {
+    await toggleOrganisationStatus(org.id);
+    const newStatus = org.is_active === false ? 'activated' : 'deactivated';
+    showToast(`Organisation ${newStatus} successfully!`);
+    await fetchOrgs();
+  } catch (e) {
+    showToast(e.message || 'Failed to toggle organisation status', 'error');
+  }
+}
+
+// Computed for filtered respondents
+const filteredRespondents = computed(() => {
+  const respondents = detail.value?.respondents || [];
+  if (submissionSourceFilter.value === 'all') return respondents;
+  if (submissionSourceFilter.value === 'direct') {
+    return respondents.filter(r => !r.invited_by);
+  }
+  if (submissionSourceFilter.value === 'invited') {
+    return respondents.filter(r => r.invited_by);
+  }
+  return respondents;
+});
+
+const countDirect = computed(() => {
+  const respondents = detail.value?.respondents || [];
+  return respondents.filter(r => !r.invited_by).length;
+});
+
+const countInvite = computed(() => {
+  const respondents = detail.value?.respondents || [];
+  return respondents.filter(r => r.invited_by).length;
+});
 
 onMounted(fetchOrgs);
 </script>
