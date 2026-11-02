@@ -32,7 +32,10 @@ host.json
 
 # Tests, Scripts & Local Artifacts
 tests/
-scripts/
 temp/
 tmp/
 *.log
+
+# Allow specific scripts needed in container
+!scripts/run_migration.py
+!scripts/migrate.py

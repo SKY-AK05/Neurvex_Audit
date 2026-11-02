@@ -43,8 +43,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source
 COPY app/ app/
 
-# Copy scripts directory (migrations, setup, etc.)
-COPY scripts/ scripts/
+# Copy migration scripts
+COPY scripts/run_migration.py scripts/run_migration.py
+COPY scripts/migrate.py scripts/migrate.py
 
 # Copy migrations SQL files
 COPY migrations/ migrations/
