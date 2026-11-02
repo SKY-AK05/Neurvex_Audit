@@ -1084,6 +1084,116 @@
             </div>
           </section>
 
+          <!-- TAB 6: INVITATIONS & LINKS -->
+          <section v-if="activeTab === 'invitations'" class="invitations-view animate-fade">
+            <div class="invitations-header-card">
+              <div class="ihc-left">
+                <h3 class="ihc-title">Organisation Invitation Links</h3>
+                <p class="ihc-subtitle">
+                  Generate secure, trackable links that auto-fill and lock <strong>{{ selectedOrg.name }}</strong> for new respondents.
+                  Perfect for company-wide assessments where you want to ensure all submissions are linked to this organisation.
+                </p>
+              </div>
+              <div class="ihc-right">
+                <button
+                  class="btn btn-primary-cta"
+                  @click="showCreateInviteModal = true"
+                  :disabled="selectedOrg.is_virtual"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                  Generate New Link
+                </button>
+              </div>
+            </div>
+
+            <!-- Invitations List -->
+            <div v-if="invitations.length === 0" class="invitations-empty-state">
+              <div class="ies-icon">🔗</div>
+              <h4>No Invitation Links Created Yet</h4>
+              <p>Create your first invitation link to start collecting pre-linked submissions for {{ selectedOrg.name }}.</p>
+              <button class="btn btn-primary-cta" @click="showCreateInviteModal = true">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Create First Invitation
+              </button>
+            </div>
+
+            <div v-else class="invitations-grid">
+              <div
+                v-for="inv in invitations"
+                :key="inv.id"
+                class="invitation-card"
+                :class="{ 'inv-expired': !inv.is_active || (inv.expires_at && new Date(inv.expires_at) < new Date()) }"
+              >
+                <div class="invc-header">
+                  <div class="invc-name-section">
+                    <h4 class="invc-name">{{ inv.invitation_name || 'Untitled Link' }}</h4>
+                    <div class="invc-meta-tags">
+                      <span v-if="inv.is_active" class="invc-tag invc-tag-active">✓ Active</span>
+                      <span v-else class="invc-tag invc-tag-inactive">⏸ Inactive</span>
+                      <span v-if="inv.expires_at" class="invc-tag invc-tag-expires">
+                        Expires {{ formatDate(inv.expires_at) }}
+                      </span>
+                      <span v-if="inv.max_submissions" class="invc-tag invc-tag-limit">
+                        {{ inv.submission_count || 0 }} / {{ inv.max_submissions }} used
+                      </span>
+                      <span v-else class="invc-tag invc-tag-unlimited">
+                        {{ inv.submission_count || 0 }} submissions
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="invc-link-row">
+                  <div class="invc-link-display">
+                    <code class="invc-link-code">{{ window.location.origin }}/?invite={{ inv.token }}</code>
+                  </div>
+                  <button
+                    class="btn btn-sm btn-outline"
+                    @click="copyText(`${window.location.origin}/?invite=${inv.token}`)"
+                    title="Copy invitation link"
+                  >
+                    📋 Copy
+                  </button>
+                </div>
+
+                <div class="invc-footer">
+                  <span class="invc-created">Created {{ formatDate(inv.created_at) }}</span>
+                  <div class="invc-actions">
+                    <button
+                      v-if="inv.is_active"
+                      class="btn-text-action"
+                      @click="revokeInvitation(inv.id)"
+                      title="Revoke this invitation"
+                    >
+                      🚫 Revoke
+                    </button>
+                    <button
+                      class="btn-text-action"
+                      @click="regenerateInvitation(inv.id)"
+                      title="Generate new token (invalidates old link)"
+                    >
+                      🔄 Regenerate
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="invitations-info-box">
+              <div class="iib-icon">💡</div>
+              <div class="iib-content">
+                <h5>How Invitation Links Work:</h5>
+                <ul>
+                  <li><strong>Auto-filled Organisation:</strong> When someone opens the link, "{{ selectedOrg.name }}" is pre-filled and locked in the audit form.</li>
+                  <li><strong>Secure Tokens:</strong> Each link contains a unique cryptographic token that can be tracked, revoked, or regenerated.</li>
+                  <li><strong>Submission Limits:</strong> Optionally set max submissions or expiry dates to control link usage.</li>
+                  <li><strong>Centralized Reporting:</strong> All submissions via these links automatically aggregate into this organisation's dashboard.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
         </div>
       </main>
 
@@ -1203,12 +1313,12 @@ const invitations = ref([]);
 const submissionSourceFilter = ref('all');
 const showCreateInviteModal = ref(false);
 const inviteForm = reactive({
-  email: '',
-  role: 'respondent',
-  expires_days: 30,
+  invitation_name: '',
+  expires_at: '',
+  max_submissions: null,
 });
 const creatingInviteSaving = ref(false);
-const generatedInviteLink = ref('');
+const generatedInviteLink = ref(null);
 
 // Organisation Management Modals
 const showCreateOrgModal = ref(false);
@@ -1833,16 +1943,40 @@ async function handleCreateInvite() {
   creatingInviteSaving.value = true;
   try {
     const data = await createOrgInvitation(selectedOrg.value.id, inviteForm);
-    generatedInviteLink.value = data.invite_url || '';
+    generatedInviteLink.value = data;
     await fetchInvitations(selectedOrg.value.id);
     showToast('Invitation created successfully!');
-    inviteForm.email = '';
-    inviteForm.role = 'respondent';
-    inviteForm.expires_days = 30;
+    showCreateInviteModal.value = false;
+    inviteForm.invitation_name = '';
+    inviteForm.expires_at = '';
+    inviteForm.max_submissions = null;
   } catch (e) {
     showToast(e.message || 'Failed to create invitation', 'error');
   } finally {
     creatingInviteSaving.value = false;
+  }
+}
+
+async function revokeInvitation(invId) {
+  if (!confirm('Are you sure you want to revoke this invitation? The link will no longer work.')) return;
+  try {
+    await revokeOrgInvitation(invId);
+    showToast('Invitation revoked successfully');
+    await fetchInvitations(selectedOrg.value.id);
+  } catch (e) {
+    showToast(e.message || 'Failed to revoke invitation', 'error');
+  }
+}
+
+async function regenerateInvitation(invId) {
+  if (!confirm('This will generate a new token and invalidate the old link. Continue?')) return;
+  try {
+    const data = await regenerateOrgInvitation(invId);
+    generatedInviteLink.value = data;
+    showToast('Invitation regenerated with new token!');
+    await fetchInvitations(selectedOrg.value.id);
+  } catch (e) {
+    showToast(e.message || 'Failed to regenerate invitation', 'error');
   }
 }
 
@@ -4001,6 +4135,246 @@ onMounted(fetchOrgs);
   padding: 0.75rem 1rem;
   border-radius: 8px;
   margin-top: 1rem;
+}
+
+/* ==========================================================================
+   TAB 6: Invitations & Links
+   ========================================================================== */
+.invitations-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.invitations-header-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.ihc-left {
+  flex: 1;
+}
+
+.ihc-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  margin-bottom: 6px;
+}
+
+.ihc-subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.invitations-empty-state {
+  background: white;
+  border-radius: 12px;
+  padding: 60px 32px;
+  text-align: center;
+  border: 1.5px dashed #d1d5db;
+}
+
+.ies-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+}
+
+.invitations-empty-state h4 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  margin-bottom: 8px;
+}
+
+.invitations-empty-state p {
+  color: #6b7280;
+  margin-bottom: 20px;
+}
+
+.invitations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 16px;
+}
+
+.invitation-card {
+  background: white;
+  border-radius: 12px;
+  border: 1.5px solid #e5e7eb;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.invitation-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.08);
+}
+
+.invitation-card.inv-expired {
+  opacity: 0.65;
+  background: #f9fafb;
+}
+
+.invc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.invc-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  margin-bottom: 8px;
+}
+
+.invc-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.invc-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.invc-tag-active {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+
+.invc-tag-inactive {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+.invc-tag-expires,
+.invc-tag-limit,
+.invc-tag-unlimited {
+  background: #e0e7ff;
+  color: #3730a3;
+  border-color: #a5b4fc;
+}
+
+.invc-link-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.invc-link-display {
+  flex: 1;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 14px;
+  overflow: hidden;
+}
+
+.invc-link-code {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #4b5563;
+  word-break: break-all;
+}
+
+.invc-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.invc-created {
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.invc-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-text-action {
+  background: none;
+  border: none;
+  color: var(--primary, #161057);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.btn-text-action:hover {
+  background: #f3f4f6;
+}
+
+.invitations-info-box {
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+}
+
+.iib-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.iib-content h5 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  margin-bottom: 10px;
+}
+
+.iib-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.iib-content li {
+  font-size: 0.9rem;
+  color: #374151;
+  line-height: 1.5;
+  padding-left: 20px;
+  position: relative;
+}
+
+.iib-content li::before {
+  content: '•';
+  position: absolute;
+  left: 6px;
+  color: #3b82f6;
+  font-weight: 700;
 }
 
 </style>
