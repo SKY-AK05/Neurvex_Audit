@@ -96,25 +96,38 @@ DOCKER_CMD="sudo docker run -d \
 if [ "$USE_ENV_FILE" = true ]; then
     DOCKER_CMD="$DOCKER_CMD --env-file $ENV_FILE"
 else
-    # Set minimal required environment variables for Azure Key Vault mode
-    # Use --network=host to allow container to access Azure IMDS endpoint
-    echo -e "${BLUE}ℹ️  Using Azure Key Vault: ${KEY_VAULT_NAME:-not set}${NC}"
+    # Azure Key Vault with Managed Identity mode
+    echo -e "${BLUE}ℹ️  Using Azure Key Vault with Managed Identity${NC}"
+    echo -e "${BLUE}   Vault: ${KEY_VAULT_NAME:-not set}${NC}"
     
     if [ -z "$KEY_VAULT_NAME" ]; then
         echo -e "${RED}❌ ERROR: KEY_VAULT_NAME environment variable is not set!${NC}"
-        echo -e "${YELLOW}Please set it with: export KEY_VAULT_NAME=niwi-prod-kv${NC}"
+        echo -e "${YELLOW}Set it with: export KEY_VAULT_NAME=niwi-prod-kv${NC}"
+        echo -e "${YELLOW}Or add to ~/.bashrc for persistence${NC}"
         exit 1
     fi
     
+    # Use host network mode to access Azure IMDS endpoint
+    # and mount MSI endpoint socket if it exists
     DOCKER_CMD="$DOCKER_CMD \
       --network=host \
       -e APP_ENV=production \
       -e KEY_VAULT_NAME=$KEY_VAULT_NAME \
-      -e REQUIRE_KEYVAULT=true"
+      -e REQUIRE_KEYVAULT=true \
+      -e AZURE_CLIENT_ID=${AZURE_CLIENT_ID:-} \
+      -e MSI_ENDPOINT=${MSI_ENDPOINT:-http://169.254.169.254/metadata/identity/oauth2/token} \
+      -e MSI_SECRET=${MSI_SECRET:-}"
+    
+    # Mount Azure credentials directory if it exists (for local development)
+    if [ -d "$HOME/.azure" ]; then
+        DOCKER_CMD="$DOCKER_CMD -v $HOME/.azure:/root/.azure:ro"
+        echo -e "${BLUE}   Mounted ~/.azure directory${NC}"
+    fi
 fi
 
 # Add image name and execute
 DOCKER_CMD="$DOCKER_CMD $IMAGE_NAME"
+echo -e "${BLUE}   Starting container...${NC}"
 eval $DOCKER_CMD
 
 if [ $? -eq 0 ]; then
