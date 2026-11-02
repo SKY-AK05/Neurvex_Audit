@@ -68,7 +68,14 @@
                 :key="s.id"
                 @click="$router.push(`/admin/submissions/${s.id}`)"
               >
-                <td class="org-name">{{ s.company_name }}</td>
+                <td class="org-name">
+                  <div class="org-name-cell">
+                    <span>{{ s.company_name }}</span>
+                    <span :class="`source-badge source-${(s.submission_source || 'DIRECT').toLowerCase()}`">
+                      {{ s.submission_source === 'INVITATION' ? 'Invite' : 'Direct' }}
+                    </span>
+                  </div>
+                </td>
                 <td class="email-cell">{{ s.email }}</td>
                 <td class="designation-cell">{{ s.designation || '—' }}</td>
                 <td class="score-cell">
@@ -109,7 +116,12 @@
             @click="$router.push(`/admin/submissions/${s.id}`)"
           >
             <div class="scm-header">
-              <span class="scm-org">{{ s.company_name }}</span>
+              <div class="scm-org-group">
+                <span class="scm-org">{{ s.company_name }}</span>
+                <span :class="`source-badge source-${(s.submission_source || 'DIRECT').toLowerCase()}`">
+                  {{ s.submission_source === 'INVITATION' ? 'Invite' : 'Direct' }}
+                </span>
+              </div>
               <span :class="`badge badge-${s.status === 'sent' ? 'delivered' : 'pending'}`">
                 <span class="badge-dot"></span>
                 {{ s.status === 'sent' ? 'Delivered' : (s.status === 'sending' ? 'Sending' : 'Pending') }}
@@ -401,6 +413,35 @@ async function downloadCurrentPage() {
 }
 .badge-pending .badge-dot {
   background: #D97706;
+}
+
+.org-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.scm-org-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.source-badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+}
+.source-direct {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+.source-invitation {
+  background: #FEF3C7;
+  color: #B45309;
 }
 
 .action-group { display: flex; gap: 0.4rem; align-items: center; }

@@ -1,10 +1,23 @@
+-- =============================================================================
+-- Migration 01: Core Remediation
+-- =============================================================================
+
 -- 1. UUID Migration
 -- Using native gen_random_uuid() instead of uuid-ossp extension for Azure Postgres compatibility
-ALTER TABLE submissions ADD COLUMN new_id UUID DEFAULT gen_random_uuid();
-ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_pkey CASCADE;
-ALTER TABLE submissions DROP COLUMN id;
-ALTER TABLE submissions RENAME COLUMN new_id TO id;
-ALTER TABLE submissions ADD PRIMARY KEY (id);
+-- Safe conditional: only convert if id column is integer; never overwrite existing UUIDs
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'submissions' AND column_name = 'id' AND data_type = 'integer'
+    ) THEN
+        ALTER TABLE submissions ADD COLUMN new_id UUID DEFAULT gen_random_uuid();
+        ALTER TABLE submissions DROP CONSTRAINT IF EXISTS submissions_pkey CASCADE;
+        ALTER TABLE submissions DROP COLUMN id;
+        ALTER TABLE submissions RENAME COLUMN new_id TO id;
+        ALTER TABLE submissions ADD PRIMARY KEY (id);
+    END IF;
+END $$;
 
 -- 2. GDPR Consent Columns
 ALTER TABLE submissions 

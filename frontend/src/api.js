@@ -132,14 +132,17 @@ export async function toggleNotifications() {
   return handleResponse(res);
 }
 
-export async function deleteAllRecords(password) {
+export async function deleteAllRecords(payload) {
+  const body = typeof payload === "string"
+    ? { confirmation: payload, password: payload }
+    : { confirmation: "DELETE ALL SUBMISSIONS", ...payload };
   const res = await fetch(`${API_BASE}/settings/delete-all-records`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       ...getAuthHeaders(),
     },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify(body),
   });
   return handleResponse(res);
 }
@@ -152,6 +155,21 @@ export async function updateRespondent(id, data) {
       ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function reassignSubmissionOrganisation(id, organizationId, reason = "") {
+  const res = await fetch(`${API_BASE}/submissions/${id}/organisation`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({ 
+      organization_id: organizationId,
+      reason: reason 
+    }),
   });
   return handleResponse(res);
 }
@@ -195,3 +213,101 @@ export async function deleteSavedFilter(filterId) {
   return handleResponse(res);
 }
 
+// ---------------------------------------------------------------------------
+// Dual Assessment Entry & Organisation Management APIs
+// ---------------------------------------------------------------------------
+
+export async function validateOrganisationByName(name) {
+  const res = await fetch(`${API_BASE}/public/organisations/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  return handleResponse(res);
+}
+
+export async function validateInvitation(token) {
+  const res = await fetch(`${API_BASE}/public/invitations/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  return handleResponse(res);
+}
+
+export async function createOrganisation(name) {
+  const res = await fetch(`${API_BASE}/manage/orgs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ name }),
+  });
+  return handleResponse(res);
+}
+
+export async function updateOrganisation(id, name) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ name }),
+  });
+  return handleResponse(res);
+}
+
+export async function toggleOrganisationStatus(id, isActive) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${id}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify({ is_active: isActive }),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteOrganisation(id) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function getOrgInvitations(orgId) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${orgId}/invitations`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function createOrgInvitation(orgId, data) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${orgId}/invitations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function revokeOrgInvitation(invId) {
+  const res = await fetch(`${API_BASE}/manage/orgs/invitations/${invId}/revoke`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function regenerateOrgInvitation(invId) {
+  const res = await fetch(`${API_BASE}/manage/orgs/invitations/${invId}/regenerate`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+
+
+export async function getOrganisations(includeDeleted = false) {
+  const params = includeDeleted ? '?include_deleted=true' : '';
+  const res = await fetch(`${API_BASE}/manage/orgs${params}`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}

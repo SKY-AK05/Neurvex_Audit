@@ -103,7 +103,7 @@ async def jwks_middleware(request: Request, call_next):
         "/api/health",
         "/api/support",
         "/api/book-call",
-    ) or request.url.path.startswith("/api/org/") or request.url.path.startswith("/api/drafts"):
+    ) or request.url.path.startswith("/api/org/") or request.url.path.startswith("/api/drafts") or request.url.path.startswith("/api/public/"):
         return await call_next(request)
 
     # Form builder modifications (POST, PUT, DELETE) must require admin auth
@@ -119,11 +119,25 @@ async def jwks_middleware(request: Request, call_next):
         try:
             # Check for local developer login bypass — ONLY when explicitly enabled in dev/test environment
             app_env = os.environ.get("APP_ENV", os.environ.get("ENVIRONMENT", "production")).lower()
-            is_dev_env = app_env in ("development", "dev", "test", "testing") or os.environ.get("TESTING") == "true"
+            is_production = app_env in ("production", "prod")
+            is_dev_env = not is_production and (app_env in ("development", "dev", "test", "testing") or os.environ.get("TESTING") == "true")
             enable_dev_bypass = os.environ.get("ENABLE_DEV_BYPASS", "").lower() in ("true", "1")
 
-            if is_dev_env and enable_dev_bypass and token.startswith("local_bypass:"):
+            # Prevent bypass in production
+            if is_production and enable_dev_bypass:
+                logger.critical(
+                    "SECURITY VIOLATION: ENABLE_DEV_BYPASS=true detected in production environment (APP_ENV=%s). "
+                    "Authentication bypass is DISABLED. Set APP_ENV=development AND ENABLE_DEV_BYPASS=true only in isolated local environments.",
+                    app_env
+                )
+                enable_dev_bypass = False
+
+            if not is_production and is_dev_env and enable_dev_bypass and token.startswith("local_bypass:"):
                 email = token.split("local_bypass:")[1].lower()
+                logger.warning(
+                    "DEV BYPASS ACTIVE: Bypassing Entra ID authentication for local development user: %s (APP_ENV=%s)",
+                    email, app_env
+                )
                 from app.core.database import get_conn
                 conn = get_conn()
                 try:
@@ -131,9 +145,10 @@ async def jwks_middleware(request: Request, call_next):
                         cur.execute("SELECT role FROM admin_users WHERE LOWER(email) = %s", (email,))
                         row = cur.fetchone()
                     if not row:
-                        return JSONResponse(status_code=401, content={"detail": "Unauthorized developer email"})
+                        return JSONResponse(status_code=403, content={"detail": f"User {email} not authorized"})
                     request.state.admin_email = email
                     request.state.admin_role = row[0] if row else "admin"
+                    request.state.user_id = email  # For audit trails
                 finally:
                     conn.close()
             else:
@@ -146,16 +161,17 @@ async def jwks_middleware(request: Request, call_next):
                     or "unknown"
                 ).lower()
                 
+                # Extract user_id from JWT for audit trails
+                user_id = payload.get("oid") or payload.get("sub") or admin_email
+                
                 # Verify that the Entra ID user is an authorized admin in admin_users
                 from app.core.database import get_conn
+                conn = get_conn()
                 try:
-                    conn = get_conn()
                     with conn.cursor() as cur:
                         cur.execute("SELECT role FROM admin_users WHERE LOWER(email) = %s", (admin_email,))
                         row = cur.fetchone()
-                    conn.close()
                     if not row:
-                        # User authenticated with Entra ID but not authorized in the app
                         return JSONResponse(
                             status_code=403,
                             content={"detail": "Forbidden: You are not an authorized administrator"}
@@ -164,8 +180,11 @@ async def jwks_middleware(request: Request, call_next):
                 except Exception as db_err:
                     logger.warning("Could not verify admin role in DB: %s", db_err)
                     request.state.admin_role = "admin"
+                finally:
+                    conn.close()
 
                 request.state.admin_email = admin_email
+                request.state.user_id = user_id
 
         except HTTPException as e:
             return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
@@ -195,17 +214,21 @@ def audit_log(action_type: str):
             
             # Log action post-execution
             from app.core.database import get_conn
+            conn = get_conn()
             try:
-                conn = get_conn()
                 with conn:
                     with conn.cursor() as cur:
                         cur.execute("""
                             INSERT INTO audit_logs (admin_id, action_type, ip_address)
                             VALUES (%s, %s, %s)
                         """, (admin_email, action_type, ip))
-                conn.close()
             except Exception as e:
                 logger.error(f"Failed to write audit log: {e}")
+            finally:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
                 
             return response
         return wrapper

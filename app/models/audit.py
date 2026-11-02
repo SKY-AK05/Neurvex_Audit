@@ -8,7 +8,9 @@ from typing import Optional
 class AuditSubmission(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
     designation: Optional[str] = Field(None, max_length=255)
-    company_name: str = Field(..., min_length=1, max_length=255)
+    company_name: Optional[str] = Field(None, max_length=255)
+    organization_id: Optional[str] = None
+    invitation_token: Optional[str] = None
     email: EmailStr
     contact_number: Optional[str] = Field(None, max_length=50)
     consent_given: Optional[bool] = False
@@ -33,4 +35,3 @@ class AuditSubmission(BaseModel):
     # We will capture any additional questions dynamically
     class Config:
         extra = "allow"
-

@@ -7,6 +7,7 @@
     "ui": "npm run dev --prefix frontend"
   },
   "devDependencies": {
-    "concurrently": "^9.2.5"
+    "concurrently": "^9.2.5",
+    "playwright": "^1.64.1"
   }
 }

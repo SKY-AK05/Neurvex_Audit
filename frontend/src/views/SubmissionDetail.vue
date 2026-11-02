@@ -16,6 +16,14 @@
           <h2>Respondent</h2>
           <div class="header-actions">
             <button 
+              class="btn-secondary-small" 
+              @click="openReassignModal"
+              type="button"
+              style="margin-right: 8px;"
+            >
+              🔄 Change Organisation
+            </button>
+            <button 
               v-if="hasChanges" 
               class="btn-save-inline" 
               @click="saveRespondent"
@@ -194,6 +202,70 @@
 
     </template>
 
+    <!-- Reassign Organisation Modal -->
+    <div v-if="showReassignModal" class="modal-overlay" @click="closeReassignModal">
+      <div class="modal-content reassign-modal" @click.stop>
+        <h3>Change Organisation</h3>
+        <p style="margin-bottom: 16px; color: #666;">
+          Reassign this submission to a different organisation. This will update analytics and reporting.
+        </p>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+            Select Target Organisation:
+          </label>
+          <select 
+            v-model="reassignOrgId" 
+            class="org-select"
+            :disabled="loadingOrgs"
+          >
+            <option value="">{{ loadingOrgs ? 'Loading...' : '-- Select Organisation --' }}</option>
+            <option 
+              v-for="org in availableOrgs" 
+              :key="org.id" 
+              :value="org.id"
+              :disabled="org.id === sub?.organization_id"
+            >
+              {{ org.name }}{{ org.id === sub?.organization_id ? ' (Current)' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 500;">
+            Reason (optional):
+          </label>
+          <textarea 
+            v-model="reassignReason" 
+            class="reason-textarea"
+            placeholder="Enter reason for reassignment..."
+            rows="3"
+          ></textarea>
+        </div>
+
+        <div v-if="reassignError" class="alert alert-error" style="margin-bottom: 16px;">
+          {{ reassignError }}
+        </div>
+
+        <div class="modal-actions">
+          <button 
+            class="btn btn-secondary" 
+            @click="closeReassignModal"
+            :disabled="reassigning"
+          >
+            Cancel
+          </button>
+          <button 
+            class="btn btn-lime" 
+            @click="confirmReassign"
+            :disabled="!reassignOrgId || reassigning"
+          >
+            {{ reassigning ? 'Reassigning...' : 'Confirm Reassignment' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Custom Modal -->
     <div v-if="modalConfig.show" class="modal-overlay" @click="closeModal">
       <div class="modal-content" @click.stop>
@@ -212,7 +284,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getSubmission, saveEmail, sendEmail, regenerateEmail, updateRespondent } from "../api";
+import { getSubmission, saveEmail, sendEmail, regenerateEmail, updateRespondent, reassignSubmissionOrganisation, getOrganisations } from "../api";
 import ScoreTable from "../components/ScoreTable.vue";
 import RichEditor from "../components/RichEditor.vue";
 import { normalizeEmailHtml } from "../utils/emailHtml.js";
@@ -256,12 +328,85 @@ const modalConfig = ref({
   onConfirm: null
 });
 
+// Reassignment state
+const showReassignModal = ref(false);
+const reassignOrgId = ref("");
+const reassignReason = ref("");
+const reassigning = ref(false);
+const reassignError = ref("");
+const availableOrgs = ref([]);
+const loadingOrgs = ref(false);
+
 function openModal(title, message, confirmText, onConfirm) {
   modalConfig.value = { show: true, title, message, confirmText, onConfirm };
 }
 
 function closeModal() {
   modalConfig.value.show = false;
+}
+
+async function openReassignModal() {
+  showReassignModal.value = true;
+  reassignOrgId.value = "";
+  reassignReason.value = "";
+  reassignError.value = "";
+  
+  // Load organisations
+  loadingOrgs.value = true;
+  try {
+    const orgs = await getOrganisations(false);
+    // Filter out virtual orgs (they can't be reassignment targets)
+    availableOrgs.value = orgs
+      .filter(org => !org.is_virtual && !org.is_deleted)
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch (e) {
+    reassignError.value = "Failed to load organisations: " + e.message;
+  } finally {
+    loadingOrgs.value = false;
+  }
+}
+
+function closeReassignModal() {
+  showReassignModal.value = false;
+  reassignOrgId.value = "";
+  reassignReason.value = "";
+  reassignError.value = "";
+}
+
+async function confirmReassign() {
+  if (!reassignOrgId.value) {
+    reassignError.value = "Please select an organisation";
+    return;
+  }
+  
+  reassigning.value = true;
+  reassignError.value = "";
+  
+  try {
+    const result = await reassignSubmissionOrganisation(
+      route.params.id,
+      reassignOrgId.value,
+      reassignReason.value
+    );
+    
+    // Update local submission data
+    sub.value.organization_id = result.new_organization_id;
+    
+    // Find and update the company_name display if the org name changed
+    const targetOrg = availableOrgs.value.find(org => org.id === reassignOrgId.value);
+    if (targetOrg) {
+      sub.value.company_name = targetOrg.name;
+      editForm.value.company_name = targetOrg.name;
+      originalForm.value.company_name = targetOrg.name;
+    }
+    
+    closeReassignModal();
+    showEditMsg("success", "Submission reassigned successfully");
+  } catch (e) {
+    reassignError.value = e.message || "Failed to reassign submission";
+  } finally {
+    reassigning.value = false;
+  }
 }
 
 onMounted(async () => {
@@ -500,6 +645,12 @@ function getCommentary(key, score) {
   if (score <= 14) return commentaries[key].med;
   return commentaries[key].high;
 }
+
+function showEditMsg(type, msg) {
+  editMsgType.value = type;
+  editMsg.value = msg;
+  setTimeout(() => { editMsg.value = ""; }, 3000);
+}
 </script>
 
 <style scoped>
@@ -719,5 +870,79 @@ h2 {
     width: 95%;
     padding: 1.5rem 1.25rem;
   }
+}
+
+/* Reassignment Modal Styles */
+.reassign-modal {
+  max-width: 540px;
+}
+
+.btn-secondary-small {
+  padding: 0.45rem 1rem;
+  font-size: 0.8rem;
+  background: #FFFFFF;
+  border: 1.5px solid rgba(22, 16, 87, 0.12);
+  border-radius: 99px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--c-primary-dark, #161057);
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-secondary-small:hover {
+  background: #FAFAF8;
+  border-color: var(--c-accent, #04907C);
+  color: var(--c-accent, #04907C);
+}
+
+.org-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.925rem;
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+  border: 1.5px solid rgba(22, 16, 87, 0.12);
+  border-radius: 10px;
+  background: #FAFAF8;
+  color: var(--c-primary-dark, #161057);
+  transition: all 0.15s;
+  cursor: pointer;
+}
+
+.org-select:focus {
+  outline: none;
+  background: #FFFFFF;
+  border-color: var(--c-accent, #04907C);
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.12);
+}
+
+.org-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.reason-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-family: var(--font-body, 'Geist', 'Inter', sans-serif);
+  border: 1.5px solid rgba(22, 16, 87, 0.12);
+  border-radius: 10px;
+  background: #FAFAF8;
+  color: var(--c-primary-dark, #161057);
+  transition: all 0.15s;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.reason-textarea:focus {
+  outline: none;
+  background: #FFFFFF;
+  border-color: var(--c-accent, #04907C);
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.12);
+}
+
+.reason-textarea::placeholder {
+  color: #94A3B8;
 }
 </style>

@@ -21,20 +21,44 @@ from azure.communication.email import EmailClient
 from app.api.routes import router
 from app.api.form_builder import router as form_builder_router
 from app.core.security import jwks_middleware
-from app.core.database import get_conn
+from app.core.database import get_conn, get_db_connection, init_connection_pool, close_connection_pool
 from app.core.limiter import limiter
 from app.tasks.email_worker import start_dlq_worker
 
 from app.core.config import CORS_ORIGINS
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title="Orchvate Audit API", docs_url=None, redoc_url=None)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 @app.on_event("startup")
 async def startup_event():
+    """Initialize application resources on startup"""
+    logger.info("Starting NIWI application...")
+    
+    # Initialize database connection pool
+    # Production deployment with 4 workers * 10 connections = 40 max connections
+    # Adjust based on actual deployment configuration
+    try:
+        init_connection_pool(minconn=2, maxconn=10)
+        logger.info("Database connection pool initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize connection pool: {e}")
+        raise
+    
+    # Start email worker
     await start_dlq_worker()
+    logger.info("Application startup complete")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup application resources on shutdown"""
+    logger.info("Shutting down NIWI application...")
+    close_connection_pool()
+    logger.info("Application shutdown complete")
 
 # CORS is only needed for local dev (in production, nginx handles same-origin routing)
 app.add_middleware(
@@ -73,11 +97,10 @@ async def health(response: Response):
 
     # Check Database
     try:
-        conn = get_conn()
-        with conn.cursor() as cur:
-            cur.execute("SELECT 1")
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1")
         health_status["database"] = "up"
-        conn.close()
     except Exception:
         status_code = 503
         

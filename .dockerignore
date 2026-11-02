@@ -11,6 +11,7 @@ frontend/dist/
 
 # Secrets and local config
 .env
+.env.*
 local.settings.json
 
 # Git
@@ -24,7 +25,14 @@ docs/
 # Azure Functions (no longer used)
 function_app.py
 host.json
-local.settings.json
 
 # IDE
 .vscode/
+.idea/
+
+# Tests, Scripts & Local Artifacts
+tests/
+scripts/
+temp/
+tmp/
+*.log

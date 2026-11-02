@@ -46,6 +46,22 @@
             <!-- Left Column: Assessment Details -->
             <div class="intro-hero-left">
 
+            <!-- Invitation Status Banners -->
+            <div v-if="isInvitationMode && form.company_name" class="hero-invite-banner anim-hero-p1">
+              <span class="invite-banner-icon">🏢</span>
+              <div class="invite-banner-text">
+                Assessment for <strong>{{ form.company_name }}</strong>
+                <span class="invite-banner-tag">Verified Invitation</span>
+              </div>
+            </div>
+
+            <div v-if="isInvitationMode && invitationError" class="hero-invite-error anim-hero-p1">
+              <span class="invite-error-icon">⚠️</span>
+              <div class="invite-error-text">
+                <strong>Invitation Link Error:</strong> {{ invitationError }}
+              </div>
+            </div>
+
             <!-- Phase 3: Main Headline -->
             <h1 class="hero-title anim-hero-headline" @click="onLogoClick">
               Neuro-Inclusive Workplace Index (NIWI) Self-Assessment
@@ -375,16 +391,46 @@
                   </div>
 
                   <div class="field-group">
-                    <label for="demo_company" class="field-label">Organization Name *</label>
-                    <input
-                      id="demo_company"
-                      v-model="form.company_name"
-                      type="text"
-                      class="field-input"
-                      :class="{ 'input-error': errors.company_name }"
-                      placeholder="Enter your organization name"
-                    />
-                    <span v-if="errors.company_name" class="error-message">{{ errors.company_nameMsg || 'Required' }}</span>
+                    <!-- Method B: Invitation Link (Read-only prefilled) -->
+                    <template v-if="isInvitationMode">
+                      <div class="field-label-row">
+                        <label for="demo_company" class="field-label">Organization Name *</label>
+                        <span class="invite-prefilled-badge" title="Pre-filled via official invitation link">
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                          Verified via Invitation Link
+                        </span>
+                      </div>
+                      <div class="locked-input-wrapper">
+                        <input
+                          id="demo_company"
+                          :value="form.company_name"
+                          type="text"
+                          class="field-input field-input-locked"
+                          readonly
+                          disabled
+                        />
+                        <div class="locked-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        </div>
+                      </div>
+                      <span v-if="errors.company_name" class="error-message">{{ errors.company_nameMsg || 'Required' }}</span>
+                    </template>
+
+                    <!-- Method A: Direct Access (Text Input) -->
+                    <template v-else>
+                      <label for="demo_company" class="field-label">Organisation Name *</label>
+                      <input
+                        id="demo_company"
+                        v-model="form.company_name"
+                        type="text"
+                        class="field-input"
+                        :class="{ 'input-error': errors.company_name }"
+                        placeholder="Enter your organisation name"
+                      />
+                      <span v-if="errors.company_name" class="error-message">
+                        {{ errors.company_nameMsg || 'Please enter your organisation name' }}
+                      </span>
+                    </template>
                   </div>
 
                   <!-- Row 2: Email & Function -->
@@ -839,8 +885,8 @@
 
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { submitAudit } from "../api";
+import { useRouter, useRoute } from "vue-router";
+import { submitAudit, validateInvitation } from "../api";
 import { useDraftSaving } from "../composables/useDraftSaving";
 import SaveContinueButton from "../components/SaveContinueButton.vue";
 import SearchableSelect from "../components/SearchableSelect.vue";
@@ -849,6 +895,25 @@ import { COUNTRIES, INDIAN_STATES, INDIAN_UTS } from "../utils/geoData";
 import { DEFAULT_SECTIONS } from "../utils/defaultSections";
 
 const router = useRouter();
+const route = useRoute();
+
+// Dual Assessment Entry State
+const isInvitationMode = ref(false);
+const invitationLoading = ref(false);
+const invitationError = ref("");
+const invitationDetails = ref(null);
+const availableOrgs = ref([]);
+const loadingOrgs = ref(false);
+
+// Organisation input - simplified (no real-time validation)
+function onOrganisationSelect() {
+  const chosen = availableOrgs.value.find(o => o.id === form.organization_id);
+  if (chosen) {
+    form.company_name = chosen.name;
+    errors.organization_id = false;
+    errors.company_name = false;
+  }
+}
 
 // ── Developer mode: click NIWI logo 5 times within 3 seconds to auto-fill ──
 const devClickCount = ref(0);
@@ -1068,6 +1133,8 @@ watch(currentStep, async (step) => {
 const form = reactive({
   name: "",
   company_name: "",
+  organization_id: "",
+  invitation_token: "",
   email: "",
   contact_number: "",
   consent_given: false,
@@ -1184,6 +1251,31 @@ const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useD
 
 onMounted(async () => {
   setupWelcomeAnimation();
+
+  // Dual Entry Initialization: Check for invitation token vs normal direct access
+  const inviteToken = route.params.token || route.query.token || route.query.invite;
+  if (inviteToken) {
+    isInvitationMode.value = true;
+    invitationLoading.value = true;
+    try {
+      const valRes = await validateInvitation(inviteToken);
+      if (valRes && valRes.valid) {
+        invitationDetails.value = valRes;
+        form.invitation_token = inviteToken;
+        form.company_name = valRes.organization_name;
+      } else {
+        invitationError.value = valRes?.error || "This invitation link is invalid or has expired.";
+      }
+    } catch (err) {
+      invitationError.value = "Failed to validate invitation link. Please check your connection.";
+    } finally {
+      invitationLoading.value = false;
+    }
+  } else {
+    // Method A: Direct access - no longer fetch org list
+    // Organisation validation happens on blur/submit
+    loadingOrgs.value = false;
+  }
   try {
     const res = await fetch("/api/form/sections");
     if (res.ok) {
@@ -1255,11 +1347,18 @@ function validateStep() {
     // Tell Us About You validation - all fields on one page
     // A. Name is optional
 
-    // B. Organization Name (reject empty or whitespace-only)
-    const comp = (form.company_name || "").trim();
-    if (!comp) {
-      errors.company_name = true;
-      errors.company_nameMsg = "Organization name is required";
+    // B. Organization validation (Invitation vs Direct text entry)
+    if (isInvitationMode.value) {
+      if (!form.company_name || invitationError.value) {
+        errors.company_name = true;
+        errors.company_nameMsg = invitationError.value || "Valid organization invitation required";
+      }
+    } else {
+      // Method A: Text input validation
+      if (!form.company_name || !form.company_name.trim()) {
+        errors.company_name = true;
+        errors.company_nameMsg = "Please enter your organisation name";
+      }
     }
 
     // C. Email ID (required, format validated)
@@ -1379,6 +1478,8 @@ function nextStep() {
 function resetForm() {
   form.name = "";
   form.company_name = "";
+  form.organization_id = "";
+  form.invitation_token = "";
   form.email = "";
   form.contact_number = "";
   form.function = "";
@@ -1408,7 +1509,13 @@ function autoFillTestData() {
 
   // Fill person details with valid demographic values
   form.name = rand(names);
-  form.company_name = rand(companies);
+  if (!isInvitationMode.value && availableOrgs.value.length > 0) {
+    const chosen = rand(availableOrgs.value);
+    form.organization_id = chosen.id;
+    form.company_name = chosen.name;
+  } else if (!isInvitationMode.value) {
+    form.company_name = rand(companies);
+  }
   form.email = "test@orchvate.com";
   form.contact_number = "+44 7700 900000";
   form.function = "HR / People";
@@ -1849,22 +1956,48 @@ async function submit() {
   color: #ffffff;
   border: none;
   border-radius: 99px;
-  padding: 0.8rem 2.4rem;
-  font-size: 0.98rem;
+  padding: 0.65rem 2rem;
+  min-height: 46px;
+  min-width: 140px;
+  font-size: 0.95rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-body);
-  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.24);
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.24);
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  text-align: center;
+  line-height: 1;
+  outline: none;
 }
 
-.hero-cta-btn:hover {
+.hero-cta-btn:hover:not(:disabled) {
   background: #0f0a42;
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(22, 16, 87, 0.35);
+  box-shadow: 0 6px 20px rgba(22, 16, 87, 0.35);
+}
+
+.hero-cta-btn:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
+}
+
+.hero-cta-btn:focus-visible {
+  outline: 2.5px solid var(--c-accent, #04907C);
+  outline-offset: 3px;
+}
+
+.hero-cta-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* ── Right Column: Clipart Video Illustration ── */
@@ -1879,7 +2012,7 @@ async function submit() {
   padding: 0;
   height: 100%;
   gap: 1.5rem;
-  margin-top: 20.5rem;
+  margin-top: clamp(7rem, 9.6vw, 11rem);
 }
 
 .clipart-card {
@@ -2200,10 +2333,10 @@ async function submit() {
   }
   .hero-cta-btn {
     width: 100%;
-    max-width: 420px;
-    min-height: 48px;
-    padding: 0.85rem 2rem;
-    font-size: 1rem;
+    max-width: 340px;
+    min-height: 46px;
+    padding: 0.65rem 1.75rem;
+    font-size: 0.95rem;
     justify-content: center;
   }
   .clipart-card {
@@ -2836,6 +2969,8 @@ async function submit() {
 
 /* ── Inline Navigation Bar (at end of question content) ── */
 .inline-nav-bar {
+  display: flex;
+  justify-content: space-between;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
@@ -2866,8 +3001,11 @@ async function submit() {
 
 .btn-back-compact {
   background: transparent;
+  border: 1.5px solid rgba(22, 16, 87, 0.15);
   border: 1.5px solid rgba(22, 16, 87, 0.18);
   border-radius: 99px;
+  padding: 0.55rem 1.35rem;
+  font-size: 0.85rem;
   padding: 0.6rem 1.4rem;
   font-size: 0.88rem;
   font-weight: 600;
@@ -2883,11 +3021,48 @@ async function submit() {
 
 .btn-back-compact:hover {
   background: rgba(22, 16, 87, 0.05);
+}
+
+.btn-next-compact {
+  background: var(--c-primary-dark, #161057);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 99px;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-body);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
+}
+
+.btn-next-compact:hover {
+  background: #0f0a42;
   transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .inline-nav-bar {
+    padding: 1.25rem 0 1.5rem;
+    margin-top: 1.5rem;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .btn-back-compact,
+  .btn-next-compact,
+  .btn-submit {
+    min-height: 48px;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 .step-nav-mid {
   display: flex;
+  gap: 0.75rem;
   justify-content: center;
   align-items: center;
 }
@@ -2895,12 +3070,15 @@ async function submit() {
 .btn-start-fresh {
   background: transparent;
   color: var(--text-muted, #6B7280);
+  border: 1.5px solid var(--border, rgba(22, 16, 87, 0.15));
+  padding: 0.5rem 1.1rem;
   border: 1.5px solid rgba(22, 16, 87, 0.18);
   padding: 0.55rem 1.15rem;
   border-radius: 99px;
   font-weight: 600;
   font-family: var(--font-body);
   cursor: pointer;
+  font-size: 0.85rem;
   font-size: 0.82rem;
   white-space: nowrap;
   display: inline-flex;
@@ -2913,6 +3091,22 @@ async function submit() {
 .btn-start-fresh:hover {
   background: rgba(22, 16, 87, 0.05);
   color: var(--c-primary-dark, #161057);
+}
+
+.btn-back-compact {
+  background: transparent;
+  border: 1.5px solid var(--border, rgba(22, 16, 87, 0.15));
+  border-radius: 99px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--c-primary-dark, #161057);
+  font-family: var(--font-body);
+}
+
+.btn-back-compact:hover {
+  background: rgba(22, 16, 87, 0.05);
   transform: translateY(-1px);
 }
 
@@ -2921,11 +3115,14 @@ async function submit() {
   color: #FFFFFF;
   border: none;
   border-radius: 99px;
+  padding: 0.6rem 1.75rem;
+  font-size: 0.875rem;
   padding: 0.65rem 1.6rem;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-body);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
   box-shadow: 0 3px 12px rgba(22, 16, 87, 0.22);
   white-space: nowrap;
   display: inline-flex;
@@ -2937,6 +3134,7 @@ async function submit() {
 .btn-next-compact:hover {
   background: #0f0a42;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 16, 87, 0.3);
   box-shadow: 0 6px 18px rgba(22, 16, 87, 0.32);
 }
 
@@ -2945,11 +3143,14 @@ async function submit() {
   color: #FFFFFF;
   border: none;
   border-radius: 99px;
+  padding: 0.6rem 1.75rem;
+  font-size: 0.875rem;
   padding: 0.65rem 1.75rem;
   font-size: 0.88rem;
   font-weight: 700;
   cursor: pointer;
   font-family: var(--font-body);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
   box-shadow: 0 3px 12px rgba(22, 16, 87, 0.22);
   white-space: nowrap;
   display: inline-flex;
@@ -2961,6 +3162,7 @@ async function submit() {
 .btn-submit:hover:not(:disabled) {
   background: #0f0a42;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(22, 16, 87, 0.3);
   box-shadow: 0 6px 18px rgba(22, 16, 87, 0.32);
 }
 
@@ -2970,6 +3172,11 @@ async function submit() {
   box-shadow: none;
 }
 
+@media (max-width: 1080px) {
+  .why-matters-footer {
+    padding: 1rem 2rem;
+  }
+}
 @media (max-width: 640px) {
   .inline-nav-bar {
     display: grid;
@@ -2980,14 +3187,23 @@ async function submit() {
     margin-top: 1.5rem;
     width: 100%;
   }
+}
 
+@media (max-width: 640px) {
+  .why-matters-footer {
+    padding: 0.875rem 1.5rem;
+    flex-wrap: wrap;
+  }
   .btn-back-compact {
     min-height: 42px;
     padding: 0.5rem 0.95rem;
     font-size: 0.82rem;
   }
+  
 
   .step-nav-mid {
+    order: 3;
+    width: 100%;
     width: auto;
     justify-content: center;
   }
@@ -3523,6 +3739,90 @@ html {
   font-weight: 400;
   color: #6B7280;
   font-style: italic;
+}
+
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.375rem;
+}
+
+.invite-prefilled-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #047C69;
+  background: #E6F4F1;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  border: 1px solid rgba(4, 124, 105, 0.2);
+}
+
+.locked-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.field-input-locked {
+  background-color: #F3F4F6 !important;
+  color: #374151 !important;
+  cursor: not-allowed;
+  border-color: #E5E7EB !important;
+  font-weight: 500;
+  padding-right: 2.25rem !important;
+}
+
+.locked-icon {
+  position: absolute;
+  right: 0.75rem;
+  color: #9CA3AF;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.hero-invite-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(230, 244, 241, 0.95);
+  border: 1px solid rgba(4, 124, 105, 0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  color: #0F172A;
+  box-shadow: 0 2px 8px rgba(4, 124, 105, 0.08);
+}
+
+.invite-banner-tag {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #047C69;
+  background: #FFFFFF;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  border: 1px solid rgba(4, 124, 105, 0.25);
+}
+
+.hero-invite-error {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
 .field-input,
@@ -5096,3 +5396,55 @@ html {
 }
 
 </style>
+
+
+/* =========================================================
+   METHOD A — ORGANISATION TEXT INPUT VALIDATION
+   ========================================================= */
+
+.org-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.validation-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: 2px solid #E5E7EB;
+  border-top-color: var(--c-accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.field-input.input-success {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.02);
+}
+
+.field-input.input-success:focus {
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.success-message {
+  display: block;
+  font-size: 0.875rem;
+  color: #10B981;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.success-message::before {
+  content: '✓ ';
+  font-weight: 700;
+}
+
+@keyframes spin {
+  0% { transform: translateY(-50%) rotate(0deg); }
+  100% { transform: translateY(-50%) rotate(360deg); }
+}

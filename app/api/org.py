@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, HTTPException, Request, Depends
 
-from app.core.database import get_conn
+from app.core.database import get_db_connection
 from app.services.settings_service import send_acs_email, get_sender_for_send
 
 router = APIRouter(prefix="/org", tags=["Organizations"])
@@ -34,11 +34,9 @@ async def register_or_login_org(payload: RegisterPayload):
     login_url = f"{FRONTEND_URL}/org/verify?token={token}"
     
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 sender_address, sender_name = get_sender_for_send(cur)
-        conn.close()
     except Exception:
         sender_address = os.environ.get("ACS_SENDER_ADDRESS", "founders@orchvate.in")
         sender_name = os.environ.get("ACS_SENDER_NAME", "Orchvate")
@@ -80,33 +78,31 @@ async def verify_magic_link(token: str):
         raise HTTPException(status_code=401, detail="Invalid link token.")
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                # Get or Create Organization
-                cur.execute("SELECT id FROM organizations WHERE name = %s", (company_name,))
-                org_row = cur.fetchone()
-                if org_row:
-                    org_id = org_row[0]
-                else:
-                    cur.execute("INSERT INTO organizations (name) VALUES (%s) RETURNING id", (company_name,))
-                    org_id = cur.fetchone()[0]
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    # Get or Create Organization
+                    cur.execute("SELECT id FROM organizations WHERE name = %s", (company_name,))
+                    org_row = cur.fetchone()
+                    if org_row:
+                        org_id = org_row[0]
+                    else:
+                        cur.execute("INSERT INTO organizations (name, is_active, is_deleted, approval_status) VALUES (%s, TRUE, FALSE, 'approved') RETURNING id", (company_name,))
+                        org_id = cur.fetchone()[0]
 
-                # Get or Create Org User
-                cur.execute("SELECT id FROM organization_users WHERE email = %s", (email,))
-                user_row = cur.fetchone()
-                if not user_row:
-                    cur.execute("INSERT INTO organization_users (organization_id, email) VALUES (%s, %s) RETURNING id", (org_id, email))
+                    # Get or Create Org User
+                    cur.execute("SELECT id FROM organization_users WHERE email = %s", (email,))
                     user_row = cur.fetchone()
-                
-                # Claim older submissions that matched this email but had no organization_id
-                cur.execute("""
-                    UPDATE submissions 
-                    SET organization_id = %s 
-                    WHERE email = %s AND organization_id IS NULL
-                """, (org_id, email))
-                
-        conn.close()
+                    if not user_row:
+                        cur.execute("INSERT INTO organization_users (organization_id, email) VALUES (%s, %s) RETURNING id", (org_id, email))
+                        user_row = cur.fetchone()
+                    
+                    # Claim older submissions that matched this email but had no organization_id
+                    cur.execute("""
+                        UPDATE submissions 
+                        SET organization_id = %s 
+                        WHERE email = %s AND organization_id IS NULL
+                    """, (org_id, email))
     except Exception as e:
         logger.error(f"Error in verification database steps: {e}")
         raise HTTPException(status_code=500, detail="Database registration failed.")
@@ -145,8 +141,7 @@ async def get_current_org_user(request: Request) -> dict:
 async def get_org_dashboard(current_user: dict = Depends(get_current_org_user)):
     org_id = current_user.get("org_id")
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("""
                     SELECT id, name, designation, company_name, email, submitted_at,
@@ -158,12 +153,10 @@ async def get_org_dashboard(current_user: dict = Depends(get_current_org_user)):
                     ORDER BY submitted_at ASC
                 """, (org_id,))
                 submissions = cur.fetchall()
-        conn.close()
     except Exception as e:
         logger.error(f"Dashboard query failed: {e}")
         raise HTTPException(status_code=500, detail="Database query failed.")
 
-    # Process and build history graph
     history = []
     current_level = "Foundational"
     last_audit_date = None

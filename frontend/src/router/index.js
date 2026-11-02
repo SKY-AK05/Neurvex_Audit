@@ -34,6 +34,7 @@ const routes = [
   { path: "/admin/form-builder",      component: FormBuilder,      meta: { requiresAuth: true } },
 
   // Public / org routes
+  { path: "/invite/:token",           component: AuditForm },
   { path: "/resume",                  component: ResumeDraft },
   { path: "/org/login",               component: OrgLogin },
   { path: "/org/verify",              component: OrgVerify },

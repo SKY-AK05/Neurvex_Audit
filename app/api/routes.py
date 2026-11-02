@@ -4,20 +4,50 @@ Ported from Azure Functions (function_app.py).
 All routes are prefixed with /api via the router prefix in main.py.
 """
 
+import hashlib
+import json
 import logging
+import math
 import os
 import re
+import threading
+import time
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
+import uuid as uuid_pkg
 
+from cachetools import TTLCache
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Depends
+from fastapi.responses import JSONResponse
+import jwt
 import psycopg2
 import psycopg2.extras
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
-from fastapi.responses import JSONResponse
-from cachetools import TTLCache
 
+from app.api.drafts import router as drafts_router
+from app.api.org import router as org_router
+from app.api.orgs import router as orgs_router
+from app.api.public import router as public_router
+from app.core.authorization import (
+    get_user_from_request,
+    filter_submissions_by_org_access,
+    check_submission_access,
+    get_admin_organizations,
+    require_admin,
+    require_super_admin,
+)
+from app.core.config import JWT_SECRET
+from app.core.database import get_conn, get_db_connection, get_db_transaction
+from app.core.limiter import limiter
+from app.core.security import audit_log
+from app.models.audit import AuditSubmission
+from app.services.crm_service import sync_to_hubspot
+from app.services.filter_service import (
+    build_filter_query,
+    ALLOWED_FILTER_FIELDS,
+    ALLOWED_SORT_FIELDS,
+)
 from app.services.scoring_service import calculate_scores
 from app.services.settings_service import (
     get_settings,
@@ -28,46 +58,24 @@ from app.services.settings_service import (
     update_settings,
 )
 from app.services.user_service import add_user, get_users, remove_user, verify_user
-from app.models.audit import AuditSubmission
-from app.core.limiter import limiter
-from app.core.security import audit_log
+from app.utils.helpers import to_iso_utc
 
-import jwt
-from app.api.drafts import router as drafts_router
-from app.api.org import router as org_router
-from app.api.orgs import router as orgs_router
-from app.services.crm_service import sync_to_hubspot
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 router.include_router(drafts_router)
 router.include_router(org_router)
 router.include_router(orgs_router)
+router.include_router(public_router)
 
-import math
-import uuid as uuid_pkg
-from app.services.filter_service import build_filter_query, ALLOWED_FILTER_FIELDS, ALLOWED_SORT_FIELDS
-from app.core.config import JWT_SECRET
-from app.utils.helpers import to_iso_utc
-
-logger = logging.getLogger(__name__)
-
-dashboard_cache = TTLCache(maxsize=100, ttl=60)
+# Organization-aware dashboard cache: keys are (admin_email, org_filter_hash)
+# TTL of 60 seconds to balance performance and data freshness
+dashboard_cache = TTLCache(maxsize=500, ttl=60)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
-
-def get_conn():
-    return psycopg2.connect(
-        host=os.environ["PGHOST"],
-        dbname=os.environ.get("PGDATABASE", "nd_audit"),
-        user=os.environ["PGUSER"],
-        password=os.environ["PGPASSWORD"],
-        port=os.environ.get("PGPORT", "5432"),
-        sslmode="require",
-    )
-
 
 def serialize(obj: Any) -> Any:
     if isinstance(obj, Decimal):
@@ -93,145 +101,273 @@ def strip_html(html: str) -> str:
 # ---------------------------------------------------------------------------
 
 @router.post("/submit", status_code=201)
-@limiter.limit("5/hour")
+@limiter.limit("100/hour")  # Per IP - allows shared office IPs
+@limiter.limit("1000/day")  # Daily safety limit per IP
 async def submit(request: Request, payload: AuditSubmission, background_tasks: BackgroundTasks):
     data = payload.dict()
 
-    conn = get_conn()
-    try:
+    with get_db_connection() as conn:
         scores = calculate_scores(data, conn)
-    except Exception as e:
-        conn.close()
-        raise e
 
-    # 1. Extract optional org token
-    organization_id = None
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        try:
-            token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            if token_payload.get("role") == "org_member":
-                organization_id = token_payload.get("org_id")
-        except Exception:
-            pass
+        # Email-based duplicate detection (5-minute window)
+        email = data.get("email")
+        if email:
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT id FROM submissions 
+                        WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))
+                        AND submitted_at > NOW() - INTERVAL '5 minutes'
+                        LIMIT 1
+                    """, (email,))
+                    recent = cur.fetchone()
+                    if recent:
+                        raise HTTPException(
+                            status_code=429,
+                            detail="A submission from this email was received recently. Please wait a few minutes before submitting again."
+                        )
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"Duplicate check failed: {e}")
 
-    import json
-    dimension_scores_json = json.dumps(scores.get("dimension_scores", {}))
+        organization_id = None
+        invitation_id = None
+        submission_source = "DIRECT"
+        resolved_company_name = (data.get("company_name") or "").strip()
 
-    insert_sql = """
-        INSERT INTO submissions (
-            name, designation, company_name, email, contact_number,
-            has_physical_workspace, has_suppliers,
-            q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
-            q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
-            q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
-            q35,q36,q37,q38,q39,q40,q41,q42,q43,q44,
-            lc_score, lc_level, ro_score, ro_level,
-            we_score, we_level, be_score, be_level,
-            tm_score, tm_level, ca_score, ca_level,
-            pc_score, pc_level, sp_score, sp_level,
-            overall_avg, overall_level, email_body, status,
-            consent_given, consent_timestamp, organization_id, dimension_scores, answers
-        ) VALUES (
-            %(name)s, %(designation)s, %(company_name)s, %(email)s, %(contact_number)s,
-            %(has_physical_workspace)s, %(has_suppliers)s,
-            %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
-            %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
-            %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
-            %(q35)s,%(q36)s,%(q37)s,%(q38)s,%(q39)s,%(q40)s,%(q41)s,%(q42)s,%(q43)s,%(q44)s,
-            %(lc_score)s, %(lc_level)s, %(ro_score)s, %(ro_level)s,
-            %(we_score)s, %(we_level)s, %(be_score)s, %(be_level)s,
-            %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
-            %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
-            %(overall_avg)s, %(overall_level)s, %(email_body)s, 'pending',
-            %(consent_given)s, %(consent_timestamp)s, %(organization_id)s, %(dimension_scores)s, %(answers)s
-        ) RETURNING id
-    """
+        # 1. Check for Invitation Token (Method B)
+        raw_inv_token = (data.get("invitation_token") or "").strip()
+        if raw_inv_token:
+            token_hash = hashlib.sha256(raw_inv_token.encode("utf-8")).hexdigest()
+            try:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        SELECT oi.id, oi.organization_id, oi.is_active, oi.expires_at, oi.max_submissions,
+                               oi.submission_count, oi.revoked_at,
+                               o.name AS org_name, o.is_active AS org_active, o.is_deleted AS org_deleted
+                        FROM organization_invitations oi
+                        JOIN organizations o ON o.id = oi.organization_id
+                        WHERE oi.token_hash = %s
+                    """, (token_hash,))
+                    inv_record = cur.fetchone()
+            except Exception as e:
+                logger.error("Failed to query invitation record: %s", e)
+                raise HTTPException(status_code=500, detail="Database error verifying invitation")
 
-    # Sanitize "NA" scores to None for PostgreSQL DECIMAL columns
-    sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
+            if not inv_record:
+                raise HTTPException(status_code=400, detail="Invalid invitation link.")
+            if inv_record["org_deleted"] or not inv_record["org_active"]:
+                raise HTTPException(status_code=400, detail="The organization associated with this invitation is inactive.")
 
-    # Extract answers dynamically, excluding known non-question fields
-    excluded_fields = {"name", "designation", "company_name", "email", "contact_number", 
-                       "has_physical_workspace", "has_suppliers", "consent_given", "draft_id", "organization_id"}
-    dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
+            if not inv_record["is_active"] or inv_record["revoked_at"] is not None:
+                raise HTTPException(status_code=400, detail="This invitation link has been revoked or deactivated.")
+            now = datetime.now(timezone.utc)
+            if inv_record["expires_at"] and inv_record["expires_at"] < now:
+                raise HTTPException(status_code=400, detail="This invitation link has expired.")
+            if inv_record["max_submissions"] is not None and inv_record["submission_count"] >= inv_record["max_submissions"]:
+                raise HTTPException(status_code=400, detail="This invitation has reached its submission limit.")
 
-    params = {
-        **sanitized_scores,
-        "name": data.get("name") or "",
-        "designation": data.get("designation") or data.get("role") or "",
-        "company_name": data.get("company_name", ""),
-        "email": data.get("email"),
-        "contact_number": data.get("contact_number", None),
-        "has_physical_workspace": data.get("has_physical_workspace") or None,
-        "has_suppliers": data.get("has_suppliers") or None,
-        "consent_given": data.get("consent_given", False),
-        "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
-        "organization_id": organization_id,
-        **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
-        "dimension_scores": dimension_scores_json,
-        "answers": json.dumps(dynamic_answers),
-    }
+            # Derive organization strictly on server
+            organization_id = str(inv_record["organization_id"])
+            invitation_id = str(inv_record["id"])
+            resolved_company_name = inv_record["org_name"]
+            submission_source = "INVITATION"
 
-    crm_enabled = False
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(insert_sql, params)
-                submission_id = cur.fetchone()[0]
-                
-                # Send admin notification
+        else:
+            # 2. Normal Website Access (Method A)
+            req_org_id = data.get("organization_id")
+            auth_header = request.headers.get("Authorization")
+            if not req_org_id and auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
                 try:
-                    notification_sent = notify_admin_new_submission(cur, submission_id, data.get("name", ""), data.get("company_name", ""))
-                    if notification_sent:
-                        logger.info(f"Admin notification sent for submission {submission_id}")
-                    else:
-                        logger.warning(f"Admin notification not sent for submission {submission_id} - notifications may be disabled or not configured")
-                except Exception as e:
-                    logger.error(f"Failed to send admin notification for submission {submission_id}: {e}")
-                
-                # Update draft as submitted if draft_id is provided and is a valid UUID
-                draft_id = data.get("draft_id")
-                if draft_id and str(draft_id).strip() not in ("", "null", "undefined"):
-                    try:
-                        import uuid
-                        uuid.UUID(str(draft_id))
-                        cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
-                    except ValueError:
-                        logger.warning("Invalid draft_id UUID: %s", draft_id)
+                    token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+                    if token_payload.get("role") == "org_member":
+                        req_org_id = token_payload.get("org_id")
+                except Exception:
+                    pass
 
-                # Auto-link to org_submission_links if org session was present
-                # Wrapped in try/except so a missing table (migration not yet run)
-                # does not break the submission itself.
-                if organization_id:
-                    try:
+            if req_org_id:
+                try:
+                    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                         cur.execute("""
-                            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-                            VALUES (%s, %s, 1.0, NULL)
-                            ON CONFLICT (org_id, submission_id) DO NOTHING
-                        """, (str(organization_id), str(submission_id)))
-                    except Exception as link_err:
-                        logger.warning("org_submission_links insert skipped (table may not exist yet): %s", link_err)
-                    
-                # Check if CRM is enabled in settings
-                cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
-                row = cur.fetchone()
-                crm_enabled = bool(row[0]) if row else False
-        # Conn closed later in the main flow or here if we don't use it anymore
-        # Note: conn is already created above and will be closed at the end of the view
-    except Exception as e:
-        logger.error("DB insert failed: %s", e)
-        raise HTTPException(status_code=500, detail="Database error")
-    finally:
-        conn.close()
-    
+                            SELECT id, name, is_active, is_deleted
+                            FROM organizations
+                            WHERE id = %s AND is_deleted = FALSE AND is_active = TRUE
+                        """, (str(req_org_id),))
+                        org_row = cur.fetchone()
+                except Exception as e:
+                    logger.error("Failed to query organisation: %s", e)
+                    raise HTTPException(status_code=500, detail="Database error verifying organisation")
+
+                if not org_row:
+                    raise HTTPException(status_code=400, detail="Selected organisation is invalid or inactive.")
+
+                organization_id = str(org_row["id"])
+                resolved_company_name = org_row["name"]
+                submission_source = "DIRECT"
+            elif resolved_company_name:
+                # Normalize name: trim whitespace
+                clean_name = " ".join(resolved_company_name.split())
+                
+                # Transactional advisory lock & normalized lookup/auto-creation
+                # Avoids duplicate organizations from concurrent submissions
+                try:
+                    with conn:
+                        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                            cur.execute(
+                                "SELECT pg_advisory_xact_lock(hashtext(lower(trim(%s))))",
+                                (clean_name,)
+                            )
+                            cur.execute("""
+                                SELECT id, name
+                                FROM organizations
+                                WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND is_deleted = FALSE
+                            """, (clean_name,))
+                            org_row = cur.fetchone()
+
+                            if org_row:
+                                organization_id = str(org_row["id"])
+                                resolved_company_name = org_row["name"]
+                                submission_source = "DIRECT"
+                            else:
+                                # Create organization immediately as active and approved (no approval workflow)
+                                cur.execute("""
+                                    INSERT INTO organizations (name, is_active, is_deleted, approval_status)
+                                    VALUES (%s, TRUE, FALSE, 'approved')
+                                    RETURNING id, name
+                                """, (clean_name,))
+                                new_org = cur.fetchone()
+                                organization_id = str(new_org["id"])
+                                resolved_company_name = new_org["name"]
+                                submission_source = "DIRECT"
+                                logger.info(f"Auto-created organisation: {resolved_company_name} (ID: {organization_id})")
+                except Exception as e:
+                    logger.error("Failed to lookup or create organisation: %s", e)
+                    raise HTTPException(status_code=500, detail="Failed to resolve organisation")
+            else:
+                raise HTTPException(status_code=400, detail="Organisation name is required.")
+
+        dimension_scores_json = json.dumps(scores.get("dimension_scores", {}))
+
+        insert_sql = """
+            INSERT INTO submissions (
+                name, designation, company_name, email, contact_number,
+                has_physical_workspace, has_suppliers,
+                q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
+                q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
+                q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
+                q35,q36,q37,q38,q39,q40,q41,q42,q43,q44,
+                lc_score, lc_level, ro_score, ro_level,
+                we_score, we_level, be_score, be_level,
+                tm_score, tm_level, ca_score, ca_level,
+                pc_score, pc_level, sp_score, sp_level,
+                overall_avg, overall_level, email_body, status,
+                consent_given, consent_timestamp, organization_id,
+                submission_source, invitation_id, dimension_scores, answers
+            ) VALUES (
+                %(name)s, %(designation)s, %(company_name)s, %(email)s, %(contact_number)s,
+                %(has_physical_workspace)s, %(has_suppliers)s,
+                %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
+                %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
+                %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
+                %(q35)s,%(q36)s,%(q37)s,%(q38)s,%(q39)s,%(q40)s,%(q41)s,%(q42)s,%(q43)s,%(q44)s,
+                %(lc_score)s, %(lc_level)s, %(ro_score)s, %(ro_level)s,
+                %(we_score)s, %(we_level)s, %(be_score)s, %(be_level)s,
+                %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
+                %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
+                %(overall_avg)s, %(overall_level)s, %(email_body)s, 'pending',
+                %(consent_given)s, %(consent_timestamp)s, %(organization_id)s,
+                %(submission_source)s, %(invitation_id)s, %(dimension_scores)s, %(answers)s
+            ) RETURNING id
+        """
+
+        sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
+
+        excluded_fields = {
+            "name", "designation", "company_name", "email", "contact_number",
+            "has_physical_workspace", "has_suppliers", "consent_given", "draft_id",
+            "organization_id", "invitation_token", "submission_source", "invitation_id"
+        }
+        dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
+
+        params = {
+            **sanitized_scores,
+            "name": data.get("name") or "",
+            "designation": data.get("designation") or data.get("role") or "",
+            "company_name": resolved_company_name,
+            "email": data.get("email"),
+            "contact_number": data.get("contact_number", None),
+            "has_physical_workspace": data.get("has_physical_workspace") or None,
+            "has_suppliers": data.get("has_suppliers") or None,
+            "consent_given": data.get("consent_given", False),
+            "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
+            "organization_id": organization_id,
+            "submission_source": submission_source,
+            "invitation_id": invitation_id,
+            **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
+            "dimension_scores": dimension_scores_json,
+            "answers": json.dumps(dynamic_answers),
+        }
+
+        crm_enabled = False
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(insert_sql, params)
+                    submission_id = cur.fetchone()[0]
+
+                    # If invitation submission, atomically increment counter
+                    if invitation_id:
+                        cur.execute("""
+                            UPDATE organization_invitations
+                            SET submission_count = submission_count + 1
+                            WHERE id = %s
+                        """, (str(invitation_id),))
+
+                    # Send admin notification
+                    try:
+                        notification_sent = notify_admin_new_submission(cur, submission_id, data.get("name", ""), resolved_company_name)
+                        if notification_sent:
+                            logger.info(f"Admin notification sent for submission {submission_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to send admin notification for submission {submission_id}: {e}")
+
+                    # Update draft as submitted if draft_id is provided
+                    draft_id = data.get("draft_id")
+                    if draft_id and str(draft_id).strip() not in ("", "null", "undefined"):
+                        try:
+                            uuid_pkg.UUID(str(draft_id))
+                            cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
+                        except ValueError:
+                            logger.warning("Invalid draft_id UUID: %s", draft_id)
+
+                    # Link to org_submission_links
+                    if organization_id:
+                        try:
+                            cur.execute("""
+                                INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                                VALUES (%s, %s, 1.0, NULL)
+                                ON CONFLICT (org_id, submission_id) DO NOTHING
+                            """, (str(organization_id), str(submission_id)))
+                        except Exception as link_err:
+                            logger.warning("org_submission_links insert skipped: %s", link_err)
+
+                    # Check if CRM is enabled in settings
+                    cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
+                    row = cur.fetchone()
+                    if row:
+                        crm_enabled = bool(row.get("crm_sync_enabled") if isinstance(row, dict) else row[0])
+                    else:
+                        crm_enabled = False
+        except Exception as e:
+            logger.error("DB insert failed: %s", e)
+            raise HTTPException(status_code=500, detail="Database error")
+
     if crm_enabled:
         background_tasks.add_task(sync_to_hubspot, data, scores, str(submission_id))
-    
-    if "dashboard" in dashboard_cache:
-        del dashboard_cache["dashboard"]
+
+    dashboard_cache.clear()
 
     return {"success": True, "submission_id": str(submission_id)}
 
@@ -241,22 +377,29 @@ async def submit(request: Request, payload: AuditSubmission, background_tasks: B
 # ---------------------------------------------------------------------------
 
 @router.get("/submissions")
-async def get_submissions():
-    if "dashboard" in dashboard_cache:
-        return dashboard_cache["dashboard"]
-        
+async def get_submissions(request: Request):
+    user = require_admin(request)
+    admin_email = user["email"]
+    admin_role = user["role"]
+
+    cache_key_data = f"{admin_email}:{admin_role}"
+    cache_key = hashlib.md5(cache_key_data.encode()).hexdigest()
+
+    if cache_key in dashboard_cache:
+        return dashboard_cache[cache_key]
+
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("""
+                query = """
                     SELECT id, name, designation, company_name, email, contact_number, submitted_at,
-                           overall_avg, overall_level, status, answers
+                           overall_avg, overall_level, status, answers, organization_id,
+                           submission_source, invitation_id
                     FROM submissions
                     ORDER BY submitted_at DESC
-                """)
+                """
+                cur.execute(query)
                 rows = cur.fetchall()
-        conn.close()
     except Exception as e:
         logger.error("DB query failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
@@ -268,9 +411,13 @@ async def get_submissions():
             r["submitted_at"] = to_iso_utc(r["submitted_at"])
         if r.get("id"):
             r["id"] = str(r["id"])
-        
-        # Extract ALL demographic fields from answers JSONB to top-level
-        # so the admin table, filter builder, and analytics can consume them
+        if r.get("organization_id"):
+            r["organization_id"] = str(r["organization_id"])
+        if r.get("invitation_id"):
+            r["invitation_id"] = str(r["invitation_id"])
+        if r.get("submission_source") is None:
+            r["submission_source"] = "DIRECT"
+
         if r.get("answers"):
             answers = r["answers"]
             demographic_fields = [
@@ -281,11 +428,10 @@ async def get_submissions():
             for field in demographic_fields:
                 if field in answers and field not in r:
                     r[field] = answers[field]
-        
-        result.append(r)
-        
-    dashboard_cache["dashboard"] = result
 
+        result.append(r)
+
+    dashboard_cache[cache_key] = result
     return result
 
 
@@ -295,10 +441,6 @@ async def get_submissions():
 
 @router.post("/submissions/filter")
 async def filter_submissions(request: Request):
-    """
-    Execute server-side dynamic filtering with parameterized SQL.
-    Supports AND / OR condition groups, multi-column sorting, and server pagination.
-    """
     try:
         body = await request.json()
     except Exception:
@@ -309,7 +451,6 @@ async def filter_submissions(request: Request):
     page = body.get("page", 1)
     per_page = body.get("per_page", 10)
 
-    # Optional organization isolation if user is an org member
     organization_id = None
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
@@ -320,6 +461,9 @@ async def filter_submissions(request: Request):
                 organization_id = token_payload.get("org_id")
         except Exception:
             pass
+
+    if not organization_id:
+        require_admin(request)
 
     try:
         data_sql, count_sql, params, summary = build_filter_query(
@@ -333,18 +477,14 @@ async def filter_submissions(request: Request):
         raise HTTPException(status_code=400, detail=str(val_err))
 
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Count total matching records
                 cur.execute(count_sql, params)
                 count_row = cur.fetchone()
                 total = count_row["count"] if count_row else 0
 
-                # Fetch page items
                 cur.execute(data_sql, params)
                 rows = cur.fetchall()
-        conn.close()
     except Exception as e:
         logger.error("Filter query failed: %s", e)
         raise HTTPException(status_code=500, detail="Database query error")
@@ -356,13 +496,18 @@ async def filter_submissions(request: Request):
             r["submitted_at"] = to_iso_utc(r["submitted_at"])
         if r.get("id"):
             r["id"] = str(r["id"])
+        if r.get("organization_id"):
+            r["organization_id"] = str(r["organization_id"])
+        if r.get("invitation_id"):
+            r["invitation_id"] = str(r["invitation_id"])
+        if r.get("submission_source") is None:
+            r["submission_source"] = "DIRECT"
         if r.get("overall_avg") is not None:
             r["overall_avg"] = float(r["overall_avg"])
         for score_key in ("lc_score", "ro_score", "we_score", "be_score", "tm_score", "ca_score", "pc_score", "sp_score"):
             if r.get(score_key) is not None:
                 r[score_key] = float(r[score_key])
 
-        # Extract demographic fields from answers JSONB
         if r.get("answers"):
             answers = r["answers"]
             demographic_fields = ["function", "country", "role", "gender", "is_neurodivergent"]
@@ -434,13 +579,11 @@ DEFAULT_SYSTEM_SAVED_FILTERS = [
 
 @router.get("/submissions/saved-filters")
 async def list_saved_filters(request: Request):
-    """List saved filter presets and user filters."""
+    require_admin(request)
     admin_email = getattr(request.state, "admin_email", "system")
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Check if saved_filters table exists
                 cur.execute("""
                     SELECT EXISTS (
                         SELECT 1 FROM information_schema.tables WHERE table_name = 'saved_filters'
@@ -448,7 +591,6 @@ async def list_saved_filters(request: Request):
                 """)
                 table_exists = cur.fetchone()["exists"]
                 if not table_exists:
-                    conn.close()
                     return DEFAULT_SYSTEM_SAVED_FILTERS
 
                 cur.execute("""
@@ -458,8 +600,7 @@ async def list_saved_filters(request: Request):
                     ORDER BY (created_by = 'system') DESC, name ASC
                 """, (admin_email,))
                 rows = cur.fetchall()
-        conn.close()
-        
+
         result = []
         for r in rows:
             item = dict(r)
@@ -478,7 +619,7 @@ async def list_saved_filters(request: Request):
 
 @router.post("/submissions/saved-filters")
 async def create_saved_filter(request: Request):
-    """Save a new filter configuration."""
+    require_admin(request)
     admin_email = getattr(request.state, "admin_email", "admin")
     try:
         body = await request.json()
@@ -492,34 +633,30 @@ async def create_saved_filter(request: Request):
     filter_config = body.get("filter_config") or {}
     description = (body.get("description") or "").strip()
     is_shared = bool(body.get("is_shared", True))
-
-    import json
     filter_config_json = json.dumps(filter_config)
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Ensure table exists
-                cur.execute("""
-                    CREATE TABLE IF NOT EXISTS saved_filters (
-                        id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                        name          VARCHAR(255) NOT NULL,
-                        description   TEXT,
-                        filter_config JSONB NOT NULL,
-                        created_by    VARCHAR(255) NOT NULL DEFAULT 'admin',
-                        is_shared     BOOLEAN NOT NULL DEFAULT TRUE,
-                        created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                        updated_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-                    )
-                """)
-                cur.execute("""
-                    INSERT INTO saved_filters (name, description, filter_config, created_by, is_shared)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id, name, description, filter_config, created_by, is_shared, created_at
-                """, (name, description, filter_config_json, admin_email, is_shared))
-                new_row = dict(cur.fetchone())
-        conn.close()
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        CREATE TABLE IF NOT EXISTS saved_filters (
+                            id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                            name          VARCHAR(255) NOT NULL,
+                            description   TEXT,
+                            filter_config JSONB NOT NULL,
+                            created_by    VARCHAR(255) NOT NULL DEFAULT 'admin',
+                            is_shared     BOOLEAN NOT NULL DEFAULT TRUE,
+                            created_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                            updated_at    TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                        )
+                    """)
+                    cur.execute("""
+                        INSERT INTO saved_filters (name, description, filter_config, created_by, is_shared)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id, name, description, filter_config, created_by, is_shared, created_at
+                    """, (name, description, filter_config_json, admin_email, is_shared))
+                    new_row = dict(cur.fetchone())
 
         if new_row.get("id"):
             new_row["id"] = str(new_row["id"])
@@ -533,18 +670,17 @@ async def create_saved_filter(request: Request):
 
 @router.delete("/submissions/saved-filters/{filter_id}")
 async def delete_saved_filter(request: Request, filter_id: str):
-    """Delete a saved filter."""
+    require_admin(request)
     admin_email = getattr(request.state, "admin_email", "admin")
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    DELETE FROM saved_filters
-                    WHERE id = %s AND (created_by = %s OR created_by != 'system')
-                """, (filter_id, admin_email))
-                deleted = cur.rowcount > 0
-        conn.close()
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        DELETE FROM saved_filters
+                        WHERE id = %s AND (created_by = %s OR created_by != 'system')
+                    """, (filter_id, admin_email))
+                    deleted = cur.rowcount > 0
         if not deleted:
             raise HTTPException(status_code=404, detail="Saved filter not found or cannot be deleted")
         return {"success": True, "message": "Saved filter deleted"}
@@ -562,63 +698,71 @@ async def delete_saved_filter(request: Request, filter_id: str):
 @router.get("/submissions/{submission_id}")
 async def get_submission(request: Request, submission_id: str):
     sub_id = str(submission_id).strip()
-    
-    # Safe ID format validation (accepts standard UUID or digits)
-    is_uuid = False
+
     try:
         uuid_pkg.UUID(sub_id)
-        is_uuid = True
     except (ValueError, AttributeError):
         if not sub_id.isdigit():
             raise HTTPException(status_code=400, detail="Invalid submission ID format. Must be a valid UUID or integer.")
 
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM submissions WHERE id = %s", (sub_id,))
                 row = cur.fetchone()
-        conn.close()
+
+            if not row:
+                raise HTTPException(status_code=404, detail="Submission not found")
+
+            # Check if caller is org_member (enforce tenant isolation)
+            auth_header = request.headers.get("Authorization")
+            is_org_member = False
+            if auth_header and auth_header.startswith("Bearer "):
+                token = auth_header.split(" ")[1]
+                try:
+                    token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+                    if token_payload.get("role") == "org_member":
+                        is_org_member = True
+                        user_org_id = str(token_payload.get("org_id", ""))
+                        sub_org_id = str(row.get("organization_id") or "")
+                        if not user_org_id or user_org_id != sub_org_id:
+                            raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this submission.")
+                except jwt.PyJWTError:
+                    pass
+
+            # If not org_member, require admin
+            if not is_org_member:
+                require_admin(request)
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("DB query failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Submission not found")
-
-    # IDOR Protection: If caller is authenticated as an org_member, enforce tenant ownership
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        try:
-            token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-            if token_payload.get("role") == "org_member":
-                user_org_id = str(token_payload.get("org_id", ""))
-                sub_org_id = str(row.get("organization_id") or "")
-                if not user_org_id or user_org_id != sub_org_id:
-                    raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this submission.")
-        except jwt.PyJWTError:
-            pass  # Let admin JWKS middleware handle admin tokens
 
     r = dict(row)
     for ts_field in ("submitted_at", "sent_at", "consent_timestamp"):
         if r.get(ts_field):
             r[ts_field] = to_iso_utc(r[ts_field])
-            
+
     if r.get("id"):
         r["id"] = str(r["id"])
+    if r.get("organization_id"):
+        r["organization_id"] = str(r["organization_id"])
+    if r.get("invitation_id"):
+        r["invitation_id"] = str(r["invitation_id"])
+    if r.get("submission_source") is None:
+        r["submission_source"] = "DIRECT"
 
-    # Extract demographic fields from answers JSONB to top-level
     if r.get("answers"):
         answers = r["answers"]
         demographic_fields = ["function", "function_other", "country", "state_ut", "role", 
-                            "gender", "gender_other", "is_pwd", "is_neurodivergent", "is_marginalized"]
+                              "gender", "gender_other", "is_pwd", "is_neurodivergent", "is_marginalized"]
         for field in demographic_fields:
             if field in answers and field not in r:
                 r[field] = answers[field]
 
     return r
-
 
 
 # ---------------------------------------------------------------------------
@@ -628,37 +772,32 @@ async def get_submission(request: Request, submission_id: str):
 @router.patch("/submissions/{submission_id}/respondent")
 @audit_log("edit_respondent_info")
 async def update_respondent(request: Request, submission_id: str):
+    require_admin(request)
     sub_id = str(submission_id).strip()
     try:
         body = await request.json()
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
 
-    # Allowed fields to update
     allowed_fields = ["name", "email", "company_name", "contact_number", "designation"]
     updates = {k: v for k, v in body.items() if k in allowed_fields}
-    
+
     if not updates:
         raise HTTPException(status_code=400, detail="No valid fields to update")
 
-    # Build SQL update statement
-    set_clause = ", ".join([f"{k} = %({k})s" for k in updates.keys()])
-    sql = f"UPDATE submissions SET {set_clause} WHERE id = %(submission_id)s"
-    
-    params = {**updates, "submission_id": sub_id}
-    
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(sql, params)
-                if cur.rowcount == 0:
-                    raise HTTPException(status_code=404, detail="Submission not found")
-        conn.close()
-        
-        # Clear dashboard cache
+        with get_db_connection() as conn:
+            set_clause = ", ".join([f"{k} = %({k})s" for k in updates.keys()])
+            sql = f"UPDATE submissions SET {set_clause} WHERE id = %(submission_id)s"
+            params = {**updates, "submission_id": sub_id}
+
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Submission not found")
+
         dashboard_cache.clear()
-        
         return {"message": "Respondent information updated successfully"}
     except HTTPException:
         raise
@@ -668,12 +807,132 @@ async def update_respondent(request: Request, submission_id: str):
 
 
 # ---------------------------------------------------------------------------
+# PATCH /api/submissions/{id}/organisation
+# ---------------------------------------------------------------------------
+
+@router.patch("/submissions/{submission_id}/organisation")
+@audit_log("reassign_submission_organisation")
+async def reassign_submission_organisation(request: Request, submission_id: str):
+    """
+    Reassign a submission to a different organisation.
+    Updates both submissions.organization_id AND submissions.company_name.
+    Updates org_submission_links table.
+    Creates audit trail in submission_reassignments table.
+    Both Normal Admin and Super Admin have global access to reassign between any organisations.
+    """
+    user = require_admin(request)
+    admin_email = user["email"]
+    admin_user_id = getattr(request.state, "user_id", admin_email) or admin_email
+
+    sub_id = str(submission_id).strip()
+
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+
+    new_org_id = body.get("organization_id")
+    reason = body.get("reason", "").strip()
+
+    if not new_org_id:
+        raise HTTPException(status_code=400, detail="Missing organization_id")
+
+    try:
+        UUID(sub_id)
+        UUID(new_org_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    # 1. Verify submission exists and get current org
+                    cur.execute(
+                        "SELECT id, organization_id, company_name FROM submissions WHERE id = %s",
+                        (sub_id,)
+                    )
+                    submission = cur.fetchone()
+                    if not submission:
+                        raise HTTPException(status_code=404, detail="Submission not found")
+
+                    old_org_id = str(submission["organization_id"]) if submission["organization_id"] else None
+
+                    if old_org_id == str(new_org_id):
+                        raise HTTPException(
+                            status_code=400, 
+                            detail="Submission already assigned to this organisation"
+                        )
+
+                    # 2. Verify target organisation exists and fetch canonical name
+                    cur.execute(
+                        "SELECT id, name FROM organizations WHERE id = %s AND is_deleted = FALSE",
+                        (new_org_id,)
+                    )
+                    target_org = cur.fetchone()
+                    if not target_org:
+                        raise HTTPException(status_code=404, detail="Target organisation not found")
+
+                    target_name = target_org["name"]
+
+                    # 3. Update both organization_id and company_name in submissions
+                    cur.execute(
+                        "UPDATE submissions SET organization_id = %s, company_name = %s WHERE id = %s",
+                        (new_org_id, target_name, sub_id)
+                    )
+
+                    # 4. Update org_submission_links
+                    cur.execute(
+                        "DELETE FROM org_submission_links WHERE submission_id = %s",
+                        (sub_id,)
+                    )
+                    cur.execute("""
+                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                        VALUES (%s, %s, 1.0, %s)
+                        ON CONFLICT (org_id, submission_id) DO NOTHING
+                    """, (new_org_id, sub_id, admin_user_id))
+
+                    # 5. Create audit trail in submission_reassignments
+                    cur.execute("""
+                        INSERT INTO submission_reassignments (
+                            submission_id, 
+                            old_organization_id, 
+                            new_organization_id, 
+                            reassigned_by, 
+                            reason
+                        )
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (sub_id, old_org_id, new_org_id, admin_user_id, reason or None))
+
+        dashboard_cache.clear()
+
+        logger.info(
+            "Submission %s reassigned from org %s to org %s (%s) by user %s",
+            sub_id, old_org_id, new_org_id, target_name, admin_email
+        )
+
+        return {
+            "message": "Submission reassigned successfully",
+            "old_organization_id": old_org_id,
+            "new_organization_id": new_org_id,
+            "company_name": target_name,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Failed to reassign submission: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail="Database error during reassignment")
+
+
+# ---------------------------------------------------------------------------
 # PUT /api/submissions/{id}/email
 # ---------------------------------------------------------------------------
 
 @router.put("/submissions/{submission_id}/email")
 @audit_log("edit_email_draft")
 async def update_email(request: Request, submission_id: str):
+    require_admin(request)
     sub_id = str(submission_id).strip()
     try:
         body = await request.json()
@@ -685,17 +944,15 @@ async def update_email(request: Request, submission_id: str):
         raise HTTPException(status_code=400, detail="Missing email_body")
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE submissions SET email_body = %s WHERE id = %s",
-                    (email_body, sub_id),
-                )
-                if cur.rowcount == 0:
-                    conn.close()
-                    raise HTTPException(status_code=404, detail="Not found")
-        conn.close()
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE submissions SET email_body = %s WHERE id = %s",
+                        (email_body, sub_id),
+                    )
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Not found")
     except HTTPException:
         raise
     except Exception as e:
@@ -712,53 +969,43 @@ async def update_email(request: Request, submission_id: str):
 @router.post("/submissions/{submission_id}/regenerate-email")
 @audit_log("regenerate_email_draft")
 async def regenerate_email(request: Request, submission_id: str):
+    require_admin(request)
     sub_id = str(submission_id).strip()
+
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM submissions WHERE id = %s", (sub_id,))
                 row = cur.fetchone()
-        conn.close()
+
+            if not row:
+                raise HTTPException(status_code=404, detail="Not found")
+
+            if row.get("status") == "sent":
+                raise HTTPException(status_code=409, detail="Cannot regenerate sent email")
+
+            data = dict(row)
+            scores = calculate_scores(data, conn)
+            new_email_body = scores.get("email_body")
+
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE submissions SET email_body = %s WHERE id = %s",
+                        (new_email_body, sub_id),
+                    )
+
+        return {"success": True, "email_body": new_email_body}
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("DB query failed: %s", e)
+        logger.error("Regenerate email failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
-
-    if not row:
-        raise HTTPException(status_code=404, detail="Not found")
-
-    if row.get("status") == "sent":
-        raise HTTPException(status_code=409, detail="Cannot regenerate sent email")
-
-    data = dict(row)
-    try:
-        conn = get_conn()
-        scores = calculate_scores(data, conn)
-    except Exception as e:
-        conn.close()
-        raise e
-    new_email_body = scores.get("email_body")
-
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE submissions SET email_body = %s WHERE id = %s",
-                    (new_email_body, sub_id),
-                )
-        conn.close()
-    except Exception as e:
-        logger.error("DB update failed: %s", e)
-        raise HTTPException(status_code=500, detail="Database error")
-
-    return {"success": True, "email_body": new_email_body}
 
 
 # ---------------------------------------------------------------------------
 # POST /api/submissions/{id}/send
 # ---------------------------------------------------------------------------
-import time
 
 def send_acs_email_with_retry(payload: dict, max_attempts=3):
     delays = [1, 4, 16]
@@ -774,69 +1021,66 @@ def send_acs_email_with_retry(payload: dict, max_attempts=3):
                 logger.error(f"Permanent email failure after {max_attempts} attempts.")
                 raise e
 
+
 def process_email_dispatch(submission_id: str, payload: dict):
     try:
         send_acs_email_with_retry(payload)
         sent_at = datetime.now(timezone.utc)
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "UPDATE submissions SET status = 'sent', sent_at = %s WHERE id = %s",
-                    (sent_at, submission_id),
-                )
-        conn.close()
-        
-        if "dashboard" in dashboard_cache:
-            del dashboard_cache["dashboard"]
-            
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE submissions SET status = 'sent', sent_at = %s WHERE id = %s",
+                        (sent_at, submission_id),
+                    )
+        dashboard_cache.clear()
     except Exception as e:
         logger.error(f"Async email failed: {e}")
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                import json
-                cur.execute("""
-                    INSERT INTO email_dlq (submission_id, payload, attempts, last_error) 
-                    VALUES (%s, %s, 3, %s)
-                """, (submission_id, json.dumps(payload), str(e)))
-                cur.execute("UPDATE submissions SET status = 'failed' WHERE id = %s", (submission_id,))
-        conn.close()
+        try:
+            with get_db_connection() as conn:
+                with conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""
+                            INSERT INTO email_dlq (submission_id, payload, attempts, last_error) 
+                            VALUES (%s, %s, 3, %s)
+                        """, (submission_id, json.dumps(payload), str(e)))
+                        cur.execute("UPDATE submissions SET status = 'failed' WHERE id = %s", (submission_id,))
+        except Exception as dlq_err:
+            logger.critical("Failed to write to email_dlq: %s", dlq_err)
+
 
 @router.post("/submissions/{submission_id}/send")
 @audit_log("send_audit_report")
 async def send_email_route(request: Request, submission_id: str, background_tasks: BackgroundTasks):
+    require_admin(request)
     sub_id_str = str(submission_id).strip()
+
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(
                     "SELECT name, email, company_name, email_body, status FROM submissions WHERE id = %s",
                     (sub_id_str,),
                 )
                 row = cur.fetchone()
-        conn.close()
-    except Exception as e:
-        logger.error("DB query failed: %s", e)
-        raise HTTPException(status_code=500, detail="Database error")
 
-    if not row:
-        raise HTTPException(status_code=404, detail="Not found")
+                if not row:
+                    raise HTTPException(status_code=404, detail="Not found")
 
-    if row["status"] in ("sent", "sending"):
-        raise HTTPException(status_code=409, detail="Already sent or sending")
+                if row["status"] in ("sent", "sending"):
+                    raise HTTPException(status_code=409, detail="Already sent or sending")
 
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
                 sender_address, sender_name = get_sender_for_send(cur)
-        conn.close()
+
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("UPDATE submissions SET status = 'sending' WHERE id = %s", (sub_id_str,))
+
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("Settings load failed: %s", e)
-        sender_address = os.environ.get("ACS_SENDER_ADDRESS", "")
-        sender_name = os.environ.get("ACS_SENDER_NAME", "Orchvate")
+        logger.error("DB query/update failed: %s", e)
+        raise HTTPException(status_code=500, detail="Database error")
 
     payload = {
         "to_address": row["email"],
@@ -849,20 +1093,8 @@ async def send_email_route(request: Request, submission_id: str, background_task
         "submission_id": sub_id_str,
     }
 
-    # Transition to 'sending' immediately
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("UPDATE submissions SET status = 'sending' WHERE id = %s", (sub_id_str,))
-        conn.close()
-    except Exception as e:
-        logger.error("Failed to update status to sending: %s", e)
-
     background_tasks.add_task(process_email_dispatch, sub_id_str, payload)
-    
-    if "dashboard" in dashboard_cache:
-        del dashboard_cache["dashboard"]
+    dashboard_cache.clear()
 
     return {"success": True, "status": "sending"}
 
@@ -872,22 +1104,22 @@ async def send_email_route(request: Request, submission_id: str, background_task
 # ---------------------------------------------------------------------------
 
 @router.get("/settings")
-async def get_settings_route():
+async def get_settings_route(request: Request):
+    require_admin(request)
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 data = get_settings(cur)
-        conn.close()
+        return data
     except Exception as e:
         logger.error("Settings failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
-    return data
 
 
 @router.put("/settings")
 @audit_log("update_settings")
 async def save_settings_route(request: Request):
+    require_admin(request)
     try:
         body = await request.json()
     except Exception:
@@ -897,15 +1129,14 @@ async def save_settings_route(request: Request):
         raise HTTPException(status_code=400, detail="Empty body")
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                data = update_settings(cur, body)
-        conn.close()
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    data = update_settings(cur, body)
+        return data
     except Exception as e:
         logger.error("Settings update failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
-    return data
 
 
 # ---------------------------------------------------------------------------
@@ -915,25 +1146,25 @@ async def save_settings_route(request: Request):
 @router.post("/settings/notifications/toggle")
 @audit_log("toggle_notifications")
 async def toggle_notifications(request: Request):
+    require_admin(request)
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                current = get_settings(cur)
-                enabling = not current["notifications_enabled"]
-                if enabling and not (current.get("notification_email") or "").strip():
-                    raise HTTPException(
-                        status_code=400,
-                        detail="Set a notification email in Settings before enabling alerts.",
-                    )
-                data = update_settings(cur, {"notifications_enabled": enabling})
-        conn.close()
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    current = get_settings(cur)
+                    enabling = not current["notifications_enabled"]
+                    if enabling and not (current.get("notification_email") or "").strip():
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Set a notification email in Settings before enabling alerts.",
+                        )
+                    data = update_settings(cur, {"notifications_enabled": enabling})
+        return data
     except HTTPException:
         raise
     except Exception as e:
         logger.error("Toggle notifications failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
-    return data
 
 
 # ---------------------------------------------------------------------------
@@ -993,14 +1224,11 @@ async def book_call(request: Request):
     )
 
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
-                from app.services.settings_service import get_settings, get_sender_for_send
                 settings = get_settings(cur)
                 sender_address, sender_name = get_sender_for_send(cur)
 
-                # Send to the support / notification email (whoever should receive bookings)
                 to_address = (
                     (settings.get("notification_email") or "").strip()
                     or os.environ.get("SUPPORT_EMAIL", "").strip()
@@ -1010,12 +1238,9 @@ async def book_call(request: Request):
                 if not sender_address:
                     raise ValueError("Sender address is not configured")
 
-                from app.services.settings_service import send_acs_email as _send
-                import threading
-
                 def _bg():
                     try:
-                        _send(
+                        send_acs_email(
                             to_address=to_address,
                             to_name="Orchvate Team",
                             subject=subject_line,
@@ -1028,7 +1253,6 @@ async def book_call(request: Request):
                         logger.error("Book-call email failed: %s", e)
 
                 threading.Thread(target=_bg).start()
-        conn.close()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -1038,7 +1262,9 @@ async def book_call(request: Request):
     return {"success": True, "message": "Booking request received. We will be in touch soon."}
 
 
-
+# ---------------------------------------------------------------------------
+# POST /api/support
+# ---------------------------------------------------------------------------
 
 @router.post("/support")
 @limiter.limit("5/hour")
@@ -1063,11 +1289,9 @@ async def support_request(request: Request):
         raise HTTPException(status_code=400, detail="Message is required")
 
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor() as cur:
                 send_support_request(cur, name, email, subject, message)
-        conn.close()
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -1106,9 +1330,8 @@ async def auth_verify(request: Request):
         raise HTTPException(status_code=400, detail="Email is required")
 
     try:
-        conn = get_conn()
-        res = verify_user(conn, email)
-        conn.close()
+        with get_db_connection() as conn:
+            res = verify_user(conn, email)
         return res
     except Exception as e:
         logger.error("Verify user failed: %s", e)
@@ -1116,15 +1339,15 @@ async def auth_verify(request: Request):
 
 
 # ---------------------------------------------------------------------------
-# RBAC: /api/manage/users
+# RBAC: /api/manage/users — Strictly Super Admin Only
 # ---------------------------------------------------------------------------
 
 @router.get("/manage/users")
-async def admin_users_list():
+async def admin_users_list(request: Request):
+    require_super_admin(request)
     try:
-        conn = get_conn()
-        users = get_users(conn)
-        conn.close()
+        with get_db_connection() as conn:
+            users = get_users(conn)
         for u in users:
             if u.get("created_at"):
                 u["created_at"] = u["created_at"].isoformat()
@@ -1137,6 +1360,7 @@ async def admin_users_list():
 @router.post("/manage/users")
 @audit_log("add_user")
 async def admin_user_add(request: Request):
+    require_super_admin(request)
     try:
         body = await request.json()
         email = (body.get("email") or "").strip().lower()
@@ -1146,87 +1370,106 @@ async def admin_user_add(request: Request):
 
     if not email:
         raise HTTPException(status_code=400, detail="Email is required")
-    
+
     try:
-        conn = get_conn()
-        new_user = add_user(conn, email, role)
-        conn.close()
+        with get_db_connection() as conn:
+            new_user = add_user(conn, email, role)
         if new_user.get("created_at"):
             new_user["created_at"] = new_user["created_at"].isoformat()
         return new_user
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Admin user add failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ---------------------------------------------------------------------------
-# POST /api/settings/delete-all-records
-# Deletes ALL submissions from the database (dangerous operation!)
-# ---------------------------------------------------------------------------
-
-@router.post("/settings/delete-all-records")
-@audit_log("delete_all_records")
-async def delete_all_records(request: Request):
-    try:
-        body = await request.json()
-        password = (body.get("password") or "").strip()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-
-    # Verify password from environment variable
-    correct_password = os.environ.get("DELETE_ALL_PASSWORD", "")
-    if not correct_password:
-        raise HTTPException(status_code=500, detail="Delete password not configured")
-    
-    if password != correct_password:
-        raise HTTPException(status_code=403, detail="Incorrect password")
-
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                # Delete all submissions
-                cur.execute("DELETE FROM submissions")
-                deleted_count = cur.rowcount
-                
-                # Clear cache
-                if "dashboard" in dashboard_cache:
-                    del dashboard_cache["dashboard"]
-        conn.close()
-        
-        logger.info(f"All records deleted: {deleted_count} submissions removed")
-        return {"success": True, "deleted_count": deleted_count}
-    except Exception as e:
-        logger.error(f"Delete all records failed: {e}")
-        raise HTTPException(status_code=500, detail="Database error")
-
-
 @router.delete("/manage/users/{email}")
 @audit_log("remove_user")
 async def admin_user_remove(request: Request, email: str):
+    require_super_admin(request)
     try:
-        conn = get_conn()
-        remove_user(conn, email.lower())
-        conn.close()
+        with get_db_connection() as conn:
+            remove_user(conn, email.lower())
         return {"success": True}
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("Admin user remove failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
+# POST /api/settings/delete-all-records — Strictly Super Admin Only
+# ---------------------------------------------------------------------------
+
+@router.post("/settings/delete-all-records")
+@audit_log("delete_all_records")
+async def delete_all_records(request: Request):
+    """
+    Deletes all submissions from the database.
+    Strictly Super Admin only. Requires explicit confirmation text 'DELETE ALL SUBMISSIONS'.
+    Normal Admin receives HTTP 403 Forbidden.
+    Unauthenticated caller receives HTTP 401 Unauthorized.
+    """
+    admin_user = require_super_admin(request)
+    actor_email = admin_user["email"]
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    confirmation = (body.get("confirmation") or "").strip()
+    password = (body.get("password") or "").strip()
+    correct_password = os.environ.get("DELETE_ALL_PASSWORD", "")
+
+    # Require explicit confirmation payload
+    if confirmation != "DELETE ALL SUBMISSIONS":
+        # Allow password check as secondary fallback for existing tests/scripts
+        if not (correct_password and password == correct_password):
+            raise HTTPException(
+                status_code=400,
+                detail='Explicit confirmation string "DELETE ALL SUBMISSIONS" is required to delete all records.'
+            )
+
+    try:
+        with get_db_transaction() as conn:
+            with conn.cursor() as cur:
+                # 1. Clean email_dlq first to prevent foreign key NO ACTION violations
+                cur.execute("DELETE FROM email_dlq")
+
+                # 2. Delete all submissions (cascades to org_submission_links and submission_reassignments)
+                cur.execute("DELETE FROM submissions")
+                deleted_count = cur.rowcount
+
+                # 3. Reset invitation counters
+                cur.execute("UPDATE organization_invitations SET submission_count = 0")
+
+        dashboard_cache.clear()
+        logger.warning(
+            "ALL SUBMISSIONS DELETED: %d records removed by Super Admin %s",
+            deleted_count, actor_email
+        )
+        return {"success": True, "deleted_count": deleted_count}
+    except Exception as e:
+        logger.error("Delete all records failed: %s", e)
+        raise HTTPException(status_code=500, detail="Database error during records deletion")
+
+
+# ---------------------------------------------------------------------------
 # GET /api/manage/audit-logs
 # ---------------------------------------------------------------------------
+
 @router.get("/manage/audit-logs")
-async def get_audit_logs():
+async def get_audit_logs(request: Request):
+    require_admin(request)
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100")
                 rows = cur.fetchall()
-        conn.close()
-        
+
         result = []
         for row in rows:
             r = dict(row)

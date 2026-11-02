@@ -52,6 +52,14 @@
             <span class="osc-subtitle">{{ filteredOrgs.length }} organisations found</span>
           </div>
           <div class="osc-header-right">
+            <button
+              type="button"
+              class="btn-new-org-sm"
+              @click="openCreateOrgModal"
+              title="Create new organisation"
+            >
+              + New Org
+            </button>
             <span class="osc-badge">{{ orgFilter === 'all' ? 'All' : orgFilter }}</span>
             <button
               type="button"
@@ -163,6 +171,12 @@
                   <span v-else class="pill-success">
                     ✓ Official Linked Organisation Account
                   </span>
+                  <span v-if="!selectedOrg.is_virtual && selectedOrg.is_active !== false" class="pill-status-active-badge">
+                    ● Active
+                  </span>
+                  <span v-if="!selectedOrg.is_virtual && selectedOrg.is_active === false" class="pill-status-inactive-badge">
+                    ⏸ Inactive
+                  </span>
                   <span v-if="currentScore?.org_level" :class="['pill-level', levelClass(currentScore.org_level)]">
                     {{ currentScore.org_level }}
                   </span>
@@ -222,6 +236,216 @@
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   Export CSV
                 </button>
+
+                <!-- Official Org Management Dropdown / Actions -->
+                <template v-if="!selectedOrg.is_virtual">
+                  <button
+                    class="btn btn-outline btn-icon-only"
+                    @click="openEditOrgModal(selectedOrg)"
+                    title="Edit organisation name"
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    class="btn btn-outline btn-icon-only"
+                    @click="toggleOrgStatus(selectedOrg)"
+                    :title="selectedOrg.is_active === false ? 'Activate organisation' : 'Deactivate organisation'"
+                  >
+                    {{ selectedOrg.is_active === false ? '▶ Activate' : '⏸ Deactivate' }}
+                  </button>
+                  <button
+                    class="btn btn-outline btn-icon-only btn-danger-action"
+                    @click="openDeleteOrgModal(selectedOrg)"
+                    title="Soft delete organisation"
+                  >
+                    🗑 Delete
+                  </button>
+                
+    <!-- Modal: Create New Organisation -->
+    <div v-if="showCreateOrgModal" class="modal-backdrop" @click.self="showCreateOrgModal = false">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h3 class="modal-title">Create Organisation</h3>
+          <button class="btn-close-modal" @click="showCreateOrgModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field-block">
+            <label class="field-label">Organisation Name *</label>
+            <input
+              v-model="createOrgName"
+              type="text"
+              class="modern-input"
+              placeholder="e.g. Nexora Technologies"
+              @keyup.enter="handleCreateOrg"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showCreateOrgModal = false">Cancel</button>
+          <button
+            class="btn btn-primary-cta"
+            :disabled="!createOrgName.trim() || creatingOrgSaving"
+            @click="handleCreateOrg"
+          >
+            {{ creatingOrgSaving ? 'Creating…' : 'Create Organisation' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Edit Organisation Name -->
+    <div v-if="showEditOrgModal" class="modal-backdrop" @click.self="showEditOrgModal = false">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h3 class="modal-title">Edit Organisation Name</h3>
+          <button class="btn-close-modal" @click="showEditOrgModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field-block">
+            <label class="field-label">Organisation Name *</label>
+            <input
+              v-model="editOrgName"
+              type="text"
+              class="modern-input"
+              @keyup.enter="handleUpdateOrg"
+            />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showEditOrgModal = false">Cancel</button>
+          <button
+            class="btn btn-primary-cta"
+            :disabled="!editOrgName.trim() || editingOrgSaving"
+            @click="handleUpdateOrg"
+          >
+            {{ editingOrgSaving ? 'Saving…' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Soft Delete Confirmation -->
+    <div v-if="showDeleteOrgModal" class="modal-backdrop" @click.self="showDeleteOrgModal = false">
+      <div class="modal-card modal-card-sm">
+        <div class="modal-header">
+          <h3 class="modal-title" style="color: #DC2626;">Delete Organisation</h3>
+          <button class="btn-close-modal" @click="showDeleteOrgModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.95rem; color: #374151; line-height: 1.5; margin-bottom: 1rem;">
+            Are you sure you want to delete <strong>{{ selectedOrg?.name }}</strong>?
+          </p>
+          <p style="font-size: 0.85rem; color: #6B7280; line-height: 1.4;">
+            This will soft-delete the organisation and revoke all active invitation links.
+            Existing historical employee submissions and scoring records will be preserved.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showDeleteOrgModal = false">Cancel</button>
+          <button
+            class="btn btn-primary-cta"
+            style="background: #DC2626; border-color: #DC2626;"
+            :disabled="deletingOrgSaving"
+            @click="handleDeleteOrg"
+          >
+            {{ deletingOrgSaving ? 'Deleting…' : 'Confirm Delete' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Generate New Invitation -->
+    <div v-if="showCreateInviteModal" class="modal-backdrop" @click.self="showCreateInviteModal = false">
+      <div class="modal-card modal-card-md">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Generate Invitation Link</h3>
+            <p class="modal-sub">For {{ selectedOrg?.name }}</p>
+          </div>
+          <button class="btn-close-modal" @click="showCreateInviteModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="field-block">
+            <label class="field-label">Invitation Label (Optional)</label>
+            <input
+              v-model="inviteForm.invitation_name"
+              type="text"
+              class="modern-input"
+              placeholder="e.g. Q4 Company-wide Assessment"
+            />
+          </div>
+
+          <div class="field-grid-2">
+            <div class="field-block">
+              <label class="field-label">Expiration Date (Optional)</label>
+              <input
+                v-model="inviteForm.expires_at"
+                type="datetime-local"
+                class="modern-input"
+              />
+            </div>
+            <div class="field-block">
+              <label class="field-label">Max Submissions (Optional)</label>
+              <input
+                v-model.number="inviteForm.max_submissions"
+                type="number"
+                min="1"
+                class="modern-input"
+                placeholder="Unlimited"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-outline" @click="showCreateInviteModal = false">Cancel</button>
+          <button
+            class="btn btn-primary-cta"
+            :disabled="creatingInviteSaving"
+            @click="handleCreateInvite"
+          >
+            {{ creatingInviteSaving ? 'Generating…' : 'Generate Link' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Invitation Link Created (One-Time Raw Token Display) -->
+    <div v-if="generatedInviteLink" class="modal-backdrop" @click.self="generatedInviteLink = null">
+      <div class="modal-card modal-card-md">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">🎉 Invitation Link Ready</h3>
+            <p class="modal-sub">{{ generatedInviteLink.invitation_name }}</p>
+          </div>
+          <button class="btn-close-modal" @click="generatedInviteLink = null">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="inv-link-box">
+            <label class="field-label">Shareable Link</label>
+            <div class="inv-copy-row">
+              <input
+                :value="generatedInviteLink.full_url"
+                type="text"
+                class="modern-input inv-link-input"
+                readonly
+              />
+              <button class="btn btn-primary-cta" @click="copyText(generatedInviteLink.full_url)">
+                📋 Copy
+              </button>
+            </div>
+          </div>
+          <p class="inv-security-note">
+            🔒 <strong>Security Note:</strong> This unique link includes a cryptographically secure token.
+            Anyone opening this link will have <strong>{{ selectedOrg?.name }}</strong> automatically pre-filled and locked.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary-cta" @click="generatedInviteLink = null">Done</button>
+        </div>
+      </div>
+    </div>
+
+</template>
               </div>
             </div>
           </div>
@@ -275,6 +499,17 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
             Employee Submissions
             <span class="tab-count-pill">{{ detail?.respondents?.length || 0 }}</span>
+          </button>
+
+          <button
+            v-if="!selectedOrg.is_virtual"
+            class="nav-tab-btn"
+            :class="{ active: activeTab === 'invitations' }"
+            @click="activeTab = 'invitations'"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            Invitations &amp; Links
+            <span v-if="invitations.length" class="tab-count-pill">{{ invitations.length }}</span>
           </button>
 
           <button
@@ -606,20 +841,47 @@
               </div>
             </div>
 
+            <!-- Source Filter Chips -->
+            <div class="resp-source-filter-row">
+              <span class="rsf-label">Submission Method:</span>
+              <button
+                class="rsf-pill"
+                :class="{ active: submissionSourceFilter === 'all' }"
+                @click="submissionSourceFilter = 'all'"
+              >
+                All ({{ detail.respondents.length }})
+              </button>
+              <button
+                class="rsf-pill"
+                :class="{ active: submissionSourceFilter === 'direct' }"
+                @click="submissionSourceFilter = 'direct'"
+              >
+                🌐 Direct Website ({{ countDirect }})
+              </button>
+              <button
+                class="rsf-pill"
+                :class="{ active: submissionSourceFilter === 'invitation' }"
+                @click="submissionSourceFilter = 'invitation'"
+              >
+                🔗 Invitation Link ({{ countInvite }})
+              </button>
+            </div>
+
             <div class="table-container">
               <table class="modern-resp-table">
                 <thead>
                   <tr>
-                    <th style="width: 25%">Respondent &amp; Designation</th>
-                    <th style="width: 20%">Function &amp; Role</th>
-                    <th style="width: 15%">Score</th>
-                    <th style="width: 15%" v-if="!selectedOrg.is_virtual">Audit Weight</th>
-                    <th style="width: 15%">Demographics</th>
-                    <th style="width: 10%; text-align: center">Actions</th>
+                    <th style="width: 22%; min-width: 170px">Respondent &amp; Designation</th>
+                    <th style="width: 13%; min-width: 110px">Method</th>
+                    <th style="width: 17%; min-width: 130px">Function &amp; Role</th>
+                    <th style="width: 16%; min-width: 130px">Score &amp; Level</th>
+                    <th style="width: 12%; min-width: 100px" v-if="!selectedOrg.is_virtual">Audit Weight</th>
+                    <th style="width: 12%; min-width: 110px">Demographics</th>
+                    <th style="width: 8%; min-width: 70px; text-align: center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <template v-for="r in detail.respondents" :key="r.id">
+                  <template v-for="r in filteredRespondents" :key="r.id">
                     <tr
                       class="resp-row"
                       :class="{ 'expanded': expandedRespondentId === r.id }"
@@ -633,6 +895,23 @@
                             <span class="resp-user-email">{{ r.email }}</span>
                           </div>
                         </div>
+                      </td>
+
+                      <td>
+                        <span
+                          v-if="(r.submission_source || '').toUpperCase() === 'INVITATION'"
+                          class="pill-source-invite"
+                          :title="r.invitation_name ? `Invitation: ${r.invitation_name}` : 'Submitted via unique organisation invitation link'"
+                        >
+                          🔗 Invitation
+                        </span>
+                        <span
+                          v-else
+                          class="pill-source-direct"
+                          title="Submitted directly via website organisation dropdown"
+                        >
+                          🌐 Direct
+                        </span>
                       </td>
 
                       <td>
@@ -861,6 +1140,16 @@ import { ref, reactive, computed, watch, onMounted } from 'vue';
 import ScoreTable from '../components/ScoreTable.vue';
 import { DEFAULT_SECTIONS } from '../utils/defaultSections.js';
 import { downloadFilteredSubmissions } from '../utils/csvExport.js';
+import {
+  createOrganisation,
+  updateOrganisation,
+  toggleOrganisationStatus,
+  deleteOrganisation,
+  getOrgInvitations,
+  createOrgInvitation,
+  revokeOrgInvitation,
+  regenerateOrgInvitation
+} from '../api.js';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -969,10 +1258,11 @@ function levelClass(level) {
 
 function shortLevel(level) {
   if (!level) return '';
-  if (level.includes('1')) return 'L1 Foundational';
-  if (level.includes('2')) return 'L2 Early Progress';
-  if (level.includes('3')) return 'L3 Developing';
-  if (level.includes('4')) return 'L4 Proficient';
+  const l = String(level).toLowerCase();
+  if (l.includes('1') || l.includes('foundational')) return 'L1 Foundational';
+  if (l.includes('2') || l.includes('early')) return 'L2 Early Progress';
+  if (l.includes('3') || l.includes('developing')) return 'L3 Developing';
+  if (l.includes('4') || l.includes('proficient')) return 'L4 Proficient';
   return 'L5 Leading';
 }
 
@@ -1325,6 +1615,9 @@ async function selectOrg(org) {
   msgPanel.open = false;
   await fetchDetail(org);
   initReportForm();
+  if (!org.is_virtual) {
+    fetchInvitations(org.id);
+  }
 }
 
 function toggleRespondent(id) {
@@ -1652,7 +1945,7 @@ onMounted(fetchOrgs);
    ========================================================================== */
 .main-orgs-grid {
   display: grid;
-  grid-template-columns: 310px 1fr;
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -1660,6 +1953,7 @@ onMounted(fetchOrgs);
 @media (max-width: 1024px) {
   .main-orgs-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -2169,13 +2463,20 @@ onMounted(fetchOrgs);
   border-bottom: 2px solid #E2E8F0;
   padding-bottom: 2px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.analysis-tabs-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-tab-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 10px 14px;
+  min-height: 44px;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
@@ -2184,6 +2485,7 @@ onMounted(fetchOrgs);
   font-size: 0.88rem;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
   margin-bottom: -2px;
 }
@@ -2920,10 +3222,13 @@ onMounted(fetchOrgs);
   border-radius: 12px;
   box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
 }
 
 .modern-resp-table {
   width: 100%;
+  min-width: 680px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -2936,6 +3241,7 @@ onMounted(fetchOrgs);
   font-weight: 700;
   text-transform: uppercase;
   color: var(--primary, #161057);
+  white-space: nowrap;
 }
 
 .resp-row { cursor: pointer; border-bottom: 1px solid #E2E8F0; transition: background 0.15s ease; }
@@ -2953,9 +3259,36 @@ onMounted(fetchOrgs);
 .role-bold { font-weight: 600; color: #1E293B; }
 .func-muted { font-size: 0.74rem; color: #64748B; }
 
-.resp-score-cell { display: flex; align-items: center; gap: 6px; }
-.score-badge-inline { font-weight: 800; font-size: 0.9rem; color: var(--primary, #161057); }
-.score-level-inline { font-size: 0.7rem; font-weight: 700; padding: 2px 5px; border-radius: 999px; }
+.resp-score-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.score-badge-inline {
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--primary, #161057);
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+.score-level-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  text-align: center;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
 
 .modern-weight-select {
   padding: 3px 6px;
@@ -3144,7 +3477,7 @@ onMounted(fetchOrgs);
   to { opacity: 1; transform: translateY(0); }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .main-orgs-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -3198,8 +3531,8 @@ onMounted(fetchOrgs);
   }
   .org-hero-main {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    align-items: stretch;
+    gap: 14px;
   }
   .org-hero-left {
     flex: 1 1 100%;
@@ -3207,21 +3540,40 @@ onMounted(fetchOrgs);
   }
   .org-hero-right {
     width: 100%;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
     gap: 12px;
+  }
+  .hero-score-stat {
+    width: 100%;
+    align-items: flex-start;
+    text-align: left;
+    background: #F8FAFC;
+    border: 1.5px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    box-sizing: border-box;
   }
   .org-hero-actions {
     width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
   }
   .org-hero-actions .btn {
-    flex: 1;
+    flex: 1 1 calc(50% - 4px);
     min-height: 44px;
     justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.82rem;
   }
   .pillars-cards-grid {
     grid-template-columns: 1fr;
   }
   .highlights-grid {
+    grid-template-columns: 1fr;
+  }
+  .segment-groups-grid {
     grid-template-columns: 1fr;
   }
   .qac-top {
@@ -3240,10 +3592,256 @@ onMounted(fetchOrgs);
   }
   .org-hero-actions .btn {
     width: 100%;
+    flex: 1 1 100%;
   }
   .hero-score-stat {
     align-items: flex-start;
     text-align: left;
   }
 }
+
+/* Dual Assessment Entry & Org Management Enhancements */
+.btn-new-org-sm {
+  background: #047C69;
+  color: #FFFFFF;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-new-org-sm:hover {
+  background: #036858;
+}
+
+.pill-status-active-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.pill-status-inactive-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #92400E;
+  background: #FEF3C7;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.btn-icon-only {
+  font-size: 0.8rem;
+  padding: 0.45rem 0.75rem;
+}
+
+.btn-danger-action {
+  color: #DC2626 !important;
+  border-color: #FCA5A5 !important;
+}
+.btn-danger-action:hover {
+  background: #FEF2F2 !important;
+}
+
+.resp-source-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+  flex-wrap: wrap;
+}
+
+.rsf-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #6B7280;
+}
+
+.rsf-pill {
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rsf-pill:hover {
+  border-color: #9CA3AF;
+}
+
+.rsf-pill.active {
+  background: #161057;
+  color: #FFFFFF;
+  border-color: #161057;
+}
+
+.pill-source-invite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #047C69;
+  background: #E6F4F1;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  border: 1px solid rgba(4, 124, 105, 0.2);
+}
+
+.pill-source-direct {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #4B5563;
+  background: #F3F4F6;
+  padding: 0.2rem 0.55rem;
+  border-radius: 99px;
+  border: 1px solid #E5E7EB;
+}
+
+.empty-invitations-card {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #FFFFFF;
+  border: 1px dashed #D1D5DB;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+.empty-invitations-card h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0.75rem 0 0.5rem;
+}
+.empty-invitations-card p {
+  color: #6B7280;
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.inv-label-cell {
+  display: flex;
+  flex-direction: column;
+}
+.inv-id-muted {
+  font-size: 0.7rem;
+  color: #9CA3AF;
+  font-family: monospace;
+}
+
+.badge-uses {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  background: #F3F4F6;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.pill-status-active {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #065F46;
+  background: #D1FAE5;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+}
+.pill-status-expired {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #92400E;
+  background: #FEF3C7;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+}
+.pill-status-revoked {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #991B1B;
+  background: #FEE2E2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+}
+
+.inv-action-btns {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.btn-action-sm {
+  border: 1px solid #D1D5DB;
+  background: #FFFFFF;
+  padding: 0.25rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-regen-token {
+  color: #1E40AF;
+  border-color: #BFDBFE;
+}
+.btn-regen-token:hover {
+  background: #EFF6FF;
+}
+.btn-revoke-token {
+  color: #DC2626;
+  border-color: #FECACA;
+}
+.btn-revoke-token:hover {
+  background: #FEF2F2;
+}
+
+.modal-card-sm {
+  max-width: 440px !important;
+}
+.modal-card-md {
+  max-width: 540px !important;
+}
+.field-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.inv-copy-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+}
+.inv-link-input {
+  font-family: monospace;
+  font-size: 0.85rem;
+  background: #F9FAFB !important;
+}
+.inv-security-note {
+  font-size: 0.8rem;
+  color: #4B5563;
+  line-height: 1.45;
+  background: #F3F4F6;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
 </style>

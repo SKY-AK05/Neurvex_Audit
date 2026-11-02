@@ -70,19 +70,19 @@
         </div>
       </div>
 
-      <div class="card danger-zone">
+      <div v-if="isSuperAdmin" class="card danger-zone">
         <h2 style="color: #C0392B;">⚠️ Danger Zone</h2>
         <p class="card-hint">
-          <strong>Delete all submission records permanently.</strong> This action cannot be undone. All audit submissions, scores, and email drafts will be permanently deleted from the database.
+          <strong>Delete all submission records permanently.</strong> This action cannot be undone. All audit submissions, scores, and email drafts will be permanently deleted from the database. Organisations and admin user accounts will NOT be deleted.
         </p>
         <div class="delete-section">
           <div class="field" style="max-width: 400px;">
-            <label for="delete-password">Enter password to confirm deletion</label>
+            <label for="delete-confirm">Type <strong>DELETE ALL SUBMISSIONS</strong> to confirm</label>
             <input 
-              id="delete-password" 
-              v-model="deletePassword" 
-              type="password" 
-              placeholder="Enter deletion password"
+              id="delete-confirm" 
+              v-model="deleteConfirmText" 
+              type="text" 
+              placeholder="DELETE ALL SUBMISSIONS"
               :disabled="deleting"
             />
           </div>
@@ -90,7 +90,7 @@
             type="button" 
             class="btn btn-danger" 
             @click="confirmDeleteAll"
-            :disabled="!deletePassword || deleting"
+            :disabled="deleteConfirmText !== 'DELETE ALL SUBMISSIONS' || deleting"
           >
             {{ deleting ? 'Deleting...' : '🗑️ Delete All Records' }}
           </button>
@@ -118,7 +118,8 @@ const loadError = ref("");
 const msg = ref("");
 const msgType = ref("success");
 
-const deletePassword = ref("");
+const isSuperAdmin = ref(sessionStorage.getItem("nd_role") === "super");
+const deleteConfirmText = ref("");
 const deleting = ref(false);
 const deleteMsg = ref("");
 const deleteMsgType = ref("success");
@@ -187,6 +188,10 @@ async function save() {
 }
 
 async function confirmDeleteAll() {
+  if (deleteConfirmText.value !== "DELETE ALL SUBMISSIONS") {
+    return;
+  }
+
   const confirmed = confirm(
     "⚠️ WARNING: This will permanently delete ALL submission records from the database.\n\n" +
     "This includes:\n" +
@@ -194,6 +199,7 @@ async function confirmDeleteAll() {
     "• All scores and analysis\n" +
     "• All email drafts\n" +
     "• All submission history\n\n" +
+    "Organisations and administrator user accounts will NOT be deleted.\n\n" +
     "This action CANNOT be undone.\n\n" +
     "Are you absolutely sure you want to proceed?"
   );
@@ -217,10 +223,10 @@ async function confirmDeleteAll() {
   deleteMsg.value = "";
 
   try {
-    const result = await deleteAllRecords(deletePassword.value);
+    const result = await deleteAllRecords({ confirmation: deleteConfirmText.value });
     deleteMsgType.value = "success";
     deleteMsg.value = `✅ Successfully deleted ${result.deleted_count} submission record(s). All data has been permanently removed.`;
-    deletePassword.value = "";
+    deleteConfirmText.value = "";
     
     // Refresh the page after 3 seconds to clear any cached data
     setTimeout(() => {

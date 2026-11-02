@@ -1430,7 +1430,7 @@ onMounted(async () => {
    ========================================================================== */
 .main-dashboard-grid {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 280px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
@@ -2278,7 +2278,7 @@ onMounted(async () => {
    ========================================================================== */
 @media (max-width: 1024px) {
   .main-dashboard-grid {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
     gap: 16px;
   }
   .kpi-metric-strip {

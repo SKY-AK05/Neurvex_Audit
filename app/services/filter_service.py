@@ -176,6 +176,17 @@ ALLOWED_FILTER_FIELDS = {
         "label": "Underrepresented / Marginalized",
         "options": ["Yes", "No", "Prefer not to say"],
     },
+    "submission_source": {
+        "column": "submission_source",
+        "type": "enum",
+        "label": "Submission Method",
+        "options": ["DIRECT", "INVITATION"],
+    },
+    "organization_id": {
+        "column": "organization_id",
+        "type": "text",
+        "label": "Organization ID",
+    },
 }
 
 ALLOWED_SORT_FIELDS = set(ALLOWED_FILTER_FIELDS.keys())
@@ -467,7 +478,8 @@ def build_filter_query(
         SELECT id, name, designation, company_name, email, contact_number, submitted_at,
                overall_avg, overall_level, status, answers,
                lc_score, ro_score, we_score, be_score,
-               tm_score, ca_score, pc_score, sp_score
+               tm_score, ca_score, pc_score, sp_score,
+               organization_id, submission_source, invitation_id
         FROM submissions
         {where_sql}
         {order_by_sql}

@@ -1,22 +1,60 @@
 """
-orgs.py — Admin endpoints for multi-respondent org scoring.
+orgs.py — Admin endpoints for multi-respondent org scoring, organisation management, and invitation links.
 
-All routes are under /manage/orgs and protected by jwks_middleware.
+All routes are under /manage/orgs and protected for Normal Admin and Super Admin.
 """
 
-from __future__ import annotations
+from collections import defaultdict
+import hashlib
 import logging
+import secrets
+from datetime import datetime, timezone
+from typing import Optional
 from uuid import UUID
 
 import psycopg2.extras
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Query, Depends
+from pydantic import BaseModel, Field
 
-from app.core.database import get_conn
+from app.core.database import get_db_connection
+from app.core.authorization import require_admin
 from app.services.org_scoring_service import calc_weighted_org_score, build_org_summary_email
 from app.services.settings_service import send_acs_email, get_sender_for_send
 
-router = APIRouter(prefix="/manage/orgs", tags=["Org Scoring"])
+router = APIRouter(
+    prefix="/manage/orgs",
+    tags=["Org Scoring & Management"],
+    dependencies=[Depends(require_admin)]
+)
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Request Models
+# ---------------------------------------------------------------------------
+
+class CreateOrgRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+
+
+class UpdateOrgRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=255)
+
+
+class OrgStatusRequest(BaseModel):
+    is_active: bool
+
+
+class CreateInvitationRequest(BaseModel):
+    invitation_name: Optional[str] = Field(None, max_length=255)
+    expires_at: Optional[datetime] = None
+    max_submissions: Optional[int] = Field(None, ge=1)
+
+
+class UpdateInvitationRequest(BaseModel):
+    invitation_name: Optional[str] = Field(None, max_length=255)
+    expires_at: Optional[datetime] = None
+    max_submissions: Optional[int] = Field(None, ge=1)
 
 
 # ---------------------------------------------------------------------------
@@ -41,14 +79,18 @@ def _serialize_row(row: dict) -> dict:
 
 
 def _fetch_org_links(conn, org_id: str) -> list[dict]:
-    """Return all linked submissions for an org, enriched with weight."""
+    """Return all linked submissions for an org, enriched with weight and submission method."""
     with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute("""
             SELECT
                 s.*,
-                osl.weight, osl.linked_by, osl.linked_at
+                osl.weight, osl.linked_by, osl.linked_at,
+                s.submission_source,
+                s.invitation_id,
+                oi.invitation_name
             FROM org_submission_links osl
             JOIN submissions s ON s.id = osl.submission_id
+            LEFT JOIN organization_invitations oi ON oi.id = s.invitation_id
             WHERE osl.org_id = %s
             ORDER BY s.submitted_at ASC
         """, (org_id,))
@@ -57,28 +99,54 @@ def _fetch_org_links(conn, org_id: str) -> list[dict]:
 
 # ---------------------------------------------------------------------------
 # GET /api/manage/orgs
-# List all orgs with weighted avg summary, PLUS virtual groups for unlinked
-# submissions grouped by company_name so the admin can see and link them.
+# List all orgs with weighted avg summary, active status, invitation counts,
+# PLUS virtual groups for unlinked submissions.
+# Optimized: Batch queries to eliminate N+1 loops.
 # ---------------------------------------------------------------------------
 
 @router.get("")
-async def list_orgs():
+async def list_orgs(include_deleted: bool = Query(False)):
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 # 1. Real org accounts
-                cur.execute("""
-                    SELECT o.id, o.name, o.created_at,
-                           COUNT(osl.submission_id) AS respondent_count
+                where_clause = "" if include_deleted else "WHERE o.is_deleted = FALSE"
+                cur.execute(f"""
+                    SELECT o.id, o.name, o.is_active, o.is_deleted, o.created_at, o.updated_at,
+                           COUNT(DISTINCT osl.submission_id) AS respondent_count,
+                           COUNT(DISTINCT oi.id) FILTER (
+                               WHERE oi.is_active = TRUE AND (oi.expires_at IS NULL OR oi.expires_at > NOW())
+                           ) AS active_invitations_count
                     FROM organizations o
                     LEFT JOIN org_submission_links osl ON osl.org_id = o.id
-                    GROUP BY o.id, o.name, o.created_at
+                    LEFT JOIN organization_invitations oi ON oi.organization_id = o.id
+                    {where_clause}
+                    GROUP BY o.id, o.name, o.is_active, o.is_deleted, o.created_at, o.updated_at
                     ORDER BY o.name ASC
                 """)
                 orgs = [_serialize_row(dict(r)) for r in cur.fetchall()]
 
-                # 2. Unlinked submissions grouped by company_name (virtual groups)
+                # 2. Batch fetch all linked submissions to eliminate N+1 query loop
+                cur.execute("""
+                    SELECT
+                        s.*,
+                        osl.org_id,
+                        osl.weight, osl.linked_by, osl.linked_at,
+                        s.submission_source,
+                        s.invitation_id,
+                        oi.invitation_name
+                    FROM org_submission_links osl
+                    JOIN submissions s ON s.id = osl.submission_id
+                    LEFT JOIN organization_invitations oi ON oi.id = s.invitation_id
+                    ORDER BY s.submitted_at ASC
+                """)
+                all_links = cur.fetchall()
+                links_by_org = defaultdict(list)
+                for r in all_links:
+                    d = _serialize_row(dict(r))
+                    links_by_org[str(d["org_id"])].append(d)
+
+                # 3. Unlinked submissions grouped by company_name (virtual groups)
                 cur.execute("""
                     SELECT
                         LOWER(TRIM(s.company_name)) AS name_key,
@@ -95,44 +163,122 @@ async def list_orgs():
                 """)
                 unlinked_groups = cur.fetchall()
 
-            # Compute weighted avg for real orgs
+            # Compute weighted avg for real orgs from batched links
             result = []
             for org in orgs:
-                links = _fetch_org_links(conn, org["id"])
-                scores = calc_weighted_org_score(links) if links else None
+                org_links = links_by_org.get(str(org["id"]), [])
+                scores = calc_weighted_org_score(org_links) if org_links else None
                 result.append({
                     **org,
-                    "org_avg":    scores["org_avg"]   if scores else None,
-                    "org_level":  scores["org_level"] if scores else None,
-                    "is_virtual": False,
+                    "org_avg":                  scores["org_avg"]   if scores else None,
+                    "org_level":                scores["org_level"] if scores else None,
+                    "is_virtual":               False,
+                    "active_invitations_count": int(org.get("active_invitations_count") or 0),
                 })
 
             # Add virtual groups (unlinked, grouped by company_name)
-            # Use a stable fake id so the frontend can key on it
-            import hashlib
             for g in unlinked_groups:
                 name_key = g["name_key"] or ""
-                # Skip if a real org already has this name (case-insensitive)
                 real_names = {o["name"].lower().strip() for o in orgs}
                 if name_key in real_names:
                     continue
                 fake_id = "virtual-" + hashlib.md5(name_key.encode()).hexdigest()[:12]
                 avg = float(g["org_avg"]) if g["org_avg"] else None
                 result.append({
-                    "id":              fake_id,
-                    "name":            g["display_name"],
-                    "created_at":      None,
-                    "respondent_count": int(g["respondent_count"]),
-                    "org_avg":         round(avg, 2) if avg else None,
-                    "org_level":       None,   # no weighted calc without links
-                    "is_virtual":      True,   # flag so frontend can show "Link all" CTA
+                    "id":                       fake_id,
+                    "name":                     g["display_name"],
+                    "is_active":                True,
+                    "is_deleted":               False,
+                    "created_at":               None,
+                    "updated_at":               None,
+                    "respondent_count":         int(g["respondent_count"]),
+                    "active_invitations_count": 0,
+                    "org_avg":                  round(avg, 2) if avg else None,
+                    "org_level":                None,
+                    "is_virtual":               True,
                 })
 
-        conn.close()
         return result
     except Exception as e:
         logger.error("list_orgs failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# POST /api/manage/orgs
+# Create a new formal organisation
+# ---------------------------------------------------------------------------
+
+@router.post("")
+async def create_org(request: Request, body: CreateOrgRequest):
+    company_name = " ".join(body.name.strip().split())
+    if not company_name:
+        raise HTTPException(status_code=400, detail="Organization name is required")
+
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    # Check for existing non-deleted org (case and whitespace normalized)
+                    cur.execute("""
+                        SELECT id FROM organizations
+                        WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND is_deleted = FALSE
+                    """, (company_name,))
+                    if cur.fetchone():
+                        raise HTTPException(status_code=400, detail="An organization with this name already exists")
+
+                    cur.execute("""
+                        INSERT INTO organizations (name, is_active, is_deleted, approval_status, updated_by)
+                        VALUES (%s, TRUE, FALSE, 'approved', %s)
+                        RETURNING id, name, is_active, is_deleted, created_at
+                    """, (company_name, admin_email))
+                    row = cur.fetchone()
+                    org_id = str(row["id"])
+
+                    # Link all unlinked submissions matching this company_name
+                    cur.execute("""
+                        SELECT id FROM submissions s
+                        WHERE LOWER(TRIM(s.company_name)) = LOWER(TRIM(%s))
+                        AND NOT EXISTS (
+                            SELECT 1 FROM org_submission_links osl WHERE osl.submission_id = s.id
+                        )
+                    """, (company_name,))
+                    sub_ids = [str(r["id"]) for r in cur.fetchall()]
+
+                    for sid in sub_ids:
+                        cur.execute("""
+                            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                            VALUES (%s, %s, 1.0, %s)
+                            ON CONFLICT (org_id, submission_id) DO NOTHING
+                        """, (org_id, sid, admin_email))
+                        cur.execute("""
+                            UPDATE submissions SET organization_id = %s
+                            WHERE id = %s AND organization_id IS NULL
+                        """, (org_id, sid))
+
+        return {
+            "success": True,
+            "org": _serialize_row(dict(row)),
+            "linked_count": len(sub_ids)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_org failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Legacy alias: POST /api/manage/orgs/create
+@router.post("/create")
+async def create_org_legacy(request: Request):
+    try:
+        body = await request.json()
+        name = (body.get("company_name") or body.get("name") or "").strip()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    return await create_org(request, CreateOrgRequest(name=name))
 
 
 # ---------------------------------------------------------------------------
@@ -143,8 +289,7 @@ async def list_orgs():
 @router.get("/unlinked")
 async def list_unlinked(company_name: str = None):
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 if company_name:
                     cur.execute("""
@@ -168,75 +313,10 @@ async def list_unlinked(company_name: str = None):
                         ORDER BY s.submitted_at DESC
                     """)
                 rows = [_serialize_row(dict(r)) for r in cur.fetchall()]
-        conn.close()
         return rows
     except Exception as e:
         logger.error("list_unlinked failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
-
-
-# ---------------------------------------------------------------------------
-# POST /api/manage/orgs/create
-# Create a new org from a company_name and link all matching unlinked submissions
-# ---------------------------------------------------------------------------
-
-@router.post("/create")
-async def create_org_from_name(request: Request):
-    try:
-        body = await request.json()
-        company_name = (body.get("company_name") or "").strip()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid JSON")
-
-    if not company_name:
-        raise HTTPException(status_code=400, detail="company_name is required")
-
-    admin_email = getattr(request.state, "admin_email", "unknown")
-
-    try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                # Create org (or get existing one with same name)
-                cur.execute("""
-                    INSERT INTO organizations (name)
-                    VALUES (%s)
-                    ON CONFLICT DO NOTHING
-                    RETURNING id
-                """, (company_name,))
-                row = cur.fetchone()
-                if not row:
-                    cur.execute("SELECT id FROM organizations WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))", (company_name,))
-                    row = cur.fetchone()
-                org_id = str(row[0])
-
-                # Link all unlinked submissions matching this company_name
-                cur.execute("""
-                    SELECT id FROM submissions s
-                    WHERE LOWER(TRIM(s.company_name)) = LOWER(TRIM(%s))
-                    AND NOT EXISTS (
-                        SELECT 1 FROM org_submission_links osl WHERE osl.submission_id = s.id
-                    )
-                """, (company_name,))
-                sub_ids = [str(r[0]) for r in cur.fetchall()]
-
-                for sid in sub_ids:
-                    cur.execute("""
-                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-                        VALUES (%s, %s, 1.0, %s)
-                        ON CONFLICT (org_id, submission_id) DO NOTHING
-                    """, (org_id, sid, admin_email))
-                    cur.execute("""
-                        UPDATE submissions SET organization_id = %s
-                        WHERE id = %s AND organization_id IS NULL
-                    """, (org_id, sid))
-
-        conn.close()
-    except Exception as e:
-        logger.error("create_org_from_name failed: %s", e)
-        raise HTTPException(status_code=500, detail=str(e))
-
-    return {"success": True, "org_id": org_id, "linked_count": len(sub_ids)}
 
 
 # ---------------------------------------------------------------------------
@@ -248,17 +328,18 @@ async def create_org_from_name(request: Request):
 async def get_org(org_id: UUID):
     oid = str(org_id)
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT id, name, created_at FROM organizations WHERE id = %s", (oid,))
+                cur.execute("""
+                    SELECT id, name, is_active, is_deleted, created_at, updated_at
+                    FROM organizations
+                    WHERE id = %s
+                """, (oid,))
                 org_row = cur.fetchone()
             if not org_row:
-                conn.close()
                 raise HTTPException(status_code=404, detail="Organisation not found")
 
             links = _fetch_org_links(conn, oid)
-        conn.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -271,6 +352,345 @@ async def get_org(org_id: UUID):
         "scores": scores,
         "respondents": links,
     }
+
+
+# ---------------------------------------------------------------------------
+# PUT /api/manage/orgs/{org_id}
+# Update organization name / metadata
+# ---------------------------------------------------------------------------
+
+@router.put("/{org_id}")
+async def update_org(org_id: UUID, body: UpdateOrgRequest, request: Request):
+    oid = str(org_id)
+    name = " ".join(body.name.strip().split())
+    if not name:
+        raise HTTPException(status_code=400, detail="Organization name is required")
+
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    # Check for duplicate name
+                    cur.execute("""
+                        SELECT id FROM organizations
+                        WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND id != %s AND is_deleted = FALSE
+                    """, (name, oid))
+                    if cur.fetchone():
+                        raise HTTPException(status_code=400, detail="Another organization with this name already exists")
+
+                    cur.execute("""
+                        UPDATE organizations
+                        SET name = %s, updated_at = NOW(), updated_by = %s
+                        WHERE id = %s AND is_deleted = FALSE
+                        RETURNING id, name, is_active, is_deleted, updated_at
+                    """, (name, admin_email, oid))
+                    row = cur.fetchone()
+                    if not row:
+                        raise HTTPException(status_code=404, detail="Organisation not found or has been deleted")
+
+        return {"success": True, "org": _serialize_row(dict(row))}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("update_org failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# PATCH /api/manage/orgs/{org_id}/status
+# Toggle active / inactive status
+# ---------------------------------------------------------------------------
+
+@router.patch("/{org_id}/status")
+async def toggle_org_status(org_id: UUID, body: OrgStatusRequest, request: Request):
+    oid = str(org_id)
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        UPDATE organizations
+                        SET is_active = %s, updated_at = NOW(), updated_by = %s
+                        WHERE id = %s AND is_deleted = FALSE
+                        RETURNING id, name, is_active, is_deleted, updated_at
+                    """, (body.is_active, admin_email, oid))
+                    row = cur.fetchone()
+                    if not row:
+                        raise HTTPException(status_code=404, detail="Organisation not found or has been deleted")
+
+        return {"success": True, "org": _serialize_row(dict(row))}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("toggle_org_status failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# DELETE /api/manage/orgs/{org_id}
+# Soft delete an organisation, revoking its active invitations while preserving
+# all historical submissions and scoring data.
+# ---------------------------------------------------------------------------
+
+@router.delete("/{org_id}")
+async def delete_org(org_id: UUID, request: Request):
+    oid = str(org_id)
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE organizations
+                        SET is_deleted = TRUE, is_active = FALSE, deleted_at = NOW(), deleted_by = %s
+                        WHERE id = %s AND is_deleted = FALSE
+                        RETURNING id
+                    """, (admin_email, oid))
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Organisation not found or already deleted")
+
+                    # Deactivate all active invitations for this organisation
+                    cur.execute("""
+                        UPDATE organization_invitations
+                        SET is_active = FALSE, revoked_at = NOW(), revoked_by = %s
+                        WHERE organization_id = %s AND is_active = TRUE
+                    """, (admin_email, oid))
+
+        return {"success": True, "message": "Organisation deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("delete_org failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# POST /api/manage/orgs/{org_id}/restore
+# Restore a soft-deleted organisation, reactivating it while preserving
+# all historical submissions, answers, scores, and links.
+# ---------------------------------------------------------------------------
+
+@router.post("/{org_id}/restore")
+async def restore_org(org_id: UUID, request: Request):
+    require_admin(request)
+    oid = str(org_id)
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE organizations
+                        SET is_deleted = FALSE, is_active = TRUE, deleted_at = NULL, deleted_by = NULL
+                        WHERE id = %s AND is_deleted = TRUE
+                        RETURNING id
+                    """, (oid,))
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Organisation not found or not deleted")
+
+        return {"success": True, "message": "Organisation restored successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("restore_org failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# INVITATIONS MANAGEMENT
+# ---------------------------------------------------------------------------
+
+@router.post("/{org_id}/invitations")
+async def create_invitation(org_id: UUID, body: CreateInvitationRequest, request: Request):
+    """
+    Generate a reusable invitation link with a cryptographically secure token (32+ bytes).
+    Store only the SHA-256 hash. Return raw token only once.
+    """
+    oid = str(org_id)
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        SELECT id, name, is_active, is_deleted
+                        FROM organizations
+                        WHERE id = %s AND is_deleted = FALSE
+                    """, (oid,))
+                    org = cur.fetchone()
+                    if not org:
+                        raise HTTPException(status_code=404, detail="Organisation not found or is deleted")
+                    if not org["is_active"]:
+                        raise HTTPException(status_code=400, detail="Cannot create invitation for an inactive organisation")
+
+                    inv_name = (body.invitation_name or "").strip() or f"{org['name']} Assessment Link"
+
+                    cur.execute("""
+                        INSERT INTO organization_invitations (
+                            organization_id, token_hash, invitation_name, created_by,
+                            expires_at, max_submissions, is_active
+                        ) VALUES (%s, %s, %s, %s, %s, %s, TRUE)
+                        RETURNING id, organization_id, invitation_name, created_by, created_at,
+                                  expires_at, is_active, max_submissions, submission_count
+                    """, (oid, token_hash, inv_name, admin_email, body.expires_at, body.max_submissions))
+                    row = cur.fetchone()
+
+        res = _serialize_row(dict(row))
+        res["raw_token"] = raw_token
+        res["invite_url"] = f"/invite/{raw_token}"
+        return res
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("create_invitation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{org_id}/invitations")
+async def list_invitations(org_id: UUID):
+    """List all invitations for an organisation."""
+    oid = str(org_id)
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT id, organization_id, invitation_name, created_by, created_at,
+                           expires_at, is_active, max_submissions, submission_count,
+                           revoked_at, revoked_by
+                    FROM organization_invitations
+                    WHERE organization_id = %s
+                    ORDER BY created_at DESC
+                """, (oid,))
+                rows = [_serialize_row(dict(r)) for r in cur.fetchall()]
+        return rows
+    except Exception as e:
+        logger.error("list_invitations failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/invitations/{invitation_id}")
+async def update_invitation(invitation_id: UUID, body: UpdateInvitationRequest):
+    """Update invitation label, expiration, or maximum submissions limit."""
+    inv_id = str(invitation_id)
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        UPDATE organization_invitations
+                        SET invitation_name = COALESCE(%s, invitation_name),
+                            expires_at = %s,
+                            max_submissions = %s
+                        WHERE id = %s
+                        RETURNING id, organization_id, invitation_name, created_by, created_at,
+                                  expires_at, is_active, max_submissions, submission_count,
+                                  revoked_at, revoked_by
+                    """, (
+                        body.invitation_name.strip() if body.invitation_name else None,
+                        body.expires_at,
+                        body.max_submissions,
+                        inv_id
+                    ))
+                    row = cur.fetchone()
+                    if not row:
+                        raise HTTPException(status_code=404, detail="Invitation not found")
+
+        return _serialize_row(dict(row))
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("update_invitation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/invitations/{invitation_id}/revoke")
+async def revoke_invitation(invitation_id: UUID, request: Request):
+    """Revoke an active invitation link immediately."""
+    inv_id = str(invitation_id)
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE organization_invitations
+                        SET is_active = FALSE, revoked_at = NOW(), revoked_by = %s
+                        WHERE id = %s
+                        RETURNING id
+                    """, (admin_email, inv_id))
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Invitation not found")
+
+        return {"success": True, "message": "Invitation revoked successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("revoke_invitation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/invitations/{invitation_id}/regenerate")
+async def regenerate_invitation(invitation_id: UUID, request: Request):
+    """
+    Revoke the existing invitation and generate a fresh token with identical settings.
+    Returns the new raw token and link.
+    """
+    inv_id = str(invitation_id)
+    admin_email = getattr(request.state, "admin_email", "unknown")
+
+    new_raw_token = secrets.token_urlsafe(32)
+    new_token_hash = hashlib.sha256(new_raw_token.encode("utf-8")).hexdigest()
+
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    cur.execute("""
+                        UPDATE organization_invitations
+                        SET is_active = FALSE, revoked_at = NOW(), revoked_by = %s
+                        WHERE id = %s
+                        RETURNING organization_id, invitation_name, expires_at, max_submissions
+                    """, (admin_email, inv_id))
+                    old_inv = cur.fetchone()
+                    if not old_inv:
+                        raise HTTPException(status_code=404, detail="Invitation not found")
+
+                    cur.execute("""
+                        INSERT INTO organization_invitations (
+                            organization_id, token_hash, invitation_name, created_by,
+                            expires_at, max_submissions, is_active
+                        ) VALUES (%s, %s, %s, %s, %s, %s, TRUE)
+                        RETURNING id, organization_id, invitation_name, created_by, created_at,
+                                  expires_at, is_active, max_submissions, submission_count
+                    """, (
+                        old_inv["organization_id"],
+                        new_token_hash,
+                        old_inv["invitation_name"],
+                        admin_email,
+                        old_inv["expires_at"],
+                        old_inv["max_submissions"]
+                    ))
+                    new_row = cur.fetchone()
+
+        res = _serialize_row(dict(new_row))
+        res["raw_token"] = new_raw_token
+        res["invite_url"] = f"/invite/{new_raw_token}"
+        return res
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("regenerate_invitation failed: %s", e)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ---------------------------------------------------------------------------
@@ -293,21 +713,18 @@ async def update_link_weight(org_id: UUID, submission_id: UUID, request: Request
     sid = str(submission_id)
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    UPDATE org_submission_links
-                    SET weight = %s
-                    WHERE org_id = %s AND submission_id = %s
-                """, (weight, oid, sid))
-                if cur.rowcount == 0:
-                    conn.close()
-                    raise HTTPException(status_code=404, detail="Link not found")
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE org_submission_links
+                        SET weight = %s
+                        WHERE org_id = %s AND submission_id = %s
+                    """, (weight, oid, sid))
+                    if cur.rowcount == 0:
+                        raise HTTPException(status_code=404, detail="Link not found")
 
-        # Return updated scores
-        links = _fetch_org_links(conn, oid)
-        conn.close()
+            links = _fetch_org_links(conn, oid)
     except HTTPException:
         raise
     except Exception as e:
@@ -337,63 +754,51 @@ async def link_submission(org_id: UUID, request: Request):
     admin_email = getattr(request.state, "admin_email", "unknown")
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor() as cur:
-                # Verify submission exists
-                cur.execute("SELECT id FROM submissions WHERE id = %s", (submission_id,))
-                if not cur.fetchone():
-                    conn.close()
-                    raise HTTPException(status_code=404, detail="Submission not found")
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT id FROM submissions WHERE id = %s", (submission_id,))
+                    if not cur.fetchone():
+                        raise HTTPException(status_code=404, detail="Submission not found")
 
-                # Verify org exists
-                cur.execute("SELECT id FROM organizations WHERE id = %s", (oid,))
-                if not cur.fetchone():
-                    conn.close()
-                    raise HTTPException(status_code=404, detail="Organisation not found")
+                    cur.execute("SELECT id FROM organizations WHERE id = %s", (oid,))
+                    if not cur.fetchone():
+                        raise HTTPException(status_code=404, detail="Organisation not found")
 
-                # Insert link (ignore if already linked to this org)
-                cur.execute("""
-                    INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-                    VALUES (%s, %s, 1.0, %s)
-                    ON CONFLICT (org_id, submission_id) DO NOTHING
-                """, (oid, submission_id, admin_email))
+                    cur.execute("""
+                        INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+                        VALUES (%s, %s, 1.0, %s)
+                        ON CONFLICT (org_id, submission_id) DO NOTHING
+                    """, (oid, submission_id, admin_email))
 
-                # Also update submissions.organization_id if not already set
-                cur.execute("""
-                    UPDATE submissions SET organization_id = %s
-                    WHERE id = %s AND organization_id IS NULL
-                """, (oid, submission_id))
+                    cur.execute("""
+                        UPDATE submissions SET organization_id = %s
+                        WHERE id = %s AND organization_id IS NULL
+                    """, (oid, submission_id))
 
-        conn.close()
+        return {"success": True}
     except HTTPException:
         raise
     except Exception as e:
         logger.error("link_submission failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
-    return {"success": True}
-
 
 # ---------------------------------------------------------------------------
 # GET /api/manage/orgs/{org_id}/report-preview
-# Returns the rendered HTML for the org summary email (for admin preview)
 # ---------------------------------------------------------------------------
 
 @router.get("/{org_id}/report-preview")
 async def org_report_preview(org_id: UUID):
     oid = str(org_id)
     try:
-        conn = get_conn()
-        with conn:
+        with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT id, name FROM organizations WHERE id = %s", (oid,))
                 org_row = cur.fetchone()
             if not org_row:
-                conn.close()
                 raise HTTPException(status_code=404, detail="Organisation not found")
             links = _fetch_org_links(conn, oid)
-        conn.close()
     except HTTPException:
         raise
     except Exception as e:
@@ -409,13 +814,18 @@ async def org_report_preview(org_id: UUID):
     )
     return {"html": html, "org_avg": scores["org_avg"], "org_level": scores["org_level"]}
 
+
+# ---------------------------------------------------------------------------
+# POST /api/manage/orgs/{org_id}/message
+# ---------------------------------------------------------------------------
+
 @router.post("/{org_id}/message")
 async def send_org_message(org_id: UUID, request: Request):
     try:
         body = await request.json()
         subject    = (body.get("subject") or "").strip()
         message    = (body.get("body") or "").strip()
-        recipients = body.get("recipients", [])   # [{email, name}, ...]
+        recipients = body.get("recipients", [])
         is_org_report = bool(body.get("is_org_report", False))
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
@@ -431,43 +841,37 @@ async def send_org_message(org_id: UUID, request: Request):
     admin_email = getattr(request.state, "admin_email", "unknown")
 
     try:
-        conn = get_conn()
-        with conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Load sender settings
-                sender_address, sender_name = get_sender_for_send(cur)
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    sender_address, sender_name = get_sender_for_send(cur)
 
-                # If org report, build the summary email body
-                if is_org_report:
-                    links = _fetch_org_links(conn, oid)
-                    scores = calc_weighted_org_score(links)
-                    if not scores:
-                        conn.close()
-                        raise HTTPException(status_code=400, detail="No linked submissions to report on")
-                    cur.execute("SELECT name FROM organizations WHERE id = %s", (oid,))
-                    org_row = cur.fetchone()
-                    org_name = org_row["name"] if org_row else "Your Organisation"
-                    email_html = build_org_summary_email(org_name, scores, scores["respondents"])
-                    email_plain = f"Organisation Audit Summary for {org_name}\n\nOverall Score: {scores['org_avg']}/20 — {scores['org_level']}"
-                else:
-                    email_html  = f"<p>{message.replace(chr(10), '<br>')}</p>"
-                    email_plain = message
+                    if is_org_report:
+                        links = _fetch_org_links(conn, oid)
+                        scores = calc_weighted_org_score(links)
+                        if not scores:
+                            raise HTTPException(status_code=400, detail="No linked submissions to report on")
+                        cur.execute("SELECT name FROM organizations WHERE id = %s", (oid,))
+                        org_row = cur.fetchone()
+                        org_name = org_row["name"] if org_row else "Your Organisation"
+                        email_html = build_org_summary_email(org_name, scores, scores["respondents"])
+                        email_plain = f"Organisation Audit Summary for {org_name}\n\nOverall Score: {scores['org_avg']}/20 — {scores['org_level']}"
+                    else:
+                        email_html  = f"<p>{message.replace(chr(10), '<br>')}</p>"
+                        email_plain = message
 
-                # Log the message
-                import json
-                cur.execute("""
-                    INSERT INTO admin_messages (org_id, sent_by, subject, body, recipients)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (oid, admin_email, subject, message or "(org report)", json.dumps(recipients)))
+                    import json
+                    cur.execute("""
+                        INSERT INTO admin_messages (org_id, sent_by, subject, body, recipients)
+                        VALUES (%s, %s, %s, %s, %s)
+                    """, (oid, admin_email, subject, message or "(org report)", json.dumps(recipients)))
 
-        conn.close()
     except HTTPException:
         raise
     except Exception as e:
         logger.error("send_org_message failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Send emails outside the DB transaction
     errors = []
     for r in recipients:
         try:
@@ -488,23 +892,20 @@ async def send_org_message(org_id: UUID, request: Request):
         successful_emails = [r["email"] for r in recipients if r["email"] not in errors]
         if successful_emails:
             try:
-                conn = get_conn()
-                with conn:
-                    with conn.cursor() as cur:
-                        cur.execute("""
-                            UPDATE submissions s
-                            SET status = 'sent', sent_at = CURRENT_TIMESTAMP
-                            FROM org_submission_links osl
-                            WHERE s.id = osl.submission_id
-                              AND osl.org_id = %s
-                              AND s.email = ANY(%s)
-                        """, (oid, successful_emails))
-                conn.close()
+                with get_db_connection() as conn:
+                    with conn:
+                        with conn.cursor() as cur:
+                            cur.execute("""
+                                UPDATE submissions s
+                                SET status = 'sent', sent_at = CURRENT_TIMESTAMP
+                                FROM org_submission_links osl
+                                WHERE s.id = osl.submission_id
+                                  AND osl.org_id = %s
+                                  AND s.email = ANY(%s)
+                            """, (oid, successful_emails))
                 
-                # Clear dashboard cache in routes.py
                 from app.api.routes import dashboard_cache
-                if "dashboard" in dashboard_cache:
-                    del dashboard_cache["dashboard"]
+                dashboard_cache.clear()
             except Exception as update_err:
                 logger.error("Failed to update submission status after sending org report: %s", update_err)
 
