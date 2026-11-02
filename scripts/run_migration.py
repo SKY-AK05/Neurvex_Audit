@@ -6,20 +6,28 @@ Example: python run_migration.py migrations/007_fix_score_columns.sql
 import os
 import sys
 import psycopg2
-from dotenv import load_dotenv
 
-load_dotenv()
+# Add app directory to path to import keyvault module
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+from app.core.keyvault import init_keyvault, get_database_config
+
+# Initialize Key Vault (falls back to env vars in dev)
+init_keyvault()
+
+# Get database config from Key Vault or environment
+db_config = get_database_config()
 
 migration_file = sys.argv[1] if len(sys.argv) > 1 else "migrations/007_fix_score_columns.sql"
 
 print(f"Running migration: {migration_file}")
 
 conn = psycopg2.connect(
-    host=os.environ["PGHOST"],
-    dbname=os.environ.get("PGDATABASE", "nd_audit"),
-    user=os.environ["PGUSER"],
-    password=os.environ["PGPASSWORD"],
-    port=os.environ.get("PGPORT", "5432"),
+    host=db_config["host"],
+    dbname=db_config["database"],
+    user=db_config["user"],
+    password=db_config["password"],
+    port=db_config["port"],
     sslmode="require",
 )
 
