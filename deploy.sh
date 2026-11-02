@@ -19,8 +19,17 @@ NC='\033[0m' # No Color
 CONTAINER_NAME="niwi"
 IMAGE_NAME="niwi"
 PORT_MAPPING="8080:80"
-ENV_FILE=".env"
 TIMEZONE="Asia/Kolkata"
+
+# Check if .env file exists (for local/dev deployments)
+if [ -f ".env" ]; then
+    echo -e "${BLUE}ℹ️  Using .env file for environment variables${NC}"
+    USE_ENV_FILE=true
+    ENV_FILE=".env"
+else
+    echo -e "${BLUE}ℹ️  No .env file found - will use Azure Key Vault or system environment${NC}"
+    USE_ENV_FILE=false
+fi
 
 echo -e "${BLUE}📁 Current directory: $(pwd)${NC}"
 echo ""
@@ -75,13 +84,28 @@ echo ""
 
 # Step 5: Start new container
 echo -e "${YELLOW}🚀 Step 5/8: Starting new container...${NC}"
-sudo docker run -d \
+
+# Build docker run command
+DOCKER_CMD="sudo docker run -d \
   --name $CONTAINER_NAME \
   -p $PORT_MAPPING \
-  --env-file $ENV_FILE \
   -e TZ=$TIMEZONE \
-  --restart unless-stopped \
-  $IMAGE_NAME
+  --restart unless-stopped"
+
+# Add env file if it exists, otherwise rely on Azure Key Vault via Managed Identity
+if [ "$USE_ENV_FILE" = true ]; then
+    DOCKER_CMD="$DOCKER_CMD --env-file $ENV_FILE"
+else
+    # Set minimal required environment variables for Azure Key Vault mode
+    DOCKER_CMD="$DOCKER_CMD \
+      -e APP_ENV=production \
+      -e KEY_VAULT_NAME=${KEY_VAULT_NAME:-niwi-secrets} \
+      -e REQUIRE_KEYVAULT=true"
+fi
+
+# Add image name and execute
+DOCKER_CMD="$DOCKER_CMD $IMAGE_NAME"
+eval $DOCKER_CMD
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Container started successfully${NC}"
