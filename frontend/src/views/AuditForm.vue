@@ -418,13 +418,18 @@
 
                     <!-- Method A: Direct Access (Text Input) -->
                     <template v-else>
-                      <label for="demo_company" class="field-label">Organisation Name *</label>
+                      <label for="demo_company" class="field-label">
+                        Organisation Name *
+                        <span v-if="isOrgFromLink" class="field-locked-badge">🔒 Pre-filled from link</span>
+                      </label>
                       <input
                         id="demo_company"
                         v-model="form.company_name"
                         type="text"
                         class="field-input"
-                        :class="{ 'input-error': errors.company_name }"
+                        :class="{ 'input-error': errors.company_name, 'field-input-locked': isOrgFromLink }"
+                        :disabled="isOrgFromLink"
+                        :readonly="isOrgFromLink"
                         placeholder="Enter your organisation name"
                       />
                       <span v-if="errors.company_name" class="error-message">
@@ -904,6 +909,7 @@ const invitationError = ref("");
 const invitationDetails = ref(null);
 const availableOrgs = ref([]);
 const loadingOrgs = ref(false);
+const isOrgFromLink = ref(false); // Track if org came from query parameter
 
 // Organisation input - simplified (no real-time validation)
 function onOrganisationSelect() {
@@ -1280,6 +1286,7 @@ onMounted(async () => {
     const orgFromQuery = route.query.org;
     if (orgFromQuery) {
       form.company_name = decodeURIComponent(orgFromQuery);
+      isOrgFromLink.value = true; // Mark as coming from link
     }
   }
   try {
@@ -3781,6 +3788,19 @@ html {
   border-color: #E5E7EB !important;
   font-weight: 500;
   padding-right: 2.25rem !important;
+}
+
+.field-locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #047C69;
+  background: rgba(230, 244, 241, 0.6);
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
+  margin-left: 0.5rem;
 }
 
 .locked-icon {
