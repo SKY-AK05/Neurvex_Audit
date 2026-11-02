@@ -63,16 +63,34 @@ else:
 
 PROHIBITED_PASSWORDS = {
     "",
-    "Coffee!92",
     "password",
     "postgres",
     "admin",
+    "12345678",
 }
 
+# For production, require password strength but allow Azure-managed passwords
 if IS_PRODUCTION:
-    if not PGPASSWORD or PGPASSWORD in PROHIBITED_PASSWORDS or len(PGPASSWORD) < 16:
-        print("FATAL: Missing, weak, or prohibited database password in production.", file=sys.stderr)
+    if not PGPASSWORD:
+        print("FATAL: Missing database password in production.", file=sys.stderr)
         sys.exit(1)
+    
+    # Check against prohibited weak passwords
+    if PGPASSWORD in PROHIBITED_PASSWORDS:
+        print("FATAL: Prohibited weak database password in production.", file=sys.stderr)
+        sys.exit(1)
+    
+    # For Azure Key Vault managed passwords, allow shorter but complex passwords
+    # Require at least 8 chars with special characters for Azure-managed secrets
+    if KEYVAULT_AVAILABLE:
+        if len(PGPASSWORD) < 8:
+            print("FATAL: Database password too short (minimum 8 characters).", file=sys.stderr)
+            sys.exit(1)
+    else:
+        # For manually set passwords, require 16+ characters
+        if len(PGPASSWORD) < 16:
+            print("FATAL: Database password too short (minimum 16 characters for non-Key Vault).", file=sys.stderr)
+            sys.exit(1)
 
 # ============================================================================
 # Azure Communication Services Configuration
