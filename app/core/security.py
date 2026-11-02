@@ -5,7 +5,6 @@ Password hashing, token validation, and other security helpers.
 
 import jwt
 import requests
-import os
 from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from functools import lru_cache, wraps
@@ -13,18 +12,24 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-TENANT_ID = os.environ.get("ENTRA_TENANT_ID", "YOUR_TENANT_ID")
-CLIENT_ID = os.environ.get("ENTRA_CLIENT_ID", "YOUR_CLIENT_ID")
-JWKS_URL = f"https://login.microsoftonline.com/{TENANT_ID}/discovery/v2.0/keys"
+# Import from config to get Key Vault values
+from app.core.config import ENTRA_TENANT_ID, ENTRA_CLIENT_ID, JWKS_URL
+
+TENANT_ID = ENTRA_TENANT_ID
+CLIENT_ID = ENTRA_CLIENT_ID
 
 @lru_cache(maxsize=1)
 def get_jwks():
+    if not JWKS_URL or not TENANT_ID or TENANT_ID == "YOUR_TENANT_ID":
+        logger.warning("JWKS_URL or TENANT_ID not configured properly")
+        return {"keys": []}
+    
     try:
         response = requests.get(JWKS_URL, timeout=10)
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        logger.error(f"Failed to fetch JWKS: {e}")
+        logger.error(f"Failed to fetch JWKS from {JWKS_URL}: {e}")
         return {"keys": []}
 
 def verify_jwt(token: str):
