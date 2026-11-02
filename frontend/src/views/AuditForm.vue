@@ -48,7 +48,9 @@
 
             <!-- Invitation Status Banners -->
             <div v-if="isInvitationMode && form.company_name" class="hero-invite-banner anim-hero-p1">
-              <span class="invite-banner-icon">🏢</span>
+              <span class="invite-banner-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"></path><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"></path><path d="M9 9h1"></path><path d="M9 13h1"></path><path d="M9 17h1"></path><path d="M14 9h1"></path><path d="M14 13h1"></path><path d="M14 17h1"></path></svg>
+              </span>
               <div class="invite-banner-text">
                 Assessment for <strong>{{ form.company_name }}</strong>
                 <span class="invite-banner-tag">Verified Invitation</span>
@@ -56,7 +58,9 @@
             </div>
 
             <div v-if="isInvitationMode && invitationError" class="hero-invite-error anim-hero-p1">
-              <span class="invite-error-icon">⚠️</span>
+              <span class="invite-error-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              </span>
               <div class="invite-error-text">
                 <strong>Invitation Link Error:</strong> {{ invitationError }}
               </div>
@@ -85,11 +89,15 @@
             <!-- Time and perspective badges -->
             <div class="hero-info-badges anim-hero-p4">
               <div class="info-badge badge-time">
-                <span class="badge-icon">⏱</span>
+                <span class="badge-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </span>
                 <span class="badge-text">Approximately 20 minutes</span>
               </div>
               <div class="info-badge badge-perspective">
-                <span class="badge-icon">👥</span>
+                <span class="badge-icon">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </span>
                 <span class="badge-text">Every perspective adds to the picture</span>
               </div>
             </div>
@@ -393,35 +401,21 @@
                   <div class="field-group">
                     <!-- Method B: Invitation Link (Read-only prefilled) -->
                     <template v-if="isInvitationMode">
-                      <div class="field-label-row">
-                        <label for="demo_company" class="field-label">Organization Name *</label>
-                        <span class="invite-prefilled-badge" title="Pre-filled via official invitation link">
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                          Verified via Invitation Link
-                        </span>
-                      </div>
-                      <div class="locked-input-wrapper">
-                        <input
-                          id="demo_company"
-                          :value="form.company_name"
-                          type="text"
-                          class="field-input field-input-locked"
-                          readonly
-                          disabled
-                        />
-                        <div class="locked-icon">
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                        </div>
-                      </div>
+                      <label for="demo_company" class="field-label">Organisation Name *</label>
+                      <input
+                        id="demo_company"
+                        :value="form.company_name"
+                        type="text"
+                        class="field-input field-input-locked"
+                        readonly
+                        disabled
+                      />
                       <span v-if="errors.company_name" class="error-message">{{ errors.company_nameMsg || 'Required' }}</span>
                     </template>
 
                     <!-- Method A: Direct Access (Text Input) -->
                     <template v-else>
-                      <label for="demo_company" class="field-label">
-                        Organisation Name *
-                        <span v-if="isOrgFromLink" class="field-locked-badge">🔒 Pre-filled from link</span>
-                      </label>
+                      <label for="demo_company" class="field-label">Organisation Name *</label>
                       <input
                         id="demo_company"
                         v-model="form.company_name"
@@ -3782,34 +3776,20 @@ html {
 }
 
 .field-input-locked {
-  background-color: #F3F4F6 !important;
-  color: #374151 !important;
+  background-color: #F8FAFC !important;
+  color: #475569 !important;
   cursor: not-allowed;
-  border-color: #E5E7EB !important;
+  border-color: #E2E8F0 !important;
   font-weight: 500;
-  padding-right: 2.25rem !important;
+  box-shadow: none !important;
 }
 
 .field-locked-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  color: #047C69;
-  background: rgba(230, 244, 241, 0.6);
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-  font-weight: 500;
-  margin-left: 0.5rem;
+  display: none !important;
 }
 
 .locked-icon {
-  position: absolute;
-  right: 0.75rem;
-  color: #9CA3AF;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
+  display: none !important;
 }
 
 .hero-invite-banner {
