@@ -43,6 +43,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend source
 COPY app/ app/
 
+# Copy scripts directory (migrations, setup, etc.)
+COPY scripts/ scripts/
+
+# Copy migrations SQL files
+COPY migrations/ migrations/
+
 # Copy built Vue dist from Stage 1
 COPY --from=frontend-build /frontend/dist /app/dist
 
