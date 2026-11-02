@@ -106,7 +106,7 @@ echo ""
 # Step 7: Run database migrations
 echo -e "${YELLOW}🗄️  Step 7/8: Running database migrations...${NC}"
 sleep 2
-sudo docker exec $CONTAINER_NAME python run_migrations.py
+sudo docker exec $CONTAINER_NAME python scripts/run_migration.py
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Migrations completed successfully${NC}"
 else
@@ -129,7 +129,7 @@ echo -e "${BLUE}🌐 Application URL: http://taiga.orchvate.com:8080${NC}"
 echo ""
 echo -e "${YELLOW}💡 Useful commands:${NC}"
 echo -e "  View logs:      sudo docker logs -f $CONTAINER_NAME"
-echo -e "  Run migrations: sudo docker exec $CONTAINER_NAME python run_migrations.py"
+echo -e "  Run migrations: sudo docker exec $CONTAINER_NAME python scripts/run_migration.py"
 echo -e "  Restart:        sudo docker restart $CONTAINER_NAME"
 echo -e "  Stop:           sudo docker stop $CONTAINER_NAME"
 echo -e "  Container info: sudo docker inspect $CONTAINER_NAME"
