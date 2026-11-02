@@ -1275,6 +1275,12 @@ onMounted(async () => {
     // Method A: Direct access - no longer fetch org list
     // Organisation validation happens on blur/submit
     loadingOrgs.value = false;
+    
+    // Check if org query parameter is present and pre-fill organization name
+    const orgFromQuery = route.query.org;
+    if (orgFromQuery) {
+      form.company_name = decodeURIComponent(orgFromQuery);
+    }
   }
   try {
     const res = await fetch("/api/form/sections");
