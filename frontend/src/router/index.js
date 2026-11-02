@@ -18,6 +18,7 @@ import FormBuilder      from "../views/FormBuilder.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
+  { path: "/audit",                   component: AuditForm },
   { path: "/book-a-call",             component: BookCall },
   { path: "/portal",                  component: AdminLogin },
   { path: "/admin",                   redirect: "/GPadmin" },
