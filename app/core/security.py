@@ -3,6 +3,7 @@ security.py — Security utilities
 Password hashing, token validation, and other security helpers.
 """
 
+import os
 import jwt
 import requests
 from fastapi import Request, HTTPException
