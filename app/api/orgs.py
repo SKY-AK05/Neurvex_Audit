@@ -65,6 +65,7 @@ def _serialize_row(row: dict) -> dict:
     """Convert non-JSON-serialisable types in a DB row."""
     from decimal import Decimal
     from datetime import datetime
+    import json
     out = {}
     for k, v in row.items():
         if isinstance(v, Decimal):
@@ -75,6 +76,11 @@ def _serialize_row(row: dict) -> dict:
             out[k] = str(v)
         else:
             out[k] = v
+    if isinstance(out.get("answers"), str):
+        try:
+            out["answers"] = json.loads(out["answers"])
+        except Exception:
+            pass
     return out
 
 

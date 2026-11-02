@@ -394,7 +394,11 @@ async def get_submissions(request: Request):
                 query = """
                     SELECT id, name, designation, company_name, email, contact_number, submitted_at,
                            overall_avg, overall_level, status, answers, organization_id,
-                           submission_source, invitation_id
+                           submission_source, invitation_id,
+                           lc_score, lc_level, ro_score, ro_level,
+                           we_score, we_level, be_score, be_level,
+                           tm_score, tm_level, ca_score, ca_level,
+                           pc_score, pc_level, sp_score, sp_level
                     FROM submissions
                     ORDER BY submitted_at DESC
                 """
@@ -418,15 +422,27 @@ async def get_submissions(request: Request):
         if r.get("submission_source") is None:
             r["submission_source"] = "DIRECT"
 
+        if r.get("overall_avg") is not None:
+            r["overall_avg"] = float(r["overall_avg"])
+        for score_key in ("lc_score", "ro_score", "we_score", "be_score", "tm_score", "ca_score", "pc_score", "sp_score"):
+            if r.get(score_key) is not None:
+                r[score_key] = float(r[score_key])
+
         if r.get("answers"):
             answers = r["answers"]
+            if isinstance(answers, str):
+                try:
+                    answers = json.loads(answers)
+                    r["answers"] = answers
+                except Exception:
+                    answers = {}
             demographic_fields = [
                 "function", "function_other", "country", "state_ut",
                 "role", "gender", "gender_other",
                 "is_pwd", "is_neurodivergent", "is_marginalized"
             ]
             for field in demographic_fields:
-                if field in answers and field not in r:
+                if isinstance(answers, dict) and field in answers and field not in r:
                     r[field] = answers[field]
 
         result.append(r)

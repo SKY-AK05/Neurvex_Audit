@@ -3,10 +3,12 @@
     <!-- Compact Hero Header matching Overview / Reference Image -->
     <section class="hero-section" aria-label="Organisation Search Banner">
       <div class="hero-content">
-        <h1 class="hero-title">Organisation Assessment &amp; Reporting</h1>
-        <p class="hero-subtitle">
-          Aggregate multi-respondent audits, analyze workplace inclusion maturity across departments and demographics, and dispatch executive reports.
-        </p>
+        <div class="hero-header-left">
+          <h1 class="hero-title">Organisation Assessment &amp; Reporting</h1>
+          <p class="hero-subtitle">
+            Aggregate multi-respondent audits, analyze workplace inclusion maturity across departments and demographics, and dispatch executive reports.
+          </p>
+        </div>
 
         <!-- Search & Filter Bar -->
         <div class="search-banner-card">
@@ -554,6 +556,90 @@
 
           <!-- TAB 1: 8 CORE PILLARS SCORECARD -->
           <section v-if="activeTab === 'pillars'" class="pillars-view animate-fade">
+            <!-- Expandable Organisation-Level Score Explanation (Requirement 5.4) -->
+            <div class="score-explanation-card">
+              <div class="sec-toggle-header" @click="showScoreExplanation = !showScoreExplanation">
+                <div class="sec-toggle-left">
+                  <svg class="sec-info-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div>
+                    <h4 class="sec-toggle-title">How Was This Organisation's Score Calculated?</h4>
+                    <span class="sec-toggle-sub">View full 8-pillar mathematical reconciliation &amp; weighting methodology</span>
+                  </div>
+                </div>
+                <button type="button" class="btn-toggle-sec">
+                  {{ showScoreExplanation ? 'Hide Calculation ▲' : 'Inspect Calculation ▼' }}
+                </button>
+              </div>
+
+              <div v-if="showScoreExplanation" class="sec-calc-body animate-fade">
+                <p class="sec-intro-text">
+                  The Weighted NIWI Index of <strong>{{ currentScore?.org_avg }}/20</strong> is calculated across
+                  <strong>{{ detail?.respondents?.length || 0 }} employee submissions</strong> (total audit weight: {{ currentScore?.total_weight || detail?.respondents?.length || 0 }}×).
+                  Each of the 8 core inclusion pillars contributes equally (<strong>12.5% / weight 0.125</strong>).
+                  Summing all 8 weighted pillar contributions equals the final Weighted NIWI Index out of 20.
+                </p>
+
+                <div class="reconciliation-table-wrap">
+                  <table class="reconciliation-table">
+                    <thead>
+                      <tr>
+                        <th>Pillar Name</th>
+                        <th>Dimension</th>
+                        <th>Pillar Score (out of 20)</th>
+                        <th>Pillar Weight</th>
+                        <th>Weighted Contribution</th>
+                        <th>Maturity Level</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="p in pillarScorecards" :key="p.id">
+                        <td class="pillar-name-cell">
+                          <span class="pnc-icon">{{ p.icon }}</span>
+                          <strong>{{ p.title }}</strong>
+                        </td>
+                        <td><span class="dim-tag">{{ p.id.toUpperCase() }}</span></td>
+                        <td><strong>{{ p.score }}</strong> / 20</td>
+                        <td>12.5% (0.125)</td>
+                        <td class="contrib-cell">
+                          <strong>{{ (p.score * 0.125).toFixed(3) }}</strong> pts
+                        </td>
+                        <td>
+                          <span class="pill-tier" :class="levelClass(p.level)">{{ p.level }}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr class="reconciliation-total-row">
+                        <td colspan="2"><strong>Reconciled Weighted NIWI Index:</strong></td>
+                        <td><strong>{{ currentScore?.org_avg }} / 20</strong></td>
+                        <td><strong>100% (1.000)</strong></td>
+                        <td class="contrib-cell">
+                          <strong class="total-contrib-badge">{{ currentScore?.org_avg }} / 20</strong>
+                        </td>
+                        <td>
+                          <span class="pill-tier" :class="levelClass(currentScore?.org_level)">{{ currentScore?.org_level }}</span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <div class="formula-box">
+                  <span class="fb-title">Authoritative Aggregation Formula:</span>
+                  <code class="fb-code">
+                    Weighted NIWI Index = &Sigma;(Employee Score<sub>i</sub> &times; Weight<sub>i</sub>) / &Sigma; Weight<sub>i</sub> = &Sigma;(Pillar Score<sub>k</sub> &times; 0.125)
+                  </code>
+                  <p class="fb-note">
+                    All calculations come directly from database submission records and follow NIWI's additive scoring engine with exact reconciliation.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <!-- Strengths vs Growth Priorities Grid -->
             <div class="highlights-grid">
               <div class="highlight-card strength-card">
@@ -638,6 +724,40 @@
                   <span v-for="(pt, idx) in pillar.points" :key="idx" class="pc-chip">
                     • {{ pt }}
                   </span>
+                </div>
+
+                <div class="pc-card-actions">
+                  <button
+                    type="button"
+                    class="btn-inspect-pillar"
+                    @click="togglePillarExpand(pillar.id)"
+                  >
+                    {{ expandedPillarId === pillar.id ? 'Hide 5 Pillar Questions ▲' : 'Inspect 5 Pillar Questions ▼' }}
+                  </button>
+                </div>
+
+                <!-- Expanded 5 Questions Breakdown for this Pillar (Requirement 5.3) -->
+                <div v-if="expandedPillarId === pillar.id" class="pc-expanded-questions animate-fade">
+                  <div
+                    v-for="pq in getPillarQuestions(pillar.id)"
+                    :key="pq.field"
+                    class="pc-question-mini-card"
+                  >
+                    <div class="pq-header">
+                      <div class="pq-header-left">
+                        <span class="pq-num">{{ pq.field.toUpperCase() }}</span>
+                        <span class="pq-short">{{ pq.short }}</span>
+                      </div>
+                      <span class="pq-marks-tag">{{ pq.marksEarned }}/{{ pq.maxMarks }} marks ({{ pq.questionPct }}%)</span>
+                    </div>
+                    <p class="pq-text">{{ pq.text }}</p>
+                    <div class="pq-distribution-row">
+                      <span class="pq-dist-item"><strong class="c-green">Yes:</strong> {{ pq.stats.yes }} ({{ pq.stats.yes * 4 }}pts)</span>
+                      <span class="pq-dist-item"><strong class="c-amber">Partially:</strong> {{ pq.stats.partially }} ({{ pq.stats.partially * 2 }}pts)</span>
+                      <span class="pq-dist-item"><strong class="c-coral">No:</strong> {{ pq.stats.no }} (0pts)</span>
+                      <span class="pq-dist-item"><strong class="c-slate">Not Sure:</strong> {{ pq.stats.notSure }} (0pts)</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -734,9 +854,10 @@
 
           <!-- TAB 3: GRANULAR INPUT ANALYSIS (Q5–Q44) -->
           <section v-if="activeTab === 'inputs'" class="inputs-view animate-fade">
+            <!-- Filter & Controls Toolbar -->
             <div class="inputs-filter-bar">
-              <div class="ifb-pillar-select">
-                <label for="input-pillar-filter">Filter by Pillar:</label>
+              <div class="ifb-control-group">
+                <label for="input-pillar-filter">Pillar:</label>
                 <select id="input-pillar-filter" v-model="selectedInputPillar">
                   <option value="all">All 8 Pillars (40 Questions)</option>
                   <option v-for="sec in DEFAULT_SECTIONS" :key="sec.id" :value="sec.id">
@@ -745,12 +866,45 @@
                 </select>
               </div>
 
+              <div class="ifb-control-group">
+                <label for="input-practice-filter">Practice Status:</label>
+                <select id="input-practice-filter" v-model="selectedPracticeFilter">
+                  <option value="all">All Practice Levels</option>
+                  <option value="strong">✓ Strong Practice (&ge;60% Yes)</option>
+                  <option value="developing">⚡ Developing</option>
+                  <option value="awareness">❓ Low Awareness (&ge;40% Not Sure)</option>
+                  <option value="gap">⚠️ Critical Gap (&ge;40% No)</option>
+                </select>
+              </div>
+
+              <div class="ifb-control-group">
+                <label for="input-sort-filter">Sort:</label>
+                <select id="input-sort-filter" v-model="inputSortBy">
+                  <option value="order">Question Order (Q5–Q44)</option>
+                  <option value="score_asc">Score: Lowest First (Priority Gaps)</option>
+                  <option value="score_desc">Score: Highest First (Strengths)</option>
+                </select>
+              </div>
+
               <div class="ifb-search-wrap">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ifb-search-icon">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
                 <input
                   v-model="inputSearchQuery"
                   type="text"
-                  placeholder="Search question text or keyword (e.g. interview, lighting, ERG)…"
+                  placeholder="Search question text or keyword (e.g. interview, sensory, ERG)..."
                 />
+                <button v-if="inputSearchQuery" class="ifb-clear-btn" @click="inputSearchQuery = ''" title="Clear">✕</button>
+              </div>
+            </div>
+
+            <!-- Transparency Banner -->
+            <div class="inputs-transparency-banner">
+              <div class="itb-icon">ℹ️</div>
+              <div class="itb-text">
+                <strong>Scoring Methodology Single Source of Truth:</strong> Each assessment question awards <strong>4 marks for "Yes"</strong>, <strong>2 marks for "Partially"</strong>, and <strong>0 marks for "No" / "Not Sure / NA"</strong>. Total raw marks are divided by maximum available marks (4 × eligible responses) and normalised to 4.00 max points per question. Each pillar aggregates its 5 questions equally (summing to 20.00 max points).
               </div>
             </div>
 
@@ -759,6 +913,7 @@
                 v-for="q in filteredQuestionsList"
                 :key="q.field"
                 class="question-analytics-card"
+                :class="{ 'card-expanded': isQuestionExpanded(q.field) }"
               >
                 <div class="qac-top">
                   <div class="qac-identifiers">
@@ -766,19 +921,26 @@
                     <span class="qac-section-tag">{{ q.sectionTitle }}</span>
                     <span class="qac-short-tag">{{ q.short }}</span>
                   </div>
-                  <div class="qac-flag-wrap">
-                    <span v-if="q.stats.yesPct >= 60" class="flag-pill flag-strong">
-                      ✓ Strong Practice ({{ q.stats.yesPct }}% Yes)
-                    </span>
-                    <span v-else-if="q.stats.noPct >= 40" class="flag-pill flag-gap">
-                      ⚠️ Critical Gap ({{ q.stats.noPct }}% No)
-                    </span>
-                    <span v-else-if="q.stats.notSurePct >= 40" class="flag-pill flag-awareness">
-                      ❓ Low Awareness ({{ q.stats.notSurePct }}% Not Sure)
-                    </span>
-                    <span v-else class="flag-pill flag-transition">
-                      ⚡ Developing
-                    </span>
+                  <div class="qac-right-metrics">
+                    <div class="qac-score-pill">
+                      <span class="qac-score-val">{{ q.questionScore }}</span>
+                      <span class="qac-score-max">/ 4.00</span>
+                      <span class="qac-score-pct">({{ q.questionPct }}%)</span>
+                    </div>
+                    <div class="qac-flag-wrap">
+                      <span v-if="q.stats.yesPct >= 60" class="flag-pill flag-strong">
+                        ✓ Strong Practice
+                      </span>
+                      <span v-else-if="q.stats.noPct >= 40" class="flag-pill flag-gap">
+                        ⚠️ Critical Gap
+                      </span>
+                      <span v-else-if="q.stats.notSurePct >= 40" class="flag-pill flag-awareness">
+                        ❓ Low Awareness
+                      </span>
+                      <span v-else class="flag-pill flag-transition">
+                        ⚡ Developing
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -832,6 +994,83 @@
                     </span>
                   </div>
                 </div>
+
+                <!-- Score Calculation Transparency Box -->
+                <div class="qac-scoring-transparency-box">
+                  <div class="qstb-header">
+                    <span class="qstb-title">📊 Score Calculation &amp; Marks Breakdown</span>
+                    <button
+                      type="button"
+                      class="qstb-toggle-btn"
+                      @click="toggleQuestionExpand(q.field)"
+                    >
+                      {{ isQuestionExpanded(q.field) ? '▲ Hide Answer Breakdown' : '▼ Inspect Response Breakdown Table' }}
+                    </button>
+                  </div>
+                  <div class="qstb-formula">
+                    <code>{{ q.formulaText }}</code>
+                  </div>
+                  <div class="qstb-meta-row">
+                    <span><strong>Total Responses:</strong> {{ q.stats.total }}</span>
+                    <span><strong>Raw Marks Earned:</strong> {{ q.marksEarned }} / {{ q.maxMarks }}</span>
+                    <span><strong>Question Weight:</strong> 20.0% of Pillar</span>
+                    <span><strong>Normalised Score:</strong> {{ q.questionScore }} / 4.00</span>
+                  </div>
+
+                  <!-- Expandable Detailed Answer Breakdown Table (Section 5.1 & 5.2 requirement) -->
+                  <div v-if="isQuestionExpanded(q.field)" class="qstb-table-wrap">
+                    <table class="q-breakdown-table">
+                      <thead>
+                        <tr>
+                          <th>Response Option</th>
+                          <th style="text-align: right">Employees</th>
+                          <th style="text-align: right">Marks Each</th>
+                          <th style="text-align: right">Total Marks Earned</th>
+                          <th style="text-align: right">Share %</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr class="row-yes">
+                          <td><span class="opt-dot dot-yes"></span> Yes</td>
+                          <td style="text-align: right; font-weight: 600">{{ q.stats.yes }}</td>
+                          <td style="text-align: right">4</td>
+                          <td style="text-align: right; font-weight: 700">{{ q.stats.yes * 4 }}</td>
+                          <td style="text-align: right">{{ q.stats.yesPct }}%</td>
+                        </tr>
+                        <tr class="row-partially">
+                          <td><span class="opt-dot dot-partially"></span> Partially</td>
+                          <td style="text-align: right; font-weight: 600">{{ q.stats.partially }}</td>
+                          <td style="text-align: right">2</td>
+                          <td style="text-align: right; font-weight: 700">{{ q.stats.partially * 2 }}</td>
+                          <td style="text-align: right">{{ q.stats.partiallyPct }}%</td>
+                        </tr>
+                        <tr class="row-no">
+                          <td><span class="opt-dot dot-no"></span> No</td>
+                          <td style="text-align: right; font-weight: 600">{{ q.stats.no }}</td>
+                          <td style="text-align: right">0</td>
+                          <td style="text-align: right; font-weight: 700">0</td>
+                          <td style="text-align: right">{{ q.stats.noPct }}%</td>
+                        </tr>
+                        <tr class="row-notsure">
+                          <td><span class="opt-dot dot-notsure"></span> Not Sure / NA</td>
+                          <td style="text-align: right; font-weight: 600">{{ q.stats.notSure }}</td>
+                          <td style="text-align: right">0</td>
+                          <td style="text-align: right; font-weight: 700">0</td>
+                          <td style="text-align: right">{{ q.stats.notSurePct }}%</td>
+                        </tr>
+                      </tbody>
+                      <tfoot>
+                        <tr>
+                          <th>Total Eligible Responses</th>
+                          <th style="text-align: right">{{ q.stats.total }}</th>
+                          <th style="text-align: right">—</th>
+                          <th style="text-align: right">{{ q.marksEarned }} / {{ q.maxMarks }}</th>
+                          <th style="text-align: right">{{ q.questionPct }}%</th>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
@@ -881,13 +1120,13 @@
               <table class="modern-resp-table">
                 <thead>
                   <tr>
-                    <th style="width: 22%; min-width: 170px">Respondent &amp; Designation</th>
-                    <th style="width: 13%; min-width: 110px">Method</th>
-                    <th style="width: 17%; min-width: 130px">Function &amp; Role</th>
-                    <th style="width: 16%; min-width: 130px">Score &amp; Level</th>
-                    <th style="width: 12%; min-width: 100px" v-if="!selectedOrg.is_virtual">Audit Weight</th>
-                    <th style="width: 12%; min-width: 110px">Demographics</th>
-                    <th style="width: 8%; min-width: 70px; text-align: center">Actions</th>
+                    <th style="width: 22%; min-width: 160px">Respondent &amp; Designation</th>
+                    <th style="width: 12%; min-width: 90px">Method</th>
+                    <th style="width: 16%; min-width: 120px">Function &amp; Role</th>
+                    <th style="width: 15%; min-width: 120px">Score &amp; Level</th>
+                    <th style="width: 13%; min-width: 100px" v-if="!selectedOrg.is_virtual">Audit Weight</th>
+                    <th style="width: 12%; min-width: 100px">Demographics</th>
+                    <th style="width: 10%; min-width: 80px; text-align: center">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -977,9 +1216,9 @@
                       </td>
                     </tr>
 
-                    <!-- Expanded Detail Row -->
+                    <!-- Expanded Detail Row with Colspan: 7 when non-virtual, 6 when virtual -->
                     <tr v-if="expandedRespondentId === r.id" class="resp-expand-row">
-                      <td :colspan="!selectedOrg.is_virtual ? 6 : 5" class="resp-expand-cell">
+                      <td :colspan="!selectedOrg.is_virtual ? 7 : 6" class="resp-expand-cell">
                         <div class="resp-expand-card">
                           <div class="rec-header">
                             <h4>Individual Section Breakdown — {{ r.name }}</h4>
@@ -1297,6 +1536,33 @@ const selectedInputPillar = ref('all');
 const inputSearchQuery = ref('');
 const mobileDirectoryOpen = ref(false);
 
+// Score Transparency & Drilldown State
+const showScoreExplanation = ref(false);
+const expandedPillarId = ref(null);
+function togglePillarExpand(id) {
+  expandedPillarId.value = expandedPillarId.value === id ? null : id;
+}
+function getPillarQuestions(pillarId) {
+  return allQuestionsFlat.value.filter(q => q.sectionId === pillarId);
+}
+
+// Granular Input Analysis Filters & Expansions
+const selectedPracticeFilter = ref('all');
+const inputSortBy = ref('order');
+const expandedInputQuestions = ref(new Set());
+function toggleQuestionExpand(field) {
+  const next = new Set(expandedInputQuestions.value);
+  if (next.has(field)) {
+    next.delete(field);
+  } else {
+    next.add(field);
+  }
+  expandedInputQuestions.value = next;
+}
+function isQuestionExpanded(field) {
+  return expandedInputQuestions.value.has(field);
+}
+
 // Toast
 const toast = reactive({ show: false, message: '', type: 'success' });
 function showToast(message, type = 'success') {
@@ -1548,9 +1814,10 @@ const activeSegmentData = computed(() => {
   const groups = {};
 
   respondents.forEach(r => {
-    let rawVal = r.answers?.[dimKey] ?? r[dimKey];
+    const ans = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
+    let rawVal = ans[dimKey] ?? r[dimKey];
     if (rawVal === undefined || rawVal === null || rawVal === '') {
-      rawVal = 'Not Specified';
+      rawVal = ans['demo_' + dimKey] ?? 'Not Specified';
     }
     const val = String(rawVal).trim();
     if (!groups[val]) {
@@ -1565,7 +1832,7 @@ const activeSegmentData = computed(() => {
     if (r.overall_avg != null) groups[val].scores.push(parseFloat(r.overall_avg));
     ['lc', 'ro', 'we', 'be', 'tm', 'ca', 'pc', 'sp'].forEach(k => {
       const s = r[`${k}_score`];
-      if (s != null) groups[val].sectionScores[k].push(parseFloat(s));
+      if (s != null && s !== 'NA') groups[val].sectionScores[k].push(parseFloat(s));
     });
   });
 
@@ -1613,7 +1880,7 @@ const perceptionGapNotice = computed(() => {
       }
     }
   } else if (selectedSegmentKey.value === 'role') {
-    const leadGroup = activeSegmentData.value.find(g => g.name.toLowerCase().includes('lead') || g.name.toLowerCase().includes('exec') || g.name.toLowerCase().includes('c-suite'));
+    const leadGroup = activeSegmentData.value.find(g => g.name.toLowerCase().includes('lead') || g.name.toLowerCase().includes('exec') || g.name.toLowerCase().includes('c-suite') || g.name.toLowerCase().includes('manager'));
     const icGroup = activeSegmentData.value.find(g => g.name.toLowerCase().includes('contributor') || g.name.toLowerCase().includes('individual'));
     if (leadGroup && icGroup) {
       const diff = Math.round((leadGroup.avgScore - icGroup.avgScore) * 100) / 100;
@@ -1634,10 +1901,11 @@ const allQuestionsFlat = computed(() => {
   const list = [];
 
   DEFAULT_SECTIONS.forEach(sec => {
-    sec.questions.forEach(q => {
+    sec.questions.forEach((q, qIndex) => {
       let yes = 0, partially = 0, no = 0, notSure = 0;
       respondents.forEach(r => {
-        const ans = String(r[q.field] || r.answers?.[q.field] || '').trim().toLowerCase();
+        const ansObj = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
+        const ans = String(r[q.field] ?? ansObj[q.field] ?? '').trim().toLowerCase();
         if (ans === 'yes') yes++;
         else if (ans === 'partially') partially++;
         else if (ans === 'no') no++;
@@ -1645,22 +1913,46 @@ const allQuestionsFlat = computed(() => {
         else if (ans) notSure++;
       });
       const total = yes + partially + no + notSure || respondents.length || 1;
+      const yesPct = Math.round((yes / total) * 100);
+      const partiallyPct = Math.round((partially / total) * 100);
+      const noPct = Math.round((no / total) * 100);
+      const notSurePct = Math.round((notSure / total) * 100);
+
+      const marksEarned = (yes * 4) + (partially * 2);
+      const maxMarks = total * 4;
+      const questionScore = total > 0 ? Math.round((marksEarned / maxMarks) * 4 * 100) / 100 : 0;
+      const questionPct = total > 0 ? Math.round((marksEarned / maxMarks) * 100) : 0;
+
+      let practiceFlag = 'developing';
+      if (yesPct >= 60) practiceFlag = 'strong';
+      else if (noPct >= 40) practiceFlag = 'gap';
+      else if (notSurePct >= 40) practiceFlag = 'awareness';
+
+      const formulaText = `${yes} Yes × 4 marks + ${partially} Partially × 2 marks = ${marksEarned} marks earned out of ${maxMarks} max (${questionPct}%)`;
+
       list.push({
         field: q.field,
+        qNumber: parseInt(q.field.replace(/\D/g, '')) || (qIndex + 5),
         sectionId: sec.id,
         sectionTitle: sec.title,
         short: q.short,
         text: q.text,
+        marksEarned,
+        maxMarks,
+        questionScore,
+        questionPct,
+        practiceFlag,
+        formulaText,
         stats: {
           yes,
           partially,
           no,
           notSure,
           total,
-          yesPct: Math.round((yes / total) * 100),
-          partiallyPct: Math.round((partially / total) * 100),
-          noPct: Math.round((no / total) * 100),
-          notSurePct: Math.round((notSure / total) * 100),
+          yesPct,
+          partiallyPct,
+          noPct,
+          notSurePct,
         }
       });
     });
@@ -1671,9 +1963,18 @@ const allQuestionsFlat = computed(() => {
 
 const filteredQuestionsList = computed(() => {
   let list = allQuestionsFlat.value;
+
+  // Pillar filter
   if (selectedInputPillar.value !== 'all') {
     list = list.filter(q => q.sectionId === selectedInputPillar.value);
   }
+
+  // Practice flag filter
+  if (selectedPracticeFilter.value !== 'all') {
+    list = list.filter(q => q.practiceFlag === selectedPracticeFilter.value);
+  }
+
+  // Search query
   if (inputSearchQuery.value.trim()) {
     const q = inputSearchQuery.value.toLowerCase().trim();
     list = list.filter(item =>
@@ -1682,6 +1983,16 @@ const filteredQuestionsList = computed(() => {
       item.field.toLowerCase().includes(q)
     );
   }
+
+  // Sorting
+  if (inputSortBy.value === 'score_asc') {
+    list = [...list].sort((a, b) => a.questionScore - b.questionScore);
+  } else if (inputSortBy.value === 'score_desc') {
+    list = [...list].sort((a, b) => b.questionScore - a.questionScore);
+  } else {
+    list = [...list].sort((a, b) => a.qNumber - b.qNumber);
+  }
+
   return list;
 });
 
@@ -4398,4 +4709,495 @@ onMounted(fetchOrgs);
   font-weight: 700;
 }
 
+
+/* =====================================================================
+   NIWI SCORE TRANSPARENCY & RESPONSIVE REFINEMENTS
+   ===================================================================== */
+
+/* Sidebar Independent Scrolling Fix */
+.org-sidebar-card {
+  position: sticky !important;
+  top: 85px !important;
+  max-height: calc(100vh - 105px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.osc-collapsible-body {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.sidebar-orgs-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  max-height: calc(100vh - 280px) !important;
+  overflow-y: auto !important;
+  padding-right: 6px !important;
+  scrollbar-width: thin;
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+.sidebar-orgs-list::-webkit-scrollbar {
+  width: 6px;
+}
+.sidebar-orgs-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-orgs-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+/* Organisation Overview Header */
+.hero-header-left {
+  text-align: left;
+  margin-bottom: 12px;
+}
+.hero-title {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary, #161057);
+  letter-spacing: -0.02em;
+  margin-bottom: 6px;
+}
+.hero-subtitle {
+  font-size: 0.95rem;
+  color: #475569;
+  max-width: 800px;
+  line-height: 1.5;
+}
+
+/* How Was This Organisation's Score Calculated Card */
+.score-explanation-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 14px;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.sec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.sec-title {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+}
+.sec-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  background: #EEF2FF;
+  color: #3730A3;
+  border-radius: 999px;
+  border: 1px solid #C7D2FE;
+}
+.sec-intro {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.formula-callout {
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.formula-callout-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--primary, #161057);
+  margin-bottom: 4px;
+  display: block;
+}
+.formula-callout code {
+  display: block;
+  font-family: monospace;
+  font-size: 0.84rem;
+  color: #0F172A;
+  font-weight: 600;
+}
+.reconciliation-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  text-align: left;
+}
+.reconciliation-table th {
+  padding: 8px 12px;
+  background: #F8FAFC;
+  border-bottom: 2px solid var(--primary, #161057);
+  font-weight: 700;
+  color: var(--primary, #161057);
+}
+.reconciliation-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #1E293B;
+}
+.reconciliation-table tfoot th {
+  padding: 10px 12px;
+  background: #FAF9F5;
+  border-top: 2px solid var(--primary, #161057);
+  color: var(--primary, #161057);
+  font-weight: 800;
+}
+.reconciliation-table tr:hover td {
+  background: #F8FAFC;
+}
+
+/* Pillar Card Actions & Inspection Drawer */
+.pc-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid #F1F5F9;
+}
+.btn-inspect-pillar {
+  background: transparent;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary, #161057);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-inspect-pillar:hover {
+  background: #F1F5F9;
+  border-color: var(--primary, #161057);
+}
+.pc-expanded-questions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1.5px dashed #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pc-question-mini-card {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.pc-qmini-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.pc-qmini-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+.pc-qmini-text {
+  font-size: 0.78rem;
+  color: #334155;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pc-qmini-right {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.pc-qmini-score {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary, #161057);
+}
+.pc-qmini-raw {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+
+/* Tab 3: Granular Input Analysis Scoring Transparency */
+.inputs-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.ifb-control-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ifb-control-group label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  white-space: nowrap;
+}
+.ifb-control-group select {
+  font-size: 0.82rem;
+  padding: 6px 10px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  background: #FFFFFF;
+  color: #1E293B;
+  outline: none;
+  cursor: pointer;
+}
+.ifb-control-group select:focus {
+  border-color: var(--primary, #161057);
+}
+.ifb-search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 4px 10px;
+  flex: 1;
+  min-width: 220px;
+}
+.ifb-search-wrap:focus-within {
+  border-color: var(--primary, #161057);
+  background: #FFFFFF;
+}
+.ifb-search-icon {
+  color: #64748B;
+}
+.ifb-search-wrap input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 0.82rem;
+  color: #1E293B;
+}
+.ifb-clear-btn {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.inputs-transparency-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #EFF6FF;
+  border: 1.5px solid #93C5FD;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+.itb-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+.itb-text {
+  font-size: 0.82rem;
+  color: #1E3A8A;
+  line-height: 1.5;
+}
+
+.qac-right-metrics {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.qac-score-pill {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 8px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.qac-score-val {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary, #161057);
+}
+.qac-score-max {
+  font-size: 0.72rem;
+  color: #64748B;
+  font-weight: 600;
+}
+.qac-score-pct {
+  font-size: 0.74rem;
+  color: var(--accent, #04907C);
+  font-weight: 700;
+}
+
+.qac-scoring-transparency-box {
+  margin-top: 14px;
+  background: #F8FAFC;
+  border: 1.5px dashed #CBD5E1;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.qstb-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.qstb-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+}
+.qstb-toggle-btn {
+  background: #FFFFFF;
+  border: 1px solid var(--primary, #161057);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--primary, #161057);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.qstb-toggle-btn:hover {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+}
+.qstb-formula code {
+  display: block;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #1E293B;
+  overflow-x: auto;
+}
+.qstb-meta-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.qstb-table-wrap {
+  margin-top: 6px;
+  overflow-x: auto;
+}
+.q-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.q-breakdown-table th {
+  background: #F1F5F9;
+  padding: 6px 10px;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  border-bottom: 1.5px solid #CBD5E1;
+}
+.q-breakdown-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid #F1F5F9;
+  color: #334155;
+}
+.q-breakdown-table tfoot th {
+  background: #F8FAFC;
+  border-top: 1.5px solid var(--primary, #161057);
+  color: var(--primary, #161057);
+  font-weight: 700;
+}
+.opt-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.dot-yes { background: #04907C; }
+.dot-partially { background: #F59E0B; }
+.dot-no { background: #EF4444; }
+.dot-notsure { background: #94A3B8; }
+
+/* Tab 4 Table Overflow & Actions column visibility fix */
+.table-container {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  padding-bottom: 2px;
+}
+.modern-resp-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+  text-align: left;
+}
+.btn-icon-direct {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 6px;
+  background: #FFFFFF;
+  color: var(--primary, #161057);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-icon-direct:hover {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border-color: var(--primary, #161057);
+}
 </style>
