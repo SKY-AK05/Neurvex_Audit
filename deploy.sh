@@ -97,9 +97,19 @@ if [ "$USE_ENV_FILE" = true ]; then
     DOCKER_CMD="$DOCKER_CMD --env-file $ENV_FILE"
 else
     # Set minimal required environment variables for Azure Key Vault mode
+    # Use --network=host to allow container to access Azure IMDS endpoint
+    echo -e "${BLUE}ℹ️  Using Azure Key Vault: ${KEY_VAULT_NAME:-not set}${NC}"
+    
+    if [ -z "$KEY_VAULT_NAME" ]; then
+        echo -e "${RED}❌ ERROR: KEY_VAULT_NAME environment variable is not set!${NC}"
+        echo -e "${YELLOW}Please set it with: export KEY_VAULT_NAME=niwi-prod-kv${NC}"
+        exit 1
+    fi
+    
     DOCKER_CMD="$DOCKER_CMD \
+      --network=host \
       -e APP_ENV=production \
-      -e KEY_VAULT_NAME=${KEY_VAULT_NAME:-niwi-secrets} \
+      -e KEY_VAULT_NAME=$KEY_VAULT_NAME \
       -e REQUIRE_KEYVAULT=true"
 fi
 
