@@ -1,0 +1,484 @@
+{
+  "metadata": {
+    "testRunId": "run_1793645026543_3v4vj",
+    "testType": "smoke",
+    "targetConcurrencyVUs": 1,
+    "timestamp": "2026-11-02T18:43:46.544Z",
+    "targetBaseUrl": "https://niwi.orchvate.in",
+    "exactAuditUrl": "https://niwi.orchvate.in/audit?org=New%20Company%200746ed32-957c-4b16-bdfc-f6d52e9a88e1",
+    "targetOrgName": "New Company 0746ed32-957c-4b16-bdfc-f6d52e9a88e1",
+    "targetOrgId": "de4a0f39-b695-4c56-9f5f-d7a3645e42c8",
+    "environment": "Production (orchvate.in)",
+    "verdict": "FAILED"
+  },
+  "metrics": {
+    "http": {
+      "totalRequests": 7,
+      "requestsPerSecond": 0.39,
+      "httpErrorRatePercent": 0,
+      "responseTimeMs": {
+        "average": 1855.39,
+        "median": 772.71,
+        "p90": 3905.08,
+        "p95": 4195.84,
+        "p99": 0,
+        "max": 4486.61
+      }
+    },
+    "submissions": {
+      "attempts": 1,
+      "successful": 1,
+      "failed": 0,
+      "p95SubmissionDurationMs": 4487,
+      "successRatePercent": 100
+    },
+    "acceptanceCriteria": {
+      "allSubmissionsSaved": true,
+      "httpErrorRateUnderOnePercent": true,
+      "p95ResponseTimeUnder3s": false,
+      "p99ResponseTimeUnder5s": true,
+      "zeroLostSubmissions": true,
+      "zeroIncorrectOrgAssignments": true
+    }
+  },
+  "rawK6Data": {
+    "metrics": {
+      "http_req_duration": {
+        "values": {
+          "avg": 1855.3944,
+          "min": 213.9798,
+          "med": 772.7148,
+          "max": 4486.6132,
+          "p(90)": 3905.0751400000004,
+          "p(95)": 4195.844169999999
+        },
+        "thresholds": {
+          "p(95)<3000": {
+            "ok": false
+          },
+          "p(99)<5000": {
+            "ok": true
+          }
+        },
+        "type": "trend",
+        "contains": "time"
+      },
+      "http_reqs": {
+        "values": {
+          "count": 7,
+          "rate": 0.387126816661717
+        },
+        "type": "counter",
+        "contains": "default"
+      },
+      "http_req_tls_handshaking": {
+        "contains": "time",
+        "values": {
+          "avg": 78.39175714285714,
+          "min": 0,
+          "med": 0,
+          "max": 320.3335,
+          "p(90)": 265.17868000000004,
+          "p(95)": 292.75609
+        },
+        "type": "trend"
+      },
+      "iterations": {
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.055303830951673856
+        },
+        "type": "counter"
+      },
+      "niwi_submission_duration_ms": {
+        "thresholds": {
+          "p(95)<3000": {
+            "ok": false
+          },
+          "p(99)<5000": {
+            "ok": true
+          }
+        },
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "avg": 4487,
+          "min": 4487,
+          "med": 4487,
+          "max": 4487,
+          "p(90)": 4487,
+          "p(95)": 4487
+        }
+      },
+      "http_req_duration{expected_response:true}": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "max": 4486.6132,
+          "p(90)": 3905.0751400000004,
+          "p(95)": 4195.844169999999,
+          "avg": 1855.3944,
+          "min": 213.9798,
+          "med": 772.7148
+        }
+      },
+      "http_req_receiving": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(95)": 214.56302,
+          "avg": 60.96025714285714,
+          "min": 0.6948,
+          "med": 0.9128,
+          "max": 220.0274,
+          "p(90)": 209.09864000000002
+        }
+      },
+      "niwi_org_validation_duration_ms": {
+        "values": {
+          "p(90)": 774,
+          "p(95)": 774,
+          "avg": 774,
+          "min": 774,
+          "med": 774,
+          "max": 774
+        },
+        "type": "trend",
+        "contains": "default"
+      },
+      "iteration_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 12963.6941,
+          "max": 12963.6941,
+          "p(90)": 12963.6941,
+          "p(95)": 12963.6941,
+          "avg": 12963.6941,
+          "min": 12963.6941
+        }
+      },
+      "vus_max": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 1,
+          "min": 1,
+          "max": 1
+        }
+      },
+      "niwi_org_id_match_rate": {
+        "values": {
+          "fails": 0,
+          "rate": 1,
+          "passes": 1
+        },
+        "thresholds": {
+          "rate==1.0": {
+            "ok": true
+          }
+        },
+        "type": "rate",
+        "contains": "default"
+      },
+      "data_sent": {
+        "contains": "data",
+        "values": {
+          "count": 5881,
+          "rate": 325.24182982679395
+        },
+        "type": "counter"
+      },
+      "niwi_submission_failures": {
+        "contains": "default",
+        "values": {
+          "count": 0,
+          "rate": 0
+        },
+        "thresholds": {
+          "count==0": {
+            "ok": true
+          }
+        },
+        "type": "counter"
+      },
+      "vus": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 1,
+          "min": 0,
+          "max": 1
+        }
+      },
+      "http_req_failed": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 7
+        },
+        "thresholds": {
+          "rate<0.01": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_blocked": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 150.09074285714286,
+          "min": 0,
+          "med": 0,
+          "max": 604.3181,
+          "p(90)": 509.51750000000004,
+          "p(95)": 556.9177999999998
+        }
+      },
+      "checks": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 14,
+          "fails": 0
+        }
+      },
+      "http_req_sending": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "p(95)": 1.01311,
+          "avg": 0.6482571428571429,
+          "min": 0,
+          "med": 0.8432,
+          "max": 1.0204,
+          "p(90)": 1.00582
+        }
+      },
+      "niwi_audit_page_duration_ms": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "avg": 660,
+          "min": 660,
+          "med": 660,
+          "max": 660,
+          "p(90)": 660,
+          "p(95)": 660
+        }
+      },
+      "niwi_submission_attempts": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.055303830951673856
+        }
+      },
+      "http_req_connecting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 59.30294285714286,
+          "min": 0,
+          "med": 0,
+          "max": 211.6339,
+          "p(90)": 206.74558000000002,
+          "p(95)": 209.18974
+        }
+      },
+      "niwi_http_error_rate": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 4
+        }
+      },
+      "niwi_form_sections_duration_ms": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "avg": 3025,
+          "min": 3025,
+          "med": 3025,
+          "max": 3025,
+          "p(90)": 3025,
+          "p(95)": 3025
+        }
+      },
+      "data_received": {
+        "contains": "data",
+        "values": {
+          "count": 56610,
+          "rate": 3130.749870174257
+        },
+        "type": "counter"
+      },
+      "http_req_waiting": {
+        "contains": "time",
+        "values": {
+          "avg": 1793.7858857142858,
+          "min": 212.3251,
+          "med": 770.8427,
+          "max": 4484.7367,
+          "p(90)": 3782.808220000001,
+          "p(95)": 4133.772459999999
+        },
+        "type": "trend"
+      },
+      "niwi_submission_success": {
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.055303830951673856
+        },
+        "type": "counter"
+      }
+    },
+    "setup_data": {
+      "organizationId": "de4a0f39-b695-4c56-9f5f-d7a3645e42c8",
+      "organizationName": "New Company 0746ed32-957c-4b16-bdfc-f6d52e9a88e1",
+      "runId": "run_1793645008462_rfimy",
+      "auditUrl": "https://niwi.orchvate.in/audit?org=New%20Company%200746ed32-957c-4b16-bdfc-f6d52e9a88e1",
+      "baseUrl": "https://niwi.orchvate.in"
+    },
+    "root_group": {
+      "path": "",
+      "id": "d41d8cd98f00b204e9800998ecf8427e",
+      "groups": [
+        {
+          "name": "setup",
+          "path": "::setup",
+          "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+          "groups": [],
+          "checks": [
+              {
+                "name": "preflight: assessment page HTTP 200",
+                "path": "::setup::preflight: assessment page HTTP 200",
+                "id": "8b997c1f67875a3fd860b8d427411d27",
+                "passes": 1,
+                "fails": 0
+              },
+              {
+                "name": "preflight: page returns HTML content",
+                "path": "::setup::preflight: page returns HTML content",
+                "id": "5ae0c2348938487dcb18c03a5c3f864e",
+                "passes": 1,
+                "fails": 0
+              },
+              {
+                "name": "preflight: form sections HTTP 200",
+                "path": "::setup::preflight: form sections HTTP 200",
+                "id": "af99864dcbcec597e17d8b0f94e12719",
+                "passes": 1,
+                "fails": 0
+              },
+              {
+                "name": "preflight: sections array returned",
+                "path": "::setup::preflight: sections array returned",
+                "id": "22b98a2f8fd75f1f9ca8b95f9b77b7e4",
+                "passes": 1,
+                "fails": 0
+              },
+              {
+                "fails": 0,
+                "name": "preflight: org validate HTTP 200",
+                "path": "::setup::preflight: org validate HTTP 200",
+                "id": "b470546bbb628f811401da51ba00f4a4",
+                "passes": 1
+              },
+              {
+                "fails": 0,
+                "name": "preflight: org is valid in database",
+                "path": "::setup::preflight: org is valid in database",
+                "id": "514da2ad71d3fd32ed6f7a1468c8537f",
+                "passes": 1
+              },
+              {
+                "path": "::setup::preflight: resolved org ID matches expected target",
+                "id": "4e9653c0999b30623e24d3f7e338febc",
+                "passes": 1,
+                "fails": 0,
+                "name": "preflight: resolved org ID matches expected target"
+              }
+            ]
+        }
+      ],
+      "checks": [
+        {
+          "name": "step 1: audit page HTTP 200",
+          "path": "::step 1: audit page HTTP 200",
+          "id": "bddbad8e88d560dae49dce3416960048",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "name": "step 2: form sections HTTP 200",
+          "path": "::step 2: form sections HTTP 200",
+          "id": "0c868168a50b3896a05938aa3b91f615",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "name": "step 2: has valid sections array",
+          "path": "::step 2: has valid sections array",
+          "id": "ce5b736de77c9c3dbd93087b08ffbee8",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "fails": 0,
+          "name": "step 3: org validate HTTP 200",
+          "path": "::step 3: org validate HTTP 200",
+          "id": "1b28c1c431ae1d4b93f99092850cacd1",
+          "passes": 1
+        },
+        {
+          "name": "step 3: org exists and active",
+          "path": "::step 3: org exists and active",
+          "id": "27c684015a8ebaeec2a27d06ede819a6",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "name": "step 4: submit HTTP 201 or 200",
+          "path": "::step 4: submit HTTP 201 or 200",
+          "id": "51e7cc40e335c2ffa5678c779bfcf9a0",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "passes": 1,
+          "fails": 0,
+          "name": "step 4: response indicates success",
+          "path": "::step 4: response indicates success",
+          "id": "a5c37e59e89b3061846ae98d22c9f536"
+        }
+      ],
+      "name": ""
+    },
+    "options": {
+      "summaryTrendStats": [
+        "avg",
+        "min",
+        "med",
+        "max",
+        "p(90)",
+        "p(95)"
+      ],
+      "summaryTimeUnit": "",
+      "noColor": false
+    },
+    "state": {
+      "isStdOutTTY": false,
+      "isStdErrTTY": false,
+      "testRunDurationMs": 18081.93
+    }
+  }
+}

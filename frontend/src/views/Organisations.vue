@@ -693,13 +693,15 @@
                 v-for="pillar in pillarScorecards"
                 :key="pillar.id"
                 class="pillar-card"
+                :class="{ 'card-expanded': expandedPillarId === pillar.id }"
               >
+                <!-- SECTION 1: PILLAR IDENTITY -->
                 <div class="pc-top">
                   <div class="pc-icon-wrap">
                     <span class="pc-icon">{{ pillar.icon }}</span>
                     <div>
                       <h3 class="pc-title">{{ pillar.title }}</h3>
-                      <span class="pc-category">NIWI Dimension {{ pillar.id.toUpperCase() }}</span>
+                      <span class="pc-category">NIWI DIMENSION {{ pillar.id.toUpperCase() }}</span>
                     </div>
                   </div>
                   <div class="pc-score-box">
@@ -708,6 +710,7 @@
                   </div>
                 </div>
 
+                <!-- Pillar Progress Bar & Level -->
                 <div class="pc-bar-wrap">
                   <div class="pc-bar-bg">
                     <div class="pc-bar-fill" :style="{ width: `${(pillar.score / 20) * 100}%` }"></div>
@@ -718,6 +721,7 @@
                   </div>
                 </div>
 
+                <!-- Description & Indicator Chips -->
                 <p class="pc-summary">{{ pillar.summary }}</p>
 
                 <div class="pc-key-points">
@@ -726,42 +730,199 @@
                   </span>
                 </div>
 
-                <div class="pc-card-actions">
+                <!-- SECTION 2 & 3: AGGREGATED PILLAR RESPONSES & MARKS SUMMARY (Requirement 4) -->
+                <div class="pillar-agg-box">
+                  <div class="pab-header">
+                    <span class="pab-title">Pillar Aggregated Responses (5 Questions)</span>
+                    <span class="pab-count-badge">
+                      {{ pillar.agg?.totalResponses || 0 }} responses ({{ pillar.agg?.employeeCount || 0 }} employees)
+                    </span>
+                  </div>
+
+                  <!-- Horizontally Stacked Distribution Bar with NIWI Colors -->
+                  <div class="pab-distribution-bar">
+                    <div
+                      v-if="pillar.agg?.yesPct > 0"
+                      class="pab-seg pab-yes"
+                      :style="{ width: `${pillar.agg.yesPct}%`, backgroundColor: '#04907C' }"
+                      :title="`Yes: ${pillar.agg.yes} (${pillar.agg.yesPct}%)`"
+                    ></div>
+                    <div
+                      v-if="pillar.agg?.partiallyPct > 0"
+                      class="pab-seg pab-partially"
+                      :style="{ width: `${pillar.agg.partiallyPct}%`, backgroundColor: '#F59E0B' }"
+                      :title="`Partially: ${pillar.agg.partially} (${pillar.agg.partiallyPct}%)`"
+                    ></div>
+                    <div
+                      v-if="pillar.agg?.noPct > 0"
+                      class="pab-seg pab-no"
+                      :style="{ width: `${pillar.agg.noPct}%`, backgroundColor: '#E05A47' }"
+                      :title="`No: ${pillar.agg.no} (${pillar.agg.noPct}%)`"
+                    ></div>
+                    <div
+                      v-if="pillar.agg?.notSurePct > 0"
+                      class="pab-seg pab-notsure"
+                      :style="{ width: `${pillar.agg.notSurePct}%`, backgroundColor: '#94A3B8' }"
+                      :title="`Not Sure / NA: ${pillar.agg.notSure} (${pillar.agg.notSurePct}%)`"
+                    ></div>
+                    <div
+                      v-if="!pillar.agg || pillar.agg.totalResponses === 0"
+                      class="pab-seg-empty"
+                      title="No employee responses recorded yet"
+                    ></div>
+                  </div>
+
+                  <!-- 4-Item Legend -->
+                  <div class="pab-legend">
+                    <span class="pab-leg-item leg-yes">
+                      <span class="leg-dot" style="background-color: #04907C"></span>
+                      <strong>Yes:</strong> {{ pillar.agg?.yes || 0 }} ({{ pillar.agg?.yesPct || 0 }}%)
+                    </span>
+                    <span class="pab-leg-item leg-partially">
+                      <span class="leg-dot" style="background-color: #F59E0B"></span>
+                      <strong>Partially:</strong> {{ pillar.agg?.partially || 0 }} ({{ pillar.agg?.partiallyPct || 0 }}%)
+                    </span>
+                    <span class="pab-leg-item leg-no">
+                      <span class="leg-dot" style="background-color: #E05A47"></span>
+                      <strong>No:</strong> {{ pillar.agg?.no || 0 }} ({{ pillar.agg?.noPct || 0 }}%)
+                    </span>
+                    <span class="pab-leg-item leg-notsure">
+                      <span class="leg-dot" style="background-color: #94A3B8"></span>
+                      <strong>Not Sure:</strong> {{ pillar.agg?.notSure || 0 }} ({{ pillar.agg?.notSurePct || 0 }}%)
+                    </span>
+                  </div>
+
+                  <!-- Marks Breakdown & Reconciliation Row -->
+                  <div class="pab-marks-summary">
+                    <div class="pms-formula">
+                      <code>{{ pillar.agg?.yes || 0 }} Yes × 4 + {{ pillar.agg?.partially || 0 }} Partially × 2 = {{ pillar.agg?.rawMarksEarned || 0 }} / {{ pillar.agg?.maxRawMarks || 0 }} raw marks</code>
+                    </div>
+                    <div class="pms-stats-grid">
+                      <div class="pms-stat-col">
+                        <span class="pms-lbl">Pillar Score</span>
+                        <span class="pms-val"><strong>{{ pillar.score }}</strong> / 20</span>
+                      </div>
+                      <div class="pms-stat-col">
+                        <span class="pms-lbl">Pillar Weight</span>
+                        <span class="pms-val">12.5%</span>
+                      </div>
+                      <div class="pms-stat-col">
+                        <span class="pms-lbl">Weighted Contrib.</span>
+                        <span class="pms-val"><strong>{{ pillar.agg?.weightedContribution || '0.000' }}</strong> pts</span>
+                      </div>
+                      <div class="pms-stat-col">
+                        <span class="pms-lbl">Maturity Level</span>
+                        <span class="pms-badge" :class="levelClass(pillar.level)">{{ shortLevel(pillar.level) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SECTION 4: ACCORDION EXPAND/COLLAPSE TRIGGER (Requirement 5) -->
+                <div class="pc-accordion-action">
                   <button
                     type="button"
-                    class="btn-inspect-pillar"
+                    class="btn-pillar-accordion"
+                    :class="{ 'expanded': expandedPillarId === pillar.id }"
                     @click="togglePillarExpand(pillar.id)"
                   >
-                    {{ expandedPillarId === pillar.id ? 'Hide 5 Pillar Questions ▲' : 'Inspect 5 Pillar Questions ▼' }}
+                    <span>{{ expandedPillarId === pillar.id ? 'Hide Questions ↑' : 'View 5 Questions ↓' }}</span>
                   </button>
                 </div>
 
-                <!-- Expanded 5 Questions Breakdown for this Pillar (Requirement 5.3) -->
+                <!-- SECTION 5: EXPANDED 5 QUESTIONS BREAKDOWN (Requirements 6 & 7) -->
                 <div v-if="expandedPillarId === pillar.id" class="pc-expanded-questions animate-fade">
+                  <div class="peq-intro-banner">
+                    <span>Individual 5 Assessment Questions for <strong>{{ pillar.title }}</strong>:</span>
+                  </div>
+
                   <div
                     v-for="pq in getPillarQuestions(pillar.id)"
                     :key="pq.field"
-                    class="pc-question-mini-card"
+                    class="pillar-question-card"
                   >
-                    <div class="pq-header">
-                      <div class="pq-header-left">
-                        <span class="pq-num">{{ pq.field.toUpperCase() }}</span>
-                        <span class="pq-short">{{ pq.short }}</span>
+                    <!-- Question Top Row -->
+                    <div class="pqc-top-row">
+                      <div class="pqc-left-meta">
+                        <span class="pqc-num-badge">{{ pq.field.toUpperCase() }}</span>
+                        <span class="pqc-short-title">{{ pq.short }}</span>
                       </div>
-                      <span class="pq-marks-tag">{{ pq.marksEarned }}/{{ pq.maxMarks }} marks ({{ pq.questionPct }}%)</span>
+                      <div class="pqc-right-meta">
+                        <span class="pqc-score-pill">{{ pq.questionScore }} / 4.00</span>
+                        <span v-if="pq.stats.yesPct >= 60" class="flag-pill flag-strong">✓ Strong</span>
+                        <span v-else-if="pq.stats.noPct >= 40" class="flag-pill flag-gap">⚠️ Gap</span>
+                        <span v-else-if="pq.stats.notSurePct >= 40" class="flag-pill flag-awareness">❓ Low Awareness</span>
+                        <span v-else class="flag-pill flag-transition">⚡ Developing</span>
+                      </div>
                     </div>
-                    <p class="pq-text">{{ pq.text }}</p>
-                    <div class="pq-distribution-row">
-                      <span class="pq-dist-item"><strong class="c-green">Yes:</strong> {{ pq.stats.yes }} ({{ pq.stats.yes * 4 }}pts)</span>
-                      <span class="pq-dist-item"><strong class="c-amber">Partially:</strong> {{ pq.stats.partially }} ({{ pq.stats.partially * 2 }}pts)</span>
-                      <span class="pq-dist-item"><strong class="c-coral">No:</strong> {{ pq.stats.no }} (0pts)</span>
-                      <span class="pq-dist-item"><strong class="c-slate">Not Sure:</strong> {{ pq.stats.notSure }} (0pts)</span>
+
+                    <!-- Full Question Text with Generous Width -->
+                    <p class="pqc-question-text">{{ pq.text }}</p>
+
+                    <!-- Question Distribution Bar with Explicit NIWI Colors -->
+                    <div class="pqc-bar-wrap">
+                      <div class="qac-distribution-bar">
+                        <div
+                          v-if="pq.stats.yesPct > 0"
+                          class="bar-seg bar-yes"
+                          :style="{ width: `${pq.stats.yesPct}%`, backgroundColor: '#04907C' }"
+                          :title="`Yes: ${pq.stats.yes} (${pq.stats.yesPct}%)`"
+                        ></div>
+                        <div
+                          v-if="pq.stats.partiallyPct > 0"
+                          class="bar-seg bar-partially"
+                          :style="{ width: `${pq.stats.partiallyPct}%`, backgroundColor: '#F59E0B' }"
+                          :title="`Partially: ${pq.stats.partially} (${pq.stats.partiallyPct}%)`"
+                        ></div>
+                        <div
+                          v-if="pq.stats.noPct > 0"
+                          class="bar-seg bar-no"
+                          :style="{ width: `${pq.stats.noPct}%`, backgroundColor: '#E05A47' }"
+                          :title="`No: ${pq.stats.no} (${pq.stats.noPct}%)`"
+                        ></div>
+                        <div
+                          v-if="pq.stats.notSurePct > 0"
+                          class="bar-seg bar-notsure"
+                          :style="{ width: `${pq.stats.notSurePct}%`, backgroundColor: '#94A3B8' }"
+                          :title="`Not Sure / NA: ${pq.stats.notSure} (${pq.stats.notSurePct}%)`"
+                        ></div>
+                        <div
+                          v-if="pq.stats.total === 0"
+                          class="bar-seg-empty"
+                          title="No responses recorded"
+                        ></div>
+                      </div>
+
+                      <div class="qac-bar-legend">
+                        <span class="leg-item leg-yes">
+                          <span class="leg-dot" style="background-color: #04907C"></span>
+                          <strong>Yes:</strong> {{ pq.stats.yes }} ({{ pq.stats.yesPct }}%)
+                        </span>
+                        <span class="leg-item leg-partially">
+                          <span class="leg-dot" style="background-color: #F59E0B"></span>
+                          <strong>Partially:</strong> {{ pq.stats.partially }} ({{ pq.stats.partiallyPct }}%)
+                        </span>
+                        <span class="leg-item leg-no">
+                          <span class="leg-dot" style="background-color: #E05A47"></span>
+                          <strong>No:</strong> {{ pq.stats.no }} ({{ pq.stats.noPct }}%)
+                        </span>
+                        <span class="leg-item leg-notsure">
+                          <span class="leg-dot" style="background-color: #94A3B8"></span>
+                          <strong>Not Sure:</strong> {{ pq.stats.notSure }} ({{ pq.stats.notSurePct }}%)
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Footnote Calculation -->
+                    <div class="pqc-calc-footnote">
+                      <span><strong>Calculation:</strong> {{ pq.stats.yes }} Yes × 4 + {{ pq.stats.partially }} Partially × 2 = {{ pq.marksEarned }} / {{ pq.maxMarks }} marks</span>
+                      <span><strong>Weight:</strong> 20.0% of Pillar</span>
+                      <span><strong>Normalised:</strong> {{ pq.questionScore }} / 4.00</span>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </section>
+            </div></section>
 
           <!-- TAB 2: SEGMENT-LEVEL ANALYSIS -->
           <section v-if="activeTab === 'segments'" class="segments-view animate-fade">
@@ -952,26 +1113,31 @@
                     <div
                       v-if="q.stats.yesPct > 0"
                       class="bar-seg bar-yes"
-                      :style="{ width: `${q.stats.yesPct}%` }"
-                      :title="`Yes: ${q.stats.yes} (${q.stats.yesPct}%)`"
+                      :style="{ width: `${q.stats.yesPct}%`, backgroundColor: '#04907C' }"
+                      :title="`Yes: ${q.stats.yes} responses (${q.stats.yesPct}%)`"
                     ></div>
                     <div
                       v-if="q.stats.partiallyPct > 0"
                       class="bar-seg bar-partially"
-                      :style="{ width: `${q.stats.partiallyPct}%` }"
-                      :title="`Partially: ${q.stats.partially} (${q.stats.partiallyPct}%)`"
+                      :style="{ width: `${q.stats.partiallyPct}%`, backgroundColor: '#F59E0B' }"
+                      :title="`Partially: ${q.stats.partially} responses (${q.stats.partiallyPct}%)`"
                     ></div>
                     <div
                       v-if="q.stats.noPct > 0"
                       class="bar-seg bar-no"
-                      :style="{ width: `${q.stats.noPct}%` }"
-                      :title="`No: ${q.stats.no} (${q.stats.noPct}%)`"
+                      :style="{ width: `${q.stats.noPct}%`, backgroundColor: '#E05A47' }"
+                      :title="`No: ${q.stats.no} responses (${q.stats.noPct}%)`"
                     ></div>
                     <div
                       v-if="q.stats.notSurePct > 0"
                       class="bar-seg bar-notsure"
-                      :style="{ width: `${q.stats.notSurePct}%` }"
-                      :title="`Not Sure / NA: ${q.stats.notSure} (${q.stats.notSurePct}%)`"
+                      :style="{ width: `${q.stats.notSurePct}%`, backgroundColor: '#94A3B8' }"
+                      :title="`Not Sure / NA: ${q.stats.notSure} responses (${q.stats.notSurePct}%)`"
+                    ></div>
+                    <div
+                      v-if="q.stats.total === 0"
+                      class="bar-seg-empty"
+                      title="No employee responses recorded yet"
                     ></div>
                   </div>
 
@@ -1779,13 +1945,110 @@ const filteredOrgs = computed(() => {
   return list;
 });
 
+const allQuestionsFlat = computed(() => {
+  const respondents = detail.value?.respondents || [];
+  const list = [];
+
+  DEFAULT_SECTIONS.forEach(sec => {
+    sec.questions.forEach((q, qIndex) => {
+      let yes = 0, partially = 0, no = 0, notSure = 0;
+      respondents.forEach(r => {
+        const ansObj = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
+        const rawAns = String(r[q.field] ?? ansObj[q.field] ?? r[q.field.toUpperCase()] ?? ansObj[q.field.toUpperCase()] ?? '').trim().toLowerCase();
+        
+        if (rawAns === 'yes' || rawAns === 'true' || rawAns === '1' || rawAns === 'often' || rawAns === 'always') {
+          yes++;
+        } else if (rawAns === 'partially' || rawAns === 'sometimes' || rawAns === 'partial' || rawAns === 'somewhat') {
+          partially++;
+        } else if (rawAns === 'no' || rawAns === 'false' || rawAns === '0' || rawAns === 'rarely' || rawAns === 'never') {
+          no++;
+        } else if (rawAns === 'not sure' || rawAns === 'not_sure' || rawAns === 'n/a' || rawAns === 'na' || rawAns === 'unsure' || rawAns === 'not applicable') {
+          notSure++;
+        } else if (rawAns) {
+          notSure++;
+        }
+      });
+      const total = yes + partially + no + notSure;
+      const denom = total > 0 ? total : 1;
+      const yesPct = total > 0 ? Math.round((yes / denom) * 100) : 0;
+      const partiallyPct = total > 0 ? Math.round((partially / denom) * 100) : 0;
+      const noPct = total > 0 ? Math.round((no / denom) * 100) : 0;
+      const notSurePct = total > 0 ? Math.round((notSure / denom) * 100) : 0;
+
+      const marksEarned = (yes * 4) + (partially * 2);
+      const maxMarks = total > 0 ? (total * 4) : 4;
+      const questionScore = maxMarks > 0 ? Math.round((marksEarned / maxMarks) * 4 * 100) / 100 : 0;
+      const questionPct = maxMarks > 0 ? Math.round((marksEarned / maxMarks) * 100) : 0;
+
+      let practiceFlag = 'developing';
+      if (yesPct >= 60) practiceFlag = 'strong';
+      else if (noPct >= 40) practiceFlag = 'gap';
+      else if (notSurePct >= 40) practiceFlag = 'awareness';
+
+      const formulaText = `${yes} Yes × 4 marks + ${partially} Partially × 2 marks = ${marksEarned} marks earned out of ${maxMarks} max (${questionPct}%)`;
+
+      list.push({
+        field: q.field,
+        qNumber: parseInt(q.field.replace(/\D/g, '')) || (qIndex + 5),
+        sectionId: sec.id,
+        sectionTitle: sec.title,
+        short: q.short,
+        text: q.text,
+        marksEarned,
+        maxMarks,
+        questionScore,
+        questionPct,
+        practiceFlag,
+        formulaText,
+        stats: {
+          yes,
+          partially,
+          no,
+          notSure,
+          total,
+          yesPct,
+          partiallyPct,
+          noPct,
+          notSurePct,
+        }
+      });
+    });
+  });
+
+  return list;
+});
+
 const pillarScorecards = computed(() => {
   const avgs = currentScore.value?.section_avgs || {};
   const levels = currentScore.value?.section_levels || {};
+  const respondents = detail.value?.respondents || [];
+  const allQs = allQuestionsFlat.value;
 
   return DEFAULT_SECTIONS.map(s => {
     const score = avgs[s.id] != null ? avgs[s.id] : 0;
     const level = levels[s.id] || (score <= 6 ? 'Level 1 — Foundational' : score <= 14 ? 'Level 2 — Early Progress' : 'Level 3 — Developing');
+
+    // Aggregate metrics across the 5 questions belonging to this pillar
+    const pQs = allQs.filter(q => q.sectionId === s.id);
+    let aggYes = 0, aggPartially = 0, aggNo = 0, aggNotSure = 0;
+    let aggMarksEarned = 0, aggMaxMarks = 0;
+
+    pQs.forEach(q => {
+      aggYes += q.stats.yes;
+      aggPartially += q.stats.partially;
+      aggNo += q.stats.no;
+      aggNotSure += q.stats.notSure;
+      aggMarksEarned += q.marksEarned;
+      aggMaxMarks += q.maxMarks;
+    });
+
+    const totalResponses = aggYes + aggPartially + aggNo + aggNotSure;
+    const denom = totalResponses > 0 ? totalResponses : 1;
+    const yesPct = totalResponses > 0 ? Math.round((aggYes / denom) * 100) : 0;
+    const partiallyPct = totalResponses > 0 ? Math.round((aggPartially / denom) * 100) : 0;
+    const noPct = totalResponses > 0 ? Math.round((aggNo / denom) * 100) : 0;
+    const notSurePct = totalResponses > 0 ? Math.round((aggNotSure / denom) * 100) : 0;
+
     return {
       id: s.id,
       title: s.title,
@@ -1793,7 +2056,24 @@ const pillarScorecards = computed(() => {
       summary: s.summary,
       points: s.points,
       score: score,
-      level: level
+      level: level,
+      agg: {
+        totalResponses,
+        employeeCount: respondents.length,
+        yes: aggYes,
+        partially: aggPartially,
+        no: aggNo,
+        notSure: aggNotSure,
+        yesPct,
+        partiallyPct,
+        noPct,
+        notSurePct,
+        yesMarks: aggYes * 4,
+        partiallyMarks: aggPartially * 2,
+        rawMarksEarned: aggMarksEarned,
+        maxRawMarks: aggMaxMarks,
+        weightedContribution: (score * 0.125).toFixed(3),
+      }
     };
   });
 });
@@ -1894,71 +2174,6 @@ const perceptionGapNotice = computed(() => {
     }
   }
   return null;
-});
-
-const allQuestionsFlat = computed(() => {
-  const respondents = detail.value?.respondents || [];
-  const list = [];
-
-  DEFAULT_SECTIONS.forEach(sec => {
-    sec.questions.forEach((q, qIndex) => {
-      let yes = 0, partially = 0, no = 0, notSure = 0;
-      respondents.forEach(r => {
-        const ansObj = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || {});
-        const ans = String(r[q.field] ?? ansObj[q.field] ?? '').trim().toLowerCase();
-        if (ans === 'yes') yes++;
-        else if (ans === 'partially') partially++;
-        else if (ans === 'no') no++;
-        else if (ans === 'not sure' || ans === 'not_sure') notSure++;
-        else if (ans) notSure++;
-      });
-      const total = yes + partially + no + notSure || respondents.length || 1;
-      const yesPct = Math.round((yes / total) * 100);
-      const partiallyPct = Math.round((partially / total) * 100);
-      const noPct = Math.round((no / total) * 100);
-      const notSurePct = Math.round((notSure / total) * 100);
-
-      const marksEarned = (yes * 4) + (partially * 2);
-      const maxMarks = total * 4;
-      const questionScore = total > 0 ? Math.round((marksEarned / maxMarks) * 4 * 100) / 100 : 0;
-      const questionPct = total > 0 ? Math.round((marksEarned / maxMarks) * 100) : 0;
-
-      let practiceFlag = 'developing';
-      if (yesPct >= 60) practiceFlag = 'strong';
-      else if (noPct >= 40) practiceFlag = 'gap';
-      else if (notSurePct >= 40) practiceFlag = 'awareness';
-
-      const formulaText = `${yes} Yes × 4 marks + ${partially} Partially × 2 marks = ${marksEarned} marks earned out of ${maxMarks} max (${questionPct}%)`;
-
-      list.push({
-        field: q.field,
-        qNumber: parseInt(q.field.replace(/\D/g, '')) || (qIndex + 5),
-        sectionId: sec.id,
-        sectionTitle: sec.title,
-        short: q.short,
-        text: q.text,
-        marksEarned,
-        maxMarks,
-        questionScore,
-        questionPct,
-        practiceFlag,
-        formulaText,
-        stats: {
-          yes,
-          partially,
-          no,
-          notSure,
-          total,
-          yesPct,
-          partiallyPct,
-          noPct,
-          notSurePct,
-        }
-      });
-    });
-  });
-
-  return list;
 });
 
 const filteredQuestionsList = computed(() => {
@@ -5199,5 +5414,350 @@ onMounted(fetchOrgs);
   background: var(--primary, #161057);
   color: #FFFFFF;
   border-color: var(--primary, #161057);
+}
+
+/* =====================================================================
+   CORE PILLARS REDESIGN & VIBRANT RESPONSE DISTRIBUTION BARS
+   ===================================================================== */
+
+/* 2-Column Responsive Layout for 8 Core Pillars on Desktop */
+.pillars-cards-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 22px !important;
+  align-items: start !important;
+}
+
+@media (max-width: 1024px) {
+  .pillars-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.pillar-card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 14px;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.2s ease;
+}
+
+.pillar-card.card-expanded {
+  box-shadow: 3px 3px 0px rgba(22, 16, 87, 0.12);
+  border-color: var(--primary, #161057);
+}
+
+/* Pillar Aggregated Responses Card Box */
+.pillar-agg-box {
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.pab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pab-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.pab-count-badge {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #334155;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 99px;
+  padding: 2px 10px;
+}
+
+/* Horizontally Stacked Distribution Bars with NIWI Colors */
+.pab-distribution-bar,
+.qac-distribution-bar {
+  display: flex !important;
+  width: 100% !important;
+  height: 12px !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  background: #E2E8F0 !important;
+  border: 1px solid #CBD5E1 !important;
+}
+
+.pab-seg,
+.bar-seg {
+  height: 100% !important;
+  transition: width 0.3s ease;
+}
+
+.pab-seg-empty,
+.bar-seg-empty {
+  height: 100%;
+  width: 100%;
+  background: #E2E8F0;
+}
+
+/* Strict Color Mapping: Teal, Amber, Coral, Grey */
+.pab-yes,
+.bar-seg.bar-yes {
+  background-color: #04907C !important;
+}
+
+.pab-partially,
+.bar-seg.bar-partially {
+  background-color: #F59E0B !important;
+}
+
+.pab-no,
+.bar-seg.bar-no {
+  background-color: #E05A47 !important;
+}
+
+.pab-notsure,
+.bar-seg.bar-notsure {
+  background-color: #94A3B8 !important;
+}
+
+/* Legends */
+.pab-legend,
+.qac-bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: #334155;
+}
+
+.pab-leg-item,
+.leg-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.leg-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Marks Breakdown Summary Box */
+.pab-marks-summary {
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px dashed #CBD5E1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pms-formula code {
+  display: block;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 0.76rem;
+  color: #0F172A;
+  overflow-x: auto;
+}
+
+.pms-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .pms-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pms-stat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pms-lbl {
+  font-size: 0.68rem;
+  color: #64748B;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pms-val {
+  font-size: 0.82rem;
+  color: #1E293B;
+}
+
+.pms-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  width: fit-content;
+}
+
+/* Accordion Expand/Collapse Trigger */
+.pc-accordion-action {
+  margin-top: 4px;
+}
+
+.btn-pillar-accordion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  background: #FAF9F5;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-pillar-accordion:hover {
+  background: #EEF2FF;
+  border-color: var(--primary, #161057);
+}
+
+.btn-pillar-accordion.expanded {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+}
+
+/* Expanded 5 Questions Drawer & Question Cards */
+.pc-expanded-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1.5px dashed #CBD5E1;
+}
+
+.peq-intro-banner {
+  font-size: 0.78rem;
+  color: #475569;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.pillar-question-card {
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+.pqc-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pqc-left-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pqc-num-badge {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.pqc-short-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+}
+
+.pqc-right-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pqc-score-pill {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary, #161057);
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.pqc-question-text {
+  display: block !important;
+  width: 100% !important;
+  font-size: 0.86rem;
+  color: #1E293B;
+  line-height: 1.55;
+  margin: 4px 0 6px 0;
+  word-break: normal;
+  white-space: normal;
+}
+
+.pqc-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pqc-calc-footnote {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  background: #F8FAFC;
+  border: 1px dashed #E2E8F0;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+  color: #475569;
+  font-family: monospace;
+  margin-top: 4px;
 }
 </style>
