@@ -219,6 +219,16 @@
                 </button>
 
                 <button
+                  v-if="!selectedOrg.is_virtual"
+                  class="btn btn-secondary-action"
+                  @click="copyOrgAuditLink"
+                  title="Copy audit link for this organization - respondents can use this to submit audits"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  Copy Audit Link
+                </button>
+
+                <button
                   class="btn btn-primary-cta"
                   :disabled="!detail?.respondents?.length"
                   @click="activeTab = 'report'"
@@ -1986,6 +1996,17 @@ function copyText(text) {
   }).catch(() => {
     showToast('Failed to copy', 'error');
   });
+}
+
+function copyOrgAuditLink() {
+  if (!selectedOrg.value || selectedOrg.value.is_virtual) return;
+  
+  // Build the audit URL with org name pre-filled
+  const baseUrl = window.location.origin;
+  const orgName = encodeURIComponent(selectedOrg.value.name);
+  const auditUrl = `${baseUrl}/audit?org=${orgName}`;
+  
+  copyText(auditUrl);
 }
 
 // Organisation Lifecycle Management
