@@ -43,8 +43,9 @@ def init_keyvault():
     
     app_env = os.environ.get("APP_ENV", os.environ.get("APP-ENV", "development")).lower()
     key_vault_name = os.environ.get("KEY_VAULT_NAME", "").strip()
-    require_kv = os.environ.get("REQUIRE_KEYVAULT", "").lower() in ("true", "1")
-    is_prod = app_env in ("production", "prod") and os.environ.get("TESTING") != "true"
+    is_testing = os.environ.get("TESTING", "").lower() in ("true", "1")
+    require_kv = (os.environ.get("REQUIRE_KEYVAULT", "").lower() in ("true", "1")) and not is_testing
+    is_prod = app_env in ("production", "prod") and not is_testing
     must_use_kv = require_kv or is_prod
     
     if not must_use_kv:
@@ -93,8 +94,9 @@ def get_secret(secret_name: str, env_var_name: Optional[str] = None, required: b
     global _secret_cache, _kv_client, _use_keyvault
     
     app_env = os.environ.get("APP_ENV", os.environ.get("APP-ENV", "development")).lower()
-    require_kv = os.environ.get("REQUIRE_KEYVAULT", "").lower() in ("true", "1")
-    is_prod = app_env in ("production", "prod") and os.environ.get("TESTING") != "true"
+    is_testing = os.environ.get("TESTING", "").lower() in ("true", "1")
+    require_kv = (os.environ.get("REQUIRE_KEYVAULT", "").lower() in ("true", "1")) and not is_testing
+    is_prod = app_env in ("production", "prod") and not is_testing
     must_use_kv = require_kv or is_prod
     
     if env_var_name is None:

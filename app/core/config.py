@@ -82,7 +82,7 @@ if IS_PRODUCTION:
     
     # For Azure Key Vault managed passwords, allow shorter but complex passwords
     # Require at least 8 chars with special characters for Azure-managed secrets
-    if KEYVAULT_AVAILABLE:
+    if KEYVAULT_AVAILABLE or (REQUIRE_KEYVAULT and os.environ.get("TESTING") == "true"):
         if len(PGPASSWORD) < 8:
             print("FATAL: Database password too short (minimum 8 characters).", file=sys.stderr)
             sys.exit(1)

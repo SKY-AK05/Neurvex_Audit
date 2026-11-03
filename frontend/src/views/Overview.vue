@@ -300,10 +300,19 @@
           </div>
         </div>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-container">
-          <div class="spinner"></div>
-          <p>Loading inclusion audit assessments…</p>
+        <!-- Loading State: Progressive Skeleton Cards -->
+        <div v-if="loading" class="overview-skeleton-list" aria-busy="true">
+          <div v-for="i in 4" :key="i" class="overview-skeleton-card">
+            <div class="skeleton-header">
+              <div class="skeleton-shimmer skeleton-badge"></div>
+              <div class="skeleton-shimmer skeleton-score"></div>
+            </div>
+            <div class="skeleton-shimmer skeleton-title-lg"></div>
+            <div class="skeleton-shimmer skeleton-text-sub"></div>
+            <div class="skeleton-bars-grid">
+              <div v-for="j in 8" :key="j" class="skeleton-shimmer skeleton-mini-bar"></div>
+            </div>
+          </div>
         </div>
 
         <!-- Empty State -->
@@ -1082,6 +1091,47 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Skeleton Loading for Progressive Rendering */
+.overview-skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.overview-skeleton-card {
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e2ddd4;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #ece9e6 25%, #f7f6f4 50%, #ece9e6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+}
+.skeleton-badge { width: 90px; height: 20px; border-radius: 12px; }
+.skeleton-score { width: 60px; height: 24px; border-radius: 6px; }
+.skeleton-title-lg { width: 50%; height: 22px; }
+.skeleton-text-sub { width: 30%; height: 14px; }
+.skeleton-bars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.skeleton-mini-bar { height: 16px; border-radius: 4px; }
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 /* Page Root */
 .dashboard-page {
   display: flex;

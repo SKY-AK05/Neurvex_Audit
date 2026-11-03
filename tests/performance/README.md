@@ -1,52 +1,54 @@
-# NIWI Repeatable Performance Testing Suite (10 / 25 / 50 / 75 / 100 VUs)
+# NIWI Dynamic Performance Testing Suite (10 / 25 / 50 / 75 / 100 VUs)
 
-A production-grade, repeatable performance testing suite built with **Grafana k6** to measure the concurrency limits, response times, database connection stability, and throughput of the NIWI (Neuro-Inclusive Workplace Index) assessment application.
+A production-grade, reusable performance testing suite built with **Grafana k6** to measure concurrency limits, response times, database connection pool stability, and submission throughput of the NIWI (Neuro-Inclusive Workplace Index) application.
 
----
-
-## 1. Fixed Test Organisation Specification (Mandatory)
-
-All performance test executions are strictly bound to one verified organisation already existing in the NIWI database. No secondary organisations will be accessed, created, modified, or deleted.
-
-* **Assessment Entry URL:**  
-  `https://niwi.orchvate.in/audit?org=New%20Company%200746ed32-957c-4b16-bdfc-f6d52e9a88e1`
-* **Canonical Organisation Name in Database:**  
-  `New Company 0746ed32-957c-4b16-bdfc-f6d52e9a88e1`
-* **Verified Database UUID (`organizations.id`):**  
-  `de4a0f39-b695-4c56-9f5f-d7a3645e42c8`
-* **Target Environment:**  
-  Live Production Application (`niwi.orchvate.in` / IP: `52.240.143.40`)
-
-> [!IMPORTANT]
-> **Organisation ID Verification & Auto-Creation Prevention:**  
-> The backend `POST /api/submit` route automatically creates a new organisation if an unrecognized organisation name is submitted without an explicit ID. To prevent accidental organisation pollution, our test suite executes an automated preflight check against `/api/public/organisations/validate` before any virtual user generates traffic. If the organisation fails to resolve to `de4a0f39-b695-4c56-9f5f-d7a3645e42c8`, the test halts immediately.
+All organisation configurations and execution parameters are **100% dynamically supplied by the user at runtime**. No organisation details, names, or UUIDs are hardcoded.
 
 ---
 
-## 2. Realistic Employee Assessment Workflow
+## 1. User-Configurable Execution Parameters
 
-The test suite mirrors the exact sequence executed by a real employee when visiting the application:
+Supply target parameters using standard k6 `-e` environment variables:
 
+| Parameter | Environment Variable | Required | Description | Example |
+|---|---|:---:|---|---|
+| **Base Application URL** | `BASE_URL` | **Yes** | Root URL of the target NIWI environment | `https://niwi.orchvate.in` |
+| **Organisation Code / Name** | `ORG_CODE` | **Yes** | Target organisation name or identifier to test | `SKY11` |
+| **Expected Organisation UUID** | `ORG_ID` | Optional | Target UUID; verified against backend lookup if provided | `c7d5efb5-bd5a-4883-8bb4-6a8deab1c9b8` |
+| **Virtual Users (VUs)** | `VUS` | Load tests | Target concurrent users (10, 25, 50, 75, 100) | `10` |
+| **Test Duration** | `DURATION` | Sustained | Length of sustained soak test | `3m` |
+| **Run Identifier** | `RUN_ID` | Optional | Custom session ID (auto-generated if omitted) | `perf_run_01` |
+| **Production Confirmation** | `CONFIRM_PROD` | Production | Explicit guard when targeting live production hosts | `true` |
+| **Preflight-Only Mode** | `PREFLIGHT_ONLY`| Optional | Verifies organisation and connectivity without submitting | `true` |
+
+---
+
+## 2. Mandatory Preflight Validation
+
+Before any virtual user generates synthetic traffic:
+
+1. **Parameter Validation:** Ensures `BASE_URL` and `ORG_CODE` are provided; validates `ORG_ID` UUID format if supplied.
+2. **Production Safety Check:** Requires `-e CONFIRM_PROD=true` if targeting live production domains (`orchvate.in`).
+3. **Assessment Page Connectivity:** Confirms `GET /audit?org=<ORG_CODE>` returns HTTP 200 with HTML content.
+4. **Questionnaire Schema Health:** Confirms `GET /api/form/sections` returns the 8 assessment sections.
+5. **Backend Organisation Verification:** Queries `POST /api/public/organisations/validate` with `{"name": ORG_CODE}` to retrieve the canonical organisation record from PostgreSQL.
+6. **UUID Matching:** Verifies that the resolved database UUID matches `ORG_ID` (if provided).
+7. **Fail-Safe Abort:** If validation fails, execution halts immediately. No assessment is submitted, no new organisation is created, and no database records are polluted.
+
+### Preflight Summary Banner
+```text
+==================================================
+NIWI PERFORMANCE TEST — CONFIGURATION
+==================================================
+Base URL:           https://niwi.orchvate.in
+Organisation Code:  SKY11
+Organisation ID:    c7d5efb5-bd5a-4883-8bb4-6a8deab1c9b8
+Assessment URL:     https://niwi.orchvate.in/audit?org=SKY11
+Virtual Users:      1
+Test Type:          Smoke Test
+Run ID:             run_1793645008462_rfimy
+==================================================
 ```
-[Employee Browser] ── 1. GET /audit?org=New%20Company... ─────────► [Nginx / Frontend HTML]
-[Employee Browser] ── 2. GET /api/form/sections ─────────────────► [FastAPI / PostgreSQL]
-[Employee Browser] ── 3. POST /api/public/organisations/validate ─► [FastAPI / PostgreSQL]
-[Employee Browser] ── (Think Time: Completes 40 Questions) ─────► [Client State]
-[Employee Browser] ── 4. POST /api/submit ────────────────────────► [FastAPI / Scoring Engine / DB]
-```
-
-### Discovered API Payload Structure (`POST /api/submit`):
-* `name`: Synthetic employee full name (e.g., `Synthetic Employee VU1-0`)
-* `company_name`: `New Company 0746ed32-957c-4b16-bdfc-f6d52e9a88e1`
-* `organization_id`: `de4a0f39-b695-4c56-9f5f-d7a3645e42c8`
-* `email`: `loadtest_<runId>_vu<VUID>_it<ITER>@example.com` (RFC 2606 safe domain)
-* `contact_number`: `+44 7700 900000` (Ofcom test allocation)
-* `consent_given`: `true`
-* `function` & `role`: Valid selections from application demographics
-* `country`: `India`, `state_ut`: `Maharashtra`
-* `is_pwd`, `is_neurodivergent`, `is_marginalized`: Valid demographic responses
-* `has_physical_workspace`: `Yes`, `has_suppliers`: `Yes`
-* `q5` through `q44`: 40 question fields with valid answers (`Yes`, `Partially`, `No`, `Not Sure`, and `q37` supporting `N/A`)
 
 ---
 
@@ -55,137 +57,135 @@ The test suite mirrors the exact sequence executed by a real employee when visit
 ```text
 tests/
 └── performance/
-    ├── config.js              # Centralized configuration, preflight check, & synthetic user generator
-    ├── metrics.js             # Custom k6 counters, latency trends, and acceptance thresholds
+    ├── config.js              # Centralized dynamic configuration, preflight check, & synthetic user generator
+    ├── metrics.js             # Custom k6 counters, latency trends, and separated smoke/load thresholds
     ├── report-generator.js    # Automated JSON and executive Markdown summary generator
     ├── niwi-smoke.js          # 1-User end-to-end functional smoke test
     ├── niwi-submission-load.js# 10 / 25 / 50 / 75 / 100 concurrent user load test
     ├── niwi-sustained-load.js # Long-duration sustained soak/endurance load test
-    ├── niwi-browser-load.js   # Real headless browser simulation (k6/browser)
-    ├── README.md              # Documentation, operational guide, and monitoring
+    ├── niwi-browser-load.js   # Headless browser simulation (k6/browser)
+    ├── README.md              # Documentation and execution guide
     └── reports/               # Auto-saved JSON and Markdown execution reports
 ```
 
 ---
 
-## 4. Test Execution Commands (PowerShell)
+## 4. Execution Commands (PowerShell)
 
-### One-User Smoke Test
-Validates the entire pipeline, organisation verification, and submission processing for a single employee:
+### Scenario A: Preflight Verification Only (Zero Submissions)
+Verify organisation connectivity, database resolution, and questionnaire schema without writing any assessment submissions:
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in tests/performance/niwi-smoke.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e PREFLIGHT_ONLY=true `
+  tests/performance/niwi-smoke.js
 ```
 
-### 10 Concurrent Users (Baseline Load)
-Simulates 10 employees completing and submitting assessments concurrently:
+### Scenario B: 1-User Smoke Test
+Verify end-to-end submission pipeline, scoring calculations, and database persistence for 1 employee:
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=10 tests/performance/niwi-submission-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e ORG_ID=c7d5efb5-bd5a-4883-8bb4-6a8deab1c9b8 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-smoke.js
 ```
 
-### 25 Concurrent Users (Stage 2 Load)
+### Scenario C: Concurrent Submission Load Tests (10 / 25 / 50 / 75 / 100 VUs)
+
+#### 10 Concurrent Users (Baseline Profile)
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=25 tests/performance/niwi-submission-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=10 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-submission-load.js
 ```
 
-### 50 Concurrent Users (Stage 3 Load)
+#### 25 Concurrent Users
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=50 tests/performance/niwi-submission-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=25 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-submission-load.js
 ```
 
-### 75 Concurrent Users (Stage 4 Load)
+#### 50 Concurrent Users
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=75 tests/performance/niwi-submission-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=50 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-submission-load.js
 ```
 
-### 100 Concurrent Users (Stage 5 Load)
+#### 75 Concurrent Users
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=100 tests/performance/niwi-submission-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=75 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-submission-load.js
 ```
 
-### Sustained Soak Test (3-Minute Continuous Traffic)
+#### 100 Concurrent Users (Maximum Target)
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e VUS=20 -e DURATION=3m tests/performance/niwi-sustained-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=100 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-submission-load.js
 ```
 
-### Real Browser UI Test (Headless Chromium)
+### Scenario D: Sustained Endurance / Soak Load Test
+Run continuous traffic for 3 minutes to verify database connection pool stability and memory leak prevention:
 ```powershell
-& 'C:\Program Files\k6\k6.exe' run -e BASE_URL=https://niwi.orchvate.in -e BROWSER_VUS=2 tests/performance/niwi-browser-load.js
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e VUS=20 `
+  -e DURATION=3m `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-sustained-load.js
+```
+
+### Scenario E: Frontend Headless Browser Simulation
+Simulate a real browser user session navigating AuditForm.vue with headless Chromium:
+```powershell
+& "C:\Program Files\k6\k6.exe" run `
+  -e BASE_URL=https://niwi.orchvate.in `
+  -e ORG_CODE=SKY11 `
+  -e BROWSER_VUS=1 `
+  -e CONFIRM_PROD=true `
+  tests/performance/niwi-browser-load.js
 ```
 
 ---
 
-## 5. Performance Acceptance Targets (Requirement 13)
+## 5. Performance Acceptance Criteria (SLAs)
 
-| Criterion | Target | Description |
-|---|:---:|---|
-| **Submission Success Rate** | **100%** | Every valid synthetic submission must be processed and persisted. |
-| **HTTP Error Rate** | **< 1.0%** | Network, gateway, or application failures must remain below 1%. |
-| **P95 Response Time** | **< 3,000 ms** | 95% of all HTTP requests must complete in under 3 seconds. |
-| **P99 Response Time** | **< 5,000 ms** | 99% of all HTTP requests must complete in under 5 seconds. |
-| **Lost Submissions** | **0** | Zero unhandled drops or silent failures. |
-| **Duplicate Submissions** | **0** | Unique emails prevent duplicate-submission 429 errors. |
-| **Organisation Mismatches** | **0** | All records strictly bind to `de4a0f39-b695-4c56-9f5f-d7a3645e42c8`. |
-
----
-
-## 6. Infrastructure & Database Monitoring Guide
-
-When executing load tests against the target host, monitor the backend Azure infrastructure:
-
-### 1. PostgreSQL Active Connections & Pool Status
-Execute on the PostgreSQL server during load test execution:
-```sql
--- Check total connections by state
-SELECT state, count(*) 
-FROM pg_stat_activity 
-WHERE datname = 'nd_audit' 
-GROUP BY state;
-
--- Check waiting queries and lock contention
-SELECT pid, wait_event_type, wait_event, query 
-FROM pg_stat_activity 
-WHERE wait_event IS NOT NULL AND datname = 'nd_audit';
-
--- Check connection pool utilization (max_connections is typically 100 in default Postgres)
-SELECT count(*) * 100.0 / current_setting('max_connections')::integer AS pool_utilization_pct 
-FROM pg_stat_activity;
-```
-
-### 2. Azure Virtual Machine CPU & Memory
-* **CPU Utilisation:** Monitor using Azure Portal / Metrics (`Percentage CPU`). High CPU (> 85%) during 50–100 VU runs indicates Uvicorn worker saturation or scoring calculation compute bottlenecks.
-* **Memory Utilisation:** Monitor available memory. Memory spikes indicate unclosed database cursors or in-memory cache growth.
-
-### 3. Application & Web Server Logs
-* **FastAPI / Uvicorn:** `journalctl -u niwi-backend -f` (or Docker logs). Check for unhandled exceptions or database pool exhaustion (`psycopg2.pool.PoolError`).
-* **Nginx:** `/var/log/nginx/error.log`. Look for HTTP 502 (Bad Gateway) or HTTP 504 (Gateway Timeout), which occur if Uvicorn workers fail to respond within Nginx's proxy timeout.
+| Criterion | Target Metric | Smoke Test (N=1) | Load Tests (10–100 VUs) |
+|---|:---:|:---:|:---:|
+| **Submission Success Rate** | 100% | Functional Requirement | Functional Requirement |
+| **HTTP Error Rate** | < 1.0% | Functional Requirement | Functional Requirement |
+| **P95 Response Time** | < 3,000 ms | Informational / Max < 15s | Strict SLA Threshold |
+| **P99 Response Time** | < 5,000 ms | Informational / Max < 15s | Strict SLA Threshold |
+| **Lost Submissions** | 0 | Functional Requirement | Functional Requirement |
+| **Organisation Mismatch Rate** | 0% | Mandatory Integrity Check | Mandatory Integrity Check |
 
 ---
 
-## 7. Critical Safety & Rate-Limiting Caveats
+## 6. Production Safety & Traceability
 
-1. **Backend Rate Limiter (`slowapi` in `routes.py`):**
-   In `app/api/routes.py`, the `/submit` endpoint has:
-   ```python
-   @limiter.limit("100/hour")  # Per IP - allows shared office IPs
-   @limiter.limit("1000/day")  # Daily safety limit per IP
-   ```
-   *Running more than 100 submissions within a 1-hour window from a single client IP will trigger HTTP 429 (Too Many Requests).*
-   *Recommendation:* When running the 100-user test against staging or production, temporarily adjust the limiter setting or execute from a whitelisted proxy IP.
-
-2. **Outbound Email Protection:**
-   All synthetic employee emails generated by this suite strictly use the RFC 2606 reserved domain `example.com` (e.g. `loadtest_<runId>_vu1_it0@example.com`). Real mail exchangers do not route to real individuals on this IANA-reserved domain, while satisfying Pydantic `EmailStr` formatting rules.
-
-3. **Test Data Identification & Reviewable Cleanup:**
-   Every test submission is tagged with the unique run ID in its synthetic email and name. If cleanup of test records is desired on a test/staging database:
-   ```sql
-   -- Review synthetic submissions created during a test run:
-   SELECT id, name, email, company_name, organization_id, submitted_at 
-   FROM submissions 
-   WHERE email LIKE 'loadtest_%@example.com'
-   ORDER BY submitted_at DESC;
-
-   -- Remove ONLY synthetic test submissions from an approved non-production database:
-   -- DELETE FROM org_submission_links WHERE submission_id IN (SELECT id FROM submissions WHERE email LIKE 'loadtest_%@example.com');
-   -- DELETE FROM submissions WHERE email LIKE 'loadtest_%@example.com';
-   ```
-   *Note: Never execute DELETE statements against production without explicit written sign-off.*
+1. **Synthetic Isolation:** All generated users use RFC 2606 reserved email addresses (`loadtest_<runId>_vu<VU>_it<ITER>@example.com`), completely preventing outbound email delivery to real recipients.
+2. **Organisation Containment:** Every submission payload includes the verified `organization_id` UUID, ensuring submissions link strictly to the intended organisation without creating accidental duplicates.
+3. **Traceable Run ID:** Every run generates a unique session ID prefixed in reports and logs.
+4. **Automated Reporting:** Every run outputs both structured JSON data and formatted Markdown executive summaries to `tests/performance/reports/`.

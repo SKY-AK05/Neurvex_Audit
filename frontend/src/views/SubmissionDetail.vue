@@ -160,15 +160,79 @@
 
       <!-- Dimension Breakdown & Commentary -->
       <div class="card">
-        <h2>Dimension Breakdown & Commentary</h2>
+        <div class="card-header-row">
+          <div>
+            <h2>Dimension Breakdown &amp; Commentary</h2>
+            <p v-if="editingScores" class="sub-card-hint">
+              Live Preview: <strong>{{ previewOverallAvg }}/20</strong> ({{ previewOverallLevel }})
+            </p>
+          </div>
+          <div class="header-actions">
+            <button
+              v-if="!editingScores"
+              class="btn-secondary-small"
+              @click="startEditScores"
+              type="button"
+            >
+              ✏️ Edit Scores
+            </button>
+            <template v-else>
+              <button
+                class="btn-secondary-small"
+                @click="cancelEditScores"
+                :disabled="savingScores"
+                type="button"
+                style="margin-right: 8px;"
+              >
+                Cancel
+              </button>
+              <button
+                class="btn-save-inline"
+                @click="saveScores"
+                :disabled="savingScores"
+                type="button"
+              >
+                {{ savingScores ? 'Saving...' : '💾 Save Scores' }}
+              </button>
+            </template>
+            <span v-if="scoreMsg" :class="`inline-msg msg-${scoreMsgType}`">{{ scoreMsg }}</span>
+          </div>
+        </div>
+
+        <div v-if="editingScores" class="scores-edit-notice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>Modify pillar score values (0.00 to 20.00). Overall Weighted NIWI Index and maturity tiers will recalculate automatically upon saving.</span>
+        </div>
+
         <div class="dimension-scorecard-grid">
-          <div v-for="d in dimensions" :key="d.key" class="dimension-score-card" :class="getScoreClass(sub[`${d.key}_score`])">
+          <div
+            v-for="d in dimensions"
+            :key="d.key"
+            class="dimension-score-card"
+            :class="getScoreClass(editingScores ? editScoresForm[`${d.key}_score`] : sub[`${d.key}_score`])"
+          >
             <div class="dim-head">
               <span class="dim-label">{{ d.label }}</span>
-              <span class="dim-val" v-if="sub[`${d.key}_score`] === null || sub[`${d.key}_score`] === 'NA'">N/A</span>
+              <div v-if="editingScores" class="dim-score-edit-box">
+                <input
+                  v-model.number="editScoresForm[`${d.key}_score`]"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="0.01"
+                  class="dim-inline-input"
+                  @input="recalculateEditOverall"
+                />
+                <span class="dim-max-label">/ 20</span>
+              </div>
+              <span class="dim-val" v-else-if="sub[`${d.key}_score`] === null || sub[`${d.key}_score`] === 'NA'">N/A</span>
               <span class="dim-val" v-else>{{ sub[`${d.key}_score`] }}/20</span>
             </div>
-            <p class="dim-commentary">{{ getCommentary(d.key, sub[`${d.key}_score`]) }}</p>
+            <p class="dim-commentary">{{ getCommentary(d.key, editingScores ? editScoresForm[`${d.key}_score`] : sub[`${d.key}_score`]) }}</p>
           </div>
         </div>
       </div>
@@ -179,6 +243,9 @@
           <h2>Email Draft</h2>
           <span class="email-to">To: {{ sub.email }}</span>
         </div>
+        <div v-if="!emailBody && sub.status !== 'sent'" class="email-preparing-banner" style="padding: 12px 16px; background: #FFF9E6; border: 1px solid #FFE082; border-radius: 8px; margin-bottom: 1rem; color: #7A5800; font-size: 13px;">
+          ⏳ <strong>Email Draft Preparing:</strong> The email body is being synthesized in the background. Refresh or click Regenerate Draft if needed.
+        </div>
         <RichEditor
           v-model="emailBody"
           :readonly="sub.status === 'sent'"
@@ -187,10 +254,10 @@
           <button class="btn btn-secondary" @click="regenerate" :disabled="regenerating || saving">
             {{ regenerating ? "Regenerating…" : "Regenerate Draft" }}
           </button>
-          <button class="btn btn-secondary" @click="save" :disabled="saving">
+          <button class="btn btn-secondary" @click="save" :disabled="saving || !emailBody">
             {{ saving ? "Saving…" : "Save Changes" }}
           </button>
-          <button class="btn btn-lime" @click="send" :disabled="sending">
+          <button class="btn btn-lime" @click="send" :disabled="sending || !emailBody" :title="!emailBody ? 'Email body is being prepared' : ''">
             {{ sending ? "Sending…" : "Send Email →" }}
           </button>
         </div>
@@ -284,7 +351,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import { getSubmission, saveEmail, sendEmail, regenerateEmail, updateRespondent, reassignSubmissionOrganisation, getOrganisations } from "../api";
+import { getSubmission, saveEmail, sendEmail, regenerateEmail, updateRespondent, updateSubmissionScores, reassignSubmissionOrganisation, getOrganisations } from "../api";
 import ScoreTable from "../components/ScoreTable.vue";
 import RichEditor from "../components/RichEditor.vue";
 import { normalizeEmailHtml } from "../utils/emailHtml.js";
@@ -575,6 +642,83 @@ async function saveRespondent() {
     editMsg.value = e.message;
   } finally {
     savingRespondent.value = false;
+  }
+}
+
+// Edit scores state
+const editingScores = ref(false);
+const savingScores = ref(false);
+const editScoresForm = ref({});
+const scoreMsg = ref("");
+const scoreMsgType = ref("success");
+const previewOverallAvg = ref(0);
+const previewOverallLevel = ref("");
+
+function startEditScores() {
+  editingScores.value = true;
+  scoreMsg.value = "";
+  editScoresForm.value = {
+    lc_score: sub.value?.lc_score ?? 0,
+    ro_score: sub.value?.ro_score ?? 0,
+    we_score: sub.value?.we_score ?? 0,
+    be_score: sub.value?.be_score ?? 0,
+    tm_score: sub.value?.tm_score ?? 0,
+    ca_score: sub.value?.ca_score ?? 0,
+    pc_score: sub.value?.pc_score ?? 0,
+    sp_score: sub.value?.sp_score ?? 0,
+  };
+  recalculateEditOverall();
+}
+
+function cancelEditScores() {
+  editingScores.value = false;
+  scoreMsg.value = "";
+}
+
+function recalculateEditOverall() {
+  const vals = Object.values(editScoresForm.value).filter(v => v !== null && v !== undefined && v !== "" && !isNaN(v));
+  if (vals.length > 0) {
+    const numVals = vals.map(v => parseFloat(v));
+    const avg = numVals.reduce((a, b) => a + b, 0) / numVals.length;
+    previewOverallAvg.value = Math.round(avg * 100) / 100;
+  } else {
+    previewOverallAvg.value = 0;
+  }
+  const r = Math.round(previewOverallAvg.value);
+  if (r <= 6) previewOverallLevel.value = "Level 1 — Foundational";
+  else if (r <= 14) previewOverallLevel.value = "Level 2 — Early Progress";
+  else previewOverallLevel.value = "Level 3 — Developing";
+}
+
+async function saveScores() {
+  savingScores.value = true;
+  scoreMsg.value = "";
+  try {
+    const payload = {};
+    for (const [k, v] of Object.entries(editScoresForm.value)) {
+      payload[k] = (v === null || v === "" || v === undefined) ? null : parseFloat(v);
+    }
+    payload.overall_avg = previewOverallAvg.value;
+    payload.overall_level = previewOverallLevel.value;
+
+    const res = await updateSubmissionScores(route.params.id, payload);
+
+    // Update local submission data
+    for (const [k, v] of Object.entries(res.scores || payload)) {
+      sub.value[k] = v;
+    }
+    sub.value.overall_avg = res.scores?.overall_avg ?? previewOverallAvg.value;
+    sub.value.overall_level = res.scores?.overall_level ?? previewOverallLevel.value;
+
+    editingScores.value = false;
+    scoreMsgType.value = "success";
+    scoreMsg.value = "✓ Scores updated successfully";
+    setTimeout(() => { scoreMsg.value = ""; }, 3500);
+  } catch (e) {
+    scoreMsgType.value = "error";
+    scoreMsg.value = e.message || "Failed to update scores";
+  } finally {
+    savingScores.value = false;
   }
 }
 
@@ -944,5 +1088,58 @@ h2 {
 
 .reason-textarea::placeholder {
   color: #94A3B8;
+}
+
+/* Score Editing Controls */
+.sub-card-hint {
+  font-size: 0.85rem;
+  color: var(--c-accent, #04907C);
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.scores-edit-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  border-radius: 8px;
+  color: #166534;
+  font-size: 0.82rem;
+  margin-bottom: 16px;
+  font-weight: 500;
+}
+
+.dim-score-edit-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dim-inline-input {
+  width: 72px;
+  padding: 4px 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  background: #FFFFFF;
+  border: 1.5px solid rgba(22, 16, 87, 0.2);
+  border-radius: 6px;
+  text-align: right;
+  font-family: var(--font-body, inherit);
+}
+
+.dim-inline-input:focus {
+  outline: none;
+  border-color: var(--c-accent, #04907C);
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.15);
+}
+
+.dim-max-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748B;
 }
 </style>

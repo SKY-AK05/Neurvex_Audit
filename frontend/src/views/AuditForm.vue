@@ -947,6 +947,7 @@ function onLogoClick() {
 const submitted       = ref(false);
 const submitting      = ref(false);
 const submitError     = ref("");
+const idempotencyKey  = ref("");
 const currentStep     = ref(0);
 const showMobileInfo  = ref(false);
 const questionsScroll = ref(null);
@@ -1553,9 +1554,17 @@ function autoFillTestData() {
   console.log("✅ Test data auto-filled with demographic and assessment answers");
 }
 
+function generateIdempotencyKey() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return "idemp_" + Math.random().toString(36).substring(2, 15) + "_" + Date.now().toString(36);
+}
+
 function startFresh() {
   resetForm();
   clearDraft();
+  idempotencyKey.value = "";
   currentStep.value = 0;
   Object.keys(errors).forEach(k => delete errors[k]);
 }
@@ -1564,6 +1573,9 @@ async function submit() {
   if (!validateStep()) {
     scrollToError();
     return;
+  }
+  if (!idempotencyKey.value) {
+    idempotencyKey.value = generateIdempotencyKey();
   }
   submitting.value  = true;
   submitError.value = "";
@@ -1575,12 +1587,14 @@ async function submit() {
     // 2. Section 7 (Products & Customer Experience): if q37 = "N/A", rescale section score from /20 to /16
     //    (since q37 becomes non-applicable, calculate section score based on 4 questions instead of 5)
     
-    await submitAudit({ ...form, draft_id: draftId.value });
+    await submitAudit({ ...form, draft_id: draftId.value, idempotency_key: idempotencyKey.value });
     clearDraft();
     resetForm();
+    idempotencyKey.value = "";
     submitted.value = true;
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
+    // Retain idempotencyKey across failed attempts so retry sends identical key
     submitError.value = e.message;
   } finally {
     submitting.value = false;

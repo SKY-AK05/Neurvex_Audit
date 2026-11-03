@@ -2,7 +2,7 @@
 // In local dev, set VITE_API_BASE in frontend/.env to http://localhost:7071/api
 const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
-function getAuthHeaders() {
+export function getAuthHeaders() {
   const headers = {};
   const token = sessionStorage.getItem("nd_auth_token");
   if (token) {
@@ -155,6 +155,18 @@ export async function updateRespondent(id, data) {
       ...getAuthHeaders(),
     },
     body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function updateSubmissionScores(id, scores) {
+  const res = await fetch(`${API_BASE}/submissions/${id}/scores`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(scores),
   });
   return handleResponse(res);
 }

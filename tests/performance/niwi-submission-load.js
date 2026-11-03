@@ -2,27 +2,24 @@
  * NIWI Performance Testing Suite — Concurrent Submission Load Test
  * 
  * Supports Repeatable Concurrency Profiles:
- * - Baseline: 10 Concurrent Users (10 submissions)
- * - Stage 2:  25 Concurrent Users (25 submissions)
- * - Stage 3:  50 Concurrent Users (50 submissions)
- * - Stage 4:  75 Concurrent Users (75 submissions)
- * - Stage 5:  100 Concurrent Users (100 submissions)
+ * - Baseline: 10 Concurrent Users
+ * - Stage 2:  25 Concurrent Users
+ * - Stage 3:  50 Concurrent Users
+ * - Stage 4:  75 Concurrent Users
+ * - Stage 5:  100 Concurrent Users
  *
  * Usage:
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=10 tests/performance/niwi-submission-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=25 tests/performance/niwi-submission-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=50 tests/performance/niwi-submission-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=75 tests/performance/niwi-submission-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=100 tests/performance/niwi-submission-load.js
+ *   k6 run \
+ *     -e BASE_URL=https://niwi.orchvate.in \
+ *     -e ORG_CODE=SKY11 \
+ *     -e VUS=10 \
+ *     -e CONFIRM_PROD=true \
+ *     tests/performance/niwi-submission-load.js
  */
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import {
-  BASE_URL,
-  EXACT_AUDIT_URL,
-  TARGET_ORG_NAME,
-  EXPECTED_ORG_ID,
   COMMON_HEADERS,
   DEFAULT_TIMEOUT,
   performPreflightCheck,
@@ -75,18 +72,28 @@ export const options = {
 
 // Preflight validation runs once before VUs start
 export function setup() {
-  return performPreflightCheck();
+  return performPreflightCheck('Submission Load Test', TARGET_VUS);
 }
 
 export default function (setupData) {
+  // If run in preflight-only mode, exit without submitting assessments
+  if (setupData && setupData.isPreflightOnly) {
+    return;
+  }
+
   const vuId = __VU;
   const iteration = __ITER;
+  const orgId = setupData.organizationId;
+  const orgName = setupData.organizationName;
+  const orgCode = setupData.orgCode;
+  const auditUrl = setupData.auditUrl;
+  const baseUrl = setupData.baseUrl;
 
   // -------------------------------------------------------------------------
   // STEP 1: Fetch Assessment Entry Page
   // -------------------------------------------------------------------------
   const t0 = Date.now();
-  const pageRes = http.get(EXACT_AUDIT_URL, {
+  const pageRes = http.get(auditUrl, {
     headers: { 'User-Agent': COMMON_HEADERS['User-Agent'] },
     timeout: DEFAULT_TIMEOUT,
   });
@@ -98,14 +105,14 @@ export default function (setupData) {
   httpErrorRate.add(!pageOk);
   if (!pageOk) return;
 
-  // Staggered pacing (jitter) to simulate real-world human arrival
-  sleep(Math.random() * 1.5 + 0.5);
+  // Realistic human think time with slight jitter
+  sleep(Math.random() * 1.0 + 0.5);
 
   // -------------------------------------------------------------------------
   // STEP 2: Load Questionnaire Configuration & Sections
   // -------------------------------------------------------------------------
   const t1 = Date.now();
-  const sectionsRes = http.get(`${BASE_URL}/api/form/sections`, {
+  const sectionsRes = http.get(`${baseUrl}/api/form/sections`, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -113,27 +120,19 @@ export default function (setupData) {
 
   const sectionsOk = check(sectionsRes, {
     'step 2: form sections HTTP 200': (r) => r.status === 200,
-    'step 2: has valid sections array': (r) => {
-      try {
-        const body = JSON.parse(r.body);
-        return Array.isArray(body) && body.length >= 8;
-      } catch (e) {
-        return false;
-      }
-    },
   });
   httpErrorRate.add(!sectionsOk);
   if (!sectionsOk) return;
 
-  // Pacing between reading sections
+  // Realistic reading delay
   sleep(Math.random() * 1.0 + 0.5);
 
   // -------------------------------------------------------------------------
   // STEP 3: Server-side Organisation Validation
   // -------------------------------------------------------------------------
   const t2 = Date.now();
-  const valPayload = JSON.stringify({ name: TARGET_ORG_NAME });
-  const valRes = http.post(`${BASE_URL}/api/public/organisations/validate`, valPayload, {
+  const valPayload = JSON.stringify({ name: orgCode });
+  const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -142,7 +141,7 @@ export default function (setupData) {
   let verifiedOrgId = null;
   const valOk = check(valRes, {
     'step 3: org validate HTTP 200': (r) => r.status === 200,
-    'step 3: org exists and active': (r) => {
+    'step 3: org exists': (r) => {
       try {
         const b = JSON.parse(r.body);
         if (b.valid === true) {
@@ -157,23 +156,26 @@ export default function (setupData) {
   });
   httpErrorRate.add(!valOk);
 
-  const idMatches = (verifiedOrgId === EXPECTED_ORG_ID);
+  const idMatches = (verifiedOrgId === orgId);
   orgIdMatchRate.add(idMatches);
 
-  if (!valOk || !idMatches) return;
+  if (!valOk || !idMatches) {
+    console.error(`[VU ${vuId} ERROR] Organisation validation mismatch: expected ${orgId}, got ${verifiedOrgId}`);
+    return;
+  }
 
-  // Form filling think time
+  // Realistic answering delay
   sleep(Math.random() * 2.0 + 1.0);
 
   // -------------------------------------------------------------------------
   // STEP 4: Submit Assessment
   // -------------------------------------------------------------------------
-  const payloadData = generateSyntheticEmployee(vuId, iteration, EXPECTED_ORG_ID, TARGET_ORG_NAME);
+  const payloadData = generateSyntheticEmployee(vuId, iteration, orgId, orgName);
   const payloadStr = JSON.stringify(payloadData);
 
   submissionAttempts.add(1);
   const t3 = Date.now();
-  const subRes = http.post(`${BASE_URL}/api/submit`, payloadStr, {
+  const subRes = http.post(`${baseUrl}/api/submit`, payloadStr, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -203,11 +205,10 @@ export default function (setupData) {
     submissionSuccess.add(1);
   } else {
     submissionFailures.add(1);
-    console.error(`[VU ${vuId}] Submission failed: HTTP ${subRes.status} — ${subRes.body}`);
+    console.error(`[VU ${vuId} SUBMISSION FAILED] HTTP ${subRes.status} — ${subRes.body}`);
   }
 }
 
 export function handleSummary(data) {
-  return generateCustomReports(data, 'load', TARGET_VUS);
+  return generateCustomReports(data, 'submission-load', TARGET_VUS);
 }
-

@@ -111,7 +111,7 @@ def _fetch_org_links(conn, org_id: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 @router.get("")
-async def list_orgs(include_deleted: bool = Query(False)):
+def list_orgs(include_deleted: bool = Query(False)):
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:

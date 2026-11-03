@@ -5,18 +5,17 @@
  * browser sessions directly interacting with AuditForm.vue.
  *
  * Usage:
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e BROWSER_VUS=1 tests/performance/niwi-browser-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e BROWSER_VUS=5 tests/performance/niwi-browser-load.js
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e BROWSER_VUS=10 tests/performance/niwi-browser-load.js
+ *   k6 run \
+ *     -e BASE_URL=https://niwi.orchvate.in \
+ *     -e ORG_CODE=SKY11 \
+ *     -e BROWSER_VUS=1 \
+ *     -e CONFIRM_PROD=true \
+ *     tests/performance/niwi-browser-load.js
  */
 
 import { browser } from 'k6/browser';
 import { check, sleep } from 'k6';
 import {
-  EXACT_AUDIT_URL,
-  TARGET_ORG_NAME,
-  EXPECTED_ORG_ID,
-  TEST_RUN_ID,
   performPreflightCheck,
   generateSyntheticEmployee,
 } from './config.js';
@@ -32,7 +31,7 @@ import {
 
 import { generateCustomReports } from './report-generator.js';
 
-const BROWSER_VUS = parseInt(__ENV.BROWSER_VUS || '1', 10);
+const BROWSER_VUS = parseInt(__ENV.BROWSER_VUS || __ENV.VUS || '1', 10);
 
 export const options = {
   scenarios: {
@@ -56,22 +55,31 @@ export const options = {
 };
 
 export function setup() {
-  return performPreflightCheck();
+  return performPreflightCheck('Browser Load Test', BROWSER_VUS);
 }
 
-export default async function () {
+export default async function (setupData) {
+  // If run in preflight-only mode, exit without submitting assessments
+  if (setupData && setupData.isPreflightOnly) {
+    return;
+  }
+
   const vuId = __VU || 1;
   const iteration = __ITER || 0;
+  const orgId = setupData.organizationId;
+  const orgName = setupData.organizationName;
+  const auditUrl = setupData.auditUrl;
+
   const page = await browser.newPage();
 
-  console.log(`[BROWSER VU ${vuId}] Launching headless browser session for ${EXACT_AUDIT_URL}...`);
+  console.log(`[BROWSER VU ${vuId}] Launching headless browser session for ${auditUrl}...`);
 
   try {
     // -----------------------------------------------------------------------
     // STEP 1: Navigate to Assessment Entry URL
     // -----------------------------------------------------------------------
     const navStart = Date.now();
-    await page.goto(EXACT_AUDIT_URL, { waitUntil: 'networkidle' });
+    await page.goto(auditUrl, { waitUntil: 'networkidle' });
     auditPageDuration.add(Date.now() - navStart);
 
     // Verify page title and intro branding are loaded
@@ -97,7 +105,7 @@ export default async function () {
     // -----------------------------------------------------------------------
     // STEP 4: Form Demographic & Assessment Fields
     // -----------------------------------------------------------------------
-    const synthUser = generateSyntheticEmployee(vuId, iteration, EXPECTED_ORG_ID, TARGET_ORG_NAME);
+    const synthUser = generateSyntheticEmployee(vuId, iteration, orgId, orgName);
 
     // If input fields are visible, fill synthetic user info
     const nameInput = page.locator('input[placeholder*="Name"], input[type="text"]');
@@ -144,6 +152,5 @@ export default async function () {
 }
 
 export function handleSummary(data) {
-  return generateCustomReports(data, 'browser', BROWSER_VUS);
+  return generateCustomReports(data, 'browser-load', BROWSER_VUS);
 }
-

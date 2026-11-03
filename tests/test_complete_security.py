@@ -281,6 +281,48 @@ class TestSubmissionReassignment:
             conn.close()
 
 
+class TestSubmissionScoreUpdates:
+    """Test score updates in admin portal"""
+
+    def test_score_update_requires_authentication(self, test_submission):
+        response = client.patch(
+            f"/api/submissions/{test_submission}/scores",
+            json={"lc_score": 15.0}
+        )
+        assert response.status_code == 401
+
+    def test_admin_can_update_scores(self, test_submission):
+        response = client.patch(
+            f"/api/submissions/{test_submission}/scores",
+            headers={"Authorization": f"Bearer local_bypass:{REGULAR_ADMIN_EMAIL}"},
+            json={
+                "lc_score": 16.0,
+                "ro_score": 12.0,
+                "we_score": 14.0,
+                "be_score": 18.0,
+                "tm_score": 10.0,
+                "ca_score": 8.0,
+                "pc_score": 12.0,
+                "sp_score": 14.0
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Scores updated successfully"
+        assert data["scores"]["lc_score"] == 16.0
+        assert data["scores"]["overall_avg"] == 13.0
+        assert data["scores"]["overall_level"] == "Level 2 — Early Progress"
+
+    def test_score_update_validates_range(self, test_submission):
+        response = client.patch(
+            f"/api/submissions/{test_submission}/scores",
+            headers={"Authorization": f"Bearer local_bypass:{REGULAR_ADMIN_EMAIL}"},
+            json={"lc_score": 25.0}
+        )
+        assert response.status_code == 400
+        assert "between 0 and 20" in response.json()["detail"]
+
+
 class TestInvitationSecurity:
     """Test invitation link security"""
     

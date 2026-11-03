@@ -108,7 +108,7 @@ class TestExistingOrganisationLifecycle:
         inv_id = str(uuid.uuid4())
 
         # Establish state in Mock InMemoryStore
-        from tests.conftest import MEM_STORE
+        from conftest import MEM_STORE
         MEM_STORE.organizations[org_id] = {
             "id": org_id, "name": "Historic Org", "is_active": True, "is_deleted": False
         }
@@ -151,7 +151,7 @@ class TestExistingOrganisationLifecycle:
 
     def test_soft_delete_preserves_audit_history_and_org_submission_links(self):
         """Soft delete MUST preserve submission_reassignments and org_submission_links."""
-        from tests.conftest import MEM_STORE
+        from conftest import MEM_STORE
         org_id = str(uuid.uuid4())
         sub_id = str(uuid.uuid4())
         target_org_id = str(uuid.uuid4())

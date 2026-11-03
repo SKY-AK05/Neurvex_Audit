@@ -23,7 +23,8 @@ from app.api.form_builder import router as form_builder_router
 from app.core.security import jwks_middleware
 from app.core.database import get_conn, get_db_connection, init_connection_pool, close_connection_pool
 from app.core.limiter import limiter
-from app.tasks.email_worker import start_dlq_worker
+from app.tasks.job_worker import start_job_worker, stop_job_worker
+from app.services.scoring_service import get_form_sections_metadata
 
 from app.core.config import CORS_ORIGINS
 
@@ -49,14 +50,23 @@ async def startup_event():
         logger.error(f"Failed to initialize connection pool: {e}")
         raise
     
-    # Start email worker
-    await start_dlq_worker()
+    # Warm up in-memory scoring metadata cache
+    try:
+        with get_db_connection() as conn:
+            get_form_sections_metadata(conn)
+        logger.info("Scoring sections metadata cache warmed up")
+    except Exception as e:
+        logger.warning(f"Failed to warm up scoring sections cache: {e}")
+
+    # Start post-submit background job worker
+    await start_job_worker()
     logger.info("Application startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup application resources on shutdown"""
     logger.info("Shutting down NIWI application...")
+    stop_job_worker()
     close_connection_pool()
     logger.info("Application shutdown complete")
 

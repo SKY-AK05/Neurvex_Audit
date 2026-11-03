@@ -54,10 +54,13 @@ class TestUnauthenticatedAccess:
             ("GET", "/api/manage/orgs"),
             ("GET", "/api/manage/users"),
             ("GET", "/api/manage/audit-logs"),
+            ("PATCH", "/api/submissions/00000000-0000-0000-0000-000000000000/scores"),
         ]
         for method, url in endpoints:
             if method == "GET":
                 res = client.get(url)
+            elif method == "PATCH":
+                res = client.patch(url, json={"lc_score": 10})
             else:
                 res = client.post(url, json={})
             assert res.status_code == 401, f"{method} {url} should require authentication, got {res.status_code}"

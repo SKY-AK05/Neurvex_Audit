@@ -12,6 +12,10 @@
       </div>
     </div>
 
+    <div v-if="saveMessage" :class="['alert', saveMessageType === 'success' ? 'alert-success' : 'alert-error']" style="margin-bottom: 1.25rem;">
+      {{ saveMessage }}
+    </div>
+
     <div v-if="loading" class="loading">Loading form structure...</div>
     
     <div v-else class="sections-list">
@@ -152,6 +156,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { getAuthHeaders } from '../api';
+
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 const sections = ref([]);
 const loading = ref(true);
@@ -164,11 +171,15 @@ const showQuestionModal = ref(false);
 const editingQuestion = ref(null);
 const currentSectionId = ref(null);
 const questionForm = ref({});
+const saveMessage = ref("");
+const saveMessageType = ref("success");
 
 async function loadData() {
   loading.value = true;
   try {
-    const res = await fetch("/api/form/sections");
+    const res = await fetch(`${API_BASE}/form/sections`, {
+      headers: { ...getAuthHeaders() }
+    });
     if (res.ok) {
       sections.value = await res.json();
     }
@@ -182,6 +193,12 @@ async function loadData() {
 onMounted(() => {
   loadData();
 });
+
+function showToast(msg, type = "success") {
+  saveMessage.value = msg;
+  saveMessageType.value = type;
+  setTimeout(() => { saveMessage.value = ""; }, 3500);
+}
 
 // SECTION
 function openSectionModal(section = null) {
@@ -205,7 +222,7 @@ function closeSectionModal() {
 async function saveSection() {
   try {
     const isEdit = !!editingSection.value;
-    const url = isEdit ? `/api/form/sections/${editingSection.value.id}` : "/api/form/sections";
+    const url = isEdit ? `${API_BASE}/form/sections/${editingSection.value.id}` : `${API_BASE}/form/sections`;
     const method = isEdit ? "PUT" : "POST";
     
     // Convert empty strings to null for gating fields
@@ -215,12 +232,13 @@ async function saveSection() {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(payload)
     });
     
     if (res.ok) {
       closeSectionModal();
+      showToast("Section saved successfully.");
       loadData();
     } else {
       const err = await res.json();
@@ -260,7 +278,7 @@ function closeQuestionModal() {
 async function saveQuestion() {
   try {
     const isEdit = !!editingQuestion.value;
-    const url = isEdit ? `/api/form/questions/${editingQuestion.value.id}` : `/api/form/sections/${currentSectionId.value}/questions`;
+    const url = isEdit ? `${API_BASE}/form/questions/${editingQuestion.value.id}` : `${API_BASE}/form/sections/${currentSectionId.value}/questions`;
     const method = isEdit ? "PUT" : "POST";
     
     const payload = { ...questionForm.value };
@@ -269,12 +287,13 @@ async function saveQuestion() {
 
     const res = await fetch(url, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
       body: JSON.stringify(payload)
     });
     
     if (res.ok) {
       closeQuestionModal();
+      showToast("Question score values updated and saved successfully.");
       loadData();
     } else {
       const err = await res.json();
@@ -289,8 +308,12 @@ async function saveQuestion() {
 async function deleteSection(id, title) {
   if (!confirm(`Are you sure you want to delete section "${title}"? This will also delete all its questions.`)) return;
   try {
-    const res = await fetch(`/api/form/sections/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/form/sections/${id}`, { 
+      method: 'DELETE',
+      headers: { ...getAuthHeaders() }
+    });
     if (res.ok) {
+      showToast("Section deleted.");
       loadData();
     } else {
       const err = await res.json();
@@ -304,8 +327,12 @@ async function deleteSection(id, title) {
 async function deleteQuestion(id, shortTitle) {
   if (!confirm(`Are you sure you want to delete question "${shortTitle}"?`)) return;
   try {
-    const res = await fetch(`/api/form/questions/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/form/questions/${id}`, { 
+      method: 'DELETE',
+      headers: { ...getAuthHeaders() }
+    });
     if (res.ok) {
+      showToast("Question deleted.");
       loadData();
     } else {
       const err = await res.json();

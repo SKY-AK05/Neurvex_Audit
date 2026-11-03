@@ -10,6 +10,7 @@ from fastapi import Request, HTTPException
 from fastapi.responses import JSONResponse
 from functools import lru_cache, wraps
 import logging
+import cachetools
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +20,12 @@ from app.core.config import ENTRA_TENANT_ID, ENTRA_CLIENT_ID, JWKS_URL
 TENANT_ID = ENTRA_TENANT_ID
 CLIENT_ID = ENTRA_CLIENT_ID
 
-@lru_cache(maxsize=1)
+# TTLCache with 1-hour expiry to support Microsoft key rotation without admin lockout (DEF-003)
+_jwks_cache = cachetools.TTLCache(maxsize=10, ttl=3600)
+
 def get_jwks():
+    if "jwks" in _jwks_cache:
+        return _jwks_cache["jwks"]
     if not JWKS_URL or not TENANT_ID or TENANT_ID == "YOUR_TENANT_ID":
         logger.warning("JWKS_URL or TENANT_ID not configured properly")
         return {"keys": []}
@@ -28,7 +33,9 @@ def get_jwks():
     try:
         response = requests.get(JWKS_URL, timeout=10)
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        _jwks_cache["jwks"] = data
+        return data
     except Exception as e:
         logger.error(f"Failed to fetch JWKS from {JWKS_URL}: {e}")
         return {"keys": []}

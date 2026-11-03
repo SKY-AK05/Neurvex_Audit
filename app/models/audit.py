@@ -15,6 +15,7 @@ class AuditSubmission(BaseModel):
     contact_number: Optional[str] = Field(None, max_length=50)
     consent_given: Optional[bool] = False
     draft_id: Optional[str] = None
+    idempotency_key: Optional[str] = Field(None, max_length=64)
 
     # Demographic fields (Tell Us About You)
     function: Optional[str] = None

@@ -30,8 +30,29 @@ export const httpErrorRate   = new Rate('niwi_http_error_rate');
 export const orgIdMatchRate  = new Rate('niwi_org_id_match_rate');
 
 // ---------------------------------------------------------------------------
-// Standard Acceptance Thresholds (Requirement 13)
+// 1. Smoke Test Thresholds (1-VU Sanity & Functional Acceptance)
 // ---------------------------------------------------------------------------
+// For a single-iteration smoke test (N=1), statistical percentiles (p95/p99)
+// equal the maximum single-request duration. Smoke thresholds verify functional
+// integrity: zero errors, 100% success, exact org binding, and interactive timeout.
+export const SMOKE_THRESHOLDS = {
+  // Global HTTP failure rate must stay below 1%
+  'http_req_failed': ['rate<0.01'],
+
+  // Zero lost submissions (every valid attempt must succeed)
+  'niwi_submission_failures': ['count==0'],
+
+  // Every submission must strictly bind to the verified target organisation ID
+  'niwi_org_id_match_rate': ['rate==1.0'],
+
+  // Sanity check: single-user submission operation completes without hanging
+  'http_req_duration': ['max<15000'],
+};
+
+// ---------------------------------------------------------------------------
+// 2. Standard Load Acceptance Thresholds (10, 25, 50, 75, 100 VUs)
+// ---------------------------------------------------------------------------
+// Evaluates statistical percentiles across aggregated concurrent traffic
 export const STANDARD_THRESHOLDS = {
   // Global HTTP failure rate must stay below 1%
   'http_req_failed': ['rate<0.01'],
@@ -48,4 +69,3 @@ export const STANDARD_THRESHOLDS = {
   // Custom submission endpoint latency
   'niwi_submission_duration_ms': ['p(95)<3000', 'p(99)<5000'],
 };
-

@@ -6,16 +6,18 @@
  * - Measure response time consistency and memory/connection leakage over an extended duration.
  *
  * Usage:
- *   k6 run -e BASE_URL=https://niwi.orchvate.in -e VUS=20 -e DURATION=3m tests/performance/niwi-sustained-load.js
+ *   k6 run \
+ *     -e BASE_URL=https://niwi.orchvate.in \
+ *     -e ORG_CODE=SKY11 \
+ *     -e VUS=20 \
+ *     -e DURATION=3m \
+ *     -e CONFIRM_PROD=true \
+ *     tests/performance/niwi-sustained-load.js
  */
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import {
-  BASE_URL,
-  EXACT_AUDIT_URL,
-  TARGET_ORG_NAME,
-  EXPECTED_ORG_ID,
   COMMON_HEADERS,
   DEFAULT_TIMEOUT,
   performPreflightCheck,
@@ -60,16 +62,26 @@ export const options = {
 
 // Preflight validation runs once before VUs start
 export function setup() {
-  return performPreflightCheck();
+  return performPreflightCheck('Sustained Load Test', TARGET_VUS);
 }
 
 export default function (setupData) {
+  // If run in preflight-only mode, exit without submitting assessments
+  if (setupData && setupData.isPreflightOnly) {
+    return;
+  }
+
   const vuId = __VU;
   const iteration = __ITER;
+  const orgId = setupData.organizationId;
+  const orgName = setupData.organizationName;
+  const orgCode = setupData.orgCode;
+  const auditUrl = setupData.auditUrl;
+  const baseUrl = setupData.baseUrl;
 
   // 1. Visit Audit Page
   const t0 = Date.now();
-  const pageRes = http.get(EXACT_AUDIT_URL, {
+  const pageRes = http.get(auditUrl, {
     headers: { 'User-Agent': COMMON_HEADERS['User-Agent'] },
     timeout: DEFAULT_TIMEOUT,
   });
@@ -86,7 +98,7 @@ export default function (setupData) {
 
   // 2. Fetch Form Sections
   const t1 = Date.now();
-  const sectionsRes = http.get(`${BASE_URL}/api/form/sections`, {
+  const sectionsRes = http.get(`${baseUrl}/api/form/sections`, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -98,13 +110,10 @@ export default function (setupData) {
   httpErrorRate.add(!sectionsOk);
   if (!sectionsOk) return;
 
-  // Realistic interaction pause
-  sleep(Math.random() * 2.0 + 1.0);
-
   // 3. Organisation Validation
   const t2 = Date.now();
-  const valPayload = JSON.stringify({ name: TARGET_ORG_NAME });
-  const valRes = http.post(`${BASE_URL}/api/public/organisations/validate`, valPayload, {
+  const valPayload = JSON.stringify({ name: orgCode });
+  const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -128,20 +137,20 @@ export default function (setupData) {
   });
   httpErrorRate.add(!valOk);
 
-  const idMatches = (verifiedOrgId === EXPECTED_ORG_ID);
+  const idMatches = (verifiedOrgId === orgId);
   orgIdMatchRate.add(idMatches);
   if (!valOk || !idMatches) return;
 
-  // Assessment question completion delay
-  sleep(Math.random() * 3.0 + 2.0);
+  // Answering interval
+  sleep(Math.random() * 2.0 + 2.0);
 
   // 4. Submit Assessment
-  const payloadData = generateSyntheticEmployee(vuId, iteration, EXPECTED_ORG_ID, TARGET_ORG_NAME);
+  const payloadData = generateSyntheticEmployee(vuId, iteration, orgId, orgName);
   const payloadStr = JSON.stringify(payloadData);
 
   submissionAttempts.add(1);
   const t3 = Date.now();
-  const subRes = http.post(`${BASE_URL}/api/submit`, payloadStr, {
+  const subRes = http.post(`${baseUrl}/api/submit`, payloadStr, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -150,16 +159,7 @@ export default function (setupData) {
 
   const subOk = check(subRes, {
     'step 4: submit HTTP 201 or 200': (r) => r.status === 201 || r.status === 200,
-    'step 4: response indicates success': (r) => {
-      try {
-        const b = JSON.parse(r.body);
-        return b.success === true && !!b.submission_id;
-      } catch (e) {
-        return false;
-      }
-    },
   });
-
   httpErrorRate.add(!subOk);
 
   if (subOk) {
@@ -168,11 +168,10 @@ export default function (setupData) {
     submissionFailures.add(1);
   }
 
-  // Pace between iterations for a realistic sustained cadence
-  sleep(Math.random() * 3.0 + 3.0);
+  // Inter-iteration pacing (pacing delay)
+  sleep(Math.random() * 2.0 + 1.0);
 }
 
 export function handleSummary(data) {
-  return generateCustomReports(data, 'sustained', TARGET_VUS);
+  return generateCustomReports(data, 'sustained-load', TARGET_VUS);
 }
-

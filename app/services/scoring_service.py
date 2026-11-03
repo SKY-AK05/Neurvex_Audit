@@ -3,6 +3,9 @@ scoring.py — NeuroMark Audit scoring logic
 """
 
 import html as html_module
+import logging
+
+logger = logging.getLogger(__name__)
 import math
 import json
 import os
@@ -137,29 +140,82 @@ DEFAULT_STANDARD_SECTIONS = [
      "questions": [{"field_name": f"q{i}", "score_mapping": {"Yes": 4, "Partially": 2, "No": 0, "Not Sure": 0}} for i in range(40, 45)]},
 ]
 
-def calculate_scores(data: dict, conn=None) -> dict:
+import time
+
+_cached_form_sections = None
+_cached_form_sections_time = 0
+_SECTIONS_CACHE_TTL = 300  # 5 minutes
+
+
+def get_form_sections_metadata(conn=None) -> tuple[list, int]:
+    """
+    Retrieve form sections and threshold with TTL caching and stale-while-revalidate protection.
+    If called with conn=None when cache expires, borrows a pooled DB connection to refresh custom
+    questions. If DB is temporarily unreachable, retains existing cached sections rather than
+    downgrading to default standard questions.
+    """
+    global _cached_form_sections, _cached_form_sections_time
+    now = time.time()
+    if _cached_form_sections is not None and (now - _cached_form_sections_time) < _SECTIONS_CACHE_TTL:
+        return _cached_form_sections
+
     threshold = 50
     sections = []
+    owned_conn = None
+    active_conn = conn
 
-    if conn is not None:
+    if active_conn is None:
         try:
-            with conn.cursor() as settings_cur:
+            from app.core.database import get_conn
+            owned_conn = get_conn()
+            active_conn = owned_conn
+        except Exception as conn_err:
+            logger.warning("Could not borrow connection for form metadata refresh: %s", conn_err)
+            active_conn = None
+
+    if active_conn is not None:
+        try:
+            with active_conn.cursor() as settings_cur:
                 settings = get_settings(settings_cur)
             threshold = settings.get("low_visibility_threshold", 50)
 
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            with active_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute("SELECT * FROM form_sections ORDER BY order_index ASC")
                 sec_rows = cur.fetchall()
                 for sec in sec_rows:
                     cur.execute("SELECT * FROM form_questions WHERE section_id = %s ORDER BY order_index ASC", (sec["id"],))
                     q_rows = cur.fetchall()
                     sections.append({"section": dict(sec), "questions": [dict(q) for q in q_rows]})
-        except Exception:
+        except Exception as fetch_err:
+            logger.warning("Error fetching form sections from database: %s", fetch_err)
             sections = []
+        finally:
+            if owned_conn is not None:
+                try:
+                    owned_conn.close()
+                except Exception:
+                    pass
 
+    # Stale-while-revalidate protection:
+    # If DB query failed or returned no sections, retain existing cached sections if available
     if not sections:
+        if _cached_form_sections is not None:
+            logger.warning("DB query yielded no sections; retaining previously cached form sections")
+            return _cached_form_sections
         sections = DEFAULT_STANDARD_SECTIONS
 
+    _cached_form_sections = (sections, threshold)
+    _cached_form_sections_time = now
+    return _cached_form_sections
+
+
+def calculate_scores_pure(data: dict, sections: list = None, threshold: int = 50) -> dict:
+    """
+    Pure, deterministic scoring engine (CALC-001 through CALC-006).
+    Performs zero database queries and zero network operations.
+    """
+    if not sections:
+        sections = DEFAULT_STANDARD_SECTIONS
 
     result = {}
     section_scores = []
@@ -183,7 +239,7 @@ def calculate_scores(data: dict, conn=None) -> dict:
 
         score, not_sure_count, n_applicable = score_section(data, key, qs)
         level = get_maturity_level(score)
-        
+
         is_low_visibility = False
         if n_applicable > 0 and not_sure_count >= (n_applicable * threshold / 100.0):
             is_low_visibility = True
@@ -201,18 +257,30 @@ def calculate_scores(data: dict, conn=None) -> dict:
     result["overall_level"] = overall_level
     result["dimension_scores"] = dimension_scores
     result["low_visibility_sections"] = low_visibility_sections
+    result["_section_scores"] = section_scores
+    return result
+
+
+def calculate_scores(data: dict, conn=None) -> dict:
+    """
+    Main scoring function. Preserves backwards-compatibility by compiling
+    email_body on demand for legacy callers.
+    """
+    sections, threshold = get_form_sections_metadata(conn)
+    result = calculate_scores_pure(data, sections=sections, threshold=threshold)
 
     result["email_body"] = build_email(
         name=data.get("name", ""),
-        designation=data.get("designation", ""),
+        designation=data.get("designation", "") or data.get("role", ""),
         company_name=data.get("company_name", ""),
         contact_number=data.get("contact_number", ""),
-        section_scores=section_scores,
-        overall_avg=overall_avg,
-        overall_level=overall_level,
+        section_scores=result.get("_section_scores", []),
+        overall_avg=result["overall_avg"],
+        overall_level=result["overall_level"],
     )
 
     return result
+
 
 def _e(text: str) -> str:
     return html_module.escape(str(text))

@@ -193,7 +193,11 @@ def get_sender_for_send(cur) -> Tuple[str, str]:
 
 def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to_name: str = "", cc_addresses: list[str] = None, subject: str, html: str, plain: str,
                    sender_address: str, sender_name: str, submission_id: str = None) -> None:
-    client = EmailClient.from_connection_string(os.environ["ACS_CONNECTION_STRING"])
+    acs_conn = os.environ.get("ACS_CONNECTION_STRING") or os.environ.get("ACS-CONNECTION-STRING", "")
+    if not acs_conn:
+        logger.warning("ACS_CONNECTION_STRING not configured. Email dispatch bypassed for submission %s", submission_id)
+        return
+    client = EmailClient.from_connection_string(acs_conn)
     
     to_recipients = [{"address": a.strip()} for a in to_addresses if a.strip()] if to_addresses else [{"address": to_address, "displayName": to_name}]
     message = {

@@ -52,6 +52,7 @@ def init_connection_pool(minconn=2, maxconn=10):
         return
     
     try:
+        pg_options = os.environ.get("PGOPTIONS", "-c statement_timeout=15000")
         _connection_pool = psycopg2.pool.ThreadedConnectionPool(
             minconn=minconn,
             maxconn=maxconn,
@@ -61,6 +62,7 @@ def init_connection_pool(minconn=2, maxconn=10):
             user=PGUSER,
             password=PGPASSWORD,
             sslmode="require",
+            options=pg_options,
             # Connection lifetime settings
             keepalives=1,
             keepalives_idle=30,
@@ -106,6 +108,7 @@ def get_conn():
             user=PGUSER,
             password=PGPASSWORD,
             sslmode="require",
+            options=os.environ.get("PGOPTIONS", "-c statement_timeout=15000"),
         )
         return PooledConnection(raw_conn, None)
     
@@ -114,8 +117,8 @@ def get_conn():
         conn.rollback()
         return PooledConnection(conn, _connection_pool)
     except pool.PoolError as e:
-        logger.error(f"Failed to get connection from pool: {e}")
-        raise
+        logger.error("Database connection pool exhausted (maxconn=%s): %s", getattr(_connection_pool, "maxconn", "unknown"), e)
+        raise RuntimeError(f"Database connection pool exhausted: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error getting connection: {e}")
         raise
@@ -192,10 +195,8 @@ class PooledConnection:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit - commit/rollback transaction and return to pool"""
-        res = self._conn.__exit__(exc_type, exc_val, exc_tb)
-        self.close()
-        return res
+        """Context manager exit - commit/rollback transaction without prematurely returning connection to pool"""
+        return self._conn.__exit__(exc_type, exc_val, exc_tb)
     
     def close(self):
         """Return connection to pool idempotently instead of terminating underlying socket"""

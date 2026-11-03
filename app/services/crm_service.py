@@ -46,12 +46,17 @@ def make_hubspot_request(method: str, url: str, json_data: Any = None, retries: 
 def sync_to_hubspot(data: Dict[str, Any], score_data: Dict[str, Any], submission_id: str):
     """
     Syncs the audit submission to HubSpot. Runs inside a background task.
+    Re-raises errors so background worker records failures and retries (DEF-006).
     """
+    if not HUBSPOT_ACCESS_TOKEN:
+        logger.info("HubSpot access token not configured, skipping CRM sync for submission %s", submission_id)
+        return
+
     email = data.get("email")
-    name = data.get("name")
-    company_name = data.get("company_name")
-    designation = data.get("designation")
-    contact_number = data.get("contact_number")
+    name = data.get("name") or ""
+    company_name = data.get("company_name") or ""
+    designation = data.get("designation") or ""
+    contact_number = data.get("contact_number") or ""
     
     overall_avg = score_data.get("overall_avg", 0.0)
     overall_level = score_data.get("overall_level", "Foundational")
@@ -85,7 +90,7 @@ def sync_to_hubspot(data: Dict[str, Any], score_data: Dict[str, Any], submission
         if search_res.get("results"):
             contact_id = search_res["results"][0]["id"]
     except Exception as e:
-        logger.error(f"Could not query contact search: {e}")
+        logger.warning(f"Could not query contact search (will attempt creation): {e}")
 
     # Custom properties to write on Contact
     properties = {
@@ -107,14 +112,17 @@ def sync_to_hubspot(data: Dict[str, Any], score_data: Dict[str, Any], submission
             make_hubspot_request("PATCH", contact_url, {"properties": properties})
         except Exception as e:
             logger.error(f"Contact update failed: {e}")
+            raise RuntimeError(f"HubSpot contact update failed: {e}") from e
     else:
         contact_url = "https://api.hubapi.com/crm/v3/objects/contacts"
         try:
             contact_res = make_hubspot_request("POST", contact_url, {"properties": properties})
             contact_id = contact_res.get("id")
+            if not contact_id:
+                raise RuntimeError("HubSpot contact creation succeeded without returning an id")
         except Exception as e:
             logger.error(f"Contact creation failed: {e}")
-            return # Abort if contact cannot be created
+            raise RuntimeError(f"HubSpot contact creation failed: {e}") from e
 
     # 3. Create Deal
     deal_url = "https://api.hubapi.com/crm/v3/objects/deals"
@@ -139,3 +147,4 @@ def sync_to_hubspot(data: Dict[str, Any], score_data: Dict[str, Any], submission
             logger.info(f"HubSpot Sync complete for submission {submission_id}")
     except Exception as e:
         logger.error(f"Failed to create/associate HubSpot Deal: {e}")
+        raise RuntimeError(f"HubSpot Deal creation/association failed: {e}") from e

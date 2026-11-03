@@ -6,17 +6,17 @@
  * - Confirm organization resolution without accidental duplicate creation.
  * - Test real submission pipeline and scoring persistence.
  *
- * Execution Command:
- *   k6 run -e BASE_URL=https://niwi.orchvate.in tests/performance/niwi-smoke.js
+ * Execution Command Example:
+ *   k6 run \
+ *     -e BASE_URL=https://niwi.orchvate.in \
+ *     -e ORG_CODE=SKY11 \
+ *     -e CONFIRM_PROD=true \
+ *     tests/performance/niwi-smoke.js
  */
 
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import {
-  BASE_URL,
-  EXACT_AUDIT_URL,
-  TARGET_ORG_NAME,
-  EXPECTED_ORG_ID,
   COMMON_HEADERS,
   DEFAULT_TIMEOUT,
   performPreflightCheck,
@@ -33,7 +33,7 @@ import {
   auditPageDuration,
   httpErrorRate,
   orgIdMatchRate,
-  STANDARD_THRESHOLDS,
+  SMOKE_THRESHOLDS,
 } from './metrics.js';
 
 import { generateCustomReports } from './report-generator.js';
@@ -47,25 +47,36 @@ export const options = {
       maxDuration: '1m',
     },
   },
-  thresholds: STANDARD_THRESHOLDS,
+  thresholds: SMOKE_THRESHOLDS,
 };
 
 // Preflight validation runs once before VU starts
 export function setup() {
-  return performPreflightCheck();
+  return performPreflightCheck('Smoke Test', 1);
 }
 
 export default function (setupData) {
+  // If run in preflight-only mode, exit without submitting assessments
+  if (setupData && setupData.isPreflightOnly) {
+    console.log(`[SMOKE TEST] Preflight-only mode: skipping assessment submission.`);
+    return;
+  }
+
   const vuId = __VU || 1;
   const iteration = __ITER || 0;
+  const orgId = setupData.organizationId;
+  const orgName = setupData.organizationName;
+  const orgCode = setupData.orgCode;
+  const auditUrl = setupData.auditUrl;
+  const baseUrl = setupData.baseUrl;
 
-  console.log(`[SMOKE TEST] Simulating Employee VU=${vuId}, Iteration=${iteration}...`);
+  console.log(`[SMOKE TEST] Simulating Employee VU=${vuId}, Iteration=${iteration} for "${orgName}" (${orgId})...`);
 
   // -------------------------------------------------------------------------
   // STEP 1: Open Assessment URL
   // -------------------------------------------------------------------------
   const t0 = Date.now();
-  const pageRes = http.get(EXACT_AUDIT_URL, {
+  const pageRes = http.get(auditUrl, {
     headers: { 'User-Agent': COMMON_HEADERS['User-Agent'] },
     timeout: DEFAULT_TIMEOUT,
   });
@@ -87,7 +98,7 @@ export default function (setupData) {
   // STEP 2: Load Questionnaire Configuration & Sections
   // -------------------------------------------------------------------------
   const t1 = Date.now();
-  const sectionsRes = http.get(`${BASE_URL}/api/form/sections`, {
+  const sectionsRes = http.get(`${baseUrl}/api/form/sections`, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -117,8 +128,8 @@ export default function (setupData) {
   // STEP 3: Server-side Organisation Validation
   // -------------------------------------------------------------------------
   const t2 = Date.now();
-  const valPayload = JSON.stringify({ name: TARGET_ORG_NAME });
-  const valRes = http.post(`${BASE_URL}/api/public/organisations/validate`, valPayload, {
+  const valPayload = JSON.stringify({ name: orgCode });
+  const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -142,26 +153,26 @@ export default function (setupData) {
   });
   httpErrorRate.add(!valOk);
 
-  const idMatches = (verifiedOrgId === EXPECTED_ORG_ID);
+  const idMatches = (verifiedOrgId === orgId);
   orgIdMatchRate.add(idMatches);
 
   if (!valOk || !idMatches) {
-    console.error(`[STEP 3 ERROR] Organisation validation mismatch! Verified ID: ${verifiedOrgId}`);
+    console.error(`[STEP 3 ERROR] Organisation validation mismatch! Expected: ${orgId}, Got: ${verifiedOrgId}`);
     return;
   }
 
   // Realistic think time: Completing demographic and 40 assessment questions
-  sleep(2.0);
+  sleep(1.5);
 
   // -------------------------------------------------------------------------
   // STEP 4: Submit Assessment
   // -------------------------------------------------------------------------
-  const payloadData = generateSyntheticEmployee(vuId, iteration, EXPECTED_ORG_ID, TARGET_ORG_NAME);
+  const payloadData = generateSyntheticEmployee(vuId, iteration, orgId, orgName);
   const payloadStr = JSON.stringify(payloadData);
 
   submissionAttempts.add(1);
   const t3 = Date.now();
-  const subRes = http.post(`${BASE_URL}/api/submit`, payloadStr, {
+  const subRes = http.post(`${baseUrl}/api/submit`, payloadStr, {
     headers: COMMON_HEADERS,
     timeout: DEFAULT_TIMEOUT,
   });
@@ -192,7 +203,7 @@ export default function (setupData) {
     console.log(`[SMOKE SUCCESS] Assessment submitted successfully in ${subDurationMs}ms!`);
     console.log(`  - Submission ID:   ${submissionId}`);
     console.log(`  - Synthetic Email: ${payloadData.email}`);
-    console.log(`  - Organisation ID: ${EXPECTED_ORG_ID}`);
+    console.log(`  - Organisation ID: ${orgId}`);
   } else {
     submissionFailures.add(1);
     console.error(`[SMOKE FAILURE] Submission failed: HTTP ${subRes.status} — ${subRes.body}`);
@@ -202,4 +213,3 @@ export default function (setupData) {
 export function handleSummary(data) {
   return generateCustomReports(data, 'smoke', 1);
 }
-

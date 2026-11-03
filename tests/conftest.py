@@ -55,6 +55,7 @@ class InMemoryStore:
             "low_visibility_threshold": 50
         }
         self.audit_logs = []
+        self.post_submit_jobs = {}
 
 MEM_STORE = InMemoryStore()
 
@@ -205,6 +206,13 @@ class MockCursor:
                 name_q = p[0].strip().lower()
                 matches = [o for o in self.store.organizations.values() if o["name"].strip().lower() == name_q and not o["is_deleted"]]
                 self._results = matches if self.dict_cursor else [(m["id"], m["name"], m["approval_status"], m["is_active"]) for m in matches]
+            elif "where idempotency_key = %s" in sql_lower:
+                key_q = p[0] if p else ""
+                matches = [s for s in self.store.submissions.values() if s.get("idempotency_key") == key_q]
+                if "count(*)" in sql_lower:
+                    self._results = [{"count": len(matches)}] if self.dict_cursor else [(len(matches),)]
+                else:
+                    self._results = matches if self.dict_cursor else [(m["id"],) for m in matches]
             elif "where id = %s" in sql_lower:
                 org_id = str(p[0])
                 o = self.store.organizations.get(org_id)
@@ -227,6 +235,13 @@ class MockCursor:
 
         # 4. Submissions
         if "insert into submissions" in sql_lower:
+            idem = p.get("idempotency_key") if isinstance(p, dict) else None
+            if idem and "on conflict" in sql_lower:
+                for existing_sub in self.store.submissions.values():
+                    if existing_sub.get("idempotency_key") == idem:
+                        self.rowcount = 0
+                        self._results = []
+                        return
             sub_id = str(uuid.uuid4())
             if isinstance(p, dict):
                 name = p.get("name", "User")
@@ -269,7 +284,9 @@ class MockCursor:
                 "overall_avg": 14.5,
                 "overall_level": "Developing",
                 "answers": {},
-                "invitation_id": inv_id
+                "invitation_id": inv_id,
+                "idempotency_key": p.get("idempotency_key") if isinstance(p, dict) else None,
+                "email_body": p.get("email_body") if isinstance(p, dict) else None
             }
             self.store.submissions[sub_id] = sub
             if self.conn is not None:
@@ -311,11 +328,21 @@ class MockCursor:
                     and (now - s.get("submitted_at", now)).total_seconds() < 300
                 ]
                 self._results = matches if self.dict_cursor else [(m["id"],) for m in matches]
+            elif "idempotency_key" in sql_lower:
+                key_q = p[0] if p else ""
+                matches = [s for s in self.store.submissions.values() if s.get("idempotency_key") == key_q]
+                if "count(*)" in sql_lower:
+                    self._results = [{"count": len(matches)}] if self.dict_cursor else [(len(matches),)]
+                else:
+                    self._results = matches if self.dict_cursor else [(m["id"],) for m in matches]
             elif "where id = %s" in sql_lower:
                 sub_id = str(p[0])
                 s = self.store.submissions.get(sub_id)
                 if s:
-                    self._results = [s] if self.dict_cursor else [tuple(s.values())]
+                    if "email_body" in sql_lower and sql_lower.strip().startswith("select email_body"):
+                        self._results = [{"email_body": s.get("email_body")}] if self.dict_cursor else [(s.get("email_body"),)]
+                    else:
+                        self._results = [s] if self.dict_cursor else [tuple(s.values())]
             else:
                 subs = list(self.store.submissions.values())
                 self._results = subs if self.dict_cursor else [tuple(s.values()) for s in subs]
@@ -323,7 +350,12 @@ class MockCursor:
             return
 
         if "update submissions set" in sql_lower:
-            if "organization_id = %s" in sql_lower and len(p) >= 3:
+            if "email_body = %s" in sql_lower and len(p) >= 2:
+                body = p[0]
+                sub_id = str(p[1])
+                if sub_id in self.store.submissions:
+                    self.store.submissions[sub_id]["email_body"] = body
+            elif "organization_id = %s" in sql_lower and len(p) >= 3:
                 new_org = str(p[0])
                 new_name = p[1]
                 sub_id = str(p[2])
@@ -338,6 +370,88 @@ class MockCursor:
                 self.store.submissions.pop(str(p[0]), None)
             else:
                 self.store.submissions.clear()
+            self.rowcount = 1
+            return
+
+        
+        # 4b. Post Submit Jobs
+        if "insert into post_submit_jobs" in sql_lower:
+            job_id = str(uuid.uuid4())
+            sub_id = str(p[0]) if len(p) > 0 else str(uuid.uuid4())
+            job_type = p[1] if len(p) > 1 else "email"
+            payload = p[2] if len(p) > 2 else "{}"
+            job = {
+                "id": job_id,
+                "submission_id": sub_id,
+                "job_type": job_type,
+                "status": "PENDING",
+                "payload": payload,
+                "attempts": 0,
+                "max_attempts": 5,
+                "locked_by": None,
+                "created_at": datetime.now(timezone.utc),
+                "next_attempt_at": datetime.now(timezone.utc)
+            }
+            self.store.post_submit_jobs[job_id] = job
+            self.rowcount = 1
+            if "returning" in sql_lower:
+                self._results = [job] if self.dict_cursor else [(job_id,)]
+            return
+
+        if "from post_submit_jobs" in sql_lower and sql_lower.startswith("select"):
+            if "where status in ('pending', 'retry')" in sql_lower:
+                pending = [j for j in self.store.post_submit_jobs.values() if j["status"] in ("PENDING", "RETRY")]
+                if pending:
+                    chosen = pending[0]
+                    self._results = [chosen] if self.dict_cursor else [(chosen["id"], chosen["submission_id"], chosen["job_type"], chosen["payload"], chosen["attempts"], chosen["max_attempts"])]
+                else:
+                    self._results = []
+            elif "where submission_id = %s" in sql_lower:
+                sub_id_q = str(p[0]) if p else ""
+                matches = [j for j in self.store.post_submit_jobs.values() if j["submission_id"] == sub_id_q]
+                if "count(*)" in sql_lower:
+                    self._results = [{"count": len(matches)}] if self.dict_cursor else [(len(matches),)]
+                else:
+                    self._results = matches if self.dict_cursor else [tuple(m.values()) for m in matches]
+            elif "where id = %s" in sql_lower:
+                j_id = str(p[0]) if p else ""
+                j = self.store.post_submit_jobs.get(j_id)
+                if j:
+                    if self.dict_cursor:
+                        self._results = [j]
+                    elif "locked_by" in sql_lower:
+                        self._results = [(j["status"], j["locked_by"])]
+                    else:
+                        self._results = [(j.get("status"), j.get("attempts", 0), j.get("last_error"))]
+            self.rowcount = len(self._results)
+            return
+
+        if "update post_submit_jobs set" in sql_lower:
+            if "status = 'processing'" in sql_lower:
+                worker_id = p[0] if len(p) > 0 else "worker-1"
+                job_id = str(p[1]) if len(p) > 1 else ""
+                if job_id in self.store.post_submit_jobs:
+                    self.store.post_submit_jobs[job_id]["status"] = "PROCESSING"
+                    self.store.post_submit_jobs[job_id]["locked_by"] = worker_id
+                    self.store.post_submit_jobs[job_id]["attempts"] += 1
+            elif "status = 'done'" in sql_lower:
+                job_id = str(p[0]) if p else ""
+                if job_id in self.store.post_submit_jobs:
+                    self.store.post_submit_jobs[job_id]["status"] = "DONE"
+            elif "status = 'retry'" in sql_lower:
+                next_att = p[0] if len(p) > 0 else None
+                last_err = p[1] if len(p) > 1 else ""
+                job_id = str(p[2]) if len(p) > 2 else ""
+                if job_id in self.store.post_submit_jobs:
+                    self.store.post_submit_jobs[job_id]["status"] = "RETRY"
+                    self.store.post_submit_jobs[job_id]["last_error"] = str(last_err)
+                    self.store.post_submit_jobs[job_id]["next_attempt_at"] = next_att
+            elif "status = 'failed'" in sql_lower:
+                last_err = p[0] if len(p) > 0 else ""
+                job_id = str(p[1]) if len(p) > 1 else ""
+                if job_id in self.store.post_submit_jobs:
+                    self.store.post_submit_jobs[job_id]["status"] = "FAILED"
+                    self.store.post_submit_jobs[job_id]["last_error"] = str(last_err)
             self.rowcount = 1
             return
 

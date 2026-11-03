@@ -1,0 +1,462 @@
+{
+  "metadata": {
+    "testRunId": "run_1793647410083_x3fqy",
+    "testType": "smoke",
+    "targetConcurrencyVUs": 1,
+    "timestamp": "2026-11-02T19:23:46.076Z",
+    "targetBaseUrl": "https://niwi.orchvate.in",
+    "targetOrgCode": "SKY11",
+    "targetOrgName": "SKY11",
+    "targetOrgId": "c7d5efb5-bd5a-4883-8bb4-6a8deab1c9b8",
+    "exactAuditUrl": "https://niwi.orchvate.in/audit?org=SKY11",
+    "environment": "Production (orchvate.in)",
+    "isPreflightOnly": false,
+    "overallVerdict": "PASSED (FUNCTIONAL)",
+    "functionalVerdict": "PASS",
+    "slaVerdict": "SLA_BREACH"
+  },
+  "metrics": {
+    "http": {
+      "totalRequests": 7,
+      "requestsPerSecond": 0.44,
+      "httpErrorRatePercent": 0,
+      "responseTimeMs": {
+        "average": 1628.44,
+        "median": 789.23,
+        "p90": 3275.04,
+        "p95": 3869.45,
+        "p99": 0,
+        "max": 4463.87
+      }
+    },
+    "submissions": {
+      "attempts": 1,
+      "successful": 1,
+      "failed": 0,
+      "averageSubmissionDurationMs": 4465,
+      "p95SubmissionDurationMs": 4465,
+      "p99SubmissionDurationMs": 0,
+      "successRatePercent": 100
+    },
+    "acceptanceCriteria": {
+      "allSubmissionsSaved": true,
+      "httpErrorRateUnderOnePercent": true,
+      "p95ResponseTimeUnder3s": false,
+      "p99ResponseTimeUnder5s": true,
+      "zeroLostSubmissions": true,
+      "zeroIncorrectOrgAssignments": true
+    }
+  },
+  "rawK6Data": {
+    "setup_data": {
+      "organizationId": "c7d5efb5-bd5a-4883-8bb4-6a8deab1c9b8",
+      "organizationName": "SKY11",
+      "testType": "Smoke Test",
+      "auditUrl": "https://niwi.orchvate.in/audit?org=SKY11",
+      "baseUrl": "https://niwi.orchvate.in",
+      "runId": "run_1793647410083_x3fqy",
+      "vus": 1,
+      "isPreflightOnly": false,
+      "orgCode": "SKY11"
+    },
+    "root_group": {
+      "name": "",
+      "path": "",
+      "id": "d41d8cd98f00b204e9800998ecf8427e",
+      "groups": [
+        {
+          "checks": [
+            {
+              "name": "preflight: assessment page HTTP 200",
+              "path": "::setup::preflight: assessment page HTTP 200",
+              "id": "8b997c1f67875a3fd860b8d427411d27",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "name": "preflight: page returns HTML content",
+              "path": "::setup::preflight: page returns HTML content",
+              "id": "5ae0c2348938487dcb18c03a5c3f864e",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "name": "preflight: form sections HTTP 200",
+              "path": "::setup::preflight: form sections HTTP 200",
+              "id": "af99864dcbcec597e17d8b0f94e12719",
+              "passes": 1,
+              "fails": 0
+            },
+            {
+              "name": "preflight: sections array returned",
+              "path": "::setup::preflight: sections array returned",
+              "id": "22b98a2f8fd75f1f9ca8b95f9b77b7e4",
+              "passes": 1,
+              "fails": 0
+            }
+          ],
+          "name": "setup",
+          "path": "::setup",
+          "id": "5c0f8025f7e0b6654089e5b00e950f1a",
+          "groups": []
+        }
+      ],
+      "checks": [
+        {
+          "passes": 1,
+          "fails": 0,
+          "name": "step 1: audit page HTTP 200",
+          "path": "::step 1: audit page HTTP 200",
+          "id": "bddbad8e88d560dae49dce3416960048"
+        },
+        {
+          "name": "step 2: form sections HTTP 200",
+          "path": "::step 2: form sections HTTP 200",
+          "id": "0c868168a50b3896a05938aa3b91f615",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "path": "::step 2: has valid sections array",
+          "id": "ce5b736de77c9c3dbd93087b08ffbee8",
+          "passes": 1,
+          "fails": 0,
+          "name": "step 2: has valid sections array"
+        },
+        {
+          "name": "step 3: org validate HTTP 200",
+          "path": "::step 3: org validate HTTP 200",
+          "id": "1b28c1c431ae1d4b93f99092850cacd1",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "name": "step 3: org exists and active",
+          "path": "::step 3: org exists and active",
+          "id": "27c684015a8ebaeec2a27d06ede819a6",
+          "passes": 1,
+          "fails": 0
+        },
+        {
+          "fails": 0,
+          "name": "step 4: submit HTTP 201 or 200",
+          "path": "::step 4: submit HTTP 201 or 200",
+          "id": "51e7cc40e335c2ffa5678c779bfcf9a0",
+          "passes": 1
+        },
+        {
+          "id": "a5c37e59e89b3061846ae98d22c9f536",
+          "passes": 1,
+          "fails": 0,
+          "name": "step 4: response indicates success",
+          "path": "::step 4: response indicates success"
+        }
+      ]
+    },
+    "options": {
+      "summaryTrendStats": [
+        "avg",
+        "min",
+        "med",
+        "max",
+        "p(90)",
+        "p(95)"
+      ],
+      "summaryTimeUnit": "",
+      "noColor": false
+    },
+    "state": {
+      "isStdOutTTY": false,
+      "isStdErrTTY": false,
+      "testRunDurationMs": 15925.3087
+    },
+    "metrics": {
+      "niwi_submission_attempts": {
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.06279313128793541
+        },
+        "type": "counter"
+      },
+      "data_sent": {
+        "contains": "data",
+        "values": {
+          "rate": 351.07639703084686,
+          "count": 5591
+        },
+        "type": "counter"
+      },
+      "niwi_http_error_rate": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "passes": 0,
+          "fails": 4,
+          "rate": 0
+        }
+      },
+      "niwi_submission_success": {
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.06279313128793541
+        },
+        "type": "counter"
+      },
+      "http_req_failed": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 0,
+          "passes": 0,
+          "fails": 7
+        },
+        "thresholds": {
+          "rate<0.01": {
+            "ok": true
+          }
+        }
+      },
+      "vus_max": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 1,
+          "min": 1,
+          "max": 1
+        }
+      },
+      "http_req_duration{expected_response:true}": {
+        "values": {
+          "p(90)": 3275.036000000001,
+          "p(95)": 3869.4520999999986,
+          "avg": 1628.4356571428568,
+          "min": 215.3311,
+          "med": 789.2282,
+          "max": 4463.8682
+        },
+        "type": "trend",
+        "contains": "time"
+      },
+      "niwi_submission_failures": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 0,
+          "rate": 0
+        },
+        "thresholds": {
+          "count==0": {
+            "ok": true
+          }
+        }
+      },
+      "http_req_blocked": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "min": 0,
+          "med": 0,
+          "max": 511.9674,
+          "p(90)": 501.54486,
+          "p(95)": 506.75613,
+          "avg": 143.79484285714287
+        }
+      },
+      "niwi_submission_duration_ms": {
+        "contains": "default",
+        "values": {
+          "med": 4465,
+          "max": 4465,
+          "p(90)": 4465,
+          "p(95)": 4465,
+          "avg": 4465,
+          "min": 4465
+        },
+        "type": "trend"
+      },
+      "niwi_audit_page_duration_ms": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "p(95)": 730,
+          "avg": 730,
+          "min": 730,
+          "med": 730,
+          "max": 730,
+          "p(90)": 730
+        }
+      },
+      "iterations": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 1,
+          "rate": 0.06279313128793541
+        }
+      },
+      "http_req_sending": {
+        "values": {
+          "med": 0,
+          "max": 0.8731,
+          "p(90)": 0.76846,
+          "p(95)": 0.8207799999999998,
+          "avg": 0.3136285714285715,
+          "min": 0
+        },
+        "type": "trend",
+        "contains": "time"
+      },
+      "niwi_org_validation_duration_ms": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "avg": 789,
+          "min": 789,
+          "med": 789,
+          "max": 789,
+          "p(90)": 789,
+          "p(95)": 789
+        }
+      },
+      "http_req_receiving": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 0.931,
+          "max": 230.6772,
+          "p(90)": 216.96132,
+          "p(95)": 223.81925999999999,
+          "avg": 63.00755714285714,
+          "min": 0
+        }
+      },
+      "vus": {
+        "type": "gauge",
+        "contains": "default",
+        "values": {
+          "value": 1,
+          "min": 0,
+          "max": 1
+        }
+      },
+      "http_reqs": {
+        "type": "counter",
+        "contains": "default",
+        "values": {
+          "count": 7,
+          "rate": 0.43955191901554785
+        }
+      },
+      "http_req_connecting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 0,
+          "max": 241.6501,
+          "p(90)": 221.35252,
+          "p(95)": 231.50131,
+          "avg": 64.21012857142857,
+          "min": 0
+        }
+      },
+      "http_req_tls_handshaking": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 75.39044285714286,
+          "min": 0,
+          "med": 0,
+          "max": 275.5833,
+          "p(90)": 261.52320000000003,
+          "p(95)": 268.55325
+        }
+      },
+      "http_req_waiting": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 788.7145,
+          "max": 4462.0641,
+          "p(90)": 3135.9080400000007,
+          "p(95)": 3798.986069999998,
+          "avg": 1565.1144714285713,
+          "min": 213.5939
+        }
+      },
+      "niwi_form_sections_duration_ms": {
+        "type": "trend",
+        "contains": "default",
+        "values": {
+          "p(95)": 2483,
+          "avg": 2483,
+          "min": 2483,
+          "med": 2483,
+          "max": 2483,
+          "p(90)": 2483
+        }
+      },
+      "iteration_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "med": 11972.6805,
+          "max": 11972.6805,
+          "p(90)": 11972.6805,
+          "p(95)": 11972.6805,
+          "avg": 11972.6805,
+          "min": 11972.6805
+        }
+      },
+      "http_req_duration": {
+        "type": "trend",
+        "contains": "time",
+        "values": {
+          "avg": 1628.4356571428568,
+          "min": 215.3311,
+          "med": 789.2282,
+          "max": 4463.8682,
+          "p(90)": 3275.036000000001,
+          "p(95)": 3869.4520999999986
+        },
+        "thresholds": {
+          "max<15000": {
+            "ok": true
+          }
+        }
+      },
+      "niwi_org_id_match_rate": {
+        "thresholds": {
+          "rate==1.0": {
+            "ok": true
+          }
+        },
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 1,
+          "fails": 0
+        }
+      },
+      "checks": {
+        "type": "rate",
+        "contains": "default",
+        "values": {
+          "rate": 1,
+          "passes": 11,
+          "fails": 0
+        }
+      },
+      "data_received": {
+        "type": "counter",
+        "contains": "data",
+        "values": {
+          "count": 56502,
+          "rate": 3547.9375040309264
+        }
+      }
+    }
+  }
+}
