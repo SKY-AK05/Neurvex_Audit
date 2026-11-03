@@ -22,9 +22,9 @@
 
 
 
-        <!-- Search & Filter Bar -->
+        <!-- Search & Filter Bar (shown in side layout mode) -->
 
-        <div class="search-banner-card">
+        <div class="search-banner-card" v-if="layoutMode === 'side'">
 
           <div class="search-input-group">
 
@@ -88,15 +88,181 @@
 
 
 
-    <!-- Main 2-Column Dashboard Grid matching Overview & Reference Image -->
+    <!-- TOP ORGANISATION PANEL (Full-Width Header & Switcher) -->
+    <section v-if="layoutMode === 'top'" class="org-top-selector-panel" aria-label="Organisation Switcher & Navigation">
+      <div class="otp-main-bar">
+        <!-- 1. Active Organisation Display & Dropdown Switcher Button -->
+        <div class="otp-switcher-container">
+          <div class="otp-active-card" @click="toggleOrgDropdown" :class="{ 'dropdown-open': orgDropdownOpen }" role="button" tabindex="0" :title="'Current: ' + (selectedOrg?.name || 'Select Organisation')">
+            <div class="otp-monogram" :style="{ backgroundColor: selectedOrg ? getMonogramColor(selectedOrg.name) : '#4F46E5' }">
+              {{ selectedOrg ? getMonogram(selectedOrg.name) : '🏢' }}
+            </div>
+            <div class="otp-info">
+              <span class="otp-label">Active Organisation</span>
+              <div class="otp-name-row">
+                <strong class="otp-name">{{ selectedOrg?.name || 'Select Organisation' }}</strong>
+                <span class="otp-caret">{{ orgDropdownOpen ? '▲' : '▼' }}</span>
+              </div>
+            </div>
+            <div class="otp-meta-badges" v-if="selectedOrg">
+              <span class="otp-score-badge" :class="getScoreColorClass(selectedOrg.org_avg)">
+                {{ selectedOrg.org_avg != null ? selectedOrg.org_avg + '/20' : '—' }}
+              </span>
+              <span class="otp-count-badge">
+                {{ selectedOrg.respondent_count }} {{ selectedOrg.respondent_count === 1 ? 'sub' : 'subs' }}
+              </span>
+              <span v-if="selectedOrg.is_virtual" class="otp-type-pool">Pool</span>
+              <span v-else class="otp-type-linked">Linked</span>
+            </div>
+          </div>
 
-    <div class="main-orgs-grid">
+          <!-- Quick Prev / Next Arrows -->
+          <div class="otp-nav-arrows">
+            <button type="button" class="otp-arrow-btn" @click.stop="selectPrevOrg" title="Previous Organisation" :disabled="!filteredOrgs.length">‹</button>
+            <button type="button" class="otp-arrow-btn" @click.stop="selectNextOrg" title="Next Organisation" :disabled="!filteredOrgs.length">›</button>
+          </div>
 
+          <!-- Dropdown Popover Menu -->
+          <div v-if="orgDropdownOpen" class="otp-dropdown-popover" @click.stop>
+            <div class="odp-header">
+              <span class="odp-title">Select Organisation ({{ filteredOrgs.length }})</span>
+              <button type="button" class="odp-close-btn" @click="orgDropdownOpen = false">✕</button>
+            </div>
 
+            <!-- Search Inside Dropdown -->
+            <div class="odp-search-box">
+              <input
+                v-model="orgSearch"
+                type="text"
+                placeholder="Search organisations..."
+                class="odp-search-input"
+              />
+              <button v-if="orgSearch" class="btn-clear-odp" @click="orgSearch = ''">✕</button>
+            </div>
 
-      <!-- LEFT COLUMN: Organisation Directory Card (like Filters in Overview) -->
+            <!-- Filter Pills Inside Dropdown -->
+            <div class="odp-filter-pills">
+              <button class="odp-pill" :class="{ active: orgFilter === 'all' }" @click="orgFilter = 'all'">All ({{ orgs.length }})</button>
+              <button class="odp-pill" :class="{ active: orgFilter === 'with_submissions' }" @click="orgFilter = 'with_submissions'">With Audits ({{ orgsWithSubsCount }})</button>
+              <button class="odp-pill" :class="{ active: orgFilter === 'linked' }" @click="orgFilter = 'linked'">Linked ({{ linkedOrgsCount }})</button>
+              <button class="odp-pill" :class="{ active: orgFilter === 'unlinked' }" @click="orgFilter = 'unlinked'">Pools ({{ unlinkedOrgsCount }})</button>
+            </div>
 
-      <aside class="org-sidebar-card" aria-label="Organisation Selector">
+            <!-- List of Orgs -->
+            <div class="odp-list">
+              <div v-if="filteredOrgs.length === 0" class="odp-empty">
+                No matching organisations found.
+              </div>
+              <button
+                v-for="org in filteredOrgs"
+                :key="org.id"
+                type="button"
+                class="odp-item"
+                :class="{ 'active': selectedOrg?.id === org.id }"
+                @click="selectOrgFromTop(org)"
+              >
+                <div class="odp-item-left">
+                  <div class="odp-monogram" :style="{ backgroundColor: getMonogramColor(org.name) }">
+                    {{ getMonogram(org.name) }}
+                  </div>
+                  <div class="odp-item-text">
+                    <span class="odp-item-name">{{ org.name }}</span>
+                    <span class="odp-item-count">{{ org.respondent_count }} {{ org.respondent_count === 1 ? 'submission' : 'submissions' }}</span>
+                  </div>
+                </div>
+                <div class="odp-item-right">
+                  <span class="odp-item-score" :class="getScoreColorClass(org.org_avg)">
+                    {{ org.org_avg != null ? org.org_avg + '/20' : '—' }}
+                  </span>
+                  <span v-if="org.is_virtual" class="soi-tag-pool">Pool</span>
+                  <span v-else class="soi-tag-linked">Linked</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Center / Search & Filter Controls -->
+        <div class="otp-center-controls">
+          <div class="otp-search-group">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input
+              v-model="orgSearch"
+              type="text"
+              placeholder="Search organisation…"
+              class="otp-search-input"
+            />
+            <button v-if="orgSearch" class="btn-clear-search-sm" @click="orgSearch = ''">✕</button>
+          </div>
+
+          <div class="otp-pills-row">
+            <button class="s-pill" :class="{ active: orgFilter === 'all' }" @click="orgFilter = 'all'">All</button>
+            <button class="s-pill" :class="{ active: orgFilter === 'with_submissions' }" @click="orgFilter = 'with_submissions'">With Audits</button>
+            <button class="s-pill" :class="{ active: orgFilter === 'linked' }" @click="orgFilter = 'linked'">Linked</button>
+            <button class="s-pill" :class="{ active: orgFilter === 'unlinked' }" @click="orgFilter = 'unlinked'">Pools</button>
+          </div>
+        </div>
+
+        <!-- 3. Right: Actions & Layout Toggle -->
+        <div class="otp-actions-group">
+          <button type="button" class="btn-new-org-top" @click="openCreateOrgModal">
+            + New Org
+          </button>
+          <button type="button" class="btn-toggle-strip" @click="showTopCarousel = !showTopCarousel" :title="showTopCarousel ? 'Hide Organisation Strip' : 'Show Organisation Strip'">
+            {{ showTopCarousel ? 'Hide Strip ▲' : 'Show Strip ▼' }}
+          </button>
+          <div class="layout-toggle-group">
+            <button type="button" class="btn-layout-mode" :class="{ active: layoutMode === 'top' }" @click="setLayoutMode('top')" title="Top Panel Layout (Full-Width Content)">
+              ☷ Full Width
+            </button>
+            <button type="button" class="btn-layout-mode" :class="{ active: layoutMode === 'side' }" @click="setLayoutMode('side')" title="Sidebar Layout (Split View)">
+              ◧ Side Panel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horizontal Quick-Picker Carousel Strip -->
+      <div v-if="showTopCarousel" class="otp-carousel-strip">
+        <div v-if="loading" class="otp-carousel-loading">
+          <div v-for="i in 5" :key="i" class="otp-skeleton-pill"></div>
+        </div>
+        <div v-else-if="filteredOrgs.length === 0" class="otp-carousel-empty">
+          No matching organisations
+        </div>
+        <div v-else class="otp-carousel-items" role="tablist">
+          <button
+            v-for="org in filteredOrgs"
+            :key="org.id"
+            type="button"
+            class="otp-carousel-card"
+            :class="{ 'active': selectedOrg?.id === org.id }"
+            @click="selectOrg(org)"
+            :title="org.name + ' (' + org.respondent_count + ' submissions)'"
+          >
+            <div class="occ-monogram" :style="{ backgroundColor: getMonogramColor(org.name) }">
+              {{ getMonogram(org.name) }}
+            </div>
+            <div class="occ-text">
+              <span class="occ-name">{{ org.name }}</span>
+              <span class="occ-meta">{{ org.respondent_count }} subs</span>
+            </div>
+            <span class="occ-score" :class="getScoreColorClass(org.org_avg)">
+              {{ org.org_avg != null ? org.org_avg : '—' }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Dashboard Grid (Full Width in top layout mode, or 2-column in side mode) -->
+    <div class="main-orgs-grid" :class="{ 'is-top-layout': layoutMode === 'top' }">
+
+      <!-- LEFT COLUMN: Organisation Directory Card (shown only in side mode) -->
+      <aside v-if="layoutMode === 'side'" class="org-sidebar-card" aria-label="Organisation Selector">
 
         <div class="osc-header">
 
@@ -124,6 +290,15 @@
 
               + New Org
 
+            </button>
+
+            <button
+              type="button"
+              class="btn-move-top-sm"
+              @click="setLayoutMode('top')"
+              title="Move Organisation Panel to Top for full-width content"
+            >
+              ☷ Move to Top
             </button>
 
             <span class="osc-badge">{{ orgFilter === 'all' ? 'All' : orgFilter }}</span>
@@ -3458,7 +3633,55 @@
 
 <script setup>
 
-import { ref, reactive, computed, watch, onMounted } from 'vue';
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue';
+
+// Layout Mode: 'top' (full-width table & metrics) or 'side' (split 2-column)
+const layoutMode = ref(localStorage.getItem('niwi_org_layout') || 'top');
+function setLayoutMode(mode) {
+  layoutMode.value = mode;
+  localStorage.setItem('niwi_org_layout', mode);
+}
+
+// Top Organisation Switcher & Dropdown State
+const orgDropdownOpen = ref(false);
+const showTopCarousel = ref(true);
+
+function toggleOrgDropdown() {
+  orgDropdownOpen.value = !orgDropdownOpen.value;
+}
+
+function selectOrgFromTop(org) {
+  selectOrg(org);
+  orgDropdownOpen.value = false;
+}
+
+function selectNextOrg() {
+  if (!filteredOrgs.value.length) return;
+  const currentIndex = filteredOrgs.value.findIndex(o => o.id === selectedOrg.value?.id);
+  const nextIndex = (currentIndex + 1) % filteredOrgs.value.length;
+  selectOrg(filteredOrgs.value[nextIndex]);
+}
+
+function selectPrevOrg() {
+  if (!filteredOrgs.value.length) return;
+  const currentIndex = filteredOrgs.value.findIndex(o => o.id === selectedOrg.value?.id);
+  const prevIndex = (currentIndex - 1 + filteredOrgs.value.length) % filteredOrgs.value.length;
+  selectOrg(filteredOrgs.value[prevIndex]);
+}
+
+function onDocClick(e) {
+  if (orgDropdownOpen.value && !e.target.closest('.otp-switcher-container')) {
+    orgDropdownOpen.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', onDocClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', onDocClick);
+});
 
 import ScoreTable from '../components/ScoreTable.vue';
 
@@ -11821,6 +12044,536 @@ onMounted(fetchOrgs);
 
   margin-top: 4px;
 
+}
+
+
+/* ==========================================================================
+   TOP ORGANISATION SELECTOR PANEL (Full Width Layout)
+   ========================================================================== */
+
+.main-orgs-grid.is-top-layout {
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+.main-orgs-grid.is-top-layout .org-main-workspace {
+  width: 100%;
+  max-width: 100%;
+}
+
+.org-top-selector-panel {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px rgba(22, 16, 87, 0.08);
+  margin-bottom: 20px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.otp-main-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.otp-switcher-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.otp-active-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #F8FAFC;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.otp-active-card:hover, .otp-active-card.dropdown-open {
+  border-color: var(--primary, #161057);
+  background: #EEF2FF;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.08);
+}
+
+.otp-monogram {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.otp-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.otp-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748B;
+  font-weight: 700;
+}
+
+.otp-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.otp-name {
+  font-size: 0.95rem;
+  color: var(--primary, #161057);
+  font-weight: 700;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.otp-caret {
+  font-size: 0.72rem;
+  color: #64748B;
+}
+
+.otp-meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid #CBD5E1;
+}
+
+.otp-score-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.otp-count-badge {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #E2E8F0;
+  color: #334155;
+}
+
+.otp-type-pool, .otp-type-linked {
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.otp-type-pool { background: #FEF3C7; color: #92400E; }
+.otp-type-linked { background: #E0E7FF; color: #3730A3; }
+
+.otp-nav-arrows {
+  display: flex;
+  gap: 4px;
+}
+
+.otp-arrow-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #CBD5E1;
+  background: #FFFFFF;
+  color: var(--primary, #161057);
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.otp-arrow-btn:hover:not(:disabled) {
+  background: #F1F5F9;
+  border-color: var(--primary, #161057);
+}
+.otp-arrow-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Dropdown Popover */
+.otp-dropdown-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 380px;
+  max-width: 90vw;
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(22, 16, 87, 0.15);
+  z-index: 1000;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.odp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.odp-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+}
+.odp-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #64748B;
+  font-size: 0.85rem;
+}
+
+.odp-search-box {
+  position: relative;
+}
+.odp-search-input {
+  width: 100%;
+  padding: 7px 28px 7px 10px;
+  font-size: 0.82rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  outline: none;
+}
+.odp-search-input:focus {
+  border-color: var(--primary, #161057);
+}
+.btn-clear-odp {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+}
+
+.odp-filter-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.odp-pill {
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  border: 1px solid #E2E8F0;
+  background: #F8FAFC;
+  color: #475569;
+  cursor: pointer;
+}
+.odp-pill.active {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border-color: var(--primary, #161057);
+}
+
+.odp-list {
+  max-height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.odp-empty {
+  padding: 16px;
+  text-align: center;
+  color: #94A3B8;
+  font-size: 0.82rem;
+}
+.odp-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: #FFFFFF;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+.odp-item:hover {
+  background: #F1F5F9;
+  border-color: #E2E8F0;
+}
+.odp-item.active {
+  background: #EEF2FF;
+  border-color: var(--primary, #161057);
+}
+.odp-item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.odp-monogram {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.odp-item-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.odp-item-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 190px;
+}
+.odp-item-count {
+  font-size: 0.7rem;
+  color: #64748B;
+}
+.odp-item-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.odp-item-score {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Center Controls */
+.otp-center-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  max-width: 520px;
+}
+.otp-search-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+}
+.otp-search-group .search-icon {
+  position: absolute;
+  left: 10px;
+  color: #64748B;
+  pointer-events: none;
+}
+.otp-search-input {
+  width: 100%;
+  padding: 7px 28px 7px 32px;
+  font-size: 0.82rem;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  background: #F8FAFC;
+  outline: none;
+}
+.otp-search-input:focus {
+  border-color: var(--primary, #161057);
+  background: #FFFFFF;
+}
+.btn-clear-search-sm {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+.otp-pills-row {
+  display: flex;
+  gap: 4px;
+}
+
+/* Actions Group */
+.otp-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-new-org-top {
+  background: var(--teal, #0D7A70);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.btn-new-org-top:hover {
+  opacity: 0.9;
+}
+.btn-toggle-strip {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-toggle-strip:hover {
+  background: #E2E8F0;
+}
+.layout-toggle-group {
+  display: flex;
+  background: #F1F5F9;
+  border-radius: 8px;
+  padding: 2px;
+  border: 1px solid #E2E8F0;
+}
+.btn-layout-mode {
+  border: none;
+  background: transparent;
+  padding: 5px 9px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748B;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.btn-layout-mode.active {
+  background: #FFFFFF;
+  color: var(--primary, #161057);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  font-weight: 700;
+}
+
+.btn-move-top-sm {
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: #EEF2FF;
+  color: var(--primary, #161057);
+  border: 1px solid #C7D2FE;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn-move-top-sm:hover {
+  background: #E0E7FF;
+}
+
+/* Carousel Strip */
+.otp-carousel-strip {
+  border-top: 1px solid #E2E8F0;
+  padding-top: 10px;
+  overflow: hidden;
+}
+.otp-carousel-items {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.otp-carousel-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  max-width: 220px;
+}
+.otp-carousel-card:hover {
+  border-color: #94A3B8;
+  background: #F1F5F9;
+}
+.otp-carousel-card.active {
+  border: 1.5px solid var(--primary, #161057);
+  background: #EEF2FF;
+  box-shadow: 0 1px 4px rgba(22, 16, 87, 0.1);
+}
+.occ-monogram {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.occ-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.occ-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1E293B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 110px;
+}
+.occ-meta {
+  font-size: 0.68rem;
+  color: #64748B;
+}
+.occ-score {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }
 
 </style>
