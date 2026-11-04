@@ -343,8 +343,8 @@ const ANSWER_POOL = ['Yes', 'Partially', 'No', 'Not Sure'];
  * Email uses RFC 2606 example.com domain to guarantee ZERO outbound delivery.
  */
 export function generateSyntheticEmployee(vuId, iteration, orgId, orgName) {
-  if (!orgId || !orgName) {
-    throw new Error('generateSyntheticEmployee requires verified orgId and orgName');
+  if (!orgName) {
+    throw new Error('generateSyntheticEmployee requires orgName');
   }
 
   const seed = (vuId * 100) + iteration;
@@ -372,7 +372,7 @@ export function generateSyntheticEmployee(vuId, iteration, orgId, orgName) {
   return {
     name: syntheticName,
     company_name: orgName,
-    organization_id: orgId,
+    organization_id: orgId || null,
     email: syntheticEmail,
     contact_number: '+44 7700 900000',
     consent_given: true,

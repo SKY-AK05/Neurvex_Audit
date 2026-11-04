@@ -106,14 +106,15 @@ export function setup() {
       if (valRes.status === 200 && body.valid === true) {
         orgId = body.organization_id;
         orgName = body.organization_name;
+        console.log(`✅ Existing organization verified: ${orgName} (${orgId})`);
       } else {
-        throw new Error(`Organization '${orgCode}' could not be validated: ${body.error || `HTTP ${valRes.status}`}`);
+        console.log(`📝 New organization flow: '${orgCode}' will be created on submission.`);
+        orgName = orgCode;
       }
     } catch (e) {
-      throw new Error(`Failed to validate organization '${orgCode}': ${e.message}`);
+      console.log(`📝 New organization flow: '${orgCode}' will be created on submission.`);
+      orgName = orgCode;
     }
-    
-    console.log(`✅ Organization validated: ${orgName} (${orgId})`);
     
     return {
       baseUrl: baseUrl,
