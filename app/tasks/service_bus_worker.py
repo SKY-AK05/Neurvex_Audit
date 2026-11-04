@@ -273,23 +273,28 @@ def _run_admin_notification(submission_id: str, admin_payload: dict) -> Dict[str
             "metadata": {"reason": "Notifications disabled in app_settings"}
         }
 
-    status, err = notify_admin_new_submission(
+    notify_admin_new_submission(
         cur=None,
         submission_id=submission_id,
         name=name,
         company_name=company_name,
-        sync=True
+        sync=False
     )
     return {
-        "status": status,
-        "metadata": {"reason": err} if err else {"sent": True}
+        "status": "SENT",
+        "metadata": {"dispatched_async": True}
     }
 
 
-def handle_submission_created(submission_id: str, payload: Optional[Dict[str, Any]] = None, worker_id: str = "sb-worker-1") -> None:
+def handle_submission_created(
+    submission_id: str,
+    payload: Optional[Dict[str, Any]] = None,
+    worker_id: str = "sb-worker-1",
+    prefetched_row: Optional[tuple] = None
+) -> None:
     """
     Main asynchronous worker processor for a submission:
-    1. Loads raw submission from raw_submissions table
+    1. Loads raw submission from raw_submissions table (or reuses prefetched row)
     2. Performs score calculation (calculate_scores_pure)
     3. Persists computed record into submissions table
     4. Executes post-submit steps (reports, emails, CRM, admin notifications)
@@ -297,24 +302,27 @@ def handle_submission_created(submission_id: str, payload: Optional[Dict[str, An
     """
     sub_uuid = str(submission_id).strip()
 
-    # Step 1: Load raw submission
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT submission_id, idempotency_key, organization_id, payload, status, retry_count
-                FROM raw_submissions
-                WHERE submission_id = %s
-                """,
-                (sub_uuid,)
-            )
-            raw_row = cur.fetchone()
+    if prefetched_row:
+        raw_id, form_payload, raw_retries, raw_idemp, raw_org_id, raw_status = prefetched_row
+    else:
+        # Step 1: Load raw submission
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT submission_id, idempotency_key, organization_id, payload, status, retry_count
+                    FROM raw_submissions
+                    WHERE submission_id = %s
+                    """,
+                    (sub_uuid,)
+                )
+                raw_row = cur.fetchone()
 
-    if not raw_row:
-        logger.warning("Raw submission %s not found in database. Cannot process.", sub_uuid)
-        return
+        if not raw_row:
+            logger.warning("Raw submission %s not found in database. Cannot process.", sub_uuid)
+            return
 
-    raw_id, raw_idemp, raw_org_id, form_payload, raw_status, raw_retries = raw_row
+        raw_id, raw_idemp, raw_org_id, form_payload, raw_status, raw_retries = raw_row
 
     if raw_status == "COMPLETED":
         logger.info("Submission %s already marked COMPLETED. Skipping duplicate execution.", sub_uuid)
@@ -659,7 +667,7 @@ def run_db_fallback_worker(poll_interval: float = 0.5):
                         with conn.cursor() as cur:
                             cur.execute(
                                 """
-                                SELECT submission_id, payload, retry_count
+                                SELECT submission_id, payload, retry_count, idempotency_key, organization_id, status
                                 FROM raw_submissions
                                 WHERE status = 'RECEIVED'
                                    OR (status = 'PROCESSING' AND processing_started_at < NOW() - INTERVAL '3 minutes')
@@ -673,7 +681,7 @@ def run_db_fallback_worker(poll_interval: float = 0.5):
                 if raw_pending:
                     for raw in raw_pending:
                         try:
-                            handle_submission_created(str(raw[0]), raw[1], worker_id=worker_id)
+                            handle_submission_created(str(raw[0]), raw[1], worker_id=worker_id, prefetched_row=raw)
                         except Exception as e:
                             logger.error("Error processing pending raw submission %s: %s", raw[0], e)
                 else:

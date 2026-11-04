@@ -379,7 +379,6 @@ def submit(request: Request, payload: AuditSubmission, response: Response, backg
         raise HTTPException(status_code=500, detail="Database error persisting submission")
 
     submission_id = str(created_id)
-    dashboard_cache.clear()
 
     t_req_end = time.perf_counter()
     logger.info(
@@ -446,7 +445,7 @@ def get_submissions(request: Request):
                     LEFT JOIN organizations o ON o.id = r.organization_id
                     WHERE r.status IN ('RECEIVED', 'PROCESSING', 'DEAD_LETTERED', 'FAILED', 'RETRYING')
                       AND NOT EXISTS (
-                          SELECT 1 FROM submissions s WHERE s.id = r.submission_id OR s.raw_submission_id = r.submission_id
+                          SELECT 1 FROM submissions s WHERE s.id = r.submission_id
                       )
                     ORDER BY submitted_at DESC
                 """
@@ -492,6 +491,7 @@ def get_submissions(request: Request):
             for field in demographic_fields:
                 if isinstance(answers, dict) and field in answers and field not in r:
                     r[field] = answers[field]
+            r.pop('answers', None)
 
         result.append(r)
 
@@ -578,6 +578,7 @@ async def filter_submissions(request: Request):
             for field in demographic_fields:
                 if field in answers and field not in r:
                     r[field] = answers[field]
+            r.pop('answers', None)
 
         items.append(r)
 
