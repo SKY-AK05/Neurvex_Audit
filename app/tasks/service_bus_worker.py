@@ -34,6 +34,7 @@ from app.services.settings_service import (
     get_settings,
     notify_admin_new_submission,
 )
+from app.services.worker_tracker import WorkerTracker
 from app.services.crm_service import (
     is_hubspot_configured,
     sync_to_hubspot,
@@ -327,11 +328,12 @@ def handle_submission_created(submission_id: str, payload: Optional[Dict[str, An
                     """
                     UPDATE raw_submissions
                     SET status = 'PROCESSING',
+                        worker_id = %s,
                         processing_started_at = COALESCE(processing_started_at, NOW()),
                         updated_at = NOW()
                     WHERE submission_id = %s
                     """,
-                    (sub_uuid,)
+                    (worker_id, sub_uuid)
                 )
 
     try:
@@ -486,12 +488,13 @@ def handle_submission_created(submission_id: str, payload: Optional[Dict[str, An
                             report_status = %s,
                             email_status = %s,
                             crm_status = %s,
+                            worker_id = %s,
                             processing_completed_at = NOW(),
                             updated_at = NOW(),
                             last_error = NULL
                         WHERE submission_id = %s
                         """,
-                        (final_report_status, final_email_status, final_crm_status, sub_uuid)
+                        (final_report_status, final_email_status, final_crm_status, worker_id, sub_uuid)
                     )
                     cur.execute(
                         """
@@ -533,13 +536,14 @@ def handle_submission_created(submission_id: str, payload: Optional[Dict[str, An
                         """
                         UPDATE raw_submissions
                         SET retry_count = retry_count + 1,
+                            worker_id = %s,
                             last_error = %s,
                             status = CASE WHEN retry_count + 1 >= %s THEN 'DEAD_LETTERED' ELSE 'RETRYING' END,
                             updated_at = NOW()
                         WHERE submission_id = %s
                         RETURNING retry_count, status;
                         """,
-                        (err_msg, MAX_DELIVERY_BEFORE_DLQ, sub_uuid)
+                        (worker_id, err_msg, MAX_DELIVERY_BEFORE_DLQ, sub_uuid)
                     )
                     row = cur.fetchone()
                     if row:
@@ -610,6 +614,8 @@ def run_db_fallback_worker(poll_interval: float = 0.5):
     Polls service_bus_outbox directly and executes submission processing without Azure Service Bus.
     """
     worker_id = f"db-fallback-{socket.gethostname()}-{os.getpid()}"
+    tracker = WorkerTracker(worker_id=worker_id, worker_type="db_fallback_worker", heartbeat_interval=45.0)
+    tracker.set_idle("Polling outbox queue")
     logger.info("DB Fallback Worker active [worker_id=%s, poll_interval=%.2fs]", worker_id, poll_interval)
 
     while not _stop_requested:
@@ -670,6 +676,7 @@ def run_db_fallback_worker(poll_interval: float = 0.5):
                         except Exception as e:
                             logger.error("Error processing pending raw submission %s: %s", raw[0], e)
                 else:
+                    tracker.heartbeat_if_due()
                     import time
                     time.sleep(poll_interval)
                 continue
@@ -741,6 +748,8 @@ def run_service_bus_worker():
         pass
 
     worker_id = f"sb-worker-{socket.gethostname()}-{os.getpid()}"
+    tracker = WorkerTracker(worker_id=worker_id, worker_type="service_bus_worker", heartbeat_interval=45.0)
+    tracker.set_idle("Waiting for Service Bus messages")
 
     if not is_service_bus_configured():
         logger.info("Azure Service Bus is not configured. Starting in DB-outbox fallback mode.")
@@ -769,6 +778,7 @@ def run_service_bus_worker():
                         max_wait_time=RECEIVE_WAIT_TIME
                     )
                     if not messages:
+                        tracker.heartbeat_if_due()
                         continue
 
                     for msg in messages:
@@ -779,6 +789,8 @@ def run_service_bus_worker():
                                 pass
                             break
                         process_message(receiver, msg, worker_id=worker_id)
+                        tracker.record_job_completed(1)
+                    tracker.set_idle()
 
         except Exception as e:
             if not _stop_requested:

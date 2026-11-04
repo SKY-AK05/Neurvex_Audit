@@ -1,3 +1,4 @@
+from app.services.worker_tracker import WorkerTracker
 """
 outbox_service.py — Transactional Outbox Dispatcher for Azure Service Bus.
 Polls PostgreSQL service_bus_outbox table using SELECT ... FOR UPDATE SKIP LOCKED
@@ -204,6 +205,8 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
         pass
 
     worker_id = f"outbox-disp-{socket.gethostname()}-{os.getpid()}"
+    tracker = WorkerTracker(worker_id=worker_id, worker_type="outbox_dispatcher", heartbeat_interval=45.0)
+    tracker.set_idle("Polling outbox events")
     logger.info("Outbox dispatcher daemon started [worker_id=%s, poll_interval=%.2fs]", worker_id, poll_interval)
 
     warned_offline = False
@@ -221,8 +224,12 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
 
             processed = dispatch_pending_outbox_events(batch_size=BATCH_SIZE, worker_id=worker_id)
             if processed > 0:
+                tracker.record_job_completed(processed)
+                tracker.set_task(f"Dispatched {processed} outbox events", status="active")
                 time.sleep(0.05)  # Yield briefly under heavy load
             else:
+                tracker.set_idle("Waiting for outbox events")
+                tracker.heartbeat_if_due()
                 time.sleep(poll_interval)
         except Exception as e:
             logger.error("Unexpected error in outbox dispatcher loop: %s", e, exc_info=True)

@@ -19,7 +19,7 @@ from uuid import UUID
 import uuid as uuid_pkg
 
 from cachetools import TTLCache
-from fastapi import APIRouter, HTTPException, Request, Response, BackgroundTasks, Depends, status
+from fastapi import APIRouter, HTTPException, Request, Response, BackgroundTasks, Depends, status, Query
 from fastapi.responses import JSONResponse
 import jwt
 import psycopg2
@@ -1959,3 +1959,19 @@ def replay_submission(request: Request, submission_id: str):
         "status": "PENDING",
         "message": f"Submission {sub_uuid} has been queued for replay."
     }
+
+
+# ---------------------------------------------------------------------------
+# Super Admin Operations Dashboard (Requirement: /api/admin/dashboard)
+# Strictly accessible only to users with the Super Admin role.
+# Returns cached 2-minute snapshot of request overview, analytics & worker fleet.
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/dashboard")
+def get_super_admin_dashboard_endpoint(
+    request: Request,
+    refresh: bool = Query(False, description="Force recompute snapshot")
+):
+    require_super_admin(request)
+    from app.services.dashboard_service import get_dashboard_snapshot
+    return get_dashboard_snapshot(force_refresh=refresh)

@@ -413,3 +413,12 @@ export async function replaySubmission(submissionId) {
   });
   return handleResponse(res);
 }
+
+
+export async function getSuperAdminDashboard(forceRefresh = false) {
+  const url = `${API_BASE}/admin/dashboard${forceRefresh ? '?refresh=true' : ''}`;
+  const res = await fetch(url, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}

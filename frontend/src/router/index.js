@@ -15,6 +15,7 @@ import OrgDashboard     from "../views/OrgDashboard.vue";
 import Organisations    from "../views/Organisations.vue";
 import BookCall         from "../views/BookCall.vue";
 import FormBuilder      from "../views/FormBuilder.vue";
+import SuperDashboard    from "../views/SuperDashboard.vue";
 
 const routes = [
   { path: "/",                        component: AuditForm },
@@ -31,6 +32,8 @@ const routes = [
   { path: "/admin/settings",          component: Settings,         meta: { requiresAuth: true } },
   { path: "/admin/support",           component: Support,          meta: { requiresAuth: true } },
   { path: "/admin/users",             component: UserManagement,   meta: { requiresAuth: true, requiresSuper: true } },
+  { path: "/admin/super-dashboard",   component: SuperDashboard,  meta: { requiresAuth: true, requiresSuper: true } },
+  { path: "/admin/system-dashboard",  redirect: "/admin/super-dashboard" },
   { path: "/admin/organisations",     component: Organisations,    meta: { requiresAuth: true } },
   { path: "/admin/form-builder",      component: FormBuilder,      meta: { requiresAuth: true } },
 

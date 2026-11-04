@@ -27,6 +27,10 @@
             <router-link to="/admin/form-builder" class="top-nav-link" :class="{ active: route.path === '/admin/form-builder' }">
               Form Builder
             </router-link>
+            <router-link v-if="isSuper" to="/admin/super-dashboard" class="top-nav-link super-nav-pill" :class="{ active: route.path === '/admin/super-dashboard' }">
+              <span class="super-dot"></span>
+              Super Admin
+            </router-link>
           </nav>
 
           <!-- Right Controls: Powered by, Notification Alerts, User Profile, Mobile Menu -->
@@ -86,6 +90,10 @@
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                   Settings
                 </router-link>
+                <router-link v-if="isSuper" to="/admin/super-dashboard" class="profile-item" @click="profileOpen = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
+                  Super Admin Fleet
+                </router-link>
                 <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                   User Management
@@ -134,6 +142,9 @@
           <div class="mobile-nav-divider"></div>
           <router-link to="/admin/settings" class="mobile-nav-link" @click="mobileNavOpen = false">
             Settings
+          </router-link>
+          <router-link v-if="isSuper" to="/admin/super-dashboard" class="mobile-nav-link" @click="mobileNavOpen = false">
+            Super Admin Fleet
           </router-link>
           <router-link v-if="isSuper" to="/admin/users" class="mobile-nav-link" @click="mobileNavOpen = false">
             User Management
@@ -995,5 +1006,25 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
     gap: 6px;
   }
 }
+
+.super-nav-pill {
+  position: relative;
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.super-nav-pill.active {
+  color: #0369a1 !important;
+  background: #e0f2fe;
+}
+.super-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0284c7;
+}
+
 </style>
 
