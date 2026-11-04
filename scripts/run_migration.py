@@ -1,26 +1,28 @@
 """
-run_migration.py — Run a specific SQL migration against the live database.
-Usage: python run_migration.py <migration_file>
-Example: python run_migration.py migrations/007_fix_score_columns.sql
+run_migration.py — Run migrations against the live database.
+Usage:
+  python scripts/run_migration.py                       # Runs all pending migrations via migrate.py
+  python scripts/run_migration.py <migration_file>      # Runs a specific migration file
 """
 import os
 import sys
 import psycopg2
 
-# Add app directory to path to import keyvault module
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+
+if len(sys.argv) <= 1:
+    # Default to running all pending migrations safely via migrate.py
+    from scripts.migrate import migrate
+    migrate()
+    sys.exit(0)
 
 from app.core.keyvault import init_keyvault, get_database_config
 
-# Initialize Key Vault (falls back to env vars in dev)
 init_keyvault()
-
-# Get database config from Key Vault or environment
 db_config = get_database_config()
+migration_file = sys.argv[1]
 
-migration_file = sys.argv[1] if len(sys.argv) > 1 else "migrations/007_fix_score_columns.sql"
-
-print(f"Running migration: {migration_file}")
+print(f"Running specific migration: {migration_file}")
 
 conn = psycopg2.connect(
     host=db_config["host"],
@@ -32,7 +34,7 @@ conn = psycopg2.connect(
 )
 
 try:
-    with open(migration_file, "r") as f:
+    with open(migration_file, "r", encoding="utf-8") as f:
         sql = f.read()
 
     with conn:
