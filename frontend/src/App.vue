@@ -27,8 +27,7 @@
             <router-link to="/admin/form-builder" class="top-nav-link" :class="{ active: route.path === '/admin/form-builder' }">
               Form Builder
             </router-link>
-            <router-link v-if="isSuper" to="/admin/super-dashboard" class="top-nav-link super-nav-pill" :class="{ active: route.path === '/admin/super-dashboard' }">
-              <span class="super-dot"></span>
+            <router-link v-if="isSuper" to="/admin/super-dashboard" class="top-nav-link" :class="{ active: route.path === '/admin/super-dashboard' }">
               Engine
             </router-link>
           </nav>
@@ -1007,41 +1006,6 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   }
 }
 
-.super-nav-pill {
-  position: relative;
-  color: var(--primary, #161057) !important;
-  font-weight: 700 !important;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: #FAF9F5;
-  border: 1px solid var(--primary, #161057);
-  border-radius: 9999px;
-  padding: 4px 12px;
-  margin-left: 6px;
-  font-size: 0.82rem;
-  box-shadow: 1px 1px 0px rgba(22, 16, 87, 0.12);
-  transition: all 0.15s ease;
-}
-.super-nav-pill:hover {
-  background: #F0EEE9;
-  transform: translateY(-1px);
-  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.18);
-}
-.super-nav-pill.active {
-  color: #FFFFFF !important;
-  background: var(--primary, #161057) !important;
-  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.25);
-}
-.super-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10B981;
-}
-.super-nav-pill.active .super-dot {
-  background: #34D399;
-}
 
 </style>
 
