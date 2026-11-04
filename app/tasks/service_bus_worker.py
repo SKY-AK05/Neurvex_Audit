@@ -314,7 +314,7 @@ def handle_submission_created(
                     UPDATE raw_submissions
                     SET status = 'PROCESSING',
                         worker_id = %s,
-                        processing_started_at = COALESCE(processing_started_at, NOW()),
+                        processing_started_at = NOW(),
                         updated_at = NOW()
                     WHERE submission_id = %s
                     """,

@@ -51,3 +51,4 @@ fi
 
 # 5. Hand over to supervisord
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+

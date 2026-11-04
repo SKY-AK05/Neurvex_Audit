@@ -97,12 +97,16 @@ def compute_fresh_dashboard_stats() -> Dict[str, Any]:
                 success_rate = 100.0 if status_map["completed"] > 0 else 0.0
                 failure_rate = 0.0
 
-            # 3. Request Analytics: Average processing time (completed in last 7 days)
+            # 3. Request Analytics: Average processing time (actual worker execution duration)
             cur.execute("""
-                SELECT AVG(EXTRACT(EPOCH FROM (COALESCE(processing_completed_at, updated_at) - COALESCE(processing_started_at, created_at)))) as avg_seconds
+                SELECT AVG(EXTRACT(EPOCH FROM (processing_completed_at - processing_started_at))) as avg_seconds
                 FROM raw_submissions
                 WHERE status = 'COMPLETED'
-                  AND created_at >= NOW() - INTERVAL '7 days';
+                  AND processing_started_at IS NOT NULL
+                  AND processing_completed_at IS NOT NULL
+                  AND processing_completed_at >= processing_started_at
+                  AND (processing_completed_at - processing_started_at) < INTERVAL '5 minutes'
+                  AND processing_completed_at >= NOW() - INTERVAL '24 hours';
             """)
             avg_row = cur.fetchone()
             avg_proc_seconds = float(avg_row["avg_seconds"]) if avg_row and avg_row["avg_seconds"] is not None else 0.0
