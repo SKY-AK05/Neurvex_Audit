@@ -158,7 +158,7 @@ export default function (setupData) {
   submissionDuration.add(subDurationMs);
 
   const subOk = check(subRes, {
-    'step 4: submit HTTP 201 or 200': (r) => r.status === 201 || r.status === 200,
+    'step 4: submit HTTP 202, 201 or 200': (r) => r.status === 202 || r.status === 201 || r.status === 200,
   });
   httpErrorRate.add(!subOk);
 

@@ -397,3 +397,19 @@ export async function getOrganisations(includeDeleted = false) {
   });
   return handleResponse(res);
 }
+
+
+export async function getDeadLetteredSubmissions() {
+  const res = await fetch(${API_BASE}/admin/submissions/dead-lettered, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function replaySubmission(submissionId) {
+  const res = await fetch(${API_BASE}/admin/submissions//replay, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}

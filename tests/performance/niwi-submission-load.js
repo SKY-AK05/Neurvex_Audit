@@ -242,7 +242,7 @@ export default function (setupData) {
 
   let submissionId = null;
   const subOk = check(subRes, {
-    'step 4: submit HTTP 201 or 200': (r) => r.status === 201 || r.status === 200,
+    'step 4: submit HTTP 202, 201 or 200': (r) => r.status === 202 || r.status === 201 || r.status === 200,
     'step 4: response indicates success': (r) => {
       try {
         const b = JSON.parse(r.body);

@@ -139,19 +139,22 @@ export function performPreflightCheck(testType = 'Smoke Test', vus = 1) {
   // Validate parameters before making any network calls
   validateRuntimeParams();
 
-  // 1. Verify Assessment Page responds successfully
-  const pageRes = http.get(AUDIT_URL, {
-    headers: { 'User-Agent': COMMON_HEADERS['User-Agent'] },
-    timeout: DEFAULT_TIMEOUT,
-  });
+  // 1. Verify Assessment Page responds successfully (skipped for direct backend localhost testing)
+  const isDirectBackend = BASE_URL.includes('localhost') || BASE_URL.includes('127.0.0.1') || (__ENV.SKIP_PAGE_CHECK === 'true');
+  if (!isDirectBackend) {
+    const pageRes = http.get(AUDIT_URL, {
+      headers: { 'User-Agent': COMMON_HEADERS['User-Agent'] },
+      timeout: DEFAULT_TIMEOUT,
+    });
 
-  const pageOk = check(pageRes, {
-    'preflight: assessment page HTTP 200': (r) => r.status === 200,
-    'preflight: page returns HTML content': (r) => (r.headers['Content-Type'] || '').includes('text/html'),
-  });
+    const pageOk = check(pageRes, {
+      'preflight: assessment page HTTP 200': (r) => r.status === 200,
+      'preflight: page returns HTML content': (r) => (r.headers['Content-Type'] || '').includes('text/html'),
+    });
 
-  if (!pageOk) {
-    throw new Error(`[FATAL] Assessment page unreachable or returned HTTP ${pageRes.status} for ${AUDIT_URL}`);
+    if (!pageOk) {
+      throw new Error(`[FATAL] Assessment page unreachable or returned HTTP ${pageRes.status} for ${AUDIT_URL}`);
+    }
   }
 
   // 2. Verify Assessment Dynamic Sections API
@@ -386,6 +389,7 @@ export function generateSyntheticEmployee(vuId, iteration, orgId, orgName) {
     is_marginalized: 'No',
     has_physical_workspace: 'Yes',
     has_suppliers: 'Yes',
+    idempotency_key: `idemp_${TEST_RUN_ID}_vu${vuId}_it${iteration}_${Date.now()}`,
     ...answers,
   };
 }

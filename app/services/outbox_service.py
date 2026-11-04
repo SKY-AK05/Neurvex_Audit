@@ -2,6 +2,7 @@
 outbox_service.py — Transactional Outbox Dispatcher for Azure Service Bus.
 Polls PostgreSQL service_bus_outbox table using SELECT ... FOR UPDATE SKIP LOCKED
 and reliably dispatches events to Azure Service Bus with exponential backoff and lease management.
+When Service Bus is not configured, yields gracefully to DB-outbox fallback worker.
 """
 import os
 import sys
@@ -13,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Optional, List, Dict, Any
 
 from app.core.database import get_db_connection
-from app.core.service_bus import publish_event, close_service_bus
+from app.core.service_bus import publish_event, close_service_bus, is_service_bus_configured
 
 logger = logging.getLogger("outbox_dispatcher")
 if not logger.handlers:
@@ -43,6 +44,9 @@ def dispatch_pending_outbox_events(batch_size: int = BATCH_SIZE, worker_id: Opti
     Returns:
         Number of events processed in this iteration.
     """
+    if not is_service_bus_configured():
+        return 0
+
     if worker_id is None:
         worker_id = f"outbox-{socket.gethostname()}-{os.getpid()}"
 
@@ -98,14 +102,39 @@ def dispatch_pending_outbox_events(batch_size: int = BATCH_SIZE, worker_id: Opti
         payload = event["payload"]
         attempt_count = event["attempt_count"]
 
+        # User requirement: Publish submission IDs, not large payloads. MessageId = submission_id
+        dispatch_payload = {
+            "submission_id": str(aggregate_id),
+            "event_type": event_type,
+            "outbox_id": str(evt_id)
+        }
+
         try:
-            logger.info("Dispatching outbox event %s (%s) for aggregate %s", evt_id, event_type, aggregate_id)
-            publish_event(
+            logger.info("Dispatching outbox event %s (%s) for submission %s", evt_id, event_type, aggregate_id)
+            res = publish_event(
                 event_type=event_type,
                 aggregate_id=aggregate_id,
-                payload=payload,
-                message_id=f"outbox-{evt_id}"
+                payload=dispatch_payload,
+                message_id=str(aggregate_id)
             )
+
+            if res is None:
+                # Service bus became unavailable or is offline
+                logger.warning("Service Bus publish returned None for event %s. Reverting to PENDING.", evt_id)
+                with get_db_connection() as conn:
+                    with conn:
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                """
+                                UPDATE service_bus_outbox
+                                SET status = 'PENDING',
+                                    locked_until = NULL,
+                                    locked_by = NULL
+                                WHERE id = %s::uuid
+                                """,
+                                (evt_id,)
+                            )
+                continue
 
             # Mark as PUBLISHED
             with get_db_connection() as conn:
@@ -168,14 +197,28 @@ def dispatch_pending_outbox_events(batch_size: int = BATCH_SIZE, worker_id: Opti
 
 def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
     """Continuous outbox dispatcher loop."""
-    signal.signal(signal.SIGTERM, _signal_handler)
-    signal.signal(signal.SIGINT, _signal_handler)
+    try:
+        signal.signal(signal.SIGTERM, _signal_handler)
+        signal.signal(signal.SIGINT, _signal_handler)
+    except (ValueError, AttributeError):
+        pass
 
     worker_id = f"outbox-disp-{socket.gethostname()}-{os.getpid()}"
     logger.info("Outbox dispatcher daemon started [worker_id=%s, poll_interval=%.2fs]", worker_id, poll_interval)
 
+    warned_offline = False
+
     while not _stop_requested:
         try:
+            if not is_service_bus_configured():
+                if not warned_offline:
+                    logger.info("Service Bus is not configured. Outbox events will be processed by DB fallback worker.")
+                    warned_offline = True
+                time.sleep(poll_interval * 2)
+                continue
+            else:
+                warned_offline = False
+
             processed = dispatch_pending_outbox_events(batch_size=BATCH_SIZE, worker_id=worker_id)
             if processed > 0:
                 time.sleep(0.05)  # Yield briefly under heavy load
@@ -192,4 +235,3 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
 
 if __name__ == "__main__":
     run_outbox_dispatcher()
-

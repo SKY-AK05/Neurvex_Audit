@@ -19,7 +19,7 @@ from uuid import UUID
 import uuid as uuid_pkg
 
 from cachetools import TTLCache
-from fastapi import APIRouter, HTTPException, Request, BackgroundTasks, Depends
+from fastapi import APIRouter, HTTPException, Request, Response, BackgroundTasks, Depends, status
 from fastapi.responses import JSONResponse
 import jwt
 import psycopg2
@@ -126,33 +126,27 @@ def _bg_notify_admin(submission_id: str, name: str, company_name: str):
 # POST /api/submit
 # ---------------------------------------------------------------------------
 
-@router.post("/submit", status_code=201)
+@router.post("/submit", status_code=status.HTTP_202_ACCEPTED)
 @limiter.limit(get_effective_submit_hourly_limit, key_func=get_client_ip)
 @limiter.limit(get_effective_submit_daily_limit, key_func=get_client_ip)
-def submit(request: Request, payload: AuditSubmission, background_tasks: BackgroundTasks):
+def submit(request: Request, payload: AuditSubmission, response: Response, background_tasks: BackgroundTasks):
     t_req_start = time.perf_counter()
     data = payload.dict()
-    idempotency_key = data.get("idempotency_key")
-    if idempotency_key:
-        idempotency_key = str(idempotency_key).strip() or None
+    idempotency_key = (data.get("idempotency_key") or request.headers.get("Idempotency-Key") or "").strip()
+    if not idempotency_key:
+        idempotency_key = str(uuid_pkg.uuid4())
 
     # Step 0: Dynamic per-traffic classification and session attempt rate limiting
     enforce_submission_rate_limits(request, data)
 
-    # Step 1: Pre-compute pure scores BEFORE borrowing database connection (CALC-001 through CALC-006)
-    t_score_start = time.perf_counter()
-    sections, threshold = get_form_sections_metadata(None)
-    scores = calculate_scores_pure(data, sections=sections, threshold=threshold)
-    t_score_end = time.perf_counter()
-
-    # Step 2: Validate Corporate Email Eligibility
+    # Step 1: Validate Corporate Email Eligibility
     user_email = (data.get("email") or "").strip()
     if user_email:
         email_check = check_corporate_email_eligibility(user_email)
         if not email_check["eligible"]:
             raise HTTPException(status_code=400, detail=email_check.get("error", "Corporate email is required."))
 
-    # Step 3: Organization / Token / Invitation resolution
+    # Step 2: Organization / Token / Invitation resolution
     organization_id = None
     invitation_id = None
     access_token_id = None
@@ -239,30 +233,13 @@ def submit(request: Request, payload: AuditSubmission, background_tasks: Backgro
         else:
             raise HTTPException(status_code=400, detail="Organisation name or ID is required.")
 
-    # Prepare payloads and parameters for single atomic CTE execution
-    dimension_scores_json = json.dumps(scores.get("dimension_scores", {}))
-    sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
-
-    excluded_fields = {
-        "name", "designation", "company_name", "email", "contact_number",
-        "has_physical_workspace", "has_suppliers", "consent_given", "draft_id",
-        "organization_id", "invitation_token", "submission_source", "invitation_id", "idempotency_key",
-        "t", "token", "access_token", "campaign_id", "access_token_id"
-    }
-    dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
-
-    email_job_payload = json.dumps({
-        "email": data.get("email"),
-        "name": data.get("name", ""),
-        "company_name": resolved_company_name,
-        "designation": data.get("designation") or data.get("role") or "",
-        "contact_number": data.get("contact_number")
-    })
-
-    crm_job_payload = json.dumps({
-        "data": data,
-        "score_data": scores
-    })
+    # Attach resolved properties for the background worker
+    data["_resolved_org_id"] = organization_id
+    data["_resolved_company_name"] = resolved_company_name
+    data["_resolved_source"] = submission_source
+    data["_invitation_id"] = invitation_id
+    data["_access_token_id"] = access_token_id
+    data["_campaign_id"] = campaign_id
 
     draft_uuid = None
     draft_id = data.get("draft_id")
@@ -272,192 +249,153 @@ def submit(request: Request, payload: AuditSubmission, background_tasks: Backgro
         except ValueError:
             logger.warning("Invalid draft_id UUID: %s", draft_id)
 
+    new_sub_id = str(uuid_pkg.uuid4())
+
+    # Step 3: Single atomic transaction - write raw submission & outbox
     cte_sql = """
-        WITH duplicate_check AS (
-            SELECT id FROM submissions
-            WHERE LOWER(TRIM(email)) = LOWER(TRIM(%(email)s))
-              AND submitted_at > NOW() - INTERVAL '5 minutes'
+        WITH existing_raw AS (
+            SELECT submission_id, payload, status FROM raw_submissions
+            WHERE idempotency_key = %(idempotency_key)s
             LIMIT 1
         ),
-        idempotent_check AS (
-            SELECT id FROM submissions
-            WHERE idempotency_key IS NOT NULL AND idempotency_key = %(idempotency_key)s
-            LIMIT 1
-        ),
-        org_lookup AS (
-            SELECT id, name FROM organizations
-            WHERE id = %(organization_id)s::uuid AND is_deleted = FALSE AND is_active = TRUE
-        ),
-        new_sub AS (
-            INSERT INTO submissions (
-                name, designation, company_name, email, contact_number,
-                has_physical_workspace, has_suppliers,
-                q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
-                q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
-                q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
-                q35,q36,q37,q38,q39,q40,q41,q42,q43,q44,
-                lc_score, lc_level, ro_score, ro_level,
-                we_score, we_level, be_score, be_level,
-                tm_score, tm_level, ca_score, ca_level,
-                pc_score, pc_level, sp_score, sp_level,
-                overall_avg, overall_level, email_body, status,
-                consent_given, consent_timestamp, organization_id,
-                submission_source, invitation_id, access_token_id, campaign_id, dimension_scores, answers,
-                idempotency_key
+        new_raw AS (
+            INSERT INTO raw_submissions (
+                submission_id, idempotency_key, organization_id, user_id,
+                payload, schema_version, status, scoring_status, report_status,
+                email_status, crm_status
             )
             SELECT
-                %(name)s, %(designation)s, o.name, %(email)s, %(contact_number)s,
-                %(has_physical_workspace)s, %(has_suppliers)s,
-                %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
-                %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
-                %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
-                %(q35)s,%(q36)s,%(q37)s,%(q38)s,%(q39)s,%(q40)s,%(q41)s,%(q42)s,%(q43)s,%(q44)s,
-                %(lc_score)s, %(lc_level)s, %(ro_score)s, %(ro_level)s,
-                %(we_score)s, %(we_level)s, %(be_score)s, %(be_level)s,
-                %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
-                %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
-                %(overall_avg)s, %(overall_level)s, NULL, 'pending',
-                %(consent_given)s, %(consent_timestamp)s, o.id,
-                %(submission_source)s, %(invitation_id)s, %(access_token_id)s, %(campaign_id)s, %(dimension_scores)s::jsonb, %(answers)s::jsonb,
-                %(idempotency_key)s
-            FROM org_lookup o
-            WHERE NOT EXISTS (SELECT 1 FROM duplicate_check)
-              AND NOT EXISTS (SELECT 1 FROM idempotent_check)
-            ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
-            RETURNING id, organization_id, name, company_name
+                %(submission_id)s::uuid,
+                %(idempotency_key)s,
+                %(organization_id)s::uuid,
+                %(user_id)s,
+                %(payload)s::jsonb,
+                1,
+                'RECEIVED',
+                'PENDING',
+                'PENDING',
+                'PENDING',
+                'PENDING'
+            WHERE NOT EXISTS (SELECT 1 FROM existing_raw)
+            ON CONFLICT (idempotency_key) DO NOTHING
+            RETURNING submission_id
         ),
-        new_link AS (
-            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-            SELECT organization_id, id, 1.0, NULL FROM new_sub
-            ON CONFLICT (org_id, submission_id) DO NOTHING
-        ),
-        new_outbox_event AS (
-            INSERT INTO service_bus_outbox (event_type, aggregate_id, payload, status)
-            SELECT 
+        new_outbox AS (
+            INSERT INTO service_bus_outbox (
+                event_type, aggregate_id, message_id, payload, status
+            )
+            SELECT
                 'SUBMISSION_CREATED',
-                id,
+                submission_id,
+                submission_id::text,
                 json_build_object(
-                    'submission_id', id::text,
-                    'name', name,
-                    'company_name', company_name,
-                    'email', %(email)s,
-                    'organization_id', organization_id::text,
-                    'submission_source', %(submission_source)s,
-                    'idempotency_key', %(idempotency_key)s,
-                    'email_job_payload', %(email_job_payload)s::jsonb,
-                    'crm_job_payload', %(crm_job_payload)s::jsonb
+                    'submission_id', submission_id::text,
+                    'organization_id', %(organization_id)s::text,
+                    'idempotency_key', %(idempotency_key)s
                 )::jsonb,
                 'PENDING'
-            FROM new_sub
+            FROM new_raw
         ),
         update_invitation AS (
             UPDATE organization_invitations
             SET submission_count = submission_count + 1
             WHERE %(invitation_id)s IS NOT NULL AND id = %(invitation_id)s::uuid
+              AND EXISTS (SELECT 1 FROM new_raw)
         ),
         update_draft AS (
             UPDATE draft_submissions
             SET submitted = TRUE
             WHERE %(draft_uuid)s IS NOT NULL AND id = %(draft_uuid)s::uuid
+              AND EXISTS (SELECT 1 FROM new_raw)
         )
         SELECT 
-            (SELECT id FROM new_sub) AS new_id,
-            (SELECT id FROM idempotent_check) AS existing_idempotent_id,
-            (SELECT id FROM duplicate_check) AS duplicate_id,
-            (SELECT id FROM org_lookup) AS valid_org_id;
+            (SELECT submission_id FROM new_raw) AS created_id,
+            (SELECT submission_id FROM existing_raw) AS existing_id,
+            (SELECT status FROM existing_raw) AS existing_status,
+            (SELECT payload FROM existing_raw) AS existing_payload;
     """
 
     params = {
-        **sanitized_scores,
-        "name": data.get("name") or "",
-        "designation": data.get("designation") or data.get("role") or "",
-        "company_name": resolved_company_name,
-        "email": data.get("email"),
-        "contact_number": data.get("contact_number", None),
-        "has_physical_workspace": data.get("has_physical_workspace") or None,
-        "has_suppliers": data.get("has_suppliers") or None,
-        "consent_given": data.get("consent_given", False),
-        "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
-        "organization_id": organization_id,
-        "submission_source": submission_source,
-        "invitation_id": invitation_id,
-        "access_token_id": access_token_id,
-        "campaign_id": campaign_id,
+        "submission_id": new_sub_id,
         "idempotency_key": idempotency_key,
-        "draft_uuid": draft_uuid,
-        **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
-        "dimension_scores": dimension_scores_json,
-        "answers": json.dumps(dynamic_answers),
-        "email_job_payload": email_job_payload,
-        "crm_job_payload": crm_job_payload,
+        "organization_id": organization_id,
+        "user_id": data.get("user_id") or data.get("email"),
+        "payload": json.dumps(data),
+        "invitation_id": invitation_id,
+        "draft_uuid": draft_uuid
     }
-
-    norm_email = (data.get("email") or "").strip().lower()
 
     t_checkout_start = time.perf_counter()
     with get_db_connection() as conn:
-        t_checkout_end = time.perf_counter()
         with conn:
             with conn.cursor() as cur:
-                # Advisory lock serializes concurrent submissions for the exact same email,
-                # ensuring duplicate_check is 100% race-condition free under READ COMMITTED.
-                if norm_email:
-                    cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (norm_email,))
                 cur.execute(cte_sql, params)
                 res = cur.fetchone()
 
     t_tx_end = time.perf_counter()
+    created_id, existing_id, existing_status, existing_payload = res
 
-    new_id, existing_idempotent_id, duplicate_id, valid_org_id = res
+    if existing_id:
+        if existing_payload and isinstance(existing_payload, dict):
+            existing_email = (existing_payload.get("email") or "").strip().lower()
+            incoming_email = (data.get("email") or "").strip().lower()
+            if existing_email and incoming_email and existing_email != incoming_email:
+                logger.warning("Idempotency key %s reused with conflicting email: %s vs %s",
+                               idempotency_key, incoming_email, existing_email)
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Idempotency key has already been used with a different payload."
+                )
+        logger.info("Idempotent replay detected for key %s, returning submission %s (status=%s)",
+                    idempotency_key, existing_id, existing_status)
+        response.status_code = status.HTTP_200_OK if existing_status == "COMPLETED" else status.HTTP_202_ACCEPTED
+        return {
+            "success": True,
+            "submission_id": str(existing_id),
+            "status": existing_status or "RECEIVED",
+            "message": "Your submission has been received and is being processed."
+        }
 
-    if existing_idempotent_id:
-        logger.info("Idempotent replay detected for key %s, returning submission %s", idempotency_key, existing_idempotent_id)
-        return {"success": True, "submission_id": str(existing_idempotent_id)}
+    if not created_id:
+        # Fallback query for millisecond concurrency collision
+        with get_db_connection() as fb_conn:
+            with fb_conn.cursor() as fb_cur:
+                fb_cur.execute(
+                    "SELECT submission_id, status FROM raw_submissions WHERE idempotency_key = %s LIMIT 1",
+                    (idempotency_key,)
+                )
+                fb_row = fb_cur.fetchone()
+                if fb_row:
+                    logger.info("Recovered parallel idempotency conflict for key %s -> %s", idempotency_key, fb_row[0])
+                    response.status_code = status.HTTP_202_ACCEPTED
+                    return {
+                        "success": True,
+                        "submission_id": str(fb_row[0]),
+                        "status": fb_row[1] or "RECEIVED",
+                        "message": "Your submission has been received and is being processed."
+                    }
 
-    if duplicate_id:
-        raise HTTPException(
-            status_code=429,
-            detail="A submission from this email was received recently. Please wait a few minutes before submitting again."
-        )
-
-    if not valid_org_id:
-        raise HTTPException(status_code=400, detail="Selected organisation is invalid or inactive.")
-
-    if not new_id:
-        # Safe recovery for concurrent parallel idempotency collisions:
-        # When two requests with the same key race in the exact same millisecond,
-        # ON CONFLICT DO NOTHING returns NULL for the losing request.
-        # Check if the winning transaction committed the submission.
-        if idempotency_key:
-            with get_db_connection() as fb_conn:
-                with fb_conn.cursor() as fb_cur:
-                    fb_cur.execute(
-                        "SELECT id FROM submissions WHERE idempotency_key = %s LIMIT 1",
-                        (idempotency_key,)
-                    )
-                    fb_row = fb_cur.fetchone()
-                    if fb_row:
-                        logger.info("Recovered parallel idempotency conflict for key %s -> %s", idempotency_key, fb_row[0])
-                        return {"success": True, "submission_id": str(fb_row[0])}
-
-        logger.error("CTE Insert returned no ID")
+        logger.error("Failed to persist raw submission for key %s", idempotency_key)
         raise HTTPException(status_code=500, detail="Database error persisting submission")
 
-    submission_id = str(new_id)
-
+    submission_id = str(created_id)
     dashboard_cache.clear()
 
     t_req_end = time.perf_counter()
     logger.info(
-        "SUBMISSION_METRICS: id=%s total_ms=%.2f scoring_ms=%.2f checkout_ms=%.2f tx_ms=%.2f",
+        "INGESTION_METRICS: id=%s total_ms=%.2f tx_ms=%.2f",
         submission_id,
         (t_req_end - t_req_start) * 1000.0,
-        (t_score_end - t_score_start) * 1000.0,
-        (t_checkout_end - t_checkout_start) * 1000.0,
-        (t_tx_end - t_checkout_end) * 1000.0
+        (t_tx_end - t_checkout_start) * 1000.0
     )
 
-    return {"success": True, "submission_id": submission_id}
+    response.status_code = status.HTTP_202_ACCEPTED
+    return {
+        "success": True,
+        "submission_id": submission_id,
+        "status": "RECEIVED",
+        "message": "Your submission has been received and is being processed."
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -488,6 +426,28 @@ def get_submissions(request: Request):
                            tm_score, tm_level, ca_score, ca_level,
                            pc_score, pc_level, sp_score, sp_level
                     FROM submissions
+                    UNION ALL
+                    SELECT r.submission_id AS id,
+                           COALESCE(r.payload->>'name', '') AS name,
+                           COALESCE(r.payload->>'designation', r.payload->>'role', '') AS designation,
+                           COALESCE(r.payload->>'company_name', o.name, '') AS company_name,
+                           r.payload->>'email' AS email,
+                           r.payload->>'contact_number' AS contact_number,
+                           r.created_at AS submitted_at,
+                           NULL AS overall_avg,
+                           NULL AS overall_level,
+                           r.status AS status,
+                           r.payload AS answers,
+                           r.organization_id,
+                           COALESCE(r.payload->>'submission_source', 'DIRECT') AS submission_source,
+                           NULL AS invitation_id,
+                           NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+                    FROM raw_submissions r
+                    LEFT JOIN organizations o ON o.id = r.organization_id
+                    WHERE r.status IN ('RECEIVED', 'PROCESSING', 'DEAD_LETTERED', 'FAILED', 'RETRYING')
+                      AND NOT EXISTS (
+                          SELECT 1 FROM submissions s WHERE s.id = r.submission_id OR s.raw_submission_id = r.submission_id
+                      )
                     ORDER BY submitted_at DESC
                 """
                 cur.execute(query)
@@ -814,15 +774,65 @@ async def get_submission_status(request: Request, submission_id: str):
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
                 cur.execute(
                     """
-                    SELECT id, organization_id, async_status, email_status, crm_status,
-                           report_status, admin_notify_status, hubspot_deal_id,
-                           submitted_at, async_completed_at, email_body
-                    FROM submissions
-                    WHERE id = %s
+                    SELECT 
+                        r.submission_id,
+                        r.organization_id,
+                        r.status AS raw_status,
+                        r.scoring_status,
+                        r.report_status AS raw_report_status,
+                        r.email_status AS raw_email_status,
+                        r.crm_status AS raw_crm_status,
+                        r.retry_count,
+                        r.last_error,
+                        r.created_at AS raw_created_at,
+                        r.processing_completed_at AS raw_completed_at,
+                        s.id AS sub_id,
+                        s.async_status AS sub_async_status,
+                        s.email_status AS sub_email_status,
+                        s.crm_status AS sub_crm_status,
+                        s.report_status AS sub_report_status,
+                        s.admin_notify_status,
+                        s.hubspot_deal_id,
+                        s.submitted_at AS sub_submitted_at,
+                        s.async_completed_at AS sub_completed_at,
+                        s.email_body
+                    FROM raw_submissions r
+                    LEFT JOIN submissions s ON (s.id = r.submission_id OR s.raw_submission_id = r.submission_id)
+                    WHERE r.submission_id = %s
                     """,
                     (sub_id,)
                 )
                 row = cur.fetchone()
+
+                if not row:
+                    # Fallback to direct legacy lookup in submissions table
+                    cur.execute(
+                        """
+                        SELECT id, organization_id, async_status, email_status, crm_status,
+                               report_status, admin_notify_status, hubspot_deal_id,
+                               submitted_at, async_completed_at, email_body
+                        FROM submissions
+                        WHERE id = %s
+                        """,
+                        (sub_id,)
+                    )
+                    leg_row = cur.fetchone()
+                    if leg_row:
+                        row = {
+                            "submission_id": leg_row["id"],
+                            "organization_id": leg_row.get("organization_id"),
+                            "raw_status": leg_row.get("async_status") or "COMPLETED",
+                            "scoring_status": "COMPLETED",
+                            "raw_report_status": leg_row.get("report_status"),
+                            "raw_email_status": leg_row.get("email_status"),
+                            "raw_crm_status": leg_row.get("crm_status"),
+                            "raw_created_at": leg_row.get("submitted_at"),
+                            "raw_completed_at": leg_row.get("async_completed_at"),
+                            "sub_id": leg_row["id"],
+                            "admin_notify_status": leg_row.get("admin_notify_status"),
+                            "hubspot_deal_id": leg_row.get("hubspot_deal_id"),
+                            "email_body": leg_row.get("email_body")
+                        }
 
         if not row:
             raise HTTPException(status_code=404, detail="Submission not found")
@@ -840,17 +850,22 @@ async def get_submission_status(request: Request, submission_id: str):
             except jwt.PyJWTError:
                 pass
 
-        rep_status = row.get("report_status") or ("GENERATED" if row.get("email_body") else "PENDING")
+        eff_status = row.get("raw_status") or row.get("sub_async_status") or "RECEIVED"
+        rep_status = row.get("sub_report_status") or row.get("raw_report_status") or ("GENERATED" if row.get("email_body") else "PENDING")
+
         return {
-            "submission_id": str(row["id"]),
-            "status": row.get("async_status") or "PENDING",
-            "email_status": row.get("email_status") or "PENDING",
-            "crm_status": row.get("crm_status") or "PENDING",
+            "submission_id": str(row.get("submission_id") or row.get("sub_id")),
+            "status": eff_status,
+            "scoring_status": row.get("scoring_status") or ("COMPLETED" if row.get("sub_id") else "PENDING"),
+            "email_status": row.get("sub_email_status") or row.get("raw_email_status") or "PENDING",
+            "crm_status": row.get("sub_crm_status") or row.get("raw_crm_status") or "PENDING",
             "report_status": rep_status,
             "admin_notify_status": row.get("admin_notify_status") or "PENDING",
             "hubspot_deal_id": row.get("hubspot_deal_id"),
-            "submitted_at": to_iso_utc(row["submitted_at"]) if row.get("submitted_at") else None,
-            "completed_at": to_iso_utc(row["async_completed_at"]) if row.get("async_completed_at") else None
+            "retry_count": row.get("retry_count") or 0,
+            "last_error": row.get("last_error"),
+            "submitted_at": to_iso_utc(row.get("raw_created_at") or row.get("sub_submitted_at")),
+            "completed_at": to_iso_utc(row.get("raw_completed_at") or row.get("sub_completed_at"))
         }
 
     except HTTPException:
@@ -1827,3 +1842,120 @@ async def get_audit_logs(request: Request):
     except Exception as e:
         logger.error("Failed to fetch audit logs: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
+
+
+# ---------------------------------------------------------------------------
+# GET /api/admin/submissions/dead-lettered
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/submissions/dead-lettered")
+def get_dead_lettered_submissions(request: Request):
+    require_admin(request)
+    with get_db_connection() as conn:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute("""
+                SELECT 
+                    r.submission_id,
+                    r.idempotency_key,
+                    r.organization_id,
+                    o.name AS organization_name,
+                    r.payload->>'name' AS user_name,
+                    r.payload->>'email' AS user_email,
+                    r.status,
+                    r.scoring_status,
+                    r.report_status,
+                    r.retry_count,
+                    r.last_error,
+                    r.created_at,
+                    r.updated_at
+                FROM raw_submissions r
+                LEFT JOIN organizations o ON o.id = r.organization_id
+                WHERE r.status IN ('DEAD_LETTERED', 'FAILED')
+                ORDER BY r.updated_at DESC
+            """)
+            rows = cur.fetchall()
+
+    result = []
+    for row in rows:
+        r = dict(row)
+        r["submission_id"] = str(r["submission_id"])
+        if r.get("organization_id"):
+            r["organization_id"] = str(r["organization_id"])
+        if r.get("created_at"):
+            r["created_at"] = to_iso_utc(r["created_at"])
+        if r.get("updated_at"):
+            r["updated_at"] = to_iso_utc(r["updated_at"])
+        result.append(r)
+    return {"dead_lettered_submissions": result, "count": len(result)}
+
+
+# ---------------------------------------------------------------------------
+# POST /api/admin/submissions/{submission_id}/replay
+# ---------------------------------------------------------------------------
+
+@router.post("/admin/submissions/{submission_id}/replay")
+def replay_submission(request: Request, submission_id: str):
+    require_admin(request)
+    sub_uuid = str(submission_id).strip()
+    try:
+        uuid_pkg.UUID(sub_uuid)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid submission ID format.")
+
+    with get_db_connection() as conn:
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT submission_id, idempotency_key, organization_id, payload, status
+                    FROM raw_submissions
+                    WHERE submission_id = %s
+                    FOR UPDATE
+                    """,
+                    (sub_uuid,)
+                )
+                raw = cur.fetchone()
+                if not raw:
+                    raise HTTPException(status_code=404, detail="Submission not found in raw_submissions.")
+
+                cur.execute(
+                    """
+                    UPDATE raw_submissions
+                    SET status = 'PENDING',
+                        retry_count = 0,
+                        last_error = NULL,
+                        updated_at = NOW()
+                    WHERE submission_id = %s
+                    """,
+                    (sub_uuid,)
+                )
+
+                cur.execute(
+                    """
+                    INSERT INTO service_bus_outbox (
+                        event_type, aggregate_id, message_id, payload, status, next_retry_at
+                    )
+                    VALUES (
+                        'SUBMISSION_CREATED',
+                        %s::uuid,
+                        %s,
+                        json_build_object(
+                            'submission_id', %s::text,
+                            'replay', true,
+                            'replayed_at', NOW()
+                        )::jsonb,
+                        'PENDING',
+                        NOW()
+                    )
+                    """,
+                    (sub_uuid, sub_uuid, sub_uuid)
+                )
+
+    dashboard_cache.clear()
+    logger.info("Submission %s re-armed for replay by admin", sub_uuid)
+    return {
+        "success": True,
+        "submission_id": sub_uuid,
+        "status": "PENDING",
+        "message": f"Submission {sub_uuid} has been queued for replay."
+    }

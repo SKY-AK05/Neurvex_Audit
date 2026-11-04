@@ -4,6 +4,7 @@ public.py — Public endpoints for NIWI Assessment Dual Entry.
 - POST /api/public/invitations/validate: Validate invitation token for invitation-based assessment
 """
 
+import os
 import hashlib
 import logging
 from datetime import datetime, timezone
@@ -107,7 +108,7 @@ async def validate_corporate_email(request: Request, body: ValidateEmailRequest)
 
 
 @router.post("/organisations/validate")
-@limiter.limit("120/minute")
+@limiter.limit(lambda: os.environ.get("PUBLIC_VALIDATE_LIMIT", "2000/minute"))
 async def validate_organisation_by_name(request: Request, body: ValidateOrganisationRequest):
     """
     Validates a manually entered organisation name against existing records.

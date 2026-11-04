@@ -11,6 +11,15 @@
         <div v-if="asyncStatus === 'COMPLETED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e8f5e9; border-radius: 8px; color: #2e7d32; font-weight: 500; font-size: 0.95rem;">
           ✓ Response processed and insights recorded
         </div>
+        <div v-else-if="asyncStatus === 'PROCESSING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e3f2fd; border-radius: 8px; color: #1565c0; font-weight: 500; font-size: 0.95rem;">
+          ⏳ Processing assessment and calculating insights...
+        </div>
+        <div v-else-if="asyncStatus === 'RECEIVED' || asyncStatus === 'PENDING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #f3e5f5; border-radius: 8px; color: #6a1b9a; font-weight: 500; font-size: 0.95rem;">
+          📥 Submission received and queued for processing
+        </div>
+        <div v-else-if="asyncStatus === 'DEAD_LETTERED' || asyncStatus === 'FAILED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #ffebee; border-radius: 8px; color: #c62828; font-weight: 500; font-size: 0.95rem;">
+          ⚠️ Submission safely stored. Processing queued for admin review.
+        </div>
       </div>
     </div>
     <div v-else-if="isLoading && currentStep > 0" class="success-wrap">
@@ -1687,7 +1696,7 @@ async function submit() {
 
 async function pollSubmissionStatus(subId) {
   let attempts = 0;
-  while (attempts < 8 && asyncStatus.value !== "COMPLETED") {
+  while (attempts < 20 && asyncStatus.value !== "COMPLETED" && asyncStatus.value !== "DEAD_LETTERED" && asyncStatus.value !== "FAILED") {
     await new Promise(r => setTimeout(r, 2000));
     try {
       const data = await getSubmissionStatus(subId);

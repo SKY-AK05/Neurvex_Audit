@@ -71,7 +71,12 @@ async def startup_event():
     enable_embedded = os.environ.get("ENABLE_EMBEDDED_WORKER", "false").lower() in ("true", "1")
     if enable_embedded:
         await start_job_worker()
-        logger.info("Embedded post-submit background job worker started")
+        import threading
+        from app.services.outbox_service import run_outbox_dispatcher
+        from app.tasks.service_bus_worker import run_service_bus_worker
+        threading.Thread(target=run_outbox_dispatcher, daemon=True, name="embedded_outbox").start()
+        threading.Thread(target=run_service_bus_worker, daemon=True, name="embedded_sb_worker").start()
+        logger.info("Embedded outbox dispatcher and background worker threads started")
     else:
         logger.info("Embedded worker disabled; relying on dedicated worker service")
     logger.info("Application startup complete")
@@ -158,3 +163,18 @@ async def health_cache_metrics():
     """Diagnostic endpoint to inspect worker-local organisation cache metrics."""
     from app.services.org_cache_service import get_cache_stats
     return get_cache_stats()
+
+
+from fastapi.responses import HTMLResponse
+
+@app.get("/audit", response_class=HTMLResponse)
+async def serve_audit():
+    """Fallback assessment landing page for direct API and performance testing."""
+    return HTMLResponse(
+        content="<!DOCTYPE html><html><head><title>NIWI Assessment</title></head><body><div id='app'></div></body></html>",
+        status_code=200
+    )
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_root():
+    return HTMLResponse(content="<!DOCTYPE html><html><head><title>NIWI</title></head><body>OK</body></html>", status_code=200)

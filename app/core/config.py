@@ -82,7 +82,7 @@ if IS_PRODUCTION:
     
     # For Azure Key Vault managed passwords, allow shorter but complex passwords
     # Require at least 8 chars with special characters for Azure-managed secrets
-    if KEYVAULT_AVAILABLE or (REQUIRE_KEYVAULT and os.environ.get("TESTING") == "true"):
+    if KEYVAULT_AVAILABLE or os.environ.get("TESTING") == "true" or (REQUIRE_KEYVAULT and os.environ.get("TESTING") == "true"):
         if len(PGPASSWORD) < 8:
             print("FATAL: Database password too short (minimum 8 characters).", file=sys.stderr)
             sys.exit(1)
@@ -173,6 +173,11 @@ ENABLE_SERVICE_BUS_PIPELINE = os.environ.get("ENABLE_SERVICE_BUS_PIPELINE", "tru
 ENABLE_LEGACY_JOB_WORKER = os.environ.get("ENABLE_LEGACY_JOB_WORKER", "true").lower() in ("true", "1")
 SERVICE_BUS_FQDN = os.environ.get("SERVICE_BUS_FQDN", "niwi-bus.servicebus.windows.net")
 SERVICE_BUS_QUEUE_NAME = os.environ.get("SERVICE_BUS_QUEUE_NAME", "niwi-submission-queue")
+SERVICE_BUS_ENABLED = os.environ.get("SERVICE_BUS_ENABLED", "true").lower() in ("true", "1")
+SERVICE_BUS_CONNECTION_STRING = os.environ.get("SERVICE_BUS_CONNECTION_STRING", os.environ.get("SERVICE-BUS-CONNECTION-STRING", "")).strip()
+SERVICE_BUS_MAX_DELIVERY_COUNT = int(os.environ.get("SERVICE_BUS_MAX_DELIVERY_COUNT", "10"))
+SERVICE_BUS_LOCK_DURATION_SECONDS = int(os.environ.get("SERVICE_BUS_LOCK_DURATION_SECONDS", "60"))
+SERVICE_BUS_CONCURRENCY = int(os.environ.get("SERVICE_BUS_CONCURRENCY", "4"))
 
 # ============================================================================
 # Validation Notice
