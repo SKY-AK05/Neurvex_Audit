@@ -400,14 +400,14 @@ export async function getOrganisations(includeDeleted = false) {
 
 
 export async function getDeadLetteredSubmissions() {
-  const res = await fetch(${API_BASE}/admin/submissions/dead-lettered, {
+  const res = await fetch(`${API_BASE}/admin/submissions/dead-lettered`, {
     headers: getAuthHeaders(),
   });
   return handleResponse(res);
 }
 
 export async function replaySubmission(submissionId) {
-  const res = await fetch(${API_BASE}/admin/submissions//replay, {
+  const res = await fetch(`${API_BASE}/admin/submissions/${submissionId}/replay`, {
     method: 'POST',
     headers: getAuthHeaders(),
   });
