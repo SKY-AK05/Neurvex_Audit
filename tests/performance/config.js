@@ -25,6 +25,7 @@ import { check } from 'k6';
 // ---------------------------------------------------------------------------
 export const BASE_URL = __ENV.BASE_URL ? __ENV.BASE_URL.replace(/\/+$/, '') : '';
 export const ORG_CODE = (__ENV.ORG_CODE || '').trim();
+export const AUDIT_TOKEN = (__ENV.AUDIT_TOKEN || '').trim();
 export const EXPECTED_ORG_ID = (__ENV.ORG_ID || '').trim().toLowerCase();
 export const TARGET_VUS = parseInt(__ENV.VUS || '1', 10);
 export const TEST_DURATION = __ENV.DURATION || '2m';
@@ -42,10 +43,12 @@ export const COMMON_HEADERS = {
   'User-Agent': `NIWI-K6-LoadTest/2.0 (${TEST_RUN_ID})`,
 };
 
-// Dynamic Assessment URL
-export const AUDIT_URL = BASE_URL && ORG_CODE
-  ? `${BASE_URL}/audit?org=${encodeURIComponent(ORG_CODE)}`
-  : '';
+// Dynamic Assessment URL - support both ORG_CODE and AUDIT_TOKEN modes
+export const AUDIT_URL = AUDIT_TOKEN && BASE_URL
+  ? `${BASE_URL}/audit?t=${encodeURIComponent(AUDIT_TOKEN)}`
+  : (BASE_URL && ORG_CODE
+      ? `${BASE_URL}/audit?org=${encodeURIComponent(ORG_CODE)}`
+      : '');
 
 // UUID format validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,19 +72,24 @@ export function validateRuntimeParams() {
     throw new Error('BASE_URL is missing');
   }
 
-  if (!ORG_CODE) {
+  if (!ORG_CODE && !AUDIT_TOKEN) {
     const msg = 
       `\n======================================================================\n` +
-      `ERROR: ORG_CODE is missing.\n\n` +
-      `Usage:\n` +
+      `ERROR: Either ORG_CODE or AUDIT_TOKEN is required.\n\n` +
+      `Usage with ORG_CODE:\n` +
       `  k6 run \\\n` +
       `    -e BASE_URL=https://niwi.orchvate.in \\\n` +
       `    -e ORG_CODE=SKY11 \\\n` +
       `    tests/performance/niwi-smoke.js\n\n` +
+      `Usage with AUDIT_TOKEN:\n` +
+      `  k6 run \\\n` +
+      `    -e BASE_URL=https://niwi.orchvate.in \\\n` +
+      `    -e AUDIT_TOKEN=yourTokenHere \\\n` +
+      `    tests/performance/niwi-smoke.js\n\n` +
       `Test aborted. No assessment submitted.\n` +
       `======================================================================\n`;
     console.error(msg);
-    throw new Error('ORG_CODE is missing');
+    throw new Error('ORG_CODE or AUDIT_TOKEN is missing');
   }
 
   if (EXPECTED_ORG_ID && !UUID_REGEX.test(EXPECTED_ORG_ID)) {
@@ -168,58 +176,94 @@ export function performPreflightCheck(testType = 'Smoke Test', vus = 1) {
     throw new Error(`[FATAL] Failed to retrieve questionnaire sections from ${BASE_URL}/api/form/sections`);
   }
 
-  // 3. Resolve Organisation via Public Validation API
-  const valPayload = JSON.stringify({ name: ORG_CODE });
-  const valRes = http.post(`${BASE_URL}/api/public/organisations/validate`, valPayload, {
-    headers: COMMON_HEADERS,
-    timeout: DEFAULT_TIMEOUT,
-  });
-
+  // 3. Resolve Organisation via Public Validation API (Skip if using token)
   let resolvedId = null;
   let resolvedName = null;
   let orgValid = false;
-  let serverErrMsg = '';
 
-  try {
-    const body = JSON.parse(valRes.body);
-    if (valRes.status === 200 && body.valid === true) {
-      orgValid = true;
-      resolvedId = body.organization_id;
-      resolvedName = body.organization_name;
-    } else {
-      serverErrMsg = body.error || `HTTP ${valRes.status}`;
-    }
-  } catch (e) {
-    serverErrMsg = `Failed to parse response: ${valRes.body}`;
-  }
-
-  if (!orgValid || !resolvedId) {
-    const msg =
-      `\n======================================================================\n` +
-      `ERROR: Organisation "${ORG_CODE}" could not be verified.\n` +
-      `Reason: ${serverErrMsg}\n\n` +
-      `No load test was started.\n` +
-      `No organisation was created.\n` +
-      `No assessment was submitted.\n` +
-      `======================================================================\n`;
-    console.error(msg);
-    throw new Error(`Organisation verification failed for "${ORG_CODE}": ${serverErrMsg}`);
-  }
-
-  // 4. Validate Expected Org ID Match (if user supplied ORG_ID)
-  if (EXPECTED_ORG_ID) {
-    const idMatches = resolvedId.toLowerCase() === EXPECTED_ORG_ID;
-    if (!idMatches) {
+  if (AUDIT_TOKEN) {
+    // Token-based access - resolve the token to get org info
+    console.log(`[INFO] Resolving assessment token...`);
+    
+    const tokenPayload = JSON.stringify({ token: AUDIT_TOKEN });
+    const tokenRes = http.post(`${BASE_URL}/api/public/assessment/resolve-link`, tokenPayload, {
+      headers: COMMON_HEADERS,
+      timeout: DEFAULT_TIMEOUT,
+    });
+    
+    try {
+      const body = JSON.parse(tokenRes.body);
+      if (tokenRes.status === 200 && body.valid === true && body.organization_id) {
+        orgValid = true;
+        resolvedId = body.organization_id;
+        resolvedName = body.organization_name || 'Token-Based Organisation';
+        console.log(`[INFO] Token resolved to organisation: ${resolvedName} (${resolvedId})`);
+      } else {
+        const errorMsg = body.error || `HTTP ${tokenRes.status}`;
+        throw new Error(`Token resolution failed: ${errorMsg}`);
+      }
+    } catch (e) {
       const msg =
         `\n======================================================================\n` +
-        `ERROR: Organisation ID mismatch!\n` +
-        `Expected ID: "${EXPECTED_ORG_ID}"\n` +
-        `Resolved ID: "${resolvedId}" (for "${resolvedName}")\n\n` +
-        `Test aborted to prevent cross-organisation pollution.\n` +
+        `ERROR: Failed to resolve assessment token.\n` +
+        `Reason: ${e.message}\n\n` +
+        `No load test was started.\n` +
         `No assessment was submitted.\n` +
         `======================================================================\n`;
       console.error(msg);
-      throw new Error(`Organisation ID mismatch: expected ${EXPECTED_ORG_ID}, got ${resolvedId}`);
+      throw new Error(`Token resolution failed: ${e.message}`);
+    }
+  } else {
+    // Standard org code validation
+    const valPayload = JSON.stringify({ name: ORG_CODE });
+    const valRes = http.post(`${BASE_URL}/api/public/organisations/validate`, valPayload, {
+      headers: COMMON_HEADERS,
+      timeout: DEFAULT_TIMEOUT,
+    });
+
+    let serverErrMsg = '';
+
+    try {
+      const body = JSON.parse(valRes.body);
+      if (valRes.status === 200 && body.valid === true) {
+        orgValid = true;
+        resolvedId = body.organization_id;
+        resolvedName = body.organization_name;
+      } else {
+        serverErrMsg = body.error || `HTTP ${valRes.status}`;
+      }
+    } catch (e) {
+      serverErrMsg = `Failed to parse response: ${valRes.body}`;
+    }
+
+    if (!orgValid || !resolvedId) {
+      const msg =
+        `\n======================================================================\n` +
+        `ERROR: Organisation "${ORG_CODE}" could not be verified.\n` +
+        `Reason: ${serverErrMsg}\n\n` +
+        `No load test was started.\n` +
+        `No organisation was created.\n` +
+        `No assessment was submitted.\n` +
+        `======================================================================\n`;
+      console.error(msg);
+      throw new Error(`Organisation verification failed for "${ORG_CODE}": ${serverErrMsg}`);
+    }
+
+    // 4. Validate Expected Org ID Match (if user supplied ORG_ID)
+    if (EXPECTED_ORG_ID) {
+      const idMatches = resolvedId.toLowerCase() === EXPECTED_ORG_ID;
+      if (!idMatches) {
+        const msg =
+          `\n======================================================================\n` +
+          `ERROR: Organisation ID mismatch!\n` +
+          `Expected ID: "${EXPECTED_ORG_ID}"\n` +
+          `Resolved ID: "${resolvedId}" (for "${resolvedName}")\n\n` +
+          `Test aborted to prevent cross-organisation pollution.\n` +
+          `No assessment was submitted.\n` +
+          `======================================================================\n`;
+        console.error(msg);
+        throw new Error(`Organisation ID mismatch: expected ${EXPECTED_ORG_ID}, got ${resolvedId}`);
+      }
     }
   }
 
@@ -228,7 +272,11 @@ export function performPreflightCheck(testType = 'Smoke Test', vus = 1) {
   console.log(`NIWI PERFORMANCE TEST — CONFIGURATION`);
   console.log(`==================================================`);
   console.log(`Base URL:           ${BASE_URL}`);
-  console.log(`Organisation Code:  ${ORG_CODE}`);
+  if (AUDIT_TOKEN) {
+    console.log(`Audit Token:        ${AUDIT_TOKEN.substring(0, 20)}...`);
+  } else {
+    console.log(`Organisation Code:  ${ORG_CODE}`);
+  }
   console.log(`Organisation ID:    ${resolvedId}`);
   console.log(`Assessment URL:     ${AUDIT_URL}`);
   console.log(`Virtual Users:      ${vus}`);
@@ -247,13 +295,14 @@ export function performPreflightCheck(testType = 'Smoke Test', vus = 1) {
   return {
     organizationId: resolvedId,
     organizationName: resolvedName,
-    orgCode: ORG_CODE,
+    orgCode: ORG_CODE || (AUDIT_TOKEN ? 'token-based' : 'unspecified'),
     baseUrl: BASE_URL,
     auditUrl: AUDIT_URL,
     runId: TEST_RUN_ID,
     vus: vus,
     testType: testType,
     isPreflightOnly: PREFLIGHT_ONLY,
+    tokenBasedAuth: !!AUDIT_TOKEN, // Flag for token-based authentication
   };
 }
 

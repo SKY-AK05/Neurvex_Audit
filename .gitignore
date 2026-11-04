@@ -114,3 +114,9 @@ screenshots/
 .agents/
 skills-lock.json
 
+# Temporary Scripts (one-time use, data seeding)
+# ==============================================================================
+scripts/temp/
+create_siwi*.py
+generate_audit_tokens.py
+

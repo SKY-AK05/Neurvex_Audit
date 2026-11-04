@@ -8,12 +8,21 @@
  * - Stage 4:  75 Concurrent Users
  * - Stage 5:  100 Concurrent Users
  *
- * Usage:
+ * Usage (with existing org validation):
  *   k6 run \
  *     -e BASE_URL=https://niwi.orchvate.in \
  *     -e ORG_CODE=SKY11 \
  *     -e VUS=10 \
  *     -e CONFIRM_PROD=true \
+ *     tests/performance/niwi-submission-load.js
+ *
+ * Usage (manual org entry - no validation):
+ *   k6 run \
+ *     -e BASE_URL=https://niwi.orchvate.in \
+ *     -e ORG_CODE=SIWI10 \
+ *     -e VUS=10 \
+ *     -e CONFIRM_PROD=true \
+ *     -e MANUAL_ORG_ENTRY=true \
  *     tests/performance/niwi-submission-load.js
  */
 
@@ -72,6 +81,50 @@ export const options = {
 
 // Preflight validation runs once before VUs start
 export function setup() {
+  const manualOrgEntry = (__ENV.MANUAL_ORG_ENTRY || '').toLowerCase() === 'true';
+  
+  if (manualOrgEntry) {
+    // Manual org entry mode - simulate user visiting base URL and entering org manually
+    // But we still need to resolve the org ID from the backend
+    const baseUrl = __ENV.BASE_URL || 'http://localhost:8000';
+    const orgCode = __ENV.ORG_CODE;
+    
+    console.log(`📝 MANUAL_ORG_ENTRY mode - simulating users visiting ${baseUrl} and entering org: ${orgCode}`);
+    
+    // Validate org exists (user would see this validation in the UI)
+    const valPayload = JSON.stringify({ name: orgCode });
+    const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
+      headers: COMMON_HEADERS,
+      timeout: DEFAULT_TIMEOUT,
+    });
+    
+    let orgId = null;
+    let orgName = null;
+    
+    try {
+      const body = JSON.parse(valRes.body);
+      if (valRes.status === 200 && body.valid === true) {
+        orgId = body.organization_id;
+        orgName = body.organization_name;
+      } else {
+        throw new Error(`Organization '${orgCode}' could not be validated: ${body.error || `HTTP ${valRes.status}`}`);
+      }
+    } catch (e) {
+      throw new Error(`Failed to validate organization '${orgCode}': ${e.message}`);
+    }
+    
+    console.log(`✅ Organization validated: ${orgName} (${orgId})`);
+    
+    return {
+      baseUrl: baseUrl,
+      orgCode: orgCode,
+      organizationId: orgId,
+      organizationName: orgName,
+      auditUrl: baseUrl, // Base URL - user navigates here then enters org
+      manualOrgEntry: true,
+    };
+  }
+  
   return performPreflightCheck('Submission Load Test', TARGET_VUS);
 }
 
@@ -128,40 +181,45 @@ export default function (setupData) {
   sleep(Math.random() * 1.0 + 0.5);
 
   // -------------------------------------------------------------------------
-  // STEP 3: Server-side Organisation Validation
+  // STEP 3: Server-side Organisation Validation (Skip for token-based or manual entry - already done in setup)
   // -------------------------------------------------------------------------
-  const t2 = Date.now();
-  const valPayload = JSON.stringify({ name: orgCode });
-  const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
-    headers: COMMON_HEADERS,
-    timeout: DEFAULT_TIMEOUT,
-  });
-  orgValidationDuration.add(Date.now() - t2);
+  let verifiedOrgId = orgId;
+  
+  if (!setupData.tokenBasedAuth && !setupData.manualOrgEntry) {
+    const t2 = Date.now();
+    const valPayload = JSON.stringify({ name: orgCode });
+    const valRes = http.post(`${baseUrl}/api/public/organisations/validate`, valPayload, {
+      headers: COMMON_HEADERS,
+      timeout: DEFAULT_TIMEOUT,
+    });
+    orgValidationDuration.add(Date.now() - t2);
 
-  let verifiedOrgId = null;
-  const valOk = check(valRes, {
-    'step 3: org validate HTTP 200': (r) => r.status === 200,
-    'step 3: org exists': (r) => {
-      try {
-        const b = JSON.parse(r.body);
-        if (b.valid === true) {
-          verifiedOrgId = b.organization_id;
-          return true;
+    const valOk = check(valRes, {
+      'step 3: org validate HTTP 200': (r) => r.status === 200,
+      'step 3: org exists': (r) => {
+        try {
+          const b = JSON.parse(r.body);
+          if (b.valid === true) {
+            verifiedOrgId = b.organization_id;
+            return true;
+          }
+          return false;
+        } catch (e) {
+          return false;
         }
-        return false;
-      } catch (e) {
-        return false;
-      }
-    },
-  });
-  httpErrorRate.add(!valOk);
+      },
+    });
+    httpErrorRate.add(!valOk);
 
-  const idMatches = (verifiedOrgId === orgId);
-  orgIdMatchRate.add(idMatches);
+    const idMatches = (verifiedOrgId === orgId);
+    orgIdMatchRate.add(idMatches);
 
-  if (!valOk || !idMatches) {
-    console.error(`[VU ${vuId} ERROR] Organisation validation mismatch: expected ${orgId}, got ${verifiedOrgId}`);
-    return;
+    if (!valOk || !idMatches) {
+      console.error(`[VU ${vuId} ERROR] Organisation validation mismatch: expected ${orgId}, got ${verifiedOrgId}`);
+      return;
+    }
+  } else if (setupData.manualOrgEntry) {
+    console.log(`[VU ${vuId}] Manual org entry mode - user entered: ${orgCode}`);
   }
 
   // Realistic answering delay
