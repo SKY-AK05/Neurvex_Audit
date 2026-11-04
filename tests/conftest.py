@@ -57,6 +57,14 @@ class InMemoryStore:
         self.audit_logs = []
         self.post_submit_jobs = {}
         self.service_bus_outbox = {}
+        self.system_security_settings = {
+            "submit_rate_limit_hour": 500,
+            "submit_rate_limit_day": 2000,
+            "secure_submit_rate_limit_hour": 500,
+            "secure_submit_rate_limit_day": 2000,
+            "assessment_session_limit_hour": 3,
+            "invalid_token_limit_minute": 10,
+        }
 
 MEM_STORE = InMemoryStore()
 
@@ -216,6 +224,32 @@ class MockCursor:
                 except ValueError:
                     val = raw
             self._results = [{"val": val}] if self.dict_cursor else [(val,)]
+            self.rowcount = 1
+            return
+
+        # 1.2 System Security Settings
+        if "from system_security_settings" in sql_lower and sql_lower.startswith("select"):
+            self._results = []
+            for k, v in self.store.system_security_settings.items():
+                row = {
+                    "setting_key": k,
+                    "setting_value": str(v),
+                    "description": "",
+                    "updated_at": datetime.now(timezone.utc),
+                    "updated_by": "system",
+                }
+                self._results.append(row if self.dict_cursor else (k, str(v), "", datetime.now(timezone.utc), "system"))
+            self.rowcount = len(self._results)
+            return
+
+        if "insert into system_security_settings" in sql_lower:
+            if p and len(p) >= 2:
+                self.store.system_security_settings[p[0]] = p[1]
+            self.rowcount = 1
+            return
+
+        if "insert into audit_logs" in sql_lower:
+            self.store.audit_logs.append(p)
             self.rowcount = 1
             return
 

@@ -144,6 +144,33 @@ export async function toggleNotifications() {
   return handleResponse(res);
 }
 
+export async function getRateLimitSettings() {
+  const res = await fetch(`${API_BASE}/manage/settings/rate-limits`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function updateRateLimitSettings(data) {
+  const res = await fetch(`${API_BASE}/manage/settings/rate-limits`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function resetRateLimitSettings() {
+  const res = await fetch(`${API_BASE}/manage/settings/rate-limits/reset`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
 export async function deleteAllRecords(payload) {
   const body = typeof payload === "string"
     ? { confirmation: payload, password: payload }

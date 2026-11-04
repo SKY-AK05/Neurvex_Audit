@@ -70,6 +70,165 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <h2>Security &amp; Traffic Management</h2>
+            <p class="card-hint">
+              Configure public assessment submission rate limits, burst thresholds, and abuse mitigation.
+              Changes are committed to PostgreSQL and immediately synchronized across all application workers.
+            </p>
+          </div>
+          <div class="sync-badge" :class="{ synchronized: rateLimitsMeta.sync_status === 'SYNCHRONIZED' }">
+            <span class="sync-dot"></span>
+            <span>{{ rateLimitsMeta.sync_status === 'SYNCHRONIZED' ? 'Workers In Sync' : 'Syncing' }}</span>
+          </div>
+        </div>
+
+        <div class="meta-strip">
+          <div class="meta-item">
+            <span class="meta-label">Last Updated:</span>
+            <span class="meta-val">{{ formatDate(rateLimitsMeta.last_updated_at) }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Updated By:</span>
+            <span class="meta-val">{{ rateLimitsMeta.last_updated_by || 'system' }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Blocked (429):</span>
+            <span class="meta-val">{{ rateLimitsMeta.metrics?.rate_limit_exceeded_total || 0 }}</span>
+          </div>
+        </div>
+
+        <div class="fields-row rate-limits-grid">
+          <div class="field">
+            <label for="submit_rate_limit_hour">
+              Public submissions / IP / hour
+              <span class="limit-badge">Default: 500</span>
+            </label>
+            <input
+              id="submit_rate_limit_hour"
+              v-model.number="rateLimits.submit_rate_limit_hour"
+              type="number"
+              min="1"
+              max="100000"
+              required
+            />
+            <p class="field-help">Maximum assessment submissions per client IP within one hour (shared corporate IP).</p>
+          </div>
+
+          <div class="field">
+            <label for="submit_rate_limit_day">
+              Public submissions / IP / day
+              <span class="limit-badge">Default: 2000</span>
+            </label>
+            <input
+              id="submit_rate_limit_day"
+              v-model.number="rateLimits.submit_rate_limit_day"
+              type="number"
+              min="1"
+              max="1000000"
+              required
+            />
+            <p class="field-help">Daily safety ceiling per client IP within 24 hours. Must be ≥ hourly limit.</p>
+          </div>
+
+          <div class="field">
+            <label for="secure_submit_rate_limit_hour">
+              Secure-link submissions / IP / hour
+              <span class="limit-badge">Default: 500</span>
+            </label>
+            <input
+              id="secure_submit_rate_limit_hour"
+              v-model.number="rateLimits.secure_submit_rate_limit_hour"
+              type="number"
+              min="1"
+              max="100000"
+              required
+            />
+            <p class="field-help">Higher allowance for employees submitting through validated secure assessment links.</p>
+          </div>
+
+          <div class="field">
+            <label for="secure_submit_rate_limit_day">
+              Secure-link submissions / IP / day
+              <span class="limit-badge">Default: 2000</span>
+            </label>
+            <input
+              id="secure_submit_rate_limit_day"
+              v-model.number="rateLimits.secure_submit_rate_limit_day"
+              type="number"
+              min="1"
+              max="1000000"
+              required
+            />
+            <p class="field-help">Daily ceiling for valid assessment-link traffic from a shared office network.</p>
+          </div>
+
+          <div class="field">
+            <label for="assessment_session_limit_hour">
+              Assessment session attempts / hour
+              <span class="limit-badge">Default: 3</span>
+            </label>
+            <input
+              id="assessment_session_limit_hour"
+              v-model.number="rateLimits.assessment_session_limit_hour"
+              type="number"
+              min="1"
+              max="100"
+              required
+            />
+            <p class="field-help">Maximum submission attempts per draft session ID to stop retry spam.</p>
+          </div>
+
+          <div class="field">
+            <label for="invalid_token_limit_minute">
+              Invalid-token attempts / IP / min
+              <span class="limit-badge">Default: 10</span>
+            </label>
+            <input
+              id="invalid_token_limit_minute"
+              v-model.number="rateLimits.invalid_token_limit_minute"
+              type="number"
+              min="1"
+              max="1000"
+              required
+            />
+            <p class="field-help">Aggressive mitigation against token brute-forcing, scanning, and revoked links.</p>
+          </div>
+        </div>
+
+        <div class="rate-limit-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            :disabled="savingRateLimits || resettingRateLimits"
+            @click="saveRateLimits"
+          >
+            {{ savingRateLimits ? 'Saving…' : 'Save Rate Limits' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline"
+            :disabled="savingRateLimits || resettingRateLimits || !hasRateLimitChanges"
+            @click="cancelRateLimits"
+          >
+            Reset Changes
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline"
+            :disabled="savingRateLimits || resettingRateLimits"
+            @click="handleRestoreDefaults"
+          >
+            {{ resettingRateLimits ? 'Restoring…' : 'Restore Defaults' }}
+          </button>
+          <div v-if="rateLimitMsg" :class="`alert alert-${rateLimitMsgType} msg-inline`">
+            {{ rateLimitMsg }}
+          </div>
+        </div>
+      </div>
+
       <div v-if="isSuperAdmin" class="card danger-zone">
         <h2 style="color: #C0392B;">⚠️ Danger Zone</h2>
         <p class="card-hint">
@@ -109,8 +268,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount } from "vue";
-import { getSettings, saveSettings, deleteAllRecords } from "../api";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
+import {
+  getSettings,
+  saveSettings,
+  deleteAllRecords,
+  getRateLimitSettings,
+  updateRateLimitSettings,
+  resetRateLimitSettings,
+} from "../api";
 
 const loading = ref(true);
 const saving = ref(false);
@@ -134,6 +300,158 @@ const form = reactive({
   low_visibility_threshold: 50,
 });
 
+// Security & Traffic Management: Rate Limits State
+const rateLimits = reactive({
+  submit_rate_limit_hour: 500,
+  submit_rate_limit_day: 2000,
+  secure_submit_rate_limit_hour: 500,
+  secure_submit_rate_limit_day: 2000,
+  assessment_session_limit_hour: 3,
+  invalid_token_limit_minute: 10,
+});
+
+const originalRateLimits = ref({ ...rateLimits });
+const rateLimitsMeta = reactive({
+  last_updated_at: null,
+  last_updated_by: "system",
+  last_synced_at: null,
+  sync_status: "SYNCHRONIZED",
+  metrics: { rate_limit_exceeded_total: 0, last_rate_limit_exceeded_at: null },
+});
+const savingRateLimits = ref(false);
+const resettingRateLimits = ref(false);
+const rateLimitMsg = ref("");
+const rateLimitMsgType = ref("success");
+
+const hasRateLimitChanges = computed(() => {
+  return Object.keys(rateLimits).some(
+    (k) => rateLimits[k] !== originalRateLimits.value[k]
+  );
+});
+
+function formatDate(isoStr) {
+  if (!isoStr) return "Never (System Defaults)";
+  try {
+    const d = new Date(isoStr);
+    return d.toLocaleString("en-GB", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  } catch {
+    return isoStr;
+  }
+}
+
+function applyRateLimitResponse(res) {
+  if (!res) return;
+  if (res.settings) {
+    Object.assign(rateLimits, res.settings);
+    originalRateLimits.value = { ...res.settings };
+  }
+  rateLimitsMeta.last_updated_at = res.last_updated_at;
+  rateLimitsMeta.last_updated_by = res.last_updated_by;
+  rateLimitsMeta.last_synced_at = res.last_synced_at;
+  rateLimitsMeta.sync_status = res.sync_status || "SYNCHRONIZED";
+  if (res.metrics) {
+    rateLimitsMeta.metrics = res.metrics;
+  }
+}
+
+function isSignificantIncrease(newVals, oldVals) {
+  for (const k of Object.keys(newVals)) {
+    const oldV = Number(oldVals[k]) || 0;
+    const newV = Number(newVals[k]) || 0;
+    if (oldV > 0 && newV >= oldV * 2 && newV - oldV >= 100) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function saveRateLimits() {
+  rateLimitMsg.value = "";
+
+  // Validation
+  for (const [k, v] of Object.entries(rateLimits)) {
+    if (v === null || v === undefined || v === "" || isNaN(v) || Number(v) <= 0) {
+      rateLimitMsgType.value = "error";
+      rateLimitMsg.value = "All rate limits must be positive integers.";
+      return;
+    }
+  }
+
+  if (Number(rateLimits.submit_rate_limit_day) < Number(rateLimits.submit_rate_limit_hour)) {
+    rateLimitMsgType.value = "error";
+    rateLimitMsg.value = "Public daily limit cannot be less than hourly limit.";
+    return;
+  }
+
+  if (Number(rateLimits.secure_submit_rate_limit_day) < Number(rateLimits.secure_submit_rate_limit_hour)) {
+    rateLimitMsgType.value = "error";
+    rateLimitMsg.value = "Secure-link daily limit cannot be less than hourly limit.";
+    return;
+  }
+
+  // Significant increase prompt
+  if (isSignificantIncrease(rateLimits, originalRateLimits.value)) {
+    const ok = confirm(
+      "⚠️ Significant Rate Limit Increase\n\n" +
+      "You are setting one or more rate limits to more than double their current values.\n" +
+      "This permits higher inbound traffic volumes to the application.\n\n" +
+      "Do you want to confirm this change?"
+    );
+    if (!ok) return;
+  }
+
+  savingRateLimits.value = true;
+  try {
+    const payload = {};
+    for (const [k, v] of Object.entries(rateLimits)) {
+      payload[k] = parseInt(v, 10);
+    }
+    const res = await updateRateLimitSettings(payload);
+    applyRateLimitResponse(res);
+    rateLimitMsgType.value = "success";
+    rateLimitMsg.value = "Rate limits saved and synchronized across all workers.";
+  } catch (e) {
+    rateLimitMsgType.value = "error";
+    rateLimitMsg.value = e.message || "Failed to save rate limits.";
+  } finally {
+    savingRateLimits.value = false;
+  }
+}
+
+function cancelRateLimits() {
+  Object.assign(rateLimits, originalRateLimits.value);
+  rateLimitMsg.value = "";
+}
+
+async function handleRestoreDefaults() {
+  const ok = confirm(
+    "Restore Rate Limit Defaults\n\n" +
+    "Are you sure you want to restore all submission rate limits to system defaults?\n" +
+    "• Public: 500/hr, 2,000/day\n" +
+    "• Secure-Link: 500/hr, 2,000/day\n" +
+    "• Session Attempts: 3/hr\n" +
+    "• Invalid Token Attempts: 10/min"
+  );
+  if (!ok) return;
+
+  resettingRateLimits.value = true;
+  rateLimitMsg.value = "";
+  try {
+    const res = await resetRateLimitSettings();
+    applyRateLimitResponse(res);
+    rateLimitMsgType.value = "success";
+    rateLimitMsg.value = "Rate limits restored to system defaults.";
+  } catch (e) {
+    rateLimitMsgType.value = "error";
+    rateLimitMsg.value = e.message || "Failed to restore defaults.";
+  } finally {
+    resettingRateLimits.value = false;
+  }
+}
+
 onMounted(async () => {
   try {
     const data = await getSettings();
@@ -148,6 +466,13 @@ onMounted(async () => {
     loadError.value = e.message;
   } finally {
     loading.value = false;
+  }
+
+  try {
+    const rlRes = await getRateLimitSettings();
+    applyRateLimitResponse(rlRes);
+  } catch (e) {
+    console.warn("Could not load rate limit settings:", e);
   }
   
   window.addEventListener("settings-updated", syncFromApp);
@@ -342,6 +667,110 @@ async function confirmDeleteAll() {
   padding: 0.75rem 1.5rem;
   font-weight: 700;
   min-height: 44px;
+}
+
+.card-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #F1F5F9;
+  color: #475569;
+  border: 1px solid #CBD5E1;
+  white-space: nowrap;
+}
+
+.sync-badge.synchronized {
+  background: #DCFCE7;
+  color: #166534;
+  border-color: #86EFAC;
+}
+
+.sync-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #64748B;
+}
+
+.sync-badge.synchronized .sync-dot {
+  background: #16A34A;
+}
+
+.meta-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.meta-item {
+  display: flex;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.meta-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.meta-val {
+  color: #0F172A;
+  font-weight: 700;
+}
+
+.rate-limits-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.limit-badge {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  margin-left: 0.4rem;
+}
+
+.field-help {
+  font-size: 0.76rem;
+  color: #64748B;
+  margin-top: 0.35rem;
+  line-height: 1.35;
+}
+
+.rate-limit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(22, 16, 87, 0.08);
+  flex-wrap: wrap;
+}
+
+.rate-limit-actions .btn {
+  border-radius: 99px;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  min-height: 42px;
 }
 
 @media (max-width: 640px) {

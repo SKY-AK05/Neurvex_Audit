@@ -67,6 +67,15 @@ from app.services.org_cache_service import (
 )
 from app.services.email_policy_service import check_corporate_email_eligibility
 from app.services.token_service import resolve_assessment_token
+from app.services.rate_limit_service import (
+    enforce_submission_rate_limits,
+    get_effective_submit_hourly_limit,
+    get_effective_submit_daily_limit,
+    get_client_ip,
+    get_rate_limit_config_response,
+    update_rate_limit_settings,
+    reset_rate_limit_settings,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,14 +127,17 @@ def _bg_notify_admin(submission_id: str, name: str, company_name: str):
 # ---------------------------------------------------------------------------
 
 @router.post("/submit", status_code=201)
-@limiter.limit("100/hour")  # Per IP - allows shared office IPs
-@limiter.limit("1000/day")  # Daily safety limit per IP
+@limiter.limit(get_effective_submit_hourly_limit, key_func=get_client_ip)
+@limiter.limit(get_effective_submit_daily_limit, key_func=get_client_ip)
 def submit(request: Request, payload: AuditSubmission, background_tasks: BackgroundTasks):
     t_req_start = time.perf_counter()
     data = payload.dict()
     idempotency_key = data.get("idempotency_key")
     if idempotency_key:
         idempotency_key = str(idempotency_key).strip() or None
+
+    # Step 0: Dynamic per-traffic classification and session attempt rate limiting
+    enforce_submission_rate_limits(request, data)
 
     # Step 1: Pre-compute pure scores BEFORE borrowing database connection (CALC-001 through CALC-006)
     t_score_start = time.perf_counter()
@@ -1440,6 +1452,64 @@ async def toggle_notifications(request: Request):
     except Exception as e:
         logger.error("Toggle notifications failed: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
+
+
+# ---------------------------------------------------------------------------
+# Rate Limit Settings Management
+# GET /api/manage/settings/rate-limits  (and /api/settings/rate-limits)
+# PUT /api/manage/settings/rate-limits  (and /api/settings/rate-limits)
+# POST /api/manage/settings/rate-limits/reset (and /api/settings/rate-limits/reset)
+# ---------------------------------------------------------------------------
+
+@router.get("/manage/settings/rate-limits")
+@router.get("/settings/rate-limits")
+async def get_rate_limits_route(request: Request):
+    require_admin(request)
+    try:
+        return get_rate_limit_config_response()
+    except Exception as e:
+        logger.error("Failed to fetch rate limits: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to retrieve rate limit settings")
+
+
+@router.put("/manage/settings/rate-limits")
+@router.put("/settings/rate-limits")
+async def update_rate_limits_route(request: Request):
+    user = require_admin(request)
+    admin_email = user.get("email") or getattr(request.state, "admin_email", "admin")
+    client_ip = get_client_ip(request)
+
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON body")
+
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="Request body must be a JSON object")
+
+    try:
+        updated = update_rate_limit_settings(body, admin_email=admin_email, client_ip=client_ip)
+        return updated
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error("Failed to update rate limits: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to update rate limit settings")
+
+
+@router.post("/manage/settings/rate-limits/reset")
+@router.post("/settings/rate-limits/reset")
+async def reset_rate_limits_route(request: Request):
+    user = require_admin(request)
+    admin_email = user.get("email") or getattr(request.state, "admin_email", "admin")
+    client_ip = get_client_ip(request)
+
+    try:
+        reset_res = reset_rate_limit_settings(admin_email=admin_email, client_ip=client_ip)
+        return reset_res
+    except Exception as e:
+        logger.error("Failed to reset rate limits: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to reset rate limit settings")
 
 
 # ---------------------------------------------------------------------------
