@@ -354,6 +354,92 @@
           </div>
         </div>
       </section>
+
+      <!-- 4. DEAD-LETTER QUEUE (DLQ) & FAILURE INSPECTOR -->
+      <section class="engine-section">
+        <div class="results-header-bar sub-header-bar">
+          <div class="results-header-left">
+            <h2 class="results-title">Dead-Letter Queue &amp; Failure Inspector</h2>
+            <span class="results-count-pill" :class="{ 'pill-alert': dlqItems.length > 0 }">
+              {{ dlqItems.length }} item{{ dlqItems.length === 1 ? '' : 's' }}
+            </span>
+          </div>
+
+          <div class="header-action-wrap" v-if="dlqItems.length">
+            <button
+              type="button"
+              class="hero-search-btn btn-replay-all"
+              :disabled="replayingAll"
+              @click="handleReplayAll"
+              title="Re-arm and reprocess all dead-lettered submissions"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span>{{ replayingAll ? 'Replaying All…' : 'Reprocess All DLQ' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card table-card-wrap">
+          <table class="engine-table" v-if="dlqItems.length">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Submission ID</th>
+                <th>Organisation</th>
+                <th>Recipient / User</th>
+                <th>Retries</th>
+                <th>Failure Root Cause</th>
+                <th>Last Attempt</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="item in dlqItems" :key="item.submission_id">
+                <td>
+                  <span class="worker-state-pill state-offline">
+                    <span class="state-dot"></span>
+                    {{ item.status }}
+                  </span>
+                </td>
+                <td>
+                  <code class="worker-code">{{ item.submission_id.substring(0, 8) }}…</code>
+                </td>
+                <td class="bold-text">
+                  {{ item.organization_name || 'Direct' }}
+                </td>
+                <td class="email-text">
+                  {{ item.user_email || '—' }}
+                </td>
+                <td>
+                  <span class="retry-pill">{{ item.retry_count }}</span>
+                </td>
+                <td>
+                  <span class="error-msg-box" :title="item.last_error">{{ item.last_error || 'Exceeded retry ceiling' }}</span>
+                </td>
+                <td class="date-text">
+                  {{ formatTime(item.updated_at) }}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn-row-replay"
+                    :disabled="replayingId === item.submission_id"
+                    @click="handleReplayOne(item.submission_id)"
+                  >
+                    {{ replayingId === item.submission_id ? 'Re-arming…' : 'Replay' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div v-else class="engine-empty-table green-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <h3>All Systems Nominal — 0 Dead-Letter Submissions</h3>
+            <p>Every ingested submission has been successfully processed, scored, and archived with zero unhandled errors.</p>
+          </div>
+        </div>
+      </section>
     </main>
 
     <!-- Initial Loading State matching Overview skeleton -->
@@ -372,12 +458,15 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { getSuperAdminDashboard } from '../api';
+import { getSuperAdminDashboard, getDeadLetteredSubmissions, replaySubmission, replayAllDeadLetteredSubmissions } from '../api';
 
 const stats = ref(null);
 const loading = ref(false);
 const error = ref(null);
 const lastUpdated = ref(null);
+const dlqItems = ref([]);
+const replayingId = ref(null);
+const replayingAll = ref(false);
 const isTabVisible = ref(true);
 const timelineMode = ref('24h');
 
@@ -434,6 +523,13 @@ async function fetchDashboard(forceRefresh = false) {
     stats.value = data;
     lastUpdated.value = data.timestamp || new Date().toISOString();
     lastFetchTimestamp = Date.now();
+
+    try {
+      const dlqData = await getDeadLetteredSubmissions();
+      dlqItems.value = dlqData.dead_lettered_submissions || [];
+    } catch (e) {
+      console.warn('Could not load DLQ submissions:', e);
+    }
   } catch (err) {
     console.error('Error fetching operations dashboard:', err);
     error.value = err.message || 'Failed to connect to operations endpoint';
@@ -443,6 +539,32 @@ async function fetchDashboard(forceRefresh = false) {
 }
 
 // Requirement 4: Auto-refresh every 2 minutes with Tab Visibility pause
+async function handleReplayOne(id) {
+  if (replayingId.value) return;
+  replayingId.value = id;
+  try {
+    await replaySubmission(id);
+    await fetchDashboard(true);
+  } catch (e) {
+    alert('Failed to re-arm submission: ' + e.message);
+  } finally {
+    replayingId.value = null;
+  }
+}
+
+async function handleReplayAll() {
+  if (replayingAll.value) return;
+  replayingAll.value = true;
+  try {
+    await replayAllDeadLetteredSubmissions();
+    await fetchDashboard(true);
+  } catch (e) {
+    alert('Failed to re-arm submissions: ' + e.message);
+  } finally {
+    replayingAll.value = false;
+  }
+}
+
 function startPolling() {
   stopPolling();
   pollIntervalId = setInterval(() => {
@@ -1322,4 +1444,71 @@ onUnmounted(() => {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+.btn-replay-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-replay-all:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn-row-replay {
+  background: #FFFFFF;
+  color: var(--primary, #161057);
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-row-replay:hover:not(:disabled) {
+  background: rgba(22, 16, 87, 0.08);
+}
+.error-msg-box {
+  display: inline-block;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  color: #DC2626;
+  background: rgba(239, 68, 68, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.retry-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: 99px;
+  background: #F1F5F9;
+  color: #475569;
+}
+.green-empty {
+  border-color: rgba(34, 197, 94, 0.2) !important;
+}
+.bold-text {
+  font-weight: 600;
+  color: #1E293B;
+}
+.email-text {
+  font-size: 0.82rem;
+  color: #64748B;
+}
+
 </style>

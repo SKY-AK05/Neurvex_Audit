@@ -737,6 +737,12 @@ def run_service_bus_worker():
     tracker = WorkerTracker(worker_id=worker_id, worker_type="service_bus_worker", heartbeat_interval=45.0)
     tracker.set_idle("Waiting for Service Bus messages")
 
+    from app.core.database import init_connection_pool
+    try:
+        init_connection_pool(minconn=2, maxconn=6)
+    except Exception as e:
+        logger.warning("Could not initialize worker connection pool: %s", e)
+
     if not is_service_bus_configured():
         logger.info("Azure Service Bus is not configured. Starting in DB-outbox fallback mode.")
         run_db_fallback_worker()

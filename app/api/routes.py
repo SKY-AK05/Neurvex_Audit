@@ -1962,6 +1962,63 @@ def replay_submission(request: Request, submission_id: str):
     }
 
 
+@router.post("/admin/submissions/dead-lettered/replay-all")
+def replay_all_dead_lettered_submissions(request: Request):
+    require_super_admin(request)
+    with get_db_connection() as conn:
+        with conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT submission_id
+                    FROM raw_submissions
+                    WHERE status IN ('DEAD_LETTERED', 'FAILED')
+                    FOR UPDATE SKIP LOCKED;
+                    """
+                )
+                rows = cur.fetchall()
+                if not rows:
+                    return {"success": True, "replayed_count": 0, "message": "No dead-lettered submissions to replay."}
+
+                sub_ids = [r["submission_id"] for r in rows]
+                cur.execute(
+                    """
+                    UPDATE raw_submissions
+                    SET status = 'RECEIVED',
+                        retry_count = 0,
+                        last_error = NULL,
+                        processing_started_at = NULL,
+                        updated_at = NOW()
+                    WHERE submission_id = ANY(%s::uuid[]);
+                    """,
+                    (sub_ids,)
+                )
+                cur.execute(
+                    """
+                    INSERT INTO service_bus_outbox (
+                        event_type, aggregate_id, message_id, payload, status, next_retry_at
+                    )
+                    SELECT
+                        'SUBMISSION_CREATED',
+                        s.submission_id,
+                        s.submission_id::text,
+                        json_build_object('submission_id', s.submission_id::text, 'replay', true)::jsonb,
+                        'PENDING',
+                        NOW()
+                    FROM unnest(%s::uuid[]) AS s(submission_id)
+                    ON CONFLICT (id) DO UPDATE SET status = 'PENDING', next_retry_at = NOW(), attempt_count = 0;
+                    """,
+                    (sub_ids,)
+                )
+    dashboard_cache.clear()
+    logger.info("Re-armed all %d dead-lettered submissions for replay", len(sub_ids))
+    return {
+        "success": True,
+        "replayed_count": len(sub_ids),
+        "message": f"Successfully queued {len(sub_ids)} submissions for replay."
+    }
+
+
 # ---------------------------------------------------------------------------
 # Super Admin Operations Dashboard (Requirement: /api/admin/dashboard)
 # Strictly accessible only to users with the Super Admin role.

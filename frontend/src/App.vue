@@ -12,16 +12,16 @@
 
           <!-- Centered Primary Navigation Links -->
           <nav class="topbar-nav" aria-label="Main Navigation">
-            <router-link to="/admin/dashboard" class="top-nav-link" :class="{ active: route.path === '/admin/dashboard' }">
+            <router-link to="/admin/dashboard" class="top-nav-link" :class="{ active: route.path === '/admin/dashboard' }" @mouseenter="prefetchDashboard">
               Dashboard
             </router-link>
-            <router-link to="/admin/submissions" class="top-nav-link" :class="{ active: route.path.includes('submissions') }">
+            <router-link to="/admin/submissions" class="top-nav-link" :class="{ active: route.path.includes('submissions') }" @mouseenter="prefetchSubmissions">
               Submissions
             </router-link>
             <router-link to="/admin/analytics" class="top-nav-link" :class="{ active: route.path === '/admin/analytics' }">
               Analytics
             </router-link>
-            <router-link to="/admin/organisations" class="top-nav-link" :class="{ active: route.path === '/admin/organisations' }">
+            <router-link to="/admin/organisations" class="top-nav-link" :class="{ active: route.path === '/admin/organisations' }" @mouseenter="prefetchOrganisations">
               Organisations
             </router-link>
             <router-link to="/admin/form-builder" class="top-nav-link" :class="{ active: route.path === '/admin/form-builder' }">
@@ -173,8 +173,34 @@
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { getSettings, toggleNotifications } from "./api";
+import { getSettings, toggleNotifications, getSubmissions, filterSubmissions, getOrganisations } from "./api";
 import { getMsalInstance, clearMsalCache } from "./authConfig";
+
+const prefetchCache = {};
+
+function prefetchDashboard() {
+  const now = Date.now();
+  if (!prefetchCache['dash'] || now - prefetchCache['dash'] > 30000) {
+    prefetchCache['dash'] = now;
+    getSubmissions().catch(() => {});
+  }
+}
+
+function prefetchSubmissions() {
+  const now = Date.now();
+  if (!prefetchCache['subs'] || now - prefetchCache['subs'] > 30000) {
+    prefetchCache['subs'] = now;
+    filterSubmissions({ page: 1, per_page: 10 }).catch(() => {});
+  }
+}
+
+function prefetchOrganisations() {
+  const now = Date.now();
+  if (!prefetchCache['orgs'] || now - prefetchCache['orgs'] > 30000) {
+    prefetchCache['orgs'] = now;
+    getOrganisations().catch(() => {});
+  }
+}
 
 const router = useRouter();
 const route  = useRoute();

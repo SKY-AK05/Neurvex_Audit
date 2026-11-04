@@ -414,6 +414,14 @@ export async function replaySubmission(submissionId) {
   return handleResponse(res);
 }
 
+export async function replayAllDeadLetteredSubmissions() {
+  const res = await fetch(`${API_BASE}/admin/submissions/dead-lettered/replay-all`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}
+
 
 export async function getSuperAdminDashboard(forceRefresh = false) {
   const url = `${API_BASE}/admin/dashboard${forceRefresh ? '?refresh=true' : ''}`;

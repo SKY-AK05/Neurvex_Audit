@@ -228,6 +228,57 @@ def cleanup_published_outbox_events(retention_days: int = 7, batch_size: int = 5
         logger.error("Outbox cleanup failed: %s", e)
     return total_deleted
 
+def run_db_maintenance_vacuum():
+    """Periodic non-blocking VACUUM ANALYZE to keep Postgres statistics fresh and prune dead tuples."""
+    try:
+        from app.core.database import get_conn
+        conn = get_conn()
+        conn.autocommit = True
+        with conn.cursor() as cur:
+            cur.execute("VACUUM (ANALYZE) raw_submissions;")
+            cur.execute("VACUUM (ANALYZE) service_bus_outbox;")
+        conn.close()
+        logger.info("Database automated VACUUM ANALYZE completed successfully.")
+    except Exception as e:
+        logger.error("Periodic VACUUM ANALYZE error: %s", e)
+
+
+def check_system_health_and_alert():
+    """Alert super admin if queue is backed up (>200 items for >15m) or workers are offline."""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT COUNT(*) as pending_count,
+                           EXTRACT(EPOCH FROM (NOW() - MIN(created_at))) as oldest_wait_sec
+                    FROM raw_submissions
+                    WHERE status IN ('RECEIVED', 'PENDING');
+                    """
+                )
+                q_row = cur.fetchone()
+                pending_count = q_row[0] or 0
+                oldest_wait = q_row[1] or 0.0
+
+                if pending_count >= 200 and oldest_wait >= 900:  # > 200 items waiting > 15 mins
+                    from app.services.settings_service import get_settings, send_acs_email, get_sender_for_send, is_acs_configured
+                    settings = get_settings(cur)
+                    admin_email = settings.get("notification_email")
+                    if admin_email and is_acs_configured():
+                        sender_addr, sender_name = get_sender_for_send(cur)
+                        send_acs_email(
+                            to_address=admin_email,
+                            subject=f"⚠️ [NIWI System Alert] Ingestion Queue Backlog High ({pending_count} pending)",
+                            html=f"<p>System Alert: Ingestion queue has <strong>{pending_count}</strong> pending submissions. Oldest request waiting: {int(oldest_wait // 60)} minutes.</p>",
+                            plain=f"System Alert: Ingestion queue has {pending_count} pending submissions. Oldest waiting: {int(oldest_wait // 60)} mins.",
+                            sender_address=sender_addr,
+                            sender_name=sender_name
+                        )
+                        logger.warning("Dispatched high queue backlog alert to %s", admin_email)
+    except Exception as e:
+        logger.error("Health check alert error: %s", e)
+
+
 def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
     """Continuous outbox dispatcher loop."""
     try:
@@ -241,9 +292,17 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
     tracker.set_idle("Polling outbox events")
     logger.info("Outbox dispatcher daemon started [worker_id=%s, poll_interval=%.2fs]", worker_id, poll_interval)
 
+    from app.core.database import init_connection_pool
+    try:
+        init_connection_pool(minconn=2, maxconn=4)
+    except Exception as e:
+        logger.warning("Could not initialize outbox connection pool: %s", e)
+
     warned_offline = False
     last_cleanup_time = time.monotonic()
     last_digest_time = time.monotonic()
+    last_vacuum_time = time.monotonic()
+    last_health_check_time = time.monotonic()
 
     while not _stop_requested:
         # 1. Periodic batch cleanup of published outbox events (every 1 hour)
@@ -259,6 +318,16 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
             except Exception as d_err:
                 logger.error("Failed to execute 5-minute admin digest: %s", d_err)
             last_digest_time = time.monotonic()
+
+        # 3. Periodic 15-minute system health monitoring & alerting
+        if time.monotonic() - last_health_check_time >= 900:
+            check_system_health_and_alert()
+            last_health_check_time = time.monotonic()
+
+        # 4. Periodic 24-hour non-blocking database vacuum & analysis
+        if time.monotonic() - last_vacuum_time >= 86400:
+            run_db_maintenance_vacuum()
+            last_vacuum_time = time.monotonic()
 
         try:
             if not is_service_bus_configured():
