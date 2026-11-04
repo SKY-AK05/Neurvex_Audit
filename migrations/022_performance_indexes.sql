@@ -19,3 +19,8 @@ ON submissions (submitted_at DESC NULLS LAST, id DESC);
 CREATE INDEX IF NOT EXISTS idx_raw_submissions_active_status 
 ON raw_submissions (status) 
 WHERE status IN ('RECEIVED', 'PROCESSING', 'DEAD_LETTERED', 'FAILED', 'RETRYING');
+
+-- 5. Fast partial index for 5-minute admin digest queue
+CREATE INDEX IF NOT EXISTS idx_submissions_admin_notify_digest 
+ON submissions (admin_notify_status) 
+WHERE admin_notify_status = 'QUEUED_DIGEST';

@@ -243,12 +243,23 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
 
     warned_offline = False
     last_cleanup_time = time.monotonic()
+    last_digest_time = time.monotonic()
 
     while not _stop_requested:
-        # Periodic batch cleanup of published outbox events (every 1 hour)
+        # 1. Periodic batch cleanup of published outbox events (every 1 hour)
         if time.monotonic() - last_cleanup_time > 3600:
             cleanup_published_outbox_events()
             last_cleanup_time = time.monotonic()
+
+        # 2. Periodic 5-minute batched digest notification to admin
+        if time.monotonic() - last_digest_time >= 300:
+            try:
+                from app.services.settings_service import send_admin_submission_digest
+                send_admin_submission_digest()
+            except Exception as d_err:
+                logger.error("Failed to execute 5-minute admin digest: %s", d_err)
+            last_digest_time = time.monotonic()
+
         try:
             if not is_service_bus_configured():
                 if not warned_offline:

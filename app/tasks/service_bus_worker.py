@@ -244,45 +244,22 @@ def _run_crm_sync(submission_id: str, crm_payload: dict, known_deal_id: Optional
 
 
 def _run_admin_notification(submission_id: str, admin_payload: dict) -> Dict[str, Any]:
-    """Send admin alert email if notifications are enabled and ACS is configured."""
-    if not is_acs_configured():
-        return {
-            "status": "SKIPPED",
-            "metadata": {"reason": "ACS_CONNECTION_STRING not configured"}
-        }
-
+    """
+    Queues submission for the periodic 5-minute consolidated admin digest.
+    Eliminates per-submission individual email spam and zero-blocks worker throughput.
+    """
     email = (admin_payload.get("email") or "").lower()
     name = admin_payload.get("name", "")
-    company_name = admin_payload.get("company_name", "")
 
-    # Skip external ACS calls for synthetic performance tests (RFC 2606 example.com)
     if "example.com" in email or "loadtest_" in email or "synthetic" in name.lower():
         return {
             "status": "SKIPPED",
-            "metadata": {"reason": "Synthetic load test submission — skipped external notification"}
+            "metadata": {"reason": "Synthetic load test submission"}
         }
 
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            settings = get_settings(cur)
-            notifications_enabled = settings.get("notifications_enabled", False)
-
-    if not notifications_enabled:
-        return {
-            "status": "SKIPPED",
-            "metadata": {"reason": "Notifications disabled in app_settings"}
-        }
-
-    notify_admin_new_submission(
-        cur=None,
-        submission_id=submission_id,
-        name=name,
-        company_name=company_name,
-        sync=False
-    )
     return {
-        "status": "SENT",
-        "metadata": {"dispatched_async": True}
+        "status": "QUEUED_DIGEST",
+        "metadata": {"queued_for_5m_digest": True}
     }
 
 

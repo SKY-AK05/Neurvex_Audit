@@ -61,8 +61,12 @@ RUN rm -f /etc/nginx/sites-enabled/default
 # Copy supervisord config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy dynamic adaptive entrypoint
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # ACA only exposes one port — nginx listens here and routes internally
 EXPOSE 80
 
-# supervisord starts both nginx and uvicorn
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Dynamic adaptive entrypoint adapts workers to available cores and launches supervisord
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
