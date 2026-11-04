@@ -48,7 +48,7 @@ logger.setLevel(logging.INFO)
 
 MAX_DELIVERY_BEFORE_DLQ = int(os.environ.get("SERVICE_BUS_MAX_DELIVERY_COUNT", "10"))
 RECEIVE_WAIT_TIME = float(os.environ.get("SERVICE_BUS_RECEIVE_WAIT_TIME", "5.0"))
-RECEIVE_BATCH_SIZE = int(os.environ.get("SERVICE_BUS_BATCH_SIZE", "5"))
+RECEIVE_BATCH_SIZE = int(os.environ.get("SERVICE_BUS_BATCH_SIZE", "25"))
 
 OP_SCORING = "SCORING"
 OP_REPORT_GENERATION = "REPORT_GENERATION"
@@ -250,6 +250,17 @@ def _run_admin_notification(submission_id: str, admin_payload: dict) -> Dict[str
             "metadata": {"reason": "ACS_CONNECTION_STRING not configured"}
         }
 
+    email = (admin_payload.get("email") or "").lower()
+    name = admin_payload.get("name", "")
+    company_name = admin_payload.get("company_name", "")
+
+    # Skip external ACS calls for synthetic performance tests (RFC 2606 example.com)
+    if "example.com" in email or "loadtest_" in email or "synthetic" in name.lower():
+        return {
+            "status": "SKIPPED",
+            "metadata": {"reason": "Synthetic load test submission — skipped external notification"}
+        }
+
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             settings = get_settings(cur)
@@ -260,9 +271,6 @@ def _run_admin_notification(submission_id: str, admin_payload: dict) -> Dict[str
             "status": "SKIPPED",
             "metadata": {"reason": "Notifications disabled in app_settings"}
         }
-
-    name = admin_payload.get("name", "")
-    company_name = admin_payload.get("company_name", "")
 
     status, err = notify_admin_new_submission(
         cur=None,
@@ -449,7 +457,8 @@ def handle_submission_created(submission_id: str, payload: Optional[Dict[str, An
         }
         admin_payload = {
             "name": data.get("name", ""),
-            "company_name": resolved_company_name
+            "company_name": resolved_company_name,
+            "email": data.get("email", "")
         }
 
         rep_res = claim_and_execute_operation(sub_uuid, OP_REPORT_GENERATION, worker_id, _run_report_generation, sub_uuid, email_payload)
