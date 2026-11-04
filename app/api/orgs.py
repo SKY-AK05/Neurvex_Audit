@@ -131,7 +131,17 @@ def list_orgs(include_deleted: bool = Query(False)):
                 where_clause = "" if include_deleted else "WHERE o.is_deleted = FALSE"
                 cur.execute(f"""
                     SELECT o.id, o.name, o.is_active, o.is_deleted, o.created_at, o.updated_at,
-                           COUNT(DISTINCT osl.submission_id) AS respondent_count,
+                           (
+                               COUNT(DISTINCT osl.submission_id) +
+                               COALESCE((
+                                   SELECT COUNT(*) FROM raw_submissions r 
+                                   WHERE (r.organization_id = o.id OR LOWER(TRIM(r.payload->>'company_name')) = LOWER(TRIM(o.name)))
+                                     AND r.status IN ('RECEIVED', 'PROCESSING', 'DEAD_LETTERED', 'FAILED', 'RETRYING')
+                                     AND NOT EXISTS (
+                                         SELECT 1 FROM submissions s WHERE s.id = r.submission_id OR s.raw_submission_id = r.submission_id
+                                     )
+                               ), 0)
+                           ) AS respondent_count,
                            COUNT(DISTINCT oi.id) FILTER (
                                WHERE oi.is_active = TRUE AND (oi.expires_at IS NULL OR oi.expires_at > NOW())
                            ) AS active_invitations_count
