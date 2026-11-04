@@ -138,12 +138,12 @@
           <router-link to="/admin/form-builder" class="mobile-nav-link" :class="{ active: route.path === '/admin/form-builder' }" @click="mobileNavOpen = false">
             Form Builder
           </router-link>
+          <router-link v-if="isSuper" to="/admin/super-dashboard" class="mobile-nav-link" :class="{ active: route.path === '/admin/super-dashboard' }" @click="mobileNavOpen = false">
+            Engine
+          </router-link>
           <div class="mobile-nav-divider"></div>
           <router-link to="/admin/settings" class="mobile-nav-link" @click="mobileNavOpen = false">
             Settings
-          </router-link>
-          <router-link v-if="isSuper" to="/admin/super-dashboard" class="mobile-nav-link" @click="mobileNavOpen = false">
-            Platform Engine
           </router-link>
           <router-link v-if="isSuper" to="/admin/users" class="mobile-nav-link" @click="mobileNavOpen = false">
             User Management
