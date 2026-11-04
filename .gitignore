@@ -37,6 +37,7 @@ share/python-wheels/
 # Virtual Environments
 .venv/
 .venv*/
+.venv311/
 env/
 venv/
 ENV/
@@ -55,6 +56,11 @@ coverage.xml
 *.cover
 *.py,cover
 
+# Performance Test Reports (keep directory structure, exclude reports)
+tests/performance/reports/*.json
+tests/performance/reports/*.md
+!tests/performance/reports/README.md
+
 # ==============================================================================
 # Node & Frontend
 # ==============================================================================
@@ -67,6 +73,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Vite temporary build artifacts
+*.timestamp-*.mjs
 
 # ==============================================================================
 # Logs & Temp
