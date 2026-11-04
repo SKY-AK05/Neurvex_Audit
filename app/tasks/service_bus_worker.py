@@ -662,6 +662,7 @@ def run_db_fallback_worker(poll_interval: float = 0.5):
                                 SELECT submission_id, payload, retry_count
                                 FROM raw_submissions
                                 WHERE status = 'RECEIVED'
+                                   OR (status = 'PROCESSING' AND processing_started_at < NOW() - INTERVAL '3 minutes')
                                 ORDER BY created_at ASC
                                 LIMIT %s
                                 FOR UPDATE SKIP LOCKED;

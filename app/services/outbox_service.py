@@ -196,6 +196,38 @@ def dispatch_pending_outbox_events(batch_size: int = BATCH_SIZE, worker_id: Opti
     return len(claimed_events)
 
 
+
+
+def cleanup_published_outbox_events(retention_days: int = 7, batch_size: int = 5000) -> int:
+    """
+    Safely prunes PUBLISHED outbox rows older than retention_days in small batches
+    to avoid long-lived exclusive table locks.
+    """
+    total_deleted = 0
+    try:
+        with get_db_connection() as conn:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        WITH to_delete AS (
+                            SELECT id FROM service_bus_outbox
+                            WHERE status = 'PUBLISHED'
+                              AND published_at < NOW() - (%s || ' days')::interval
+                            LIMIT %s
+                        )
+                        DELETE FROM service_bus_outbox
+                        WHERE id IN (SELECT id FROM to_delete);
+                        """,
+                        (retention_days, batch_size)
+                    )
+                    total_deleted = cur.rowcount
+        if total_deleted > 0:
+            logger.info("Cleaned up %d expired published outbox events (retention: %d days)", total_deleted, retention_days)
+    except Exception as e:
+        logger.error("Outbox cleanup failed: %s", e)
+    return total_deleted
+
 def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
     """Continuous outbox dispatcher loop."""
     try:
@@ -210,8 +242,13 @@ def run_outbox_dispatcher(poll_interval: float = DEFAULT_POLL_INTERVAL):
     logger.info("Outbox dispatcher daemon started [worker_id=%s, poll_interval=%.2fs]", worker_id, poll_interval)
 
     warned_offline = False
+    last_cleanup_time = time.monotonic()
 
     while not _stop_requested:
+        # Periodic batch cleanup of published outbox events (every 1 hour)
+        if time.monotonic() - last_cleanup_time > 3600:
+            cleanup_published_outbox_events()
+            last_cleanup_time = time.monotonic()
         try:
             if not is_service_bus_configured():
                 if not warned_offline:
