@@ -6,11 +6,14 @@ from app.services.settings_service import get_settings, ensure_settings_row, upd
 def test_get_settings_table_not_exists():
     # Reset the cached table existence status for a clean test
     import app.services.settings_service
+    app.services.settings_service._settings_cache = None
     app.services.settings_service._app_settings_table_exists = None
 
     mock_cur = MagicMock()
-    # Mock information_schema check returning False, then select returning None
-    mock_cur.fetchone.side_effect = [(False,), None]
+    # 1. First _fetch returns None
+    # 2. ensure_settings_table checks table exists -> returns (False,)
+    # 3. Second _fetch after ensure_settings_row returns None
+    mock_cur.fetchone.side_effect = [None, (False,), None]
 
     settings = get_settings(mock_cur)
 
@@ -23,15 +26,13 @@ def test_get_settings_table_not_exists():
 
 def test_get_settings_table_exists():
     import app.services.settings_service
+    app.services.settings_service._settings_cache = None
     app.services.settings_service._app_settings_table_exists = None
 
     mock_cur = MagicMock()
     
-    # 1st call to execute check: table exists
-    # 2nd call to execute in ensure_settings_row: insert
-    # 3rd call to execute in get_settings: select
+    # 1st call to _fetch: returns existing settings row directly
     mock_cur.fetchone.side_effect = [
-        (True,),  # check table exists
         (
             "Custom Sender",
             "custom@orchvate.com",
@@ -43,7 +44,7 @@ def test_get_settings_table_exists():
             False,
             "",
             50
-        )  # select settings row
+        )
     ]
 
     settings = get_settings(mock_cur)

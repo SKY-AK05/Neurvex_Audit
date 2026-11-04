@@ -8,6 +8,9 @@
         <h2>Audit Submitted</h2>
         <p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p>
         <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>
+        <div v-if="asyncStatus === 'COMPLETED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e8f5e9; border-radius: 8px; color: #2e7d32; font-weight: 500; font-size: 0.95rem;">
+          ✓ Response processed and insights recorded
+        </div>
       </div>
     </div>
     <div v-else-if="isLoading && currentStep > 0" class="success-wrap">
@@ -442,6 +445,7 @@
                       class="field-input"
                       :class="{ 'input-error': errors.email }"
                       placeholder="name@company.com"
+                      @blur="handleEmailBlur"
                     />
                     <span class="helper-text">Required solely to receive your personalized feedback.</span>
                     <span v-if="errors.email" class="error-message">{{ errors.emailMsg || 'Required' }}</span>
@@ -885,7 +889,7 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { submitAudit, validateInvitation } from "../api";
+import { submitAudit, validateInvitation, resolveAssessmentLink, resolveLegacyOrgLink, validateCorporateEmail, getSubmissionStatus } from "../api";
 import { useDraftSaving } from "../composables/useDraftSaving";
 import SaveContinueButton from "../components/SaveContinueButton.vue";
 import SearchableSelect from "../components/SearchableSelect.vue";
@@ -945,6 +949,7 @@ function onLogoClick() {
 }
 
 const submitted       = ref(false);
+const asyncStatus     = ref("PENDING");
 const submitting      = ref(false);
 const submitError     = ref("");
 const idempotencyKey  = ref("");
@@ -1136,6 +1141,7 @@ const form = reactive({
   company_name: "",
   organization_id: "",
   invitation_token: "",
+  t: "",
   email: "",
   contact_number: "",
   consent_given: false,
@@ -1253,35 +1259,63 @@ const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useD
 onMounted(async () => {
   setupWelcomeAnimation();
 
-  // Dual Entry Initialization: Check for invitation token vs normal direct access
+  // Dual Entry & Secure Assessment Link Initialization
+  // Supports new opaque secure links (/audit?t=SECURE_TOKEN) and legacy links (?token=, ?invite=, ?org=)
+  const secureToken = route.query.t;
   const inviteToken = route.params.token || route.query.token || route.query.invite;
-  if (inviteToken) {
+  const activeToken = secureToken || inviteToken;
+
+  if (activeToken) {
     isInvitationMode.value = true;
     invitationLoading.value = true;
     try {
-      const valRes = await validateInvitation(inviteToken);
+      const valRes = await resolveAssessmentLink(activeToken);
       if (valRes && valRes.valid) {
         invitationDetails.value = valRes;
-        form.invitation_token = inviteToken;
+        form.t = activeToken;
+        form.invitation_token = activeToken;
         form.company_name = valRes.organization_name;
+        isOrgFromLink.value = true;
       } else {
-        invitationError.value = valRes?.error || "This invitation link is invalid or has expired.";
+        invitationError.value = valRes?.error || "This assessment link is invalid or has expired.";
       }
     } catch (err) {
-      invitationError.value = "Failed to validate invitation link. Please check your connection.";
+      invitationError.value = "Failed to validate assessment link. Please check your connection.";
     } finally {
       invitationLoading.value = false;
     }
   } else {
-    // Method A: Direct access - no longer fetch org list
-    // Organisation validation happens on blur/submit
     loadingOrgs.value = false;
     
-    // Check if org query parameter is present and pre-fill organization name
+    // Legacy support: Check if org query parameter is present (?org=SKY11)
     const orgFromQuery = route.query.org;
     if (orgFromQuery) {
-      form.company_name = decodeURIComponent(orgFromQuery);
-      isOrgFromLink.value = true; // Mark as coming from link
+      const decodedOrg = decodeURIComponent(orgFromQuery).trim();
+      isInvitationMode.value = true;
+      invitationLoading.value = true;
+      try {
+        const orgRes = await resolveLegacyOrgLink(decodedOrg);
+        if (orgRes && orgRes.valid && orgRes.token) {
+          // Immediately wipe ?org= from browser address bar and replace with ?t=SECURE_TOKEN
+          window.history.replaceState({}, '', `/audit?t=${orgRes.token}`);
+          invitationDetails.value = orgRes;
+          form.t = orgRes.token;
+          form.invitation_token = orgRes.token;
+          form.company_name = orgRes.organization_name;
+          isOrgFromLink.value = true;
+        } else {
+          // Wipe ?org= parameter so org identifier is never exposed in URL bar
+          window.history.replaceState({}, '', '/audit');
+          form.company_name = decodedOrg;
+          isOrgFromLink.value = true;
+        }
+      } catch (err) {
+        window.history.replaceState({}, '', '/audit');
+        form.company_name = decodedOrg;
+        isOrgFromLink.value = true;
+      } finally {
+        invitationLoading.value = false;
+      }
     }
   }
   try {
@@ -1345,6 +1379,39 @@ watch(() => form, (newForm) => {
   });
 }, { deep: true });
 
+async function handleEmailBlur() {
+  const em = (form.email || "").trim();
+  if (!em) return;
+  const parts = em.split("@");
+  if (parts.length === 2) {
+    const domain = parts[1].toLowerCase();
+    const commonPersonal = [
+      "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com",
+      "hotmail.com", "live.com", "icloud.com", "me.com", "aol.com",
+      "proton.me", "protonmail.com", "zoho.com", "mail.com", "yandex.com", "rediffmail.com"
+    ];
+    if (commonPersonal.includes(domain)) {
+      errors.email = true;
+      errors.emailMsg = `Please use your corporate work email. '${domain}' is a personal email provider.`;
+      return;
+    }
+  }
+  try {
+    const res = await validateCorporateEmail(em);
+    if (res && !res.eligible) {
+      errors.email = true;
+      errors.emailMsg = res.error || "Please use your corporate work email.";
+    } else {
+      if (errors.emailMsg && errors.emailMsg.includes("corporate")) {
+        errors.email = false;
+        errors.emailMsg = "";
+      }
+    }
+  } catch (err) {
+    // Graceful fallback on network error; server validates authoritatively
+  }
+}
+
 function validateStep() {
   Object.keys(errors).forEach(k => delete errors[k]);
   if (currentStep.value === 0) {
@@ -1369,7 +1436,7 @@ function validateStep() {
       }
     }
 
-    // C. Email ID (required, format validated)
+    // C. Email ID (required, format validated, corporate eligibility)
     const em = (form.email || "").trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!em) {
@@ -1378,6 +1445,20 @@ function validateStep() {
     } else if (!emailRegex.test(em)) {
       errors.email = true;
       errors.emailMsg = "Please enter a valid email address (e.g. name@company.com)";
+    } else {
+      const parts = em.split("@");
+      if (parts.length === 2) {
+        const domain = parts[1].toLowerCase();
+        const commonPersonal = [
+          "gmail.com", "googlemail.com", "yahoo.com", "yahoo.co.in", "outlook.com",
+          "hotmail.com", "live.com", "icloud.com", "me.com", "aol.com",
+          "proton.me", "protonmail.com", "zoho.com", "mail.com", "yandex.com", "rediffmail.com"
+        ];
+        if (commonPersonal.includes(domain)) {
+          errors.email = true;
+          errors.emailMsg = `Please use your corporate work email. '${domain}' is a personal email provider.`;
+        }
+      }
     }
 
     // D. Function
@@ -1587,17 +1668,37 @@ async function submit() {
     // 2. Section 7 (Products & Customer Experience): if q37 = "N/A", rescale section score from /20 to /16
     //    (since q37 becomes non-applicable, calculate section score based on 4 questions instead of 5)
     
-    await submitAudit({ ...form, draft_id: draftId.value, idempotency_key: idempotencyKey.value });
+    const res = await submitAudit({ ...form, draft_id: draftId.value, idempotency_key: idempotencyKey.value });
     clearDraft();
     resetForm();
     idempotencyKey.value = "";
     submitted.value = true;
+    if (res && res.submission_id) {
+      pollSubmissionStatus(res.submission_id);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (e) {
     // Retain idempotencyKey across failed attempts so retry sends identical key
     submitError.value = e.message;
   } finally {
     submitting.value = false;
+  }
+}
+
+async function pollSubmissionStatus(subId) {
+  let attempts = 0;
+  while (attempts < 8 && asyncStatus.value !== "COMPLETED") {
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+      const data = await getSubmissionStatus(subId);
+      if (data && data.status) {
+        asyncStatus.value = data.status;
+        if (data.status === "COMPLETED") break;
+      }
+    } catch (e) {
+      // Ignore polling errors
+    }
+    attempts++;
   }
 }
 </script>

@@ -172,6 +172,16 @@ def process_crm_job(submission_id: str, payload: dict) -> None:
     sync_to_hubspot(data, score_data, str(submission_id))
 
 
+def process_admin_notify_job(submission_id: str, payload: dict) -> None:
+    """Send admin alert notification email for new submission."""
+    from app.services.settings_service import notify_admin_new_submission
+    name = payload.get("name", "")
+    company_name = payload.get("company_name", "")
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            notify_admin_new_submission(cur, submission_id, name, company_name)
+
+
 def complete_job(job_id: str) -> None:
     """Mark job as DONE in post_submit_jobs."""
     try:
@@ -235,7 +245,7 @@ def drain_legacy_email_dlq() -> None:
                         SELECT id, submission_id, payload, attempts
                         FROM email_dlq
                         WHERE status = 'pending' AND next_retry_at <= NOW()
-                        ORDER BY created_at ASC
+                        ORDER BY id ASC
                         LIMIT 5
                         FOR UPDATE SKIP LOCKED
                     """)
@@ -301,6 +311,8 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
                     await asyncio.to_thread(process_email_job, sub_id, payload)
                 elif j_type == "crm":
                     await asyncio.to_thread(process_crm_job, sub_id, payload)
+                elif j_type == "admin_notify":
+                    await asyncio.to_thread(process_admin_notify_job, sub_id, payload)
                 else:
                     logger.warning("Unknown job type: %s", j_type)
 
@@ -340,4 +352,19 @@ def stop_job_worker():
     _worker_running = False
     if _worker_task and not _worker_task.done():
         _worker_task.cancel()
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    )
+    logger.info("Starting standalone background job worker...")
+    from app.core.database import init_connection_pool
+    try:
+        init_connection_pool(minconn=1, maxconn=3)
+        logger.info("Job worker database pool initialized (min=1, max=3)")
+    except Exception as e:
+        logger.warning("Could not initialize job worker pool: %s", e)
+    asyncio.run(run_job_worker("standalone-worker"))
 

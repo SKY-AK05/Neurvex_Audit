@@ -59,6 +59,14 @@ from app.services.settings_service import (
 )
 from app.services.user_service import add_user, get_users, remove_user, verify_user
 from app.utils.helpers import to_iso_utc
+from app.services.org_cache_service import (
+    get_organisation_by_name,
+    get_organisation_by_id,
+    is_org_eligible,
+    invalidate_org_cache,
+)
+from app.services.email_policy_service import check_corporate_email_eligibility
+from app.services.token_service import resolve_assessment_token
 
 logger = logging.getLogger(__name__)
 
@@ -113,313 +121,331 @@ def _bg_notify_admin(submission_id: str, name: str, company_name: str):
 @limiter.limit("100/hour")  # Per IP - allows shared office IPs
 @limiter.limit("1000/day")  # Daily safety limit per IP
 def submit(request: Request, payload: AuditSubmission, background_tasks: BackgroundTasks):
+    t_req_start = time.perf_counter()
     data = payload.dict()
     idempotency_key = data.get("idempotency_key")
     if idempotency_key:
         idempotency_key = str(idempotency_key).strip() or None
 
-    # Step 1: Pre-compute pure scores BEFORE borrowing any database connection (CALC-001 through CALC-006)
+    # Step 1: Pre-compute pure scores BEFORE borrowing database connection (CALC-001 through CALC-006)
+    t_score_start = time.perf_counter()
     sections, threshold = get_form_sections_metadata(None)
     scores = calculate_scores_pure(data, sections=sections, threshold=threshold)
+    t_score_end = time.perf_counter()
 
-    # Step 2: Open single pooled connection for atomic short transaction
-    with get_db_connection() as conn:
-        with conn:
-            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                # Idempotency fast-path: check if already committed
-                if idempotency_key:
-                    cur.execute(
-                        "SELECT id FROM submissions WHERE idempotency_key = %s LIMIT 1",
-                        (idempotency_key,)
-                    )
-                    existing = cur.fetchone()
-                    if existing:
-                        logger.info("Idempotent replay detected for key %s, returning submission %s", idempotency_key, existing["id"])
-                        return {"success": True, "submission_id": str(existing["id"])}
+    # Step 2: Validate Corporate Email Eligibility
+    user_email = (data.get("email") or "").strip()
+    if user_email:
+        email_check = check_corporate_email_eligibility(user_email)
+        if not email_check["eligible"]:
+            raise HTTPException(status_code=400, detail=email_check.get("error", "Corporate email is required."))
 
-                # Email-based duplicate detection (5-minute window)
-                email = data.get("email")
-                if email:
-                    try:
-                        cur.execute("""
-                            SELECT id FROM submissions 
-                            WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s))
-                            AND submitted_at > NOW() - INTERVAL '5 minutes'
-                            LIMIT 1
-                        """, (email,))
-                        recent = cur.fetchone()
-                        if recent:
-                            raise HTTPException(
-                                status_code=429,
-                                detail="A submission from this email was received recently. Please wait a few minutes before submitting again."
-                            )
-                    except HTTPException:
-                        raise
-                    except Exception as e:
-                        logger.warning(f"Duplicate check failed: {e}")
+    # Step 3: Organization / Token / Invitation resolution
+    organization_id = None
+    invitation_id = None
+    access_token_id = None
+    campaign_id = None
+    submission_source = "DIRECT"
+    resolved_company_name = (data.get("company_name") or "").strip()
 
-                organization_id = None
-                invitation_id = None
-                submission_source = "DIRECT"
-                resolved_company_name = (data.get("company_name") or "").strip()
+    raw_token = (data.get("t") or data.get("token") or data.get("access_token") or data.get("invitation_token") or "").strip()
+    if raw_token:
+        token_res = resolve_assessment_token(raw_token)
+        if not token_res.get("valid"):
+            raise HTTPException(status_code=400, detail=token_res.get("error", "Invalid assessment link."))
 
-                # 1. Check for Invitation Token (Method B)
-                raw_inv_token = (data.get("invitation_token") or "").strip()
-                if raw_inv_token:
-                    token_hash = hashlib.sha256(raw_inv_token.encode("utf-8")).hexdigest()
-                    try:
-                        cur.execute("""
-                            SELECT oi.id, oi.organization_id, oi.is_active, oi.expires_at, oi.max_submissions,
-                                   oi.submission_count, oi.revoked_at,
-                                   o.name AS org_name, o.is_active AS org_active, o.is_deleted AS org_deleted
-                            FROM organization_invitations oi
-                            JOIN organizations o ON o.id = oi.organization_id
-                            WHERE oi.token_hash = %s
-                        """, (token_hash,))
-                        inv_record = cur.fetchone()
-                    except Exception as e:
-                        logger.error("Failed to query invitation record: %s", e)
-                        raise HTTPException(status_code=500, detail="Database error verifying invitation")
+        organization_id = str(token_res["organization_id"])
+        resolved_company_name = token_res["organization_name"]
+        campaign_id = token_res.get("campaign_id")
+        if token_res.get("is_legacy_invitation"):
+            invitation_id = str(token_res["token_id"])
+            submission_source = "INVITATION"
+        else:
+            access_token_id = str(token_res["token_id"])
+            submission_source = "SECURE_LINK"
+    else:
+        req_org_id = data.get("organization_id")
+        auth_header = request.headers.get("Authorization")
+        if not req_org_id and auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            try:
+                token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+                if token_payload.get("role") == "org_member":
+                    req_org_id = token_payload.get("org_id")
+            except Exception:
+                pass
 
-                    if not inv_record:
-                        raise HTTPException(status_code=400, detail="Invalid invitation link.")
-                    if inv_record["org_deleted"] or not inv_record["org_active"]:
-                        raise HTTPException(status_code=400, detail="The organization associated with this invitation is inactive.")
-
-                    if not inv_record["is_active"] or inv_record["revoked_at"] is not None:
-                        raise HTTPException(status_code=400, detail="This invitation link has been revoked or deactivated.")
-                    now = datetime.now(timezone.utc)
-                    if inv_record["expires_at"] and inv_record["expires_at"] < now:
-                        raise HTTPException(status_code=400, detail="This invitation link has expired.")
-                    if inv_record["max_submissions"] is not None and inv_record["submission_count"] >= inv_record["max_submissions"]:
-                        raise HTTPException(status_code=400, detail="This invitation has reached its submission limit.")
-
-                    # Derive organization strictly on server
-                    organization_id = str(inv_record["organization_id"])
-                    invitation_id = str(inv_record["id"])
-                    resolved_company_name = inv_record["org_name"]
-                    submission_source = "INVITATION"
-
-                else:
-                    # 2. Normal Website Access (Method A)
-                    req_org_id = data.get("organization_id")
-                    auth_header = request.headers.get("Authorization")
-                    if not req_org_id and auth_header and auth_header.startswith("Bearer "):
-                        token = auth_header.split(" ")[1]
-                        try:
-                            token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-                            if token_payload.get("role") == "org_member":
-                                req_org_id = token_payload.get("org_id")
-                        except Exception:
-                            pass
-
-                    if req_org_id:
-                        try:
-                            cur.execute("""
-                                SELECT id, name, is_active, is_deleted
-                                FROM organizations
-                                WHERE id = %s AND is_deleted = FALSE AND is_active = TRUE
-                            """, (str(req_org_id),))
-                            org_row = cur.fetchone()
-                        except Exception as e:
-                            logger.error("Failed to query organisation: %s", e)
-                            raise HTTPException(status_code=500, detail="Database error verifying organisation")
-
-                        if not org_row:
-                            raise HTTPException(status_code=400, detail="Selected organisation is invalid or inactive.")
-
-                        organization_id = str(org_row["id"])
-                        resolved_company_name = org_row["name"]
-                        submission_source = "DIRECT"
-                    elif resolved_company_name:
-                        clean_name = " ".join(resolved_company_name.split())
-                        
-                        # Narrow advisory lock Option A: taken ONLY right here for org lookup/create
-                        try:
-                            cur.execute(
+        if req_org_id:
+            org, _ = get_organisation_by_id(req_org_id)
+            if not org:
+                raise HTTPException(status_code=400, detail="Invalid organisation ID.")
+            eligible, err = is_org_eligible(org)
+            if not eligible:
+                raise HTTPException(status_code=400, detail=err or "Organisation is inactive.")
+            organization_id = str(org["id"])
+            resolved_company_name = org["name"]
+            submission_source = "DIRECT"
+        elif resolved_company_name:
+            clean_name = " ".join(resolved_company_name.split())
+            org, _ = get_organisation_by_name(clean_name)
+            if org:
+                eligible, err = is_org_eligible(org)
+                if not eligible:
+                    raise HTTPException(status_code=400, detail=err or "Organisation is inactive.")
+                organization_id = str(org["id"])
+                resolved_company_name = org["name"]
+            else:
+                with get_db_connection() as org_conn:
+                    with org_conn:
+                        with org_conn.cursor() as org_cur:
+                            org_cur.execute(
                                 "SELECT pg_advisory_xact_lock(hashtext(lower(trim(%s))))",
                                 (clean_name,)
                             )
-                            cur.execute("""
-                                SELECT id, name
-                                FROM organizations
+                            org_cur.execute("""
+                                SELECT id, name FROM organizations 
                                 WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND is_deleted = FALSE
                             """, (clean_name,))
-                            org_row = cur.fetchone()
-
+                            org_row = org_cur.fetchone()
                             if org_row:
-                                organization_id = str(org_row["id"])
-                                resolved_company_name = org_row["name"]
-                                submission_source = "DIRECT"
+                                organization_id = str(org_row[0])
+                                resolved_company_name = org_row[1]
                             else:
-                                cur.execute("""
+                                org_cur.execute("""
                                     INSERT INTO organizations (name, is_active, is_deleted, approval_status)
                                     VALUES (%s, TRUE, FALSE, 'approved')
                                     RETURNING id, name
                                 """, (clean_name,))
-                                new_org = cur.fetchone()
-                                organization_id = str(new_org["id"])
-                                resolved_company_name = new_org["name"]
-                                submission_source = "DIRECT"
-                                logger.info(f"Auto-created organisation: {resolved_company_name} (ID: {organization_id})")
-                        except Exception as e:
-                            logger.error("Failed to lookup or create organisation: %s", e)
-                            raise HTTPException(status_code=500, detail="Failed to resolve organisation")
-                    else:
-                        raise HTTPException(status_code=400, detail="Organisation name is required.")
+                                new_org = org_cur.fetchone()
+                                organization_id = str(new_org[0])
+                                resolved_company_name = new_org[1]
+                                try:
+                                    invalidate_org_cache()
+                                except Exception:
+                                    pass
+            submission_source = "DIRECT"
+        else:
+            raise HTTPException(status_code=400, detail="Organisation name or ID is required.")
 
-                dimension_scores_json = json.dumps(scores.get("dimension_scores", {}))
+    # Prepare payloads and parameters for single atomic CTE execution
+    dimension_scores_json = json.dumps(scores.get("dimension_scores", {}))
+    sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
 
-                insert_sql = """
-                    INSERT INTO submissions (
-                        name, designation, company_name, email, contact_number,
-                        has_physical_workspace, has_suppliers,
-                        q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
-                        q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
-                        q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
-                        q35,q36,q37,q38,q39,q40,q41,q42,q43,q44,
-                        lc_score, lc_level, ro_score, ro_level,
-                        we_score, we_level, be_score, be_level,
-                        tm_score, tm_level, ca_score, ca_level,
-                        pc_score, pc_level, sp_score, sp_level,
-                        overall_avg, overall_level, email_body, status,
-                        consent_given, consent_timestamp, organization_id,
-                        submission_source, invitation_id, dimension_scores, answers,
-                        idempotency_key
-                    ) VALUES (
-                        %(name)s, %(designation)s, %(company_name)s, %(email)s, %(contact_number)s,
-                        %(has_physical_workspace)s, %(has_suppliers)s,
-                        %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
-                        %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
-                        %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
-                        %(q35)s,%(q36)s,%(q37)s,%(q38)s,%(q39)s,%(q40)s,%(q41)s,%(q42)s,%(q43)s,%(q44)s,
-                        %(lc_score)s, %(lc_level)s, %(ro_score)s, %(ro_level)s,
-                        %(we_score)s, %(we_level)s, %(be_score)s, %(be_level)s,
-                        %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
-                        %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
-                        %(overall_avg)s, %(overall_level)s, %(email_body)s, 'pending',
-                        %(consent_given)s, %(consent_timestamp)s, %(organization_id)s,
-                        %(submission_source)s, %(invitation_id)s, %(dimension_scores)s, %(answers)s,
-                        %(idempotency_key)s
+    excluded_fields = {
+        "name", "designation", "company_name", "email", "contact_number",
+        "has_physical_workspace", "has_suppliers", "consent_given", "draft_id",
+        "organization_id", "invitation_token", "submission_source", "invitation_id", "idempotency_key",
+        "t", "token", "access_token", "campaign_id", "access_token_id"
+    }
+    dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
+
+    email_job_payload = json.dumps({
+        "email": data.get("email"),
+        "name": data.get("name", ""),
+        "company_name": resolved_company_name,
+        "designation": data.get("designation") or data.get("role") or "",
+        "contact_number": data.get("contact_number")
+    })
+
+    crm_job_payload = json.dumps({
+        "data": data,
+        "score_data": scores
+    })
+
+    draft_uuid = None
+    draft_id = data.get("draft_id")
+    if draft_id and str(draft_id).strip() not in ("", "null", "undefined"):
+        try:
+            draft_uuid = str(uuid_pkg.UUID(str(draft_id)))
+        except ValueError:
+            logger.warning("Invalid draft_id UUID: %s", draft_id)
+
+    cte_sql = """
+        WITH duplicate_check AS (
+            SELECT id FROM submissions
+            WHERE LOWER(TRIM(email)) = LOWER(TRIM(%(email)s))
+              AND submitted_at > NOW() - INTERVAL '5 minutes'
+            LIMIT 1
+        ),
+        idempotent_check AS (
+            SELECT id FROM submissions
+            WHERE idempotency_key IS NOT NULL AND idempotency_key = %(idempotency_key)s
+            LIMIT 1
+        ),
+        org_lookup AS (
+            SELECT id, name FROM organizations
+            WHERE id = %(organization_id)s::uuid AND is_deleted = FALSE AND is_active = TRUE
+        ),
+        new_sub AS (
+            INSERT INTO submissions (
+                name, designation, company_name, email, contact_number,
+                has_physical_workspace, has_suppliers,
+                q5,q6,q7,q8,q9,q10,q11,q12,q13,q14,
+                q15,q16,q17,q18,q19,q20,q21,q22,q23,q24,
+                q25,q26,q27,q28,q29,q30,q31,q32,q33,q34,
+                q35,q36,q37,q38,q39,q40,q41,q42,q43,q44,
+                lc_score, lc_level, ro_score, ro_level,
+                we_score, we_level, be_score, be_level,
+                tm_score, tm_level, ca_score, ca_level,
+                pc_score, pc_level, sp_score, sp_level,
+                overall_avg, overall_level, email_body, status,
+                consent_given, consent_timestamp, organization_id,
+                submission_source, invitation_id, access_token_id, campaign_id, dimension_scores, answers,
+                idempotency_key
+            )
+            SELECT
+                %(name)s, %(designation)s, o.name, %(email)s, %(contact_number)s,
+                %(has_physical_workspace)s, %(has_suppliers)s,
+                %(q5)s,%(q6)s,%(q7)s,%(q8)s,%(q9)s,%(q10)s,%(q11)s,%(q12)s,%(q13)s,%(q14)s,
+                %(q15)s,%(q16)s,%(q17)s,%(q18)s,%(q19)s,%(q20)s,%(q21)s,%(q22)s,%(q23)s,%(q24)s,
+                %(q25)s,%(q26)s,%(q27)s,%(q28)s,%(q29)s,%(q30)s,%(q31)s,%(q32)s,%(q33)s,%(q34)s,
+                %(q35)s,%(q36)s,%(q37)s,%(q38)s,%(q39)s,%(q40)s,%(q41)s,%(q42)s,%(q43)s,%(q44)s,
+                %(lc_score)s, %(lc_level)s, %(ro_score)s, %(ro_level)s,
+                %(we_score)s, %(we_level)s, %(be_score)s, %(be_level)s,
+                %(tm_score)s, %(tm_level)s, %(ca_score)s, %(ca_level)s,
+                %(pc_score)s, %(pc_level)s, %(sp_score)s, %(sp_level)s,
+                %(overall_avg)s, %(overall_level)s, NULL, 'pending',
+                %(consent_given)s, %(consent_timestamp)s, o.id,
+                %(submission_source)s, %(invitation_id)s, %(access_token_id)s, %(campaign_id)s, %(dimension_scores)s::jsonb, %(answers)s::jsonb,
+                %(idempotency_key)s
+            FROM org_lookup o
+            WHERE NOT EXISTS (SELECT 1 FROM duplicate_check)
+              AND NOT EXISTS (SELECT 1 FROM idempotent_check)
+            ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
+            RETURNING id, organization_id, name, company_name
+        ),
+        new_link AS (
+            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
+            SELECT organization_id, id, 1.0, NULL FROM new_sub
+            ON CONFLICT (org_id, submission_id) DO NOTHING
+        ),
+        new_outbox_event AS (
+            INSERT INTO service_bus_outbox (event_type, aggregate_id, payload, status)
+            SELECT 
+                'SUBMISSION_CREATED',
+                id,
+                json_build_object(
+                    'submission_id', id::text,
+                    'name', name,
+                    'company_name', company_name,
+                    'email', %(email)s,
+                    'organization_id', organization_id::text,
+                    'submission_source', %(submission_source)s,
+                    'idempotency_key', %(idempotency_key)s,
+                    'email_job_payload', %(email_job_payload)s::jsonb,
+                    'crm_job_payload', %(crm_job_payload)s::jsonb
+                )::jsonb,
+                'PENDING'
+            FROM new_sub
+        ),
+        update_invitation AS (
+            UPDATE organization_invitations
+            SET submission_count = submission_count + 1
+            WHERE %(invitation_id)s IS NOT NULL AND id = %(invitation_id)s::uuid
+        ),
+        update_draft AS (
+            UPDATE draft_submissions
+            SET submitted = TRUE
+            WHERE %(draft_uuid)s IS NOT NULL AND id = %(draft_uuid)s::uuid
+        )
+        SELECT 
+            (SELECT id FROM new_sub) AS new_id,
+            (SELECT id FROM idempotent_check) AS existing_idempotent_id,
+            (SELECT id FROM duplicate_check) AS duplicate_id,
+            (SELECT id FROM org_lookup) AS valid_org_id;
+    """
+
+    params = {
+        **sanitized_scores,
+        "name": data.get("name") or "",
+        "designation": data.get("designation") or data.get("role") or "",
+        "company_name": resolved_company_name,
+        "email": data.get("email"),
+        "contact_number": data.get("contact_number", None),
+        "has_physical_workspace": data.get("has_physical_workspace") or None,
+        "has_suppliers": data.get("has_suppliers") or None,
+        "consent_given": data.get("consent_given", False),
+        "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
+        "organization_id": organization_id,
+        "submission_source": submission_source,
+        "invitation_id": invitation_id,
+        "access_token_id": access_token_id,
+        "campaign_id": campaign_id,
+        "idempotency_key": idempotency_key,
+        "draft_uuid": draft_uuid,
+        **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
+        "dimension_scores": dimension_scores_json,
+        "answers": json.dumps(dynamic_answers),
+        "email_job_payload": email_job_payload,
+        "crm_job_payload": crm_job_payload,
+    }
+
+    norm_email = (data.get("email") or "").strip().lower()
+
+    t_checkout_start = time.perf_counter()
+    with get_db_connection() as conn:
+        t_checkout_end = time.perf_counter()
+        with conn:
+            with conn.cursor() as cur:
+                # Advisory lock serializes concurrent submissions for the exact same email,
+                # ensuring duplicate_check is 100% race-condition free under READ COMMITTED.
+                if norm_email:
+                    cur.execute("SELECT pg_advisory_xact_lock(hashtext(%s))", (norm_email,))
+                cur.execute(cte_sql, params)
+                res = cur.fetchone()
+
+    t_tx_end = time.perf_counter()
+
+    new_id, existing_idempotent_id, duplicate_id, valid_org_id = res
+
+    if existing_idempotent_id:
+        logger.info("Idempotent replay detected for key %s, returning submission %s", idempotency_key, existing_idempotent_id)
+        return {"success": True, "submission_id": str(existing_idempotent_id)}
+
+    if duplicate_id:
+        raise HTTPException(
+            status_code=429,
+            detail="A submission from this email was received recently. Please wait a few minutes before submitting again."
+        )
+
+    if not valid_org_id:
+        raise HTTPException(status_code=400, detail="Selected organisation is invalid or inactive.")
+
+    if not new_id:
+        # Safe recovery for concurrent parallel idempotency collisions:
+        # When two requests with the same key race in the exact same millisecond,
+        # ON CONFLICT DO NOTHING returns NULL for the losing request.
+        # Check if the winning transaction committed the submission.
+        if idempotency_key:
+            with get_db_connection() as fb_conn:
+                with fb_conn.cursor() as fb_cur:
+                    fb_cur.execute(
+                        "SELECT id FROM submissions WHERE idempotency_key = %s LIMIT 1",
+                        (idempotency_key,)
                     )
-                    ON CONFLICT (idempotency_key) WHERE idempotency_key IS NOT NULL DO NOTHING
-                    RETURNING id
-                """
+                    fb_row = fb_cur.fetchone()
+                    if fb_row:
+                        logger.info("Recovered parallel idempotency conflict for key %s -> %s", idempotency_key, fb_row[0])
+                        return {"success": True, "submission_id": str(fb_row[0])}
 
-                sanitized_scores = {k: (None if v == "NA" else v) for k, v in scores.items()}
+        logger.error("CTE Insert returned no ID")
+        raise HTTPException(status_code=500, detail="Database error persisting submission")
 
-                excluded_fields = {
-                    "name", "designation", "company_name", "email", "contact_number",
-                    "has_physical_workspace", "has_suppliers", "consent_given", "draft_id",
-                    "organization_id", "invitation_token", "submission_source", "invitation_id", "idempotency_key"
-                }
-                dynamic_answers = {k: v for k, v in data.items() if k not in excluded_fields}
-
-                params = {
-                    **sanitized_scores,
-                    "name": data.get("name") or "",
-                    "designation": data.get("designation") or data.get("role") or "",
-                    "company_name": resolved_company_name,
-                    "email": data.get("email"),
-                    "contact_number": data.get("contact_number", None),
-                    "has_physical_workspace": data.get("has_physical_workspace") or None,
-                    "has_suppliers": data.get("has_suppliers") or None,
-                    "consent_given": data.get("consent_given", False),
-                    "consent_timestamp": data.get("consent_timestamp", datetime.now(timezone.utc)),
-                    "organization_id": organization_id,
-                    "submission_source": submission_source,
-                    "invitation_id": invitation_id,
-                    "email_body": None,  # Offloaded to background worker
-                    "idempotency_key": idempotency_key,
-                    **{f"q{i}": data.get(f"q{i}") for i in range(5, 45)},
-                    "dimension_scores": dimension_scores_json,
-                    "answers": json.dumps(dynamic_answers),
-                }
-
-                try:
-                    cur.execute(insert_sql, params)
-                    sub_row = cur.fetchone()
-                except Exception as ins_err:
-                    logger.error("DB insert failed: %s", ins_err)
-                    raise HTTPException(status_code=500, detail="Database error")
-
-                if not sub_row:
-                    if idempotency_key:
-                        cur.execute("SELECT id FROM submissions WHERE idempotency_key = %s LIMIT 1", (idempotency_key,))
-                        conflict_row = cur.fetchone()
-                        if conflict_row:
-                            conf_id = conflict_row["id"] if isinstance(conflict_row, dict) else conflict_row[0]
-                            logger.info("Concurrent idempotency conflict resolved cleanly for key %s -> submission %s", idempotency_key, conf_id)
-                            return {"success": True, "submission_id": str(conf_id)}
-                    logger.error("Insert returned no ID and idempotency key resolution failed")
-                    raise HTTPException(status_code=500, detail="Database error")
-
-                submission_id = sub_row["id"] if isinstance(sub_row, dict) else sub_row[0]
-
-                # If invitation submission, atomically increment counter
-                if invitation_id:
-                    cur.execute("""
-                        UPDATE organization_invitations
-                        SET submission_count = submission_count + 1
-                        WHERE id = %s
-                    """, (str(invitation_id),))
-
-                # Enqueue non-blocking admin notification
-                background_tasks.add_task(_bg_notify_admin, str(submission_id), data.get("name", ""), resolved_company_name)
-
-                # Update draft as submitted if draft_id is provided
-                draft_id = data.get("draft_id")
-                if draft_id and str(draft_id).strip() not in ("", "null", "undefined"):
-                    try:
-                        uuid_pkg.UUID(str(draft_id))
-                        cur.execute("UPDATE draft_submissions SET submitted = TRUE WHERE id = %s", (str(draft_id),))
-                    except ValueError:
-                        logger.warning("Invalid draft_id UUID: %s", draft_id)
-
-                # Link to org_submission_links
-                if organization_id:
-                    try:
-                        cur.execute("""
-                            INSERT INTO org_submission_links (org_id, submission_id, weight, linked_by)
-                            VALUES (%s, %s, 1.0, NULL)
-                            ON CONFLICT (org_id, submission_id) DO NOTHING
-                        """, (str(organization_id), str(submission_id)))
-                    except Exception as link_err:
-                        logger.warning("org_submission_links insert skipped: %s", link_err)
-
-                # Check if CRM is enabled in settings
-                cur.execute("SELECT crm_sync_enabled FROM app_settings WHERE id = 1")
-                row = cur.fetchone()
-                crm_enabled = bool((row.get("crm_sync_enabled") if isinstance(row, dict) else row[0]) if row else False)
-
-                # Enqueue post-submit jobs for email & crm
-                email_job_payload = json.dumps({
-                    "email": data.get("email"),
-                    "name": data.get("name", ""),
-                    "company_name": resolved_company_name,
-                    "designation": data.get("designation") or data.get("role") or "",
-                    "contact_number": data.get("contact_number")
-                })
-                cur.execute("""
-                    INSERT INTO post_submit_jobs (submission_id, job_type, payload)
-                    VALUES (%s, 'email', %s)
-                    ON CONFLICT (submission_id, job_type) DO NOTHING
-                """, (str(submission_id), email_job_payload))
-
-                if crm_enabled:
-                    crm_job_payload = json.dumps({
-                        "data": data,
-                        "score_data": scores
-                    })
-                    cur.execute("""
-                        INSERT INTO post_submit_jobs (submission_id, job_type, payload)
-                        VALUES (%s, 'crm', %s)
-                        ON CONFLICT (submission_id, job_type) DO NOTHING
-                    """, (str(submission_id), crm_job_payload))
+    submission_id = str(new_id)
 
     dashboard_cache.clear()
 
-    return {"success": True, "submission_id": str(submission_id)}
+    t_req_end = time.perf_counter()
+    logger.info(
+        "SUBMISSION_METRICS: id=%s total_ms=%.2f scoring_ms=%.2f checkout_ms=%.2f tx_ms=%.2f",
+        submission_id,
+        (t_req_end - t_req_start) * 1000.0,
+        (t_score_end - t_score_start) * 1000.0,
+        (t_checkout_end - t_checkout_start) * 1000.0,
+        (t_tx_end - t_checkout_end) * 1000.0
+    )
+
+    return {"success": True, "submission_id": submission_id}
 
 
 # ---------------------------------------------------------------------------
@@ -754,6 +780,71 @@ async def delete_saved_filter(request: Request, filter_id: str):
         raise
     except Exception as e:
         logger.error("Failed to delete saved filter: %s", e)
+        raise HTTPException(status_code=500, detail="Database error")
+
+
+# ---------------------------------------------------------------------------
+# GET /api/submissions/{id}/status — Query asynchronous processing status
+# ---------------------------------------------------------------------------
+
+@router.get("/submissions/{submission_id}/status")
+async def get_submission_status(request: Request, submission_id: str):
+    sub_id = str(submission_id).strip()
+
+    try:
+        uuid_pkg.UUID(sub_id)
+    except (ValueError, AttributeError):
+        if not sub_id.isdigit():
+            raise HTTPException(status_code=400, detail="Invalid submission ID format. Must be a valid UUID or integer.")
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(
+                    """
+                    SELECT id, organization_id, async_status, email_status, crm_status,
+                           report_status, admin_notify_status, hubspot_deal_id,
+                           submitted_at, async_completed_at, email_body
+                    FROM submissions
+                    WHERE id = %s
+                    """,
+                    (sub_id,)
+                )
+                row = cur.fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="Submission not found")
+
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            try:
+                token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+                if token_payload.get("role") == "org_member":
+                    user_org_id = str(token_payload.get("org_id", ""))
+                    sub_org_id = str(row.get("organization_id") or "")
+                    if user_org_id and user_org_id != sub_org_id:
+                        raise HTTPException(status_code=403, detail="Forbidden: You do not have permission to view this submission status.")
+            except jwt.PyJWTError:
+                pass
+
+        rep_status = row.get("report_status") or ("GENERATED" if row.get("email_body") else "PENDING")
+        return {
+            "submission_id": str(row["id"]),
+            "status": row.get("async_status") or "PENDING",
+            "email_status": row.get("email_status") or "PENDING",
+            "crm_status": row.get("crm_status") or "PENDING",
+            "report_status": rep_status,
+            "admin_notify_status": row.get("admin_notify_status") or "PENDING",
+            "hubspot_deal_id": row.get("hubspot_deal_id"),
+            "submitted_at": to_iso_utc(row["submitted_at"]) if row.get("submitted_at") else None,
+            "completed_at": to_iso_utc(row["async_completed_at"]) if row.get("async_completed_at") else None
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("DB query failed checking submission status: %s", e)
         raise HTTPException(status_code=500, detail="Database error")
 
 
@@ -1189,8 +1280,19 @@ def process_email_dispatch(submission_id: str, payload: dict):
             with conn:
                 with conn.cursor() as cur:
                     cur.execute(
-                        "UPDATE submissions SET status = 'sent', sent_at = %s WHERE id = %s",
+                        "UPDATE submissions SET status = 'sent', email_status = 'SENT', sent_at = %s WHERE id = %s",
                         (sent_at, submission_id),
+                    )
+                    cur.execute(
+                        """
+                        INSERT INTO submission_operation_states (
+                            submission_id, operation_type, idempotency_key, status, completed_at, updated_at
+                        )
+                        VALUES (%s, 'EMAIL_DELIVERY', %s, 'SENT', NOW(), NOW())
+                        ON CONFLICT (submission_id, operation_type) DO UPDATE
+                        SET status = 'SENT', completed_at = NOW(), updated_at = NOW()
+                        """,
+                        (str(submission_id), f"{submission_id}:EMAIL_DELIVERY")
                     )
         dashboard_cache.clear()
     except Exception as e:
@@ -1203,7 +1305,18 @@ def process_email_dispatch(submission_id: str, payload: dict):
                             INSERT INTO email_dlq (submission_id, payload, attempts, last_error) 
                             VALUES (%s, %s, 3, %s)
                         """, (submission_id, json.dumps(payload), str(e)))
-                        cur.execute("UPDATE submissions SET status = 'failed' WHERE id = %s", (submission_id,))
+                        cur.execute("UPDATE submissions SET status = 'failed', email_status = 'FAILED' WHERE id = %s", (submission_id,))
+                        cur.execute(
+                            """
+                            INSERT INTO submission_operation_states (
+                                submission_id, operation_type, idempotency_key, status, last_error, updated_at
+                            )
+                            VALUES (%s, 'EMAIL_DELIVERY', %s, 'FAILED', %s, NOW())
+                            ON CONFLICT (submission_id, operation_type) DO UPDATE
+                            SET status = 'FAILED', last_error = %s, updated_at = NOW()
+                            """,
+                            (str(submission_id), f"{submission_id}:EMAIL_DELIVERY", str(e)[:1000], str(e)[:1000])
+                        )
         except Exception as dlq_err:
             logger.critical("Failed to write to email_dlq: %s", dlq_err)
 

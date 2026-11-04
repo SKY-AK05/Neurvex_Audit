@@ -11,6 +11,9 @@ class AuditSubmission(BaseModel):
     company_name: Optional[str] = Field(None, max_length=255)
     organization_id: Optional[str] = None
     invitation_token: Optional[str] = None
+    t: Optional[str] = None
+    access_token: Optional[str] = None
+    campaign_id: Optional[str] = None
     email: EmailStr
     contact_number: Optional[str] = Field(None, max_length=50)
     consent_given: Optional[bool] = False

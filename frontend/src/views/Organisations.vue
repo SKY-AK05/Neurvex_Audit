@@ -3428,27 +3428,16 @@
 
 
                 <div class="invc-link-row">
-
                   <div class="invc-link-display">
-
-                    <code class="invc-link-code">{{ window.location.origin }}/?invite={{ inv.token }}</code>
-
+                    <code class="invc-link-code">{{ window.location.origin }}{{ inv.assessment_url || (inv.token ? ('/audit?t=' + inv.token) : '/audit') }}</code>
                   </div>
-
                   <button
-
                     class="btn btn-sm btn-outline"
-
-                    @click="copyText(`${window.location.origin}/?invite=${inv.token}`)"
-
+                    @click="copyText(`${window.location.origin}${inv.assessment_url || (inv.token ? ('/audit?t=' + inv.token) : '/audit')}`)"
                     title="Copy invitation link"
-
                   >
-
                     📋 Copy
-
                   </button>
-
                 </div>
 
 
@@ -3690,23 +3679,15 @@ import { DEFAULT_SECTIONS } from '../utils/defaultSections.js';
 import { downloadFilteredSubmissions } from '../utils/csvExport.js';
 
 import {
-
   createOrganisation,
-
   updateOrganisation,
-
   toggleOrganisationStatus,
-
   deleteOrganisation,
-
   getOrgInvitations,
-
   createOrgInvitation,
-
   revokeOrgInvitation,
-
-  regenerateOrgInvitation
-
+  regenerateOrgInvitation,
+  getOrgDefaultAssessmentLink
 } from '../api.js';
 
 
@@ -5320,15 +5301,7 @@ function exportOrgCSV() {
 
 
 function copyOrgInviteLink() {
-
-  const auditUrl = `${window.location.origin}/`;
-
-  navigator.clipboard.writeText(auditUrl).then(() => {
-
-    showToast('Assessment URL copied to clipboard!');
-
-  });
-
+  copyOrgAuditLink();
 }
 
 
@@ -5366,7 +5339,9 @@ async function handleCreateInvite() {
   try {
 
     const data = await createOrgInvitation(selectedOrg.value.id, inviteForm);
-
+    if (data && data.raw_token) {
+      data.full_url = `${window.location.origin}/audit?t=${data.raw_token}`;
+    }
     generatedInviteLink.value = data;
 
     await fetchInvitations(selectedOrg.value.id);
@@ -5424,7 +5399,9 @@ async function regenerateInvitation(invId) {
   try {
 
     const data = await regenerateOrgInvitation(invId);
-
+    if (data && data.raw_token) {
+      data.full_url = `${window.location.origin}/audit?t=${data.raw_token}`;
+    }
     generatedInviteLink.value = data;
 
     showToast('Invitation regenerated with new token!');
@@ -5457,24 +5434,19 @@ function copyText(text) {
 
 
 
-function copyOrgAuditLink() {
-
+async function copyOrgAuditLink() {
   if (!selectedOrg.value || selectedOrg.value.is_virtual) return;
 
-  
-
-  // Build the audit URL with org name pre-filled
-
-  const baseUrl = window.location.origin;
-
-  const orgName = encodeURIComponent(selectedOrg.value.name);
-
-  const auditUrl = `${baseUrl}/audit?org=${orgName}`;
-
-  
-
-  copyText(auditUrl);
-
+  try {
+    const res = await getOrgDefaultAssessmentLink(selectedOrg.value.id);
+    const baseUrl = window.location.origin;
+    const auditUrl = `${baseUrl}${res.assessment_url}`;
+    copyText(auditUrl);
+    showToast('Secure assessment link copied to clipboard!');
+  } catch (err) {
+    console.error('Failed to copy secure assessment link:', err);
+    showToast('Failed to generate secure link', 'error');
+  }
 }
 
 

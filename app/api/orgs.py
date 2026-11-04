@@ -20,6 +20,12 @@ from app.core.database import get_db_connection
 from app.core.authorization import require_admin
 from app.services.org_scoring_service import calc_weighted_org_score, build_org_summary_email
 from app.services.settings_service import send_acs_email, get_sender_for_send
+from app.services.org_cache_service import invalidate_org_cache
+from app.services.token_service import (
+    create_assessment_token,
+    revoke_assessment_token,
+    get_or_create_default_token,
+)
 
 router = APIRouter(
     prefix="/manage/orgs",
@@ -55,6 +61,12 @@ class UpdateInvitationRequest(BaseModel):
     invitation_name: Optional[str] = Field(None, max_length=255)
     expires_at: Optional[datetime] = None
     max_submissions: Optional[int] = Field(None, ge=1)
+
+
+class CreateAssessmentLinkRequest(BaseModel):
+    name: Optional[str] = Field(None, max_length=255)
+    campaign_id: Optional[UUID] = None
+    expires_at: Optional[datetime] = None
 
 
 # ---------------------------------------------------------------------------
@@ -264,6 +276,11 @@ async def create_org(request: Request, body: CreateOrgRequest):
                             WHERE id = %s AND organization_id IS NULL
                         """, (org_id, sid))
 
+        try:
+            invalidate_org_cache()
+        except Exception as err:
+            logger.warning("Cache invalidation failed on create_org: %s", err)
+
         return {
             "success": True,
             "org": _serialize_row(dict(row)),
@@ -396,6 +413,11 @@ async def update_org(org_id: UUID, body: UpdateOrgRequest, request: Request):
                     if not row:
                         raise HTTPException(status_code=404, detail="Organisation not found or has been deleted")
 
+        try:
+            invalidate_org_cache()
+        except Exception as err:
+            logger.warning("Cache invalidation failed on update_org: %s", err)
+
         return {"success": True, "org": _serialize_row(dict(row))}
     except HTTPException:
         raise
@@ -427,6 +449,11 @@ async def toggle_org_status(org_id: UUID, body: OrgStatusRequest, request: Reque
                     row = cur.fetchone()
                     if not row:
                         raise HTTPException(status_code=404, detail="Organisation not found or has been deleted")
+
+        try:
+            invalidate_org_cache()
+        except Exception as err:
+            logger.warning("Cache invalidation failed on toggle_org_status: %s", err)
 
         return {"success": True, "org": _serialize_row(dict(row))}
     except HTTPException:
@@ -467,6 +494,11 @@ async def delete_org(org_id: UUID, request: Request):
                         WHERE organization_id = %s AND is_active = TRUE
                     """, (admin_email, oid))
 
+        try:
+            invalidate_org_cache()
+        except Exception as err:
+            logger.warning("Cache invalidation failed on delete_org: %s", err)
+
         return {"success": True, "message": "Organisation deleted successfully"}
     except HTTPException:
         raise
@@ -499,12 +531,108 @@ async def restore_org(org_id: UUID, request: Request):
                     if cur.rowcount == 0:
                         raise HTTPException(status_code=404, detail="Organisation not found or not deleted")
 
+        try:
+            invalidate_org_cache()
+        except Exception as err:
+            logger.warning("Cache invalidation failed on restore_org: %s", err)
+
         return {"success": True, "message": "Organisation restored successfully"}
     except HTTPException:
         raise
     except Exception as e:
         logger.error("restore_org failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
+# SECURE ASSESSMENT LINKS MANAGEMENT
+# ---------------------------------------------------------------------------
+
+@router.post("/{org_id}/assessment-links")
+async def create_org_assessment_link(org_id: UUID, body: CreateAssessmentLinkRequest, request: Request):
+    """
+    Generate an opaque secure assessment link (/audit?t=SECURE_TOKEN).
+    Eliminates exposure of organisation names or codes in URLs.
+    Stores only the SHA-256 hash. Returns the raw token once.
+    """
+    admin_email = getattr(request.state, "admin_email", "unknown")
+    try:
+        res = create_assessment_token(
+            org_id=org_id,
+            campaign_id=body.campaign_id,
+            name=body.name,
+            created_by=admin_email,
+            expires_at=body.expires_at,
+        )
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("create_org_assessment_link failed: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to create assessment link")
+
+
+@router.post("/{org_id}/assessment-links/default")
+async def get_or_create_org_default_link(org_id: UUID, request: Request):
+    """
+    Returns or creates the active default secure assessment link for an organisation.
+    Ensures that whenever an admin copies an audit link (for old orgs like SKY11 or new ones),
+    an opaque secure token link (/audit?t=SECURE_TOKEN) is always delivered,
+    preventing any exposure of organisation identifiers in URLs.
+    """
+    admin_email = getattr(request.state, "admin_email", "admin")
+    oid = str(org_id)
+    try:
+        res = get_or_create_default_token(oid, created_by=admin_email)
+        return res
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error("get_or_create_org_default_link failed: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to retrieve default assessment link")
+
+
+@router.get("/{org_id}/assessment-links")
+async def list_org_assessment_links(org_id: UUID):
+    """List all secure assessment links for an organisation."""
+    oid = str(org_id)
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    SELECT id, organisation_id, campaign_id, name, token, is_default, created_by, created_at,
+                           expires_at, revoked_at, revoked_by
+                    FROM assessment_access_tokens
+                    WHERE organisation_id = %s
+                    ORDER BY created_at DESC
+                """, (oid,))
+                raw_rows = cur.fetchall()
+                rows = []
+                for r in raw_rows:
+                    row_dict = _serialize_row(dict(r))
+                    if row_dict.get("token"):
+                        row_dict["assessment_url"] = f"/audit?t={row_dict['token']}"
+                    rows.append(row_dict)
+        return rows
+    except Exception as e:
+        logger.error("list_org_assessment_links failed: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to list assessment links")
+
+
+@router.delete("/{org_id}/assessment-links/{token_id}")
+async def revoke_org_assessment_link(org_id: UUID, token_id: UUID, request: Request):
+    """Revoke an assessment link immediately."""
+    admin_email = getattr(request.state, "admin_email", "unknown")
+    try:
+        success = revoke_assessment_token(token_id=token_id, revoked_by=admin_email)
+        if not success:
+            raise HTTPException(status_code=404, detail="Assessment link not found or already revoked")
+        return {"success": True, "message": "Assessment link revoked successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("revoke_org_assessment_link failed: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to revoke assessment link")
 
 
 # ---------------------------------------------------------------------------

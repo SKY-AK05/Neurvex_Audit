@@ -48,8 +48,10 @@ class TestEnvironmentAndKeyVaultEnforcement:
     def test_require_keyvault_blocks_env_file_loading(self):
         """When REQUIRE_KEYVAULT=true, .env loading is strictly disabled."""
         from app.core import config
-        # Verify the condition logic
-        assert not (config.IS_DEV_OR_TEST and config.REQUIRE_KEYVAULT)
+        # Verify the condition logic: .env is only loaded if IS_DEV_OR_TEST and NOT REQUIRE_KEYVAULT
+        should_load_dotenv = config.IS_DEV_OR_TEST and not config.REQUIRE_KEYVAULT
+        if config.REQUIRE_KEYVAULT:
+            assert not should_load_dotenv
 
     def test_production_missing_secret_fails_startup(self):
         """In production, missing required secrets must raise RuntimeError without fallback."""

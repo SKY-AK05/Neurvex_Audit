@@ -116,7 +116,7 @@ async def jwks_middleware(request: Request, call_next):
         "/api/health",
         "/api/support",
         "/api/book-call",
-    ) or request.url.path.startswith("/api/org/") or request.url.path.startswith("/api/drafts") or request.url.path.startswith("/api/public/"):
+    ) or request.url.path.startswith("/api/health") or request.url.path.startswith("/api/org/") or request.url.path.startswith("/api/drafts") or request.url.path.startswith("/api/public/") or (request.url.path.startswith("/api/submissions/") and request.url.path.endswith("/status")):
         return await call_next(request)
 
     # Form builder modifications (POST, PUT, DELETE) must require admin auth

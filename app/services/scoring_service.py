@@ -141,17 +141,20 @@ DEFAULT_STANDARD_SECTIONS = [
 ]
 
 import time
+import threading
 
 _cached_form_sections = None
-_cached_form_sections_time = 0
-_SECTIONS_CACHE_TTL = 300  # 5 minutes
+_cached_form_sections_time = 0.0
+_cache_lock = threading.Lock()
+_SECTIONS_CACHE_TTL = 300.0  # 5 minutes
 
 
 def get_form_sections_metadata(conn=None) -> tuple[list, int]:
     """
     Retrieve form sections and threshold with TTL caching and stale-while-revalidate protection.
-    If called with conn=None when cache expires, borrows a pooled DB connection to refresh custom
-    questions. If DB is temporarily unreachable, retains existing cached sections rather than
+    Uses a single SQL query with LEFT JOIN and json_agg to eliminate N+1 round trips.
+    If called with conn=None when cache expires, borrows a pooled DB connection.
+    If DB is temporarily unreachable, retains existing cached sections rather than
     downgrading to default standard questions.
     """
     global _cached_form_sections, _cached_form_sections_time
@@ -159,54 +162,85 @@ def get_form_sections_metadata(conn=None) -> tuple[list, int]:
     if _cached_form_sections is not None and (now - _cached_form_sections_time) < _SECTIONS_CACHE_TTL:
         return _cached_form_sections
 
-    threshold = 50
-    sections = []
-    owned_conn = None
-    active_conn = conn
-
-    if active_conn is None:
-        try:
-            from app.core.database import get_conn
-            owned_conn = get_conn()
-            active_conn = owned_conn
-        except Exception as conn_err:
-            logger.warning("Could not borrow connection for form metadata refresh: %s", conn_err)
-            active_conn = None
-
-    if active_conn is not None:
-        try:
-            with active_conn.cursor() as settings_cur:
-                settings = get_settings(settings_cur)
-            threshold = settings.get("low_visibility_threshold", 50)
-
-            with active_conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-                cur.execute("SELECT * FROM form_sections ORDER BY order_index ASC")
-                sec_rows = cur.fetchall()
-                for sec in sec_rows:
-                    cur.execute("SELECT * FROM form_questions WHERE section_id = %s ORDER BY order_index ASC", (sec["id"],))
-                    q_rows = cur.fetchall()
-                    sections.append({"section": dict(sec), "questions": [dict(q) for q in q_rows]})
-        except Exception as fetch_err:
-            logger.warning("Error fetching form sections from database: %s", fetch_err)
-            sections = []
-        finally:
-            if owned_conn is not None:
-                try:
-                    owned_conn.close()
-                except Exception:
-                    pass
-
-    # Stale-while-revalidate protection:
-    # If DB query failed or returned no sections, retain existing cached sections if available
-    if not sections:
-        if _cached_form_sections is not None:
-            logger.warning("DB query yielded no sections; retaining previously cached form sections")
+    with _cache_lock:
+        # Double-check inside lock
+        now = time.time()
+        if _cached_form_sections is not None and (now - _cached_form_sections_time) < _SECTIONS_CACHE_TTL:
             return _cached_form_sections
-        sections = DEFAULT_STANDARD_SECTIONS
 
-    _cached_form_sections = (sections, threshold)
-    _cached_form_sections_time = now
-    return _cached_form_sections
+        threshold = 50
+        sections = []
+        owned_conn = None
+        active_conn = conn
+
+        if active_conn is None:
+            try:
+                from app.core.database import get_conn
+                owned_conn = get_conn()
+                active_conn = owned_conn
+            except Exception as conn_err:
+                logger.warning("Could not borrow connection for form metadata refresh: %s", conn_err)
+                active_conn = None
+
+        if active_conn is not None:
+            try:
+                with active_conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT 
+                            s.id, s.section_code, s.title, s.icon, s.summary, s.why_it_matters, s.tip, 
+                            s.gating_question, s.gating_field, s.order_index,
+                            COALESCE(
+                                json_agg(
+                                    json_build_object(
+                                        'id', q.id,
+                                        'section_id', q.section_id,
+                                        'field_name', q.field_name,
+                                        'short_title', q.short_title,
+                                        'question_text', q.question_text,
+                                        'order_index', q.order_index,
+                                        'score_mapping', q.score_mapping,
+                                        'depends_on_field', q.depends_on_field,
+                                        'depends_on_value', q.depends_on_value
+                                    ) ORDER BY q.order_index ASC
+                                ) FILTER (WHERE q.id IS NOT NULL),
+                                '[]'::json
+                            ) AS questions,
+                            COALESCE((SELECT low_visibility_threshold FROM app_settings WHERE id = 1), 50) AS threshold
+                        FROM form_sections s
+                        LEFT JOIN form_questions q ON s.id = q.section_id
+                        GROUP BY s.id
+                        ORDER BY s.order_index ASC;
+                    """)
+                    rows = cur.fetchall()
+                    for r in rows:
+                        sec_dict = {
+                            "id": r[0], "section_code": r[1], "title": r[2], "icon": r[3],
+                            "summary": r[4], "why_it_matters": r[5], "tip": r[6],
+                            "gating_question": r[7], "gating_field": r[8], "order_index": r[9]
+                        }
+                        q_data = r[10] if isinstance(r[10], list) else json.loads(r[10])
+                        sections.append({"section": sec_dict, "questions": q_data})
+                        threshold = int(r[11]) if r[11] is not None else 50
+            except Exception as fetch_err:
+                logger.warning("Error fetching form sections from database: %s", fetch_err)
+                sections = []
+            finally:
+                if owned_conn is not None:
+                    try:
+                        owned_conn.close()
+                    except Exception:
+                        pass
+
+        # Stale-while-revalidate protection:
+        if not sections:
+            if _cached_form_sections is not None:
+                logger.warning("DB query yielded no sections; retaining previously cached form sections")
+                return _cached_form_sections
+            sections = DEFAULT_STANDARD_SECTIONS
+
+        _cached_form_sections = (sections, threshold)
+        _cached_form_sections_time = now
+        return _cached_form_sections
 
 
 def calculate_scores_pure(data: dict, sections: list = None, threshold: int = 50) -> dict:

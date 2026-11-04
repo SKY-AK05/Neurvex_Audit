@@ -13,3 +13,6 @@ email-validator>=2.1.1
 # Azure Key Vault integration
 azure-identity==1.15.0
 azure-keyvault-secrets==4.7.0
+
+# Azure Service Bus integration
+azure-servicebus>=7.12.0

@@ -54,6 +54,18 @@ export async function getSubmission(id) {
   return handleResponse(res);
 }
 
+export async function getSubmissionStatus(id) {
+  const headers = {};
+  const token = localStorage.getItem("org_token");
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  const res = await fetch(`${API_BASE}/submissions/${id}/status`, {
+    headers: { ...headers, ...getAuthHeaders() },
+  });
+  return handleResponse(res);
+}
+
 export async function submitAudit(data) {
   const headers = { "Content-Type": "application/json" };
   const token = localStorage.getItem("org_token");
@@ -238,6 +250,33 @@ export async function validateOrganisationByName(name) {
   return handleResponse(res);
 }
 
+export async function validateCorporateEmail(email) {
+  const res = await fetch(`${API_BASE}/public/email/validate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse(res);
+}
+
+export async function resolveAssessmentLink(token) {
+  const res = await fetch(`${API_BASE}/public/assessment/resolve-link`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  return handleResponse(res);
+}
+
+export async function resolveLegacyOrgLink(org) {
+  const res = await fetch(`${API_BASE}/public/assessment/resolve-legacy-org`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ org }),
+  });
+  return handleResponse(res);
+}
+
 export async function validateInvitation(token) {
   const res = await fetch(`${API_BASE}/public/invitations/validate`, {
     method: "POST",
@@ -294,6 +333,14 @@ export async function createOrgInvitation(orgId, data) {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function getOrgDefaultAssessmentLink(orgId) {
+  const res = await fetch(`${API_BASE}/manage/orgs/${orgId}/assessment-links/default`, {
+    method: "POST",
+    headers: getAuthHeaders(),
   });
   return handleResponse(res);
 }

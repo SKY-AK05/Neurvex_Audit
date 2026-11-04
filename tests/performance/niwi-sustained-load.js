@@ -54,7 +54,7 @@ export const options = {
         { duration: SUSTAINED_TIME, target: TARGET_VUS },
         { duration: RAMP_DOWN_TIME, target: 0 },
       ],
-      gracefulRampDown: '15s',
+      gracefulRampDown: '30s',
     },
   },
   thresholds: STANDARD_THRESHOLDS,

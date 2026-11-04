@@ -5,13 +5,20 @@ Settings and admin notification emails.
 import html as html_module
 import logging
 import os
-from typing import Tuple
+import threading
+import time
+from typing import Tuple, Optional
 
 from azure.communication.email import EmailClient
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_SUPPORT_EMAIL = "aakash.padyachi@rochvate.com"
+
+_settings_cache: Optional[dict] = None
+_settings_cache_time: float = 0.0
+_settings_lock = threading.Lock()
+_SETTINGS_CACHE_TTL = 60.0  # 60 seconds
 
 
 def _env_sender():
@@ -90,46 +97,88 @@ def ensure_settings_row(cur):
         logger.warning("Error ensuring settings row: %s", e)
 
 
-def get_settings(cur) -> dict:
-    ensure_settings_row(cur)
-    cur.execute(
-        """
-        SELECT sender_name, sender_address, notification_email, notification_cc_email,
-               notifications_enabled, support_email, updated_at, crm_sync_enabled, hubspot_api_key,
-               low_visibility_threshold
-        FROM app_settings WHERE id = 1
-        """
-    )
-    row = cur.fetchone()
-    if not row:
-        env = _env_sender()
-        return {
-            "sender_name": env["sender_name"],
-            "sender_address": env["sender_address"],
-            "notification_email": "",
-            "notification_cc_email": "",
-            "notifications_enabled": False,
-            "support_email": DEFAULT_SUPPORT_EMAIL,
-            "updated_at": None,
-            "crm_sync_enabled": False,
-            "hubspot_api_key": "",
-            "low_visibility_threshold": 50
+def get_settings(cur=None) -> dict:
+    global _settings_cache, _settings_cache_time
+    now = time.time()
+    if _settings_cache is not None and (now - _settings_cache_time) < _SETTINGS_CACHE_TTL:
+        return _settings_cache
+
+    with _settings_lock:
+        now = time.time()
+        if _settings_cache is not None and (now - _settings_cache_time) < _SETTINGS_CACHE_TTL:
+            return _settings_cache
+
+        def _fetch(cursor):
+            cursor.execute(
+                """
+                SELECT sender_name, sender_address, notification_email, notification_cc_email,
+                       notifications_enabled, support_email, updated_at, crm_sync_enabled, hubspot_api_key,
+                       low_visibility_threshold
+                FROM app_settings WHERE id = 1
+                """
+            )
+            return cursor.fetchone()
+
+        row = None
+        if cur is not None:
+            try:
+                row = _fetch(cur)
+            except Exception:
+                ensure_settings_row(cur)
+                row = _fetch(cur)
+        else:
+            from app.core.database import get_db_connection
+            with get_db_connection() as conn:
+                with conn.cursor() as c:
+                    try:
+                        row = _fetch(c)
+                    except Exception:
+                        ensure_settings_row(c)
+                        row = _fetch(c)
+
+        if not row and cur is not None:
+            ensure_settings_row(cur)
+            row = _fetch(cur)
+
+        if not row:
+            env = _env_sender()
+            _settings_cache = {
+                "sender_name": env["sender_name"],
+                "sender_address": env["sender_address"],
+                "notification_email": "",
+                "notification_cc_email": "",
+                "notifications_enabled": False,
+                "support_email": DEFAULT_SUPPORT_EMAIL,
+                "updated_at": None,
+                "crm_sync_enabled": False,
+                "hubspot_api_key": "",
+                "low_visibility_threshold": 50
+            }
+            _settings_cache_time = now
+            return _settings_cache
+
+        _settings_cache = {
+            "sender_name": row[0] or _env_sender()["sender_name"],
+            "sender_address": row[1] or _env_sender()["sender_address"],
+            "notification_email": row[2] or "",
+            "notification_cc_email": row[3] or "",
+            "notifications_enabled": bool(row[4]),
+            "support_email": (row[5] or "").strip() or DEFAULT_SUPPORT_EMAIL,
+            "updated_at": row[6].isoformat() if row[6] else None,
+            "crm_sync_enabled": bool(row[7]),
+            "hubspot_api_key": row[8] or "",
+            "low_visibility_threshold": int(row[9]) if row[9] is not None else 50
         }
-    return {
-        "sender_name": row[0] or _env_sender()["sender_name"],
-        "sender_address": row[1] or _env_sender()["sender_address"],
-        "notification_email": row[2] or "",
-        "notification_cc_email": row[3] or "",
-        "notifications_enabled": bool(row[4]),
-        "support_email": (row[5] or "").strip() or DEFAULT_SUPPORT_EMAIL,
-        "updated_at": row[6].isoformat() if row[6] else None,
-        "crm_sync_enabled": bool(row[7]),
-        "hubspot_api_key": row[8] or "",
-        "low_visibility_threshold": int(row[9]) if row[9] is not None else 50
-    }
+        _settings_cache_time = now
+        return _settings_cache
 
 
 def update_settings(cur, data: dict) -> dict:
+    global _settings_cache, _settings_cache_time
+    with _settings_lock:
+        _settings_cache = None
+        _settings_cache_time = 0.0
+
     ensure_settings_row(cur)
     current = get_settings(cur)
 
@@ -191,12 +240,24 @@ def get_sender_for_send(cur) -> Tuple[str, str]:
     return address, name
 
 
-def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to_name: str = "", cc_addresses: list[str] = None, subject: str, html: str, plain: str,
-                   sender_address: str, sender_name: str, submission_id: str = None) -> None:
+def is_acs_configured() -> bool:
+    """Check if Azure Communication Services is configured."""
     acs_conn = os.environ.get("ACS_CONNECTION_STRING") or os.environ.get("ACS-CONNECTION-STRING", "")
-    if not acs_conn:
+    return bool(acs_conn and acs_conn.strip())
+
+
+def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to_name: str = "", cc_addresses: list[str] = None, subject: str, html: str, plain: str,
+                   sender_address: str, sender_name: str, submission_id: str = None) -> bool:
+    """
+    Send email via Azure Communication Services.
+    Returns True if successfully submitted to ACS.
+    Returns False if ACS is intentionally not configured.
+    Raises exception on external send failure.
+    """
+    if not is_acs_configured():
         logger.warning("ACS_CONNECTION_STRING not configured. Email dispatch bypassed for submission %s", submission_id)
-        return
+        return False
+    acs_conn = os.environ.get("ACS_CONNECTION_STRING") or os.environ.get("ACS-CONNECTION-STRING", "")
     client = EmailClient.from_connection_string(acs_conn)
     
     to_recipients = [{"address": a.strip()} for a in to_addresses if a.strip()] if to_addresses else [{"address": to_address, "displayName": to_name}]
@@ -223,27 +284,37 @@ def send_acs_email(*, to_addresses: list[str] = None, to_address: str = None, to
 
     poller = client.begin_send(message)
     poller.result()
+    logger.info("ACS email successfully accepted by provider for submission %s", submission_id)
+    return True
 
 
-def notify_admin_new_submission(cur, submission_id: int, name: str, company_name: str) -> bool:
-    """Send admin alert if notifications are enabled. Returns True if email was sent."""
+def notify_admin_new_submission(cur, submission_id: int, name: str, company_name: str, sync: bool = False):
+    """
+    Send admin alert if notifications are enabled.
+    When sync=True: runs synchronously and returns (status, error_or_message).
+    When sync=False: runs in background thread and returns bool (for backward compatibility).
+    """
     settings = get_settings(cur)
     
     if not settings["notifications_enabled"]:
         logger.info(f"Notifications disabled - skipping admin alert for submission {submission_id}")
-        return False
+        return ("SKIPPED", "Notifications disabled") if sync else False
         
     admin_emails = [e.strip() for e in (settings["notification_email"] or "").replace(";", ",").split(",") if e.strip()]
     if not admin_emails:
         logger.warning(f"Notifications enabled but notification_email is empty for submission {submission_id}")
-        return False
+        return ("SKIPPED", "No notification email configured") if sync else False
         
     cc_emails = [e.strip() for e in (settings.get("notification_cc_email") or "").replace(";", ",").split(",") if e.strip()]
 
     sender_address, sender_name = get_sender_for_send(cur)
     if not sender_address:
         logger.error(f"No sender address configured for admin notification (submission {submission_id})")
-        return False
+        return ("SKIPPED", "No sender address configured") if sync else False
+
+    if not is_acs_configured():
+        logger.info(f"ACS_CONNECTION_STRING not configured - skipping admin notification for submission {submission_id}")
+        return ("SKIPPED", "ACS not configured") if sync else False
 
     frontend_base = os.environ.get("FRONTEND_URL", "http://localhost:5173").rstrip("/")
     review_url = f"{frontend_base}/admin/submissions/{submission_id}"
@@ -263,6 +334,24 @@ def notify_admin_new_submission(cur, submission_id: int, name: str, company_name
         f"<strong>Submission ID:</strong> {submission_id}</p>"
         f'<p><a href="{review_url}" style="display:inline-block;background:#1E1A4A;color:#FFFFFF;padding:10px 20px;border-radius:6px;text-decoration:none;font-weight:600;">Open Submission →</a></p>'
     )
+
+    if sync:
+        try:
+            logger.info(f"Synchronously sending admin notification for submission {submission_id} to {', '.join(admin_emails)}")
+            send_acs_email(
+                to_addresses=admin_emails,
+                cc_addresses=cc_emails if cc_emails else None,
+                subject=subject,
+                html=html,
+                plain=plain,
+                sender_address=sender_address,
+                sender_name=sender_name,
+                submission_id=str(submission_id),
+            )
+            return ("SENT", None)
+        except Exception as e:
+            logger.error(f"Synchronous admin notification failed for submission {submission_id}: {e}")
+            raise
 
     try:
         import threading

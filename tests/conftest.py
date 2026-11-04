@@ -56,6 +56,7 @@ class InMemoryStore:
         }
         self.audit_logs = []
         self.post_submit_jobs = {}
+        self.service_bus_outbox = {}
 
 MEM_STORE = InMemoryStore()
 
@@ -107,6 +108,101 @@ class MockCursor:
         # 1. Advisory Lock / Health checks / Literal SELECTs
         if "pg_advisory_xact_lock" in sql_lower:
             self._results = [{"locked": True}] if self.dict_cursor else [(True,)]
+            self.rowcount = 1
+            return
+
+        # 1.1 Atomic Submission CTE Query Support
+        if "with duplicate_check as" in sql_lower:
+            email_val = (p.get("email") or "").strip().lower() if isinstance(p, dict) else ""
+            org_id_val = str(p.get("organization_id") or "") if isinstance(p, dict) else ""
+            idemp_val = p.get("idempotency_key") if isinstance(p, dict) else None
+
+            # 1. Duplicate check (last 5 min)
+            dup_id = None
+            now = datetime.now(timezone.utc)
+            for s in self.store.submissions.values():
+                if (s.get("email") or "").strip().lower() == email_val:
+                    sub_time = s.get("submitted_at")
+                    if sub_time:
+                        if sub_time.tzinfo is None:
+                            sub_time = sub_time.replace(tzinfo=timezone.utc)
+                        if (now - sub_time).total_seconds() < 300:
+                            dup_id = s["id"]
+                            break
+
+            # 2. Idempotent check
+            existing_idemp_id = None
+            if idemp_val:
+                for s in self.store.submissions.values():
+                    if s.get("idempotency_key") == idemp_val:
+                        existing_idemp_id = s["id"]
+                        break
+
+            # 3. Org lookup
+            valid_org = self.store.organizations.get(org_id_val)
+            valid_org_id = valid_org["id"] if (valid_org and valid_org.get("is_active", True) and not valid_org.get("is_deleted", False)) else None
+
+            new_id = None
+            if not dup_id and not existing_idemp_id and valid_org_id:
+                new_id = str(uuid.uuid4())
+                sub_record = {
+                    "id": new_id,
+                    "name": p.get("name", ""),
+                    "email": p.get("email", ""),
+                    "company_name": p.get("company_name", ""),
+                    "organization_id": org_id_val,
+                    "submission_source": p.get("submission_source", "direct"),
+                    "status": "pending",
+                    "submitted_at": now,
+                    "overall_avg": float(p.get("overall_avg", 0.0) or 0.0),
+                    "overall_level": p.get("overall_level", "Level 1 — Foundational"),
+                    "dimension_scores": p.get("dimension_scores", "{}"),
+                    "answers": p.get("answers", "{}"),
+                    "idempotency_key": idemp_val,
+                    "invitation_id": p.get("invitation_id"),
+                }
+                for i in range(5, 45):
+                    sub_record[f"q{i}"] = p.get(f"q{i}")
+                self.store.submissions[new_id] = sub_record
+                self.store.links.append({"org": org_id_val, "sub": new_id, "name": p.get("company_name", "")})
+                self.store.post_submit_jobs[str(uuid.uuid4())] = {
+                    "submission_id": new_id, "job_type": "email", "status": "PENDING"
+                }
+                outbox_id = str(uuid.uuid4())
+                self.store.service_bus_outbox[outbox_id] = {
+                    "id": outbox_id,
+                    "event_type": "SUBMISSION_CREATED",
+                    "aggregate_id": new_id,
+                    "payload": p,
+                    "status": "PENDING"
+                }
+
+                if p.get("draft_uuid"):
+                    draft_id_str = str(p.get("draft_uuid"))
+                    if draft_id_str in self.store.drafts:
+                        self.store.drafts[draft_id_str]["submitted"] = True
+
+                if p.get("invitation_id"):
+                    inv_id_str = str(p.get("invitation_id"))
+                    seen_invs = set()
+                    for inv in self.store.invitations.values():
+                        if inv.get("id") == inv_id_str and id(inv) not in seen_invs:
+                            seen_invs.add(id(inv))
+                            inv["submission_count"] = inv.get("submission_count", 0) + 1
+
+                if self.conn is not None:
+                    self.conn._uncommitted.append(lambda nid=new_id: self.store.submissions.pop(nid, None))
+
+            row_tuple = (new_id, existing_idemp_id, dup_id, valid_org_id)
+            if self.dict_cursor:
+                self._results = [{
+                    "new_id": new_id,
+                    "existing_idempotent_id": existing_idemp_id,
+                    "duplicate_id": dup_id,
+                    "valid_org_id": valid_org_id
+                }]
+            else:
+                self._results = [row_tuple]
             self.rowcount = 1
             return
 
@@ -629,6 +725,7 @@ class MockConnection:
     def __init__(self, store: InMemoryStore):
         self.store = store
         self.closed = 0
+        self.status = psycopg2.extensions.STATUS_READY
         self.autocommit = False
         self.info = MockConnectionInfo()
         self._uncommitted = []

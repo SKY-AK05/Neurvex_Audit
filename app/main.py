@@ -41,11 +41,11 @@ async def startup_event():
     logger.info("Starting NIWI application...")
     
     # Initialize database connection pool
-    # Production deployment with 4 workers * 10 connections = 40 max connections
-    # Adjust based on actual deployment configuration
+    # Pre-warm 10 connections per worker to avoid 1.5s SSL WAN handshakes during user requests
+    # 2 workers * 10 connections = 20 max connections (Azure limit: 50)
     try:
-        init_connection_pool(minconn=2, maxconn=10)
-        logger.info("Database connection pool initialized")
+        init_connection_pool(minconn=10, maxconn=10)
+        logger.info("Database connection pool initialized and pre-warmed")
     except Exception as e:
         logger.error(f"Failed to initialize connection pool: {e}")
         raise
@@ -58,15 +58,36 @@ async def startup_event():
     except Exception as e:
         logger.warning(f"Failed to warm up scoring sections cache: {e}")
 
-    # Start post-submit background job worker
-    await start_job_worker()
+    # Warm up in-memory organisation registry cache and start scheduled 30m refresh
+    try:
+        from app.services.org_cache_service import refresh_org_cache, start_org_cache_refresher
+        refresh_org_cache()
+        start_org_cache_refresher(interval_seconds=1800)
+        logger.info("Organisation registry cache warmed up and scheduled 30-min refresher started")
+    except Exception as e:
+        logger.warning(f"Failed to initialize organisation cache on startup: {e}")
+
+    # Start post-submit background job worker (only if embedded mode is enabled)
+    enable_embedded = os.environ.get("ENABLE_EMBEDDED_WORKER", "false").lower() in ("true", "1")
+    if enable_embedded:
+        await start_job_worker()
+        logger.info("Embedded post-submit background job worker started")
+    else:
+        logger.info("Embedded worker disabled; relying on dedicated worker service")
     logger.info("Application startup complete")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup application resources on shutdown"""
     logger.info("Shutting down NIWI application...")
-    stop_job_worker()
+    enable_embedded = os.environ.get("ENABLE_EMBEDDED_WORKER", "false").lower() in ("true", "1")
+    if enable_embedded:
+        stop_job_worker()
+    try:
+        from app.services.org_cache_service import stop_org_cache_refresher
+        stop_org_cache_refresher()
+    except Exception as e:
+        logger.warning(f"Error stopping organisation cache refresher: {e}")
     close_connection_pool()
     logger.info("Application shutdown complete")
 
@@ -123,3 +144,17 @@ async def health(response: Response):
 
     response.status_code = status_code
     return health_status
+
+
+@app.get("/api/health/pool-metrics")
+async def health_pool_metrics():
+    """Diagnostic endpoint to inspect worker-local connection pool metrics."""
+    from app.core.database import get_pool_diagnostics
+    return get_pool_diagnostics()
+
+
+@app.get("/api/health/cache-metrics")
+async def health_cache_metrics():
+    """Diagnostic endpoint to inspect worker-local organisation cache metrics."""
+    from app.services.org_cache_service import get_cache_stats
+    return get_cache_stats()

@@ -166,6 +166,15 @@ DELETE_ALL_PASSWORD = os.environ.get("DELETE_ALL_PASSWORD", os.environ.get("DELE
 JWKS_URL = f"https://login.microsoftonline.com/{ENTRA_TENANT_ID}/discovery/v2.0/keys" if ENTRA_TENANT_ID else ""
 
 # ============================================================================
+# Service Bus & Asynchronous Pipeline Configuration
+# ============================================================================
+
+ENABLE_SERVICE_BUS_PIPELINE = os.environ.get("ENABLE_SERVICE_BUS_PIPELINE", "true").lower() in ("true", "1")
+ENABLE_LEGACY_JOB_WORKER = os.environ.get("ENABLE_LEGACY_JOB_WORKER", "true").lower() in ("true", "1")
+SERVICE_BUS_FQDN = os.environ.get("SERVICE_BUS_FQDN", "niwi-bus.servicebus.windows.net")
+SERVICE_BUS_QUEUE_NAME = os.environ.get("SERVICE_BUS_QUEUE_NAME", "niwi-submission-queue")
+
+# ============================================================================
 # Validation Notice
 # ============================================================================
 

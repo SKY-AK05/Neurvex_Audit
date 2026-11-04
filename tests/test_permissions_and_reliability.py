@@ -329,11 +329,9 @@ class TestSimplifiedOrgCreation:
             mock_conn.cursor.return_value.__enter__.return_value = mock_cur
 
             mock_cur.fetchone.side_effect = [
-                None,  # No recent submission from email
-                None,  # Org not found
-                {"id": "55555555-5555-5555-5555-555555555555", "name": "Fresh Startup Inc"},  # Insert new org
-                ("sub-uuid-1234",),  # Submission ID
-                (False,),  # CRM sync disabled
+                None,  # Org not found on initial lookup
+                ("55555555-5555-5555-5555-555555555555", "Fresh Startup Inc"),  # Insert new org returning id, name
+                ("sub-uuid-1234", "55555555-5555-5555-5555-555555555555", False, False),  # Submission CTE returning row
             ]
 
             res = client.post("/api/submit", json=payload)
