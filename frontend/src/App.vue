@@ -29,7 +29,7 @@
             </router-link>
             <router-link v-if="isSuper" to="/admin/super-dashboard" class="top-nav-link super-nav-pill" :class="{ active: route.path === '/admin/super-dashboard' }">
               <span class="super-dot"></span>
-              Super Admin
+              Engine
             </router-link>
           </nav>
 
@@ -92,7 +92,7 @@
                 </router-link>
                 <router-link v-if="isSuper" to="/admin/super-dashboard" class="profile-item" @click="profileOpen = false">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
-                  Super Admin Fleet
+                  Platform Engine
                 </router-link>
                 <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
@@ -144,7 +144,7 @@
             Settings
           </router-link>
           <router-link v-if="isSuper" to="/admin/super-dashboard" class="mobile-nav-link" @click="mobileNavOpen = false">
-            Super Admin Fleet
+            Platform Engine
           </router-link>
           <router-link v-if="isSuper" to="/admin/users" class="mobile-nav-link" @click="mobileNavOpen = false">
             User Management
@@ -1009,21 +1009,38 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 
 .super-nav-pill {
   position: relative;
-  color: #0284c7 !important;
-  font-weight: 600 !important;
+  color: var(--primary, #161057) !important;
+  font-weight: 700 !important;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  background: #FAF9F5;
+  border: 1px solid var(--primary, #161057);
+  border-radius: 9999px;
+  padding: 4px 12px;
+  margin-left: 6px;
+  font-size: 0.82rem;
+  box-shadow: 1px 1px 0px rgba(22, 16, 87, 0.12);
+  transition: all 0.15s ease;
+}
+.super-nav-pill:hover {
+  background: #F0EEE9;
+  transform: translateY(-1px);
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.18);
 }
 .super-nav-pill.active {
-  color: #0369a1 !important;
-  background: #e0f2fe;
+  color: #FFFFFF !important;
+  background: var(--primary, #161057) !important;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.25);
 }
 .super-dot {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: #0284c7;
+  background: #10B981;
+}
+.super-nav-pill.active .super-dot {
+  background: #34D399;
 }
 
 </style>

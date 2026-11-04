@@ -307,3 +307,4 @@ def get_dashboard_snapshot(force_refresh: bool = False) -> Dict[str, Any]:
     _MEMORY_CACHE["cached_at"] = now_monotonic
 
     return fresh_data
+

@@ -1,365 +1,371 @@
 <template>
-  <div class="super-dashboard-container">
-    <!-- Header with Breadcrumbs, Live Status & Manual Refresh -->
-    <header class="dash-header">
-      <div class="dash-title-block">
-        <div class="super-badge-row">
-          <span class="super-badge">Super Admin Fleet</span>
-          <span class="status-indicator-pill" :class="{ 'polling-active': isTabVisible, 'polling-paused': !isTabVisible }">
-            <span class="pulse-dot"></span>
-            {{ isTabVisible ? 'Auto-refresh active (2m)' : 'Polling paused (Tab hidden)' }}
+  <div class="dashboard-page animate-in super-engine-page">
+    <!-- Hero / Title Header Banner matching Overview & Analytics design language -->
+    <section class="hero-section" aria-label="Operations Engine Header">
+      <div class="hero-content">
+        <div class="super-kicker-pill">
+          <span class="kicker-tag">Restricted • Super Admin</span>
+          <span class="kicker-divider">•</span>
+          <span class="kicker-status" :class="{ 'live-on': isTabVisible, 'live-paused': !isTabVisible }">
+            <span class="pulse-indicator"></span>
+            {{ isTabVisible ? 'Auto-refresh Active (2m)' : 'Polling Paused (Tab Hidden)' }}
           </span>
         </div>
-        <h1 class="dash-title">Super Admin Operations Dashboard</h1>
-        <p class="dash-subtitle">
-          Real-time request ingestion queue, processing latency benchmarks, and background worker fleet status.
+
+        <h1 class="hero-title">Platform Operations Command</h1>
+        <p class="hero-subtitle">
+          Real-time ingestion telemetry, processing latency benchmarks, and background worker fleet coordination.
         </p>
-      </div>
 
-      <div class="dash-actions">
-        <div class="last-updated-text" v-if="lastUpdated">
-          <span>Last updated:</span>
-          <strong>{{ lastUpdatedFormatted }}</strong>
-          <span class="cache-pill" title="Aggregations are cached for 2 minutes to protect database load">Cached (2m)</span>
-        </div>
-
-        <button
-          type="button"
-          class="btn-refresh"
-          :disabled="loading"
-          @click="fetchDashboard(true)"
-          title="Force refresh current statistics"
-        >
-          <svg class="refresh-icon" :class="{ spinning: loading }" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span>{{ loading ? 'Refreshing…' : 'Refresh Now' }}</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Error Banner -->
-    <div v-if="error" class="alert-banner alert-error">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div class="alert-content">
-        <strong>Failed to load operations dashboard:</strong> {{ error }}
-      </div>
-      <button class="btn-retry" @click="fetchDashboard(true)">Retry</button>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <main v-if="stats" class="dash-body">
-      <!-- 1. HIGHLIGHT: PENDING REQUESTS HERO BANNER -->
-      <section class="pending-hero-card" :class="{ 'has-pending': pendingCount > 0, 'queue-clear': pendingCount === 0 }">
-        <div class="hero-left">
-          <div class="hero-icon-wrap">
-            <svg v-if="pendingCount > 0" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Top Controls Strip: Cache indicator, Last updated & Manual Refresh Button -->
+        <div class="engine-top-controls">
+          <div class="control-meta-pill">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
               <circle cx="12" cy="12" r="10"></circle>
               <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <svg v-else width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <span>Updated: <strong>{{ lastUpdatedFormatted }}</strong></span>
+            <span class="cache-badge" title="Snapshot is cached for 2 minutes to eliminate database overhead">Cached (2m)</span>
+          </div>
+
+          <button
+            type="button"
+            class="hero-search-btn btn-refresh-engine"
+            :disabled="loading"
+            @click="fetchDashboard(true)"
+            title="Force recompute cached operational snapshot"
+          >
+            <svg class="refresh-spinner" :class="{ spinning: loading }" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>{{ loading ? 'Recomputing…' : 'Force Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Alert Banner -->
+    <div v-if="error" class="alert-banner-error">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <div class="alert-text">
+        <strong>Operations Error:</strong> {{ error }}
+      </div>
+      <button class="btn-retry-engine" @click="fetchDashboard(true)">Retry</button>
+    </div>
+
+    <!-- MAIN BODY -->
+    <main v-if="stats" class="engine-body">
+      <!-- 1. HIGHLIGHT: PENDING QUEUE HERO CARD -->
+      <section class="card hero-pending-card" :class="{ 'pending-alert': pendingCount > 0, 'pending-clear': pendingCount === 0 }">
+        <div class="hpc-left">
+          <div class="hpc-icon-box">
+            <svg v-if="pendingCount > 0" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <svg v-else width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
               <polyline points="22 4 12 14.01 9 11.01"></polyline>
             </svg>
           </div>
-          <div class="hero-meta">
-            <span class="hero-tag">{{ pendingCount > 0 ? 'Queue Ingestion Alert' : 'Queue Health Nominal' }}</span>
-            <div class="hero-count-row">
-              <span class="hero-big-num">{{ pendingCount }}</span>
-              <span class="hero-label">Pending Requests Awaiting Processing</span>
+          <div class="hpc-text-wrap">
+            <div class="hpc-badge-row">
+              <span class="hpc-kicker">{{ pendingCount > 0 ? 'INGESTION QUEUE ACTIVE' : 'PIPELINE NOMINAL' }}</span>
+              <span v-if="stats.analytics?.oldest_pending_request" class="hpc-wait-pill">
+                Max Wait: {{ stats.analytics.oldest_pending_request.waiting_time_formatted }}
+              </span>
             </div>
-            <p class="hero-desc" v-if="pendingCount > 0">
-              {{ pendingCount }} submission{{ pendingCount === 1 ? '' : 's' }} currently in queue.
+            <div class="hpc-count-row">
+              <span class="hpc-big-val">{{ pendingCount }}</span>
+              <h2 class="hpc-count-label">Pending Submissions in Ingestion Queue</h2>
+            </div>
+            <p class="hpc-explanation" v-if="pendingCount > 0">
+              {{ pendingCount }} submission{{ pendingCount === 1 ? '' : 's' }} accepted via <code>POST /api/submit</code> awaiting scoring and outbox dispatch.
               <span v-if="stats.analytics?.oldest_pending_request">
-                Oldest request has been waiting for
-                <strong>{{ stats.analytics.oldest_pending_request.waiting_time_formatted }}</strong>
+                Oldest record waiting: <strong>{{ stats.analytics.oldest_pending_request.waiting_time_formatted }}</strong>
                 (ID: <code>{{ stats.analytics.oldest_pending_request.submission_id.substring(0, 8) }}…</code>).
               </span>
             </p>
-            <p class="hero-desc" v-else>
-              Ingestion queue is clear. All incoming respondent submissions have been ingested and processed into final scores.
+            <p class="hpc-explanation" v-else>
+              Ingestion queue is fully cleared. All incoming audit submissions have been consumed, scored, and linked.
             </p>
           </div>
         </div>
 
-        <div class="hero-right">
-          <div class="hero-stat-pill">
-            <span class="pill-label">Total Ingested</span>
-            <span class="pill-val">{{ stats.request_overview?.total_requests || 0 }}</span>
+        <div class="hpc-right">
+          <div class="hpc-stat-box">
+            <span class="hpc-stat-label">Total Ingested</span>
+            <span class="hpc-stat-val">{{ stats.request_overview?.total_requests || 0 }}</span>
           </div>
-          <div class="hero-stat-pill" v-if="stats.analytics?.oldest_pending_request">
-            <span class="pill-label">Max Queue Wait</span>
-            <span class="pill-val text-amber">{{ stats.analytics.oldest_pending_request.waiting_time_formatted }}</span>
+          <div class="hpc-stat-box" v-if="stats.analytics?.average_processing_time_formatted">
+            <span class="hpc-stat-label">Avg. Latency</span>
+            <span class="hpc-stat-val">{{ stats.analytics.average_processing_time_formatted }}</span>
           </div>
         </div>
       </section>
 
-      <!-- 1b. REQUEST OVERVIEW METRIC TILES -->
-      <section class="section-block">
-        <h2 class="section-title">Request Overview</h2>
-        <div class="metrics-grid">
+      <!-- 1b. REQUEST OVERVIEW 4-GRID -->
+      <section class="engine-section">
+        <div class="results-header-bar sub-header-bar">
+          <div class="results-header-left">
+            <h2 class="results-title">Queue Status Breakdown</h2>
+            <span class="results-count-pill">{{ stats.request_overview?.total_requests || 0 }} total requests</span>
+          </div>
+        </div>
+
+        <div class="metric-tiles-grid">
           <!-- Pending Tile -->
-          <div class="metric-card metric-pending">
-            <div class="metric-header">
-              <span class="metric-title">Pending</span>
-              <span class="metric-badge badge-amber">Received</span>
+          <div class="card metric-tile tile-pending">
+            <div class="mt-header">
+              <span class="mt-title">Pending</span>
+              <span class="pill-badge pill-amber">Awaiting Processing</span>
             </div>
-            <div class="metric-value text-amber">{{ stats.request_overview?.pending || 0 }}</div>
-            <div class="metric-subtext">Waiting in raw queue</div>
+            <div class="mt-value text-amber">{{ stats.request_overview?.pending || 0 }}</div>
+            <div class="mt-subtext">Received into staging queue</div>
           </div>
 
           <!-- In Progress Tile -->
-          <div class="metric-card metric-progress">
-            <div class="metric-header">
-              <span class="metric-title">In Progress</span>
-              <span class="metric-badge badge-blue">Processing</span>
+          <div class="card metric-tile tile-progress">
+            <div class="mt-header">
+              <span class="mt-title">In Progress</span>
+              <span class="pill-badge pill-blue">Worker Active</span>
             </div>
-            <div class="metric-value text-blue">{{ stats.request_overview?.in_progress || 0 }}</div>
-            <div class="metric-subtext">Worker jobs active</div>
+            <div class="mt-value text-blue">{{ stats.request_overview?.in_progress || 0 }}</div>
+            <div class="mt-subtext">Currently executing scoring job</div>
           </div>
 
           <!-- Completed Tile -->
-          <div class="metric-card metric-completed">
-            <div class="metric-header">
-              <span class="metric-title">Completed</span>
-              <span class="metric-badge badge-green">Scored &amp; Linked</span>
+          <div class="card metric-tile tile-completed">
+            <div class="mt-header">
+              <span class="mt-title">Completed</span>
+              <span class="pill-badge pill-green">Finalized</span>
             </div>
-            <div class="metric-value text-green">{{ stats.request_overview?.completed || 0 }}</div>
-            <div class="metric-subtext">Successfully finalized</div>
+            <div class="mt-value text-green">{{ stats.request_overview?.completed || 0 }}</div>
+            <div class="mt-subtext">Scored, linked &amp; archived</div>
           </div>
 
-          <!-- Failed / DLQ Tile -->
-          <div class="metric-card metric-failed">
-            <div class="metric-header">
-              <span class="metric-title">Failed / Dead-Letter</span>
-              <span class="metric-badge" :class="failedCount > 0 ? 'badge-red' : 'badge-slate'">
-                {{ failedCount > 0 ? 'Needs Attention' : 'Zero' }}
+          <!-- Failed Tile -->
+          <div class="card metric-tile tile-failed">
+            <div class="mt-header">
+              <span class="mt-title">Failed / Dead-Letter</span>
+              <span class="pill-badge" :class="failedCount > 0 ? 'pill-red' : 'pill-slate'">
+                {{ failedCount > 0 ? 'Action Required' : '0 Failures' }}
               </span>
             </div>
-            <div class="metric-value" :class="failedCount > 0 ? 'text-red' : 'text-slate'">{{ failedCount }}</div>
-            <div class="metric-subtext">{{ failedCount > 0 ? 'Exceeded retries' : 'Clean pipeline' }}</div>
+            <div class="mt-value" :class="failedCount > 0 ? 'text-red' : 'text-slate'">{{ failedCount }}</div>
+            <div class="mt-subtext">{{ failedCount > 0 ? 'Exceeded DLQ retries' : 'Clean audit trail' }}</div>
           </div>
         </div>
       </section>
 
       <!-- 2. REQUEST ANALYTICS -->
-      <section class="section-block">
-        <div class="section-header-row">
-          <div>
-            <h2 class="section-title">Request Analytics &amp; Throughput</h2>
-            <p class="section-subtitle">Real-time throughput trends, pipeline success rates, and latency measurements.</p>
+      <section class="engine-section">
+        <div class="results-header-bar sub-header-bar">
+          <div class="results-header-left">
+            <h2 class="results-title">Ingestion Analytics &amp; Throughput</h2>
+            <span class="results-count-pill">{{ stats.analytics?.success_rate || 0 }}% reliability</span>
           </div>
 
-          <!-- Timeline interval switch -->
-          <div class="tab-pill-group">
+          <div class="view-toggle-group">
             <button
               type="button"
-              class="tab-pill"
+              class="view-btn"
               :class="{ active: timelineMode === '24h' }"
               @click="timelineMode = '24h'"
             >
-              Last 24 Hours (Hourly)
+              Last 24h (Hourly)
             </button>
             <button
               type="button"
-              class="tab-pill"
+              class="view-btn"
               :class="{ active: timelineMode === '7d' }"
               @click="timelineMode = '7d'"
             >
-              Last 7 Days (Daily)
+              Last 7d (Daily)
             </button>
           </div>
         </div>
 
-        <!-- 3 KPI Cards for Analytics -->
-        <div class="analytics-kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-icon-row">
-              <div class="kpi-icon icon-emerald">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-              </div>
-              <span class="kpi-label">Success Rate</span>
-            </div>
-            <div class="kpi-value-row">
-              <span class="kpi-value">{{ stats.analytics?.success_rate || 0 }}%</span>
-              <span class="kpi-rate-bar-wrap">
-                <span class="kpi-rate-bar" :style="{ width: (stats.analytics?.success_rate || 0) + '%' }"></span>
+        <!-- 3 KPI Cards -->
+        <div class="kpi-cards-grid">
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-icon-pill icon-pill-emerald">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>
               </span>
+              <span class="kpi-card-label">Success Rate</span>
             </div>
-            <div class="kpi-subtext">
-              Failure rate: <strong>{{ stats.analytics?.failure_rate || 0 }}%</strong>
+            <div class="kpi-main-val">{{ stats.analytics?.success_rate || 0 }}%</div>
+            <div class="kpi-bar-track">
+              <div class="kpi-bar-fill" :style="{ width: (stats.analytics?.success_rate || 0) + '%' }"></div>
             </div>
+            <div class="kpi-footer-note">Failure rate: <strong>{{ stats.analytics?.failure_rate || 0 }}%</strong></div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-icon-row">
-              <div class="kpi-icon icon-blue">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              </div>
-              <span class="kpi-label">Avg. Processing Time</span>
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-icon-pill icon-pill-blue">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <span class="kpi-card-label">Average Processing Time</span>
             </div>
-            <div class="kpi-value-row">
-              <span class="kpi-value">{{ stats.analytics?.average_processing_time_formatted || '0s' }}</span>
-            </div>
-            <div class="kpi-subtext">
-              Across completed audits (past 7 days)
-            </div>
+            <div class="kpi-main-val">{{ stats.analytics?.average_processing_time_formatted || '0s' }}</div>
+            <div class="kpi-footer-note">End-to-end scoring &amp; database commitment</div>
           </div>
 
-          <div class="kpi-card">
-            <div class="kpi-icon-row">
-              <div class="kpi-icon icon-amber">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              </div>
-              <span class="kpi-label">Oldest Pending Request</span>
-            </div>
-            <div class="kpi-value-row">
-              <span class="kpi-value" :class="stats.analytics?.oldest_pending_request ? 'text-amber' : 'text-slate'">
-                {{ stats.analytics?.oldest_pending_request ? stats.analytics.oldest_pending_request.waiting_time_formatted : 'None' }}
+          <div class="card kpi-card">
+            <div class="kpi-top">
+              <span class="kpi-icon-pill icon-pill-amber">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
               </span>
+              <span class="kpi-card-label">Oldest Pending Request</span>
             </div>
-            <div class="kpi-subtext" v-if="stats.analytics?.oldest_pending_request">
+            <div class="kpi-main-val" :class="stats.analytics?.oldest_pending_request ? 'text-amber' : 'text-slate'">
+              {{ stats.analytics?.oldest_pending_request ? stats.analytics.oldest_pending_request.waiting_time_formatted : 'None' }}
+            </div>
+            <div class="kpi-footer-note" v-if="stats.analytics?.oldest_pending_request">
               Arrived {{ formatTime(stats.analytics.oldest_pending_request.created_at) }}
             </div>
-            <div class="kpi-subtext" v-else>
-              No pending jobs delayed in queue
+            <div class="kpi-footer-note" v-else>
+              Queue running at zero backlog
             </div>
           </div>
         </div>
 
-        <!-- Throughput Chart Block -->
-        <div class="chart-container-card">
-          <div class="chart-header">
-            <h3 class="chart-title">
-              {{ timelineMode === '24h' ? 'Hourly Ingestion Volume (Last 24 Hours)' : 'Daily Ingestion Volume (Last 7 Days)' }}
-            </h3>
-            <span class="chart-badge">{{ currentTimelineData.length }} Data Points</span>
+        <!-- Volume Chart Card -->
+        <div class="card chart-card">
+          <div class="chart-top-bar">
+            <div>
+              <h3 class="chart-heading">
+                {{ timelineMode === '24h' ? 'Submission Ingestion Velocity (Past 24 Hours)' : 'Daily Submission Aggregates (Past 7 Days)' }}
+              </h3>
+              <p class="chart-sub">Volume of assessment payloads accepted into the durable staging buffer.</p>
+            </div>
+            <span class="results-count-pill">{{ currentTimelineData.length }} time buckets</span>
           </div>
 
-          <div v-if="currentTimelineData.length" class="chart-bars-wrap">
-            <div class="bar-column" v-for="(item, idx) in currentTimelineData" :key="idx">
-              <div class="bar-fill-track">
+          <div v-if="currentTimelineData.length" class="chart-histogram">
+            <div class="hist-col" v-for="(item, idx) in currentTimelineData" :key="idx">
+              <div class="hist-track">
                 <div
-                  class="bar-fill"
+                  class="hist-bar"
                   :style="{ height: getBarHeight(item.count) }"
                   :title="`${item.bucket}: ${item.count} submissions`"
                 >
-                  <span class="bar-tooltip">{{ item.count }}</span>
+                  <span class="hist-tip">{{ item.count }}</span>
                 </div>
               </div>
-              <span class="bar-x-label">{{ item.label }}</span>
+              <span class="hist-label">{{ item.label }}</span>
             </div>
           </div>
-          <div v-else class="chart-empty-state">
-            <p>No submission volume recorded during this interval.</p>
+          <div v-else class="chart-empty">
+            <p>No submission activity recorded in this time range.</p>
           </div>
         </div>
       </section>
 
-      <!-- 3. WORKER PROGRESS & FLEET MONITORING -->
-      <section class="section-block">
-        <div class="section-header-row">
-          <div>
-            <h2 class="section-title">Background Worker Fleet Progress</h2>
-            <p class="section-subtitle">
-              Active processes, task state, and heartbeat health. Workers are automatically marked <strong>Offline</strong> if no heartbeat is received within 3 minutes.
-            </p>
+      <!-- 3. WORKER FLEET COORDINATION -->
+      <section class="engine-section">
+        <div class="results-header-bar sub-header-bar">
+          <div class="results-header-left">
+            <h2 class="results-title">Background Worker Fleet</h2>
+            <span class="results-count-pill">{{ stats.worker_progress?.total_workers || 0 }} registered processes</span>
           </div>
 
-          <!-- Fleet Counter Pills -->
-          <div class="fleet-summary-strip">
-            <div class="fleet-pill pill-total">
-              <span class="fp-dot"></span>
-              <span>Total: <strong>{{ stats.worker_progress?.total_workers || 0 }}</strong></span>
-            </div>
-            <div class="fleet-pill pill-active">
-              <span class="fp-dot dot-active"></span>
-              <span>Active: <strong>{{ stats.worker_progress?.active_workers || 0 }}</strong></span>
-            </div>
-            <div class="fleet-pill pill-idle">
-              <span class="fp-dot dot-idle"></span>
-              <span>Idle: <strong>{{ stats.worker_progress?.idle_workers || 0 }}</strong></span>
-            </div>
-            <div class="fleet-pill pill-offline">
-              <span class="fp-dot dot-offline"></span>
-              <span>Offline: <strong>{{ stats.worker_progress?.offline_workers || 0 }}</strong></span>
-            </div>
+          <div class="fleet-badges-strip">
+            <span class="fleet-tag tag-active">
+              <span class="ft-dot ft-green"></span>
+              Active: <strong>{{ stats.worker_progress?.active_workers || 0 }}</strong>
+            </span>
+            <span class="fleet-tag tag-idle">
+              <span class="ft-dot ft-blue"></span>
+              Idle: <strong>{{ stats.worker_progress?.idle_workers || 0 }}</strong>
+            </span>
+            <span class="fleet-tag tag-offline">
+              <span class="ft-dot ft-red"></span>
+              Offline (>3m): <strong>{{ stats.worker_progress?.offline_workers || 0 }}</strong>
+            </span>
           </div>
         </div>
 
-        <!-- Worker Table -->
-        <div class="table-card">
-          <table class="worker-table" v-if="stats.worker_progress?.workers?.length">
+        <div class="card table-card-wrap">
+          <table class="engine-table" v-if="stats.worker_progress?.workers?.length">
             <thead>
               <tr>
                 <th>Status</th>
                 <th>Worker ID</th>
-                <th>Type</th>
+                <th>Process Type</th>
                 <th>Current Task</th>
                 <th>Jobs Completed</th>
-                <th>Last Heartbeat</th>
-                <th>Started</th>
+                <th>Heartbeat</th>
+                <th>Uptime Started</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="w in stats.worker_progress.workers" :key="w.worker_id">
                 <td>
                   <span
-                    class="status-tag"
+                    class="worker-state-pill"
                     :class="{
-                      'tag-active': w.status === 'active',
-                      'tag-idle': w.status === 'idle',
-                      'tag-offline': w.status === 'offline'
+                      'state-active': w.status === 'active',
+                      'state-idle': w.status === 'idle',
+                      'state-offline': w.status === 'offline'
                     }"
                   >
-                    <span class="tag-dot"></span>
+                    <span class="state-dot"></span>
                     {{ w.status === 'offline' ? 'Offline (>3m)' : (w.status === 'active' ? 'Active' : 'Idle') }}
                   </span>
                 </td>
                 <td>
-                  <strong class="worker-id-code">{{ w.worker_id }}</strong>
+                  <code class="worker-code">{{ w.worker_id }}</code>
                 </td>
                 <td>
-                  <span class="worker-type-badge">{{ w.worker_type }}</span>
+                  <span class="worker-type-pill">{{ w.worker_type }}</span>
                 </td>
                 <td>
-                  <span class="worker-task-text" :title="w.current_task">{{ w.current_task }}</span>
+                  <span class="worker-task-desc" :title="w.current_task">{{ w.current_task }}</span>
                 </td>
                 <td>
-                  <span class="worker-jobs-num">{{ w.jobs_completed }}</span>
+                  <strong class="jobs-num">{{ w.jobs_completed }}</strong>
                 </td>
                 <td>
-                  <span class="heartbeat-badge" :class="{ 'hb-stale': w.status === 'offline' }">
+                  <span class="hb-indicator" :class="{ 'hb-delayed': w.status === 'offline' }">
                     {{ w.last_heartbeat_formatted }}
                   </span>
                 </td>
-                <td class="worker-date-col">
+                <td class="date-text">
                   {{ formatTime(w.started_at) }}
                 </td>
               </tr>
             </tbody>
           </table>
 
-          <div v-else class="workers-empty-box">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <div v-else class="engine-empty-table">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
               <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
               <line x1="6" y1="6" x2="6.01" y2="6"></line>
               <line x1="6" y1="18" x2="6.01" y2="18"></line>
             </svg>
-            <h3>No Active Background Workers Registered</h3>
+            <h3>No Background Worker Processes Registered</h3>
             <p>
-              Workers update the fleet directory on their 30–60 second heartbeat schedule. When background worker daemons or outbox pollers are started, they will populate here automatically.
+              Background workers (Service Bus consumers, DB outbox pollers) dispatch telemetry every 30–60 seconds. Active daemons will populate automatically.
             </p>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Initial Loading State -->
-    <div v-else class="initial-loading-wrap">
-      <div class="loading-spinner"></div>
-      <p>Loading Super Admin Operations Snapshot…</p>
+    <!-- Initial Loading State matching Overview skeleton -->
+    <div v-else class="engine-loading-skeleton">
+      <div class="skeleton-shimmer" style="height: 140px; margin-bottom: 24px; border-radius: 12px;"></div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+        <div class="skeleton-shimmer" style="height: 120px; border-radius: 12px;"></div>
+        <div class="skeleton-shimmer" style="height: 120px; border-radius: 12px;"></div>
+        <div class="skeleton-shimmer" style="height: 120px; border-radius: 12px;"></div>
+        <div class="skeleton-shimmer" style="height: 120px; border-radius: 12px;"></div>
+      </div>
+      <div class="skeleton-shimmer" style="height: 260px; border-radius: 12px;"></div>
     </div>
   </div>
 </template>
@@ -378,7 +384,7 @@ const timelineMode = ref('24h');
 let pollIntervalId = null;
 let lastFetchTimestamp = 0;
 
-// Computed metrics
+// Computed metric helpers
 const pendingCount = computed(() => stats.value?.request_overview?.pending || 0);
 const failedCount = computed(() => stats.value?.request_overview?.failed || 0);
 
@@ -418,7 +424,6 @@ function formatTime(isoString) {
   }
 }
 
-// Fetch dashboard data
 async function fetchDashboard(forceRefresh = false) {
   if (loading.value) return;
   loading.value = true;
@@ -430,14 +435,14 @@ async function fetchDashboard(forceRefresh = false) {
     lastUpdated.value = data.timestamp || new Date().toISOString();
     lastFetchTimestamp = Date.now();
   } catch (err) {
-    console.error('Error fetching Super Admin Dashboard:', err);
-    error.value = err.message || 'Failed to communicate with operations API';
+    console.error('Error fetching operations dashboard:', err);
+    error.value = err.message || 'Failed to connect to operations endpoint';
   } finally {
     loading.value = false;
   }
 }
 
-// Requirement 4: Auto-refresh every 2 minutes (120,000 ms) + Tab visibility detection
+// Requirement 4: Auto-refresh every 2 minutes with Tab Visibility pause
 function startPolling() {
   stopPolling();
   pollIntervalId = setInterval(() => {
@@ -459,23 +464,20 @@ function handleVisibilityChange() {
   isTabVisible.value = visible;
 
   if (visible) {
-    // Tab resumed: if more than 2 minutes have elapsed since last fetch, refresh immediately
     const elapsed = Date.now() - lastFetchTimestamp;
     if (elapsed >= 120000) {
       fetchDashboard(false);
     }
     startPolling();
   } else {
-    // Tab hidden: pause polling to save resources
     stopPolling();
   }
 }
 
 onMounted(() => {
-  // Ensure user is Super Admin
   const role = sessionStorage.getItem('nd_role');
   if (role !== 'super') {
-    error.value = 'Super administrator privileges required to access this dashboard.';
+    error.value = 'Super administrator privileges required to access Platform Operations Command.';
     return;
   }
 
@@ -491,145 +493,171 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.super-dashboard-container {
-  max-width: 1320px;
+/* Page Root & NIWI Warm Canvas */
+.super-engine-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--primary, #161057);
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 28px 24px 60px;
-  color: #0f172a;
-  font-family: inherit;
+  padding: 16px 24px 60px;
 }
 
-/* Header */
-.dash-header {
+/* ==========================================================================
+   HERO / SEARCH BANNER (Matches Overview.vue Neo-Modern Serif Style)
+   ========================================================================== */
+.hero-section {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.super-badge-row {
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 0 16px;
 }
 
-.super-badge {
-  background: #0f172a;
-  color: #38bdf8;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 3px 10px;
+.hero-content {
+  max-width: 880px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.super-kicker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #FAF9F5;
+  border: 1.5px solid var(--primary, #161057);
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.12);
+  padding: 4px 14px;
   border-radius: 9999px;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 14px;
 }
 
-.status-indicator-pill {
+.kicker-tag {
+  color: var(--primary, #161057);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.kicker-divider {
+  color: #94a3b8;
+}
+
+.kicker-status {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  padding: 3px 10px;
-  border-radius: 9999px;
-  background: #f1f5f9;
-  color: #475569;
+  font-weight: 600;
 }
 
-.status-indicator-pill.polling-active {
-  background: #ecfdf5;
-  color: #065f46;
+.kicker-status.live-on {
+  color: #15803d;
 }
 
-.status-indicator-pill.polling-paused {
-  background: #fef3c7;
-  color: #92400e;
+.kicker-status.live-paused {
+  color: #b45309;
 }
 
-.pulse-dot {
+.pulse-indicator {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: currentColor;
-  animation: pulse 2s infinite;
+  animation: pulse-ring 2s infinite;
 }
 
-@keyframes pulse {
-  0% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.9); }
-  100% { opacity: 1; transform: scale(1); }
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.85); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-.dash-title {
-  font-size: 1.75rem;
+.hero-title {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 2.35rem;
   font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 6px 0;
-  letter-spacing: -0.02em;
+  color: var(--primary, #161057);
+  letter-spacing: -0.03em;
+  margin: 0 0 8px 0;
+  line-height: 1.18;
 }
 
-.dash-subtitle {
-  font-size: 0.92rem;
-  color: #64748b;
-  margin: 0;
-  max-width: 680px;
-  line-height: 1.45;
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  color: #64748B;
+  max-width: 620px;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
 }
 
-.dash-actions {
+/* Engine Controls Strip */
+.engine-top-controls {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0px rgba(22, 16, 87, 0.12);
+  padding: 8px 14px;
 }
 
-.last-updated-text {
-  font-size: 0.8rem;
-  color: #64748b;
+.control-meta-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #475569;
 }
 
-.cache-pill {
-  font-size: 0.68rem;
-  font-weight: 600;
-  background: #e2e8f0;
-  color: #334155;
-  padding: 2px 7px;
+.control-meta-pill svg {
+  color: var(--primary, #161057);
+}
+
+.cache-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #FAF9F5;
+  border: 1px solid var(--primary, #161057);
+  color: var(--primary, #161057);
+  padding: 2px 8px;
   border-radius: 6px;
 }
 
-.btn-refresh {
+.btn-refresh-engine {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: #0f172a;
-  color: #ffffff;
-  border: none;
-  font-size: 0.84rem;
-  font-weight: 600;
-  padding: 9px 18px;
+  gap: 6px;
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
   border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.2);
 }
 
-.btn-refresh:hover:not(:disabled) {
-  background: #1e293b;
+.btn-refresh-engine:hover:not(:disabled) {
+  background: var(--primary-hover, #0F0A42);
   transform: translateY(-1px);
+  box-shadow: 3px 3px 0px rgba(22, 16, 87, 0.25);
 }
 
-.btn-refresh:disabled {
-  opacity: 0.7;
+.btn-refresh-engine:disabled {
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
-.refresh-icon.spinning {
+.refresh-spinner.spinning {
   animation: spin 0.8s linear infinite;
 }
 
@@ -637,389 +665,412 @@ onUnmounted(() => {
   100% { transform: rotate(360deg); }
 }
 
-/* Alert Banner */
-.alert-banner {
+/* Error Banner */
+.alert-banner-error {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 14px 18px;
-  border-radius: 10px;
-  margin-bottom: 24px;
+  background: #FFF5F5;
+  border: 1.5px solid #E53E3E;
+  color: #C53030;
+  padding: 14px 20px;
+  border-radius: 12px;
+  box-shadow: 2px 2px 0px rgba(229, 62, 62, 0.15);
 }
 
-.alert-error {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.alert-content {
+.alert-text {
   flex: 1;
   font-size: 0.88rem;
 }
 
-.btn-retry {
-  background: #991b1b;
+.btn-retry-engine {
+  background: #C53030;
   color: #fff;
   border: none;
+  font-weight: 700;
+  font-size: 0.8rem;
   padding: 6px 14px;
   border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
   cursor: pointer;
 }
 
-/* Pending Hero Banner */
-.pending-hero-card {
+/* ==========================================================================
+   CARDS & SECTION CONTAINERS (Exact NIWI Card Aesthetic)
+   ========================================================================== */
+.card {
+  background: #FFFFFF;
+  border: 1.5px solid var(--primary, #161057);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0px rgba(22, 16, 87, 0.12);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 4px 4px 0px rgba(22, 16, 87, 0.18);
+}
+
+/* Results header bar (Shared with Overview.vue) */
+.results-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.results-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-title {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--primary, #161057);
+  margin: 0;
+}
+
+.results-count-pill {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #FAF9F5;
+  border: 1.5px solid var(--primary, #161057);
+  color: var(--primary, #161057);
+  padding: 3px 10px;
+  border-radius: 9999px;
+  box-shadow: 1px 1px 0px rgba(22, 16, 87, 0.1);
+}
+
+/* 1. PENDING HERO CARD */
+.hero-pending-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 24px 28px;
-  border-radius: 14px;
   margin-bottom: 28px;
-  transition: all 0.2s ease;
   flex-wrap: wrap;
   gap: 20px;
 }
 
-.pending-hero-card.has-pending {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  border: 1.5px solid #fde68a;
-  box-shadow: 0 4px 14px rgba(217, 119, 6, 0.08);
+.hero-pending-card.pending-alert {
+  background: #FFFDF7;
+  border-color: #D97706;
+  box-shadow: 3px 3px 0px rgba(217, 119, 6, 0.2);
 }
 
-.pending-hero-card.has-pending .hero-icon-wrap {
-  background: #f59e0b;
-  color: #ffffff;
+.hero-pending-card.pending-alert .hpc-icon-box {
+  background: #D97706;
+  color: #FFFFFF;
 }
 
-.pending-hero-card.queue-clear {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 1.5px solid #bbf7d0;
-  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.06);
+.hero-pending-card.pending-clear {
+  background: #F8FCF9;
+  border-color: #15803D;
+  box-shadow: 3px 3px 0px rgba(21, 128, 61, 0.15);
 }
 
-.pending-hero-card.queue-clear .hero-icon-wrap {
-  background: #10b981;
-  color: #ffffff;
+.hero-pending-card.pending-clear .hpc-icon-box {
+  background: #15803D;
+  color: #FFFFFF;
 }
 
-.hero-left {
+.hpc-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 22px;
 }
 
-.hero-icon-wrap {
-  width: 58px;
-  height: 58px;
-  border-radius: 14px;
+.hpc-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  border: 1.5px solid var(--primary, #161057);
 }
 
-.hero-tag {
+.hpc-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.hpc-kicker {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary, #161057);
+}
+
+.hpc-wait-pill {
   font-size: 0.72rem;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #92400e;
+  background: #FEF3C7;
+  color: #B45309;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #FDE68A;
 }
 
-.pending-hero-card.queue-clear .hero-tag {
-  color: #065f46;
-}
-
-.hero-count-row {
+.hpc-count-row {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  margin: 3px 0 4px;
+  margin-bottom: 6px;
 }
 
-.hero-big-num {
-  font-size: 2.4rem;
-  font-weight: 900;
+.hpc-big-val {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 2.5rem;
+  font-weight: 800;
   line-height: 1;
-  color: #0f172a;
+  color: var(--primary, #161057);
 }
 
-.hero-label {
-  font-size: 1.05rem;
+.hpc-count-label {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #1e293b;
-}
-
-.hero-desc {
-  font-size: 0.85rem;
-  color: #475569;
+  color: var(--primary, #161057);
   margin: 0;
-  line-height: 1.4;
 }
 
-.hero-desc code {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 2px 6px;
+.hpc-explanation {
+  font-size: 0.85rem;
+  color: #64748B;
+  margin: 0;
+  max-width: 620px;
+  line-height: 1.45;
+}
+
+.hpc-explanation code {
+  background: #FAF9F5;
+  border: 1px solid #e2ddd4;
+  padding: 1px 5px;
   border-radius: 4px;
   font-size: 0.82rem;
+  color: var(--primary, #161057);
 }
 
-.hero-right {
+.hpc-right {
   display: flex;
-  gap: 12px;
+  gap: 14px;
 }
 
-.hero-stat-pill {
-  background: #ffffff;
-  padding: 10px 18px;
+.hpc-stat-box {
+  background: #FAF9F5;
+  border: 1.5px solid var(--primary, #161057);
   border-radius: 10px;
+  padding: 10px 18px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.08);
 }
 
-.pill-label {
-  font-size: 0.72rem;
-  color: #64748b;
-  font-weight: 600;
+.hpc-stat-label {
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
+  color: #64748B;
 }
 
-.pill-val {
-  font-size: 1.25rem;
+.hpc-stat-val {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.35rem;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--primary, #161057);
 }
 
-/* Sections */
-.section-block {
+/* Metric Tiles Grid */
+.engine-section {
   margin-bottom: 32px;
 }
 
-.section-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 16px;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-}
-
-.section-subtitle {
-  font-size: 0.86rem;
-  color: #64748b;
-  margin: 0;
-}
-
-/* Metrics Grid */
-.metrics-grid {
+.metric-tiles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 16px;
 }
 
-.metric-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px 22px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+.metric-tile {
+  padding: 20px;
 }
 
-.metric-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
-}
-
-.metric-header {
+.mt-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 
-.metric-title {
+.mt-title {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  color: var(--primary, #161057);
 }
 
-.metric-badge {
+.pill-badge {
   font-size: 0.68rem;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 6px;
   text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
 }
 
-.badge-amber { background: #fef3c7; color: #b45309; }
-.badge-blue { background: #e0f2fe; color: #0369a1; }
-.badge-green { background: #dcfce7; color: #15803d; }
-.badge-red { background: #fee2e2; color: #b91c1c; }
-.badge-slate { background: #f1f5f9; color: #64748b; }
+.pill-amber { background: #FEF3C7; color: #B45309; }
+.pill-blue { background: #E0F2FE; color: #0369A1; }
+.pill-green { background: #DCFCE7; color: #15803D; }
+.pill-red { background: #FEE2E2; color: #B91C1C; }
+.pill-slate { background: #F1F5F9; color: #64748B; }
 
-.metric-value {
-  font-size: 2.1rem;
+.mt-value {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 2.2rem;
   font-weight: 800;
   line-height: 1.1;
   margin-bottom: 6px;
 }
 
-.text-amber { color: #d97706; }
-.text-blue { color: #0284c7; }
-.text-green { color: #16a34a; }
-.text-red { color: #dc2626; }
+.text-amber { color: #D97706; }
+.text-blue { color: #0284C7; }
+.text-green { color: #15803D; }
+.text-red { color: #DC2626; }
 .text-slate { color: #475569; }
 
-.metric-subtext {
+.mt-subtext {
   font-size: 0.78rem;
-  color: #94a3b8;
+  color: #64748B;
 }
 
-/* Analytics KPIs */
-.analytics-kpi-grid {
+/* KPI Cards */
+.kpi-cards-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .kpi-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
   padding: 20px;
 }
 
-.kpi-icon-row {
+.kpi-top {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-bottom: 12px;
 }
 
-.kpi-icon {
+.kpi-icon-pill {
   width: 32px;
   height: 32px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 1.5px solid var(--primary, #161057);
 }
 
-.icon-emerald { background: #d1fae5; color: #059669; }
-.icon-blue { background: #e0f2fe; color: #0284c7; }
-.icon-amber { background: #fef3c7; color: #d97706; }
+.icon-pill-emerald { background: #DCFCE7; color: #15803D; }
+.icon-pill-blue { background: #E0F2FE; color: #0284C7; }
+.icon-pill-amber { background: #FEF3C7; color: #D97706; }
 
-.kpi-label {
+.kpi-card-label {
   font-size: 0.82rem;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 700;
+  color: var(--primary, #161057);
 }
 
-.kpi-value-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+.kpi-main-val {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: var(--primary, #161057);
   margin-bottom: 8px;
 }
 
-.kpi-value {
-  font-size: 1.7rem;
-  font-weight: 800;
-  color: #0f172a;
-}
-
-.kpi-rate-bar-wrap {
-  flex: 1;
+.kpi-bar-track {
+  width: 100%;
   height: 8px;
-  background: #fee2e2;
+  background: #FEE2E2;
+  border: 1px solid var(--primary, #161057);
   border-radius: 4px;
   overflow: hidden;
+  margin-bottom: 8px;
 }
 
-.kpi-rate-bar {
-  display: block;
+.kpi-bar-fill {
   height: 100%;
-  background: #10b981;
-  border-radius: 4px;
+  background: #15803D;
   transition: width 0.3s ease;
 }
 
-.kpi-subtext {
+.kpi-footer-note {
   font-size: 0.78rem;
-  color: #64748b;
+  color: #64748B;
 }
 
-/* Tab Pills */
-.tab-pill-group {
+/* View Switchers (Matches Overview.vue view-toggle-group) */
+.view-toggle-group {
   display: inline-flex;
-  background: #f1f5f9;
-  padding: 3px;
+  border: 1.5px solid var(--primary, #161057);
   border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 2px 2px 0px rgba(22, 16, 87, 0.1);
 }
 
-.tab-pill {
+.view-btn {
+  background: #FAF9F5;
   border: none;
-  background: transparent;
-  color: #64748b;
-  font-size: 0.78rem;
-  font-weight: 600;
+  color: var(--primary, #161057);
   padding: 6px 14px;
-  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-.tab-pill.active {
-  background: #ffffff;
-  color: #0f172a;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+.view-btn.active {
+  background: var(--primary, #161057);
+  color: #FFFFFF;
 }
 
-/* Throughput Chart */
-.chart-container-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 22px;
+/* Chart Container */
+.chart-card {
+  padding: 24px;
 }
 
-.chart-header {
+.chart-top-bar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 24px;
 }
 
-.chart-title {
-  font-size: 0.95rem;
+.chart-heading {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--primary, #161057);
+  margin: 0 0 4px 0;
+}
+
+.chart-sub {
+  font-size: 0.84rem;
+  color: #64748B;
   margin: 0;
 }
 
-.chart-badge {
-  font-size: 0.72rem;
-  background: #f1f5f9;
-  color: #475569;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.chart-bars-wrap {
+.chart-histogram {
   display: flex;
   align-items: flex-end;
   height: 180px;
@@ -1028,7 +1079,7 @@ onUnmounted(() => {
   padding-bottom: 8px;
 }
 
-.bar-column {
+.hist-col {
   flex: 1;
   min-width: 32px;
   display: flex;
@@ -1037,130 +1088,132 @@ onUnmounted(() => {
   height: 100%;
 }
 
-.bar-fill-track {
+.hist-track {
   width: 100%;
   max-width: 28px;
   height: 150px;
   display: flex;
   align-items: flex-end;
-  background: #f8fafc;
+  background: #FAF9F5;
   border-radius: 6px 6px 0 0;
+  border: 1px solid #e2ddd4;
 }
 
-.bar-fill {
+.hist-bar {
   width: 100%;
-  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-  border-radius: 6px 6px 0 0;
+  background: var(--primary, #161057);
+  border-radius: 4px 4px 0 0;
   position: relative;
   transition: height 0.3s ease;
 }
 
-.bar-fill:hover {
-  background: linear-gradient(180deg, #0ea5e9 0%, #0369a1 100%);
+.hist-bar:hover {
+  background: #2b237c;
 }
 
-.bar-tooltip {
+.hist-tip {
   display: none;
   position: absolute;
   top: -26px;
   left: 50%;
   transform: translateX(-50%);
-  background: #0f172a;
-  color: #ffffff;
-  font-size: 0.68rem;
+  background: var(--primary, #161057);
+  color: #FFFFFF;
+  font-size: 0.7rem;
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 4px;
   white-space: nowrap;
 }
 
-.bar-fill:hover .bar-tooltip {
+.hist-bar:hover .hist-tip {
   display: block;
 }
 
-.bar-x-label {
+.hist-label {
   font-size: 0.68rem;
-  color: #64748b;
+  color: #64748B;
   margin-top: 8px;
   text-align: center;
   white-space: nowrap;
+  font-weight: 600;
 }
 
-.chart-empty-state {
+.chart-empty {
   text-align: center;
   color: #94a3b8;
   padding: 40px 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
 }
 
-/* Worker Fleet Summary */
-.fleet-summary-strip {
+/* Fleet Strip */
+.fleet-badges-strip {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.fleet-pill {
+.fleet-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.78rem;
-  padding: 5px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
   border-radius: 9999px;
-  border: 1px solid #e2e8f0;
-  background: #ffffff;
+  border: 1.5px solid var(--primary, #161057);
+  background: #FAF9F5;
 }
 
-.fp-dot {
+.ft-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #94a3b8;
 }
 
-.dot-active { background: #10b981; }
-.dot-idle { background: #0284c7; }
-.dot-offline { background: #ef4444; }
+.ft-green { background: #15803D; }
+.ft-blue { background: #0284C7; }
+.ft-red { background: #DC2626; }
 
-/* Worker Table */
-.table-card {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+/* Table Styling (Matches Overview.vue & Organisations.vue) */
+.table-card-wrap {
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
-.worker-table {
+.engine-table {
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.84rem;
+  font-size: 0.85rem;
 }
 
-.worker-table th {
-  background: #f8fafc;
-  color: #475569;
-  font-weight: 600;
+.engine-table th {
+  background: #F8F7F4;
+  color: var(--primary, #161057);
+  font-weight: 700;
   padding: 12px 18px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1.5px solid var(--primary, #161057);
   font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
-.worker-table td {
+.engine-table td {
   padding: 14px 18px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
+  border-bottom: 1px solid #e2ddd4;
+  color: var(--primary, #161057);
   vertical-align: middle;
 }
 
-.worker-table tr:last-child td {
+.engine-table tr:hover td {
+  background: #FAF9F5;
+}
+
+.engine-table tr:last-child td {
   border-bottom: none;
 }
 
-.status-tag {
+.worker-state-pill {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1168,113 +1221,105 @@ onUnmounted(() => {
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 9999px;
+  border: 1px solid currentColor;
 }
 
-.tag-active {
-  background: #dcfce7;
-  color: #15803d;
-}
+.state-active { background: #DCFCE7; color: #15803D; }
+.state-idle { background: #E0F2FE; color: #0369A1; }
+.state-offline { background: #FEE2E2; color: #B91C1C; }
 
-.tag-idle {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.tag-offline {
-  background: #fee2e2;
-  color: #b91c1c;
-}
-
-.tag-dot {
+.state-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: currentColor;
 }
 
-.worker-id-code {
+.worker-code {
   font-family: monospace;
   font-size: 0.82rem;
-  color: #0f172a;
+  font-weight: 700;
+  color: var(--primary, #161057);
 }
 
-.worker-type-badge {
+.worker-type-pill {
   font-size: 0.72rem;
   font-weight: 600;
-  background: #f1f5f9;
+  background: #FAF9F5;
+  border: 1px solid #e2ddd4;
   color: #475569;
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: 6px;
 }
 
-.worker-task-text {
+.worker-task-desc {
   max-width: 240px;
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #334155;
+  color: #475569;
 }
 
-.worker-jobs-num {
+.jobs-num {
+  font-weight: 800;
+  color: var(--primary, #161057);
+}
+
+.hb-indicator {
+  font-size: 0.78rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #15803D;
 }
 
-.heartbeat-badge {
+.hb-indicator.hb-delayed {
+  color: #DC2626;
+}
+
+.date-text {
   font-size: 0.75rem;
-  color: #059669;
-  font-weight: 600;
+  color: #64748B;
 }
 
-.heartbeat-badge.hb-stale {
-  color: #dc2626;
-}
-
-.worker-date-col {
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.workers-empty-box {
+.engine-empty-table {
   padding: 48px 24px;
   text-align: center;
-  color: #64748b;
+  color: #64748B;
 }
 
-.workers-empty-box svg {
+.engine-empty-table svg {
+  color: var(--primary, #161057);
   margin-bottom: 12px;
-  stroke: #94a3b8;
 }
 
-.workers-empty-box h3 {
-  font-size: 1.05rem;
+.engine-empty-table h3 {
+  font-family: var(--font-heading, 'Fraunces', serif);
+  font-size: 1.15rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--primary, #161057);
   margin: 0 0 6px 0;
 }
 
-.workers-empty-box p {
-  font-size: 0.84rem;
+.engine-empty-table p {
+  font-size: 0.85rem;
   max-width: 520px;
   margin: 0 auto;
   line-height: 1.5;
 }
 
-/* Loading Wrap */
-.initial-loading-wrap {
-  text-align: center;
-  padding: 80px 20px;
-  color: #64748b;
+/* Skeleton Loading (matches Overview.vue skeleton) */
+.engine-loading-skeleton {
+  padding: 20px 0;
 }
 
-.loading-spinner {
-  width: 38px;
-  height: 38px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #0284c7;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto 16px;
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #ece9e6 25%, #f7f6f4 50%, #ece9e6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 </style>

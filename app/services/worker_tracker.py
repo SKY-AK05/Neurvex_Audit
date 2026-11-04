@@ -88,3 +88,4 @@ class WorkerTracker:
                         )
         except Exception as e:
             logger.debug("Failed to set worker offline: %s", e)
+

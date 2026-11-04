@@ -70,7 +70,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div v-if="isSuperAdmin" class="card">
         <div class="card-header-flex">
           <div>
             <h2>Security &amp; Traffic Management</h2>
@@ -468,11 +468,13 @@ onMounted(async () => {
     loading.value = false;
   }
 
-  try {
-    const rlRes = await getRateLimitSettings();
-    applyRateLimitResponse(rlRes);
-  } catch (e) {
-    console.warn("Could not load rate limit settings:", e);
+  if (isSuperAdmin.value) {
+    try {
+      const rlRes = await getRateLimitSettings();
+      applyRateLimitResponse(rlRes);
+    } catch (e) {
+      console.warn("Could not load rate limit settings:", e);
+    }
   }
   
   window.addEventListener("settings-updated", syncFromApp);

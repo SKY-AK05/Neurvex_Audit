@@ -1479,7 +1479,7 @@ async def toggle_notifications(request: Request):
 @router.get("/manage/settings/rate-limits")
 @router.get("/settings/rate-limits")
 async def get_rate_limits_route(request: Request):
-    require_admin(request)
+    require_super_admin(request)
     try:
         return get_rate_limit_config_response()
     except Exception as e:
@@ -1490,7 +1490,7 @@ async def get_rate_limits_route(request: Request):
 @router.put("/manage/settings/rate-limits")
 @router.put("/settings/rate-limits")
 async def update_rate_limits_route(request: Request):
-    user = require_admin(request)
+    user = require_super_admin(request)
     admin_email = user.get("email") or getattr(request.state, "admin_email", "admin")
     client_ip = get_client_ip(request)
 
@@ -1515,7 +1515,7 @@ async def update_rate_limits_route(request: Request):
 @router.post("/manage/settings/rate-limits/reset")
 @router.post("/settings/rate-limits/reset")
 async def reset_rate_limits_route(request: Request):
-    user = require_admin(request)
+    user = require_super_admin(request)
     admin_email = user.get("email") or getattr(request.state, "admin_email", "admin")
     client_ip = get_client_ip(request)
 

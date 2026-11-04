@@ -141,7 +141,7 @@ def test_super_admin_route_access_control():
     assert res1.status_code == 401
 
     # 2. Normal Admin role="admin" -> 403 Forbidden
-    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@example.com", "role": "admin"}):
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "admin"}):
         res2 = client.get("/api/admin/dashboard", headers={"Authorization": "Bearer mock-token"})
         assert res2.status_code == 403
         assert "Super administrator privileges required" in res2.json()["detail"]
@@ -153,8 +153,36 @@ def test_super_admin_route_access_control():
         "analytics": {"success_rate": 99.0},
         "worker_progress": {"total_workers": 2}
     }
-    with patch("app.core.authorization.get_user_from_request", return_value={"email": "super@example.com", "role": "super"}), \
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "super"}), \
          patch("app.services.dashboard_service.get_dashboard_snapshot", return_value=mock_snapshot):
         res3 = client.get("/api/admin/dashboard", headers={"Authorization": "Bearer mock-token"})
         assert res3.status_code == 200
         assert res3.json()["request_overview"]["pending"] == 5
+
+
+def test_rate_limits_endpoint_strictly_requires_super_admin():
+    """Verify rate limit GET and PUT endpoints strictly reject normal admin and require super admin."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    # 1. Unauthenticated -> 401
+    res1 = client.get("/api/manage/settings/rate-limits")
+    assert res1.status_code == 401
+
+    # 2. Normal Admin (role="admin") -> 403 Forbidden
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "admin"}):
+        res2 = client.get("/api/manage/settings/rate-limits", headers={"Authorization": "Bearer local_bypass:admin@test.com"})
+        assert res2.status_code == 403
+        assert "Super administrator privileges required" in res2.json()["detail"]
+
+        res2_put = client.put("/api/manage/settings/rate-limits", json={"submit_rate_limit_hour": 100}, headers={"Authorization": "Bearer local_bypass:admin@test.com"})
+        assert res2_put.status_code == 403
+
+    # 3. Super Admin (role="super") -> 200 OK
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "super"}), \
+         patch("app.api.routes.get_rate_limit_config_response", return_value={"sync_status": "SYNCHRONIZED"}):
+        res3 = client.get("/api/manage/settings/rate-limits", headers={"Authorization": "Bearer local_bypass:admin@test.com"})
+        assert res3.status_code == 200
+        assert res3.json()["sync_status"] == "SYNCHRONIZED"

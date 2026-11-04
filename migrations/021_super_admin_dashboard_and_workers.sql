@@ -29,3 +29,4 @@ ALTER TABLE raw_submissions ADD COLUMN IF NOT EXISTS worker_id VARCHAR(128);
 CREATE INDEX IF NOT EXISTS idx_raw_submissions_status ON raw_submissions(status);
 CREATE INDEX IF NOT EXISTS idx_raw_submissions_created_at ON raw_submissions(created_at);
 CREATE INDEX IF NOT EXISTS idx_raw_submissions_worker_id ON raw_submissions(worker_id);
+
