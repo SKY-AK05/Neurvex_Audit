@@ -374,8 +374,14 @@
           <div class="unified-card">
             <div v-if="currentStep !== 3" class="step-card-head">
               <div class="step-head-meta">
-                <div v-if="currentStep === 2" class="step-tag">Getting Started</div>
-                <div v-else class="step-tag">Section {{ currentStep - 3 }} of {{ visibleSections.length }}</div>
+                <div v-if="currentStep === 2" class="step-tag tag-purple">
+                  <span class="step-tag-dot"></span>
+                  GETTING STARTED • STEP 01
+                </div>
+                <div v-else class="step-tag tag-teal">
+                  <span class="step-tag-dot"></span>
+                  DIMENSION {{ currentStep - 3 }} OF {{ visibleSections.length }}
+                </div>
               </div>
               <div class="step-head-row">
                 <h1 class="h1-navy" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentSection?.title || '') }}</h1>
@@ -5523,6 +5529,401 @@ html {
 .page-fade-leave-from {
   opacity: 1;
   transform: translateY(0);
+}
+
+
+/* ==========================================================================
+   WHY THIS MATTERS VIBE EXTENSION FOR AUDIT FORM PAGES
+   Harmonizes colors, cards, pills, options, and typography
+   ========================================================================== */
+
+/* Unified Container & Card */
+.unified-page {
+  background: var(--bg, #FAFAF8) !important;
+}
+
+.unified-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem clamp(1rem, 3.5vw, 3rem) max(5rem, calc(env(safe-area-inset-bottom, 24px) + 3.5rem)) !important;
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.unified-card {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(22, 16, 87, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(22, 16, 87, 0.04) !important;
+  overflow: hidden !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Step Card Header */
+.step-card-head {
+  padding: 1.75rem 2.25rem 1.25rem !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid rgba(22, 16, 87, 0.08) !important;
+  margin-bottom: 0 !important;
+}
+
+.step-tag {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 99px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 0.65rem !important;
+  font-family: var(--font-body) !important;
+}
+
+.step-tag.tag-purple {
+  background: #EDE9FE !important;
+  color: #6D28D9 !important;
+  border: 1.5px solid #C4B5FD !important;
+}
+
+.step-tag.tag-teal {
+  background: #CCFBF1 !important;
+  color: #0F766E !important;
+  border: 1.5px solid #5EEAD4 !important;
+}
+
+.step-tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.75;
+}
+
+.h1-navy {
+  font-family: 'Fraunces', serif !important;
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  color: #161057 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  margin: 0 0 0.4rem 0 !important;
+}
+
+.step-sub {
+  color: #64748B !important;
+  font-size: 0.88rem !important;
+  line-height: 1.55 !important;
+  margin: 0 !important;
+}
+
+.step-sub-inline {
+  color: #64748B !important;
+  font-size: 0.84rem !important;
+}
+
+/* Content Area inside Card */
+.questions-scroll {
+  padding: 1.75rem 2.25rem 2rem !important;
+  background: #FFFFFF !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 768px) {
+  .step-card-head {
+    padding: 1.25rem 1.25rem 1rem !important;
+  }
+  .questions-scroll {
+    padding: 1.25rem 1.25rem 1.5rem !important;
+  }
+}
+
+/* Demographics Section Cards (Step 2) */
+.demographics-form {
+  gap: 1.5rem !important;
+}
+
+.section-card {
+  background: #FAF9F6 !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.02) !important;
+  overflow: hidden !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.section-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.85rem !important;
+  padding: 1rem 1.5rem !important;
+  background: #FFFFFF !important;
+  border-bottom: 1px solid rgba(22, 16, 87, 0.08) !important;
+}
+
+.section-number {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-family: 'Fraunces', serif !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  background: #EDE9FE !important;
+  color: #6D28D9 !important;
+  border: 1.5px solid #C4B5FD !important;
+  flex-shrink: 0 !important;
+}
+
+.section-card:nth-of-type(2) .section-number {
+  background: #CCFBF1 !important;
+  color: #0F766E !important;
+  border-color: #5EEAD4 !important;
+}
+
+.section-title {
+  font-family: 'Fraunces', serif !important;
+  font-weight: 700 !important;
+  font-size: 1.15rem !important;
+  color: #161057 !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.field-label {
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  color: #161057 !important;
+  margin-bottom: 0.4rem !important;
+}
+
+.field-input {
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.92rem !important;
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+  transition: all 0.2s ease !important;
+}
+
+.field-input:focus {
+  border-color: #04907C !important;
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.14) !important;
+  outline: none !important;
+}
+
+/* Radio Option Cards in Demographics */
+.radio-option {
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  padding: 0.8rem 1.1rem !important;
+  background: #FFFFFF !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.radio-option:hover {
+  border-color: #5EEAD4 !important;
+  background: #F0FDFA !important;
+}
+
+.radio-option.radio-selected {
+  border-color: #161057 !important;
+  background: #FAF8FF !important;
+  color: #161057 !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.06) !important;
+}
+
+/* Question Blocks (Step 4+) */
+.q-block {
+  background: #FAFAF8 !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 1.4rem 1.65rem !important;
+  margin-bottom: 1.25rem !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 2px 6px rgba(22, 16, 87, 0.02) !important;
+}
+
+.q-block:hover {
+  border-color: rgba(22, 16, 87, 0.18) !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 5px 16px rgba(22, 16, 87, 0.05) !important;
+}
+
+.q-header-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  margin-bottom: 0.65rem !important;
+}
+
+.q-number {
+  background: #EDE9FE !important;
+  color: #6D28D9 !important;
+  border: 1.5px solid #C4B5FD !important;
+  font-family: 'Fraunces', serif !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+  padding: 0.22rem 0.65rem !important;
+  border-radius: 99px !important;
+  letter-spacing: 0.04em !important;
+}
+
+.q-short {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  color: #64748B !important;
+  font-family: var(--font-body) !important;
+}
+
+.q-text {
+  font-size: 0.96rem !important;
+  font-weight: 500 !important;
+  color: #1E293B !important;
+  line-height: 1.55 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Likert Option Buttons */
+.options {
+  display: flex !important;
+  gap: 0.65rem !important;
+  flex-wrap: wrap !important;
+}
+
+.opt-btn {
+  border: 1.5px solid #E2E8F0 !important;
+  border-radius: 10px !important;
+  padding: 0.65rem 1.25rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  color: #1E293B !important;
+  background: #FFFFFF !important;
+  min-height: 44px !important;
+  transition: all 0.18s ease !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+.opt-btn:hover {
+  border-color: #04907C !important;
+  background: #F0FDFA !important;
+  color: #0F766E !important;
+  transform: translateY(-1px) !important;
+}
+
+.opt-btn.selected {
+  background: #161057 !important;
+  border-color: #161057 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Gating Question Callout Block */
+.gating-block {
+  background: #FFFDF5 !important;
+  border: 1.5px solid #FDE68A !important;
+  border-radius: 14px !important;
+  padding: 1.4rem 1.65rem !important;
+}
+
+.gating-eligibility-label {
+  display: inline-block !important;
+  font-size: 0.6875rem !important;
+  font-weight: 700 !important;
+  padding: 0.22rem 0.65rem !important;
+  border-radius: 99px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  background: #FEF3C7 !important;
+  color: #B45309 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Bottom Navigation Bar */
+.inline-nav-bar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 1.5rem !important;
+  margin-top: 1.5rem !important;
+  border-top: 1px solid rgba(22, 16, 87, 0.08) !important;
+  gap: 1rem !important;
+}
+
+.btn-next-compact {
+  background: #161057 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 2rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 12px rgba(22, 16, 87, 0.18) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.btn-next-compact:hover {
+  background: #241B7A !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(22, 16, 87, 0.25) !important;
+}
+
+.btn-back-compact {
+  background: #F8FAFC !important;
+  border: 1.5px solid #E2E8F0 !important;
+  color: #475569 !important;
+  border-radius: 10px !important;
+  padding: 0.75rem 1.4rem !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.btn-back-compact:hover {
+  border-color: #94A3B8 !important;
+  background: #F1F5F9 !important;
+  color: #1E293B !important;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #04907C 0%, #037A69 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 10px !important;
+  padding: 0.85rem 2.4rem !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  box-shadow: 0 4px 16px rgba(4, 144, 124, 0.3) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.btn-submit:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
 }
 
 </style>

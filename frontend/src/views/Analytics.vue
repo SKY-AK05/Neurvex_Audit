@@ -990,7 +990,7 @@ onBeforeUnmount(() => {
 }
 
 .hero-content {
-  max-width: 1360px;
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -1121,12 +1121,14 @@ onBeforeUnmount(() => {
 
 /* Layout */
 .analytics-content-layout {
-  max-width: 1360px;
+  max-width: 1600px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 32px;
+  padding: 0 clamp(16px, 2.5vw, 40px);
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
 }
 
 /* Loading & Empty Cards */
@@ -1157,8 +1159,18 @@ onBeforeUnmount(() => {
 /* KPI Grid */
 .metrics-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 1100px) {
+  .metrics-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 600px) {
+  .metrics-kpi-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .kpi-card {
@@ -1255,8 +1267,13 @@ onBeforeUnmount(() => {
 /* Chart Cards */
 .charts-row-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(480px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
+}
+@media (max-width: 960px) {
+  .charts-row-2 {
+    grid-template-columns: 1fr;
+  }
 }
 
 .chart-card, .chart-card-full, .ranking-card, .segment-breakdown-card {
