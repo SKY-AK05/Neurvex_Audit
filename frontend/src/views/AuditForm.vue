@@ -5532,42 +5532,54 @@ html {
 }
 
 
+
 /* ==========================================================================
-   WHY THIS MATTERS VIBE EXTENSION FOR AUDIT FORM PAGES
-   Harmonizes colors, cards, pills, options, and typography
+   WHY THIS MATTERS VIBE EXTENSION FOR AUDIT FORM PAGES (RESPONSIVE & POLISHED)
    ========================================================================== */
 
-/* Unified Container & Card */
+/* Unified Container & Page */
 .unified-page {
   background: var(--bg, #FAFAF8) !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .unified-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 1.25rem clamp(1rem, 3.5vw, 3rem) max(5rem, calc(env(safe-area-inset-bottom, 24px) + 3.5rem)) !important;
-  max-width: 1200px !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 1.25rem clamp(16px, 3.5vw, 48px) 3rem !important;
+  max-width: 1440px !important;
   margin: 0 auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  gap: 1.25rem !important;
 }
 
+/* Card Container (Clean flow like Why This Matters) */
 .unified-card {
-  background: #FFFFFF !important;
-  border: 1px solid rgba(22, 16, 87, 0.08) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 20px rgba(22, 16, 87, 0.04) !important;
-  overflow: hidden !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
   width: 100% !important;
-  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
 }
 
-/* Step Card Header */
+/* Step Card Header: Independent Crisp White Card */
 .step-card-head {
-  padding: 1.75rem 2.25rem 1.25rem !important;
+  padding: 1.75rem clamp(1.25rem, 3vw, 2.5rem) 1.5rem !important;
   background: #FFFFFF !important;
-  border-bottom: 1px solid rgba(22, 16, 87, 0.08) !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
   margin-bottom: 0 !important;
 }
 
@@ -5627,41 +5639,39 @@ html {
   font-size: 0.84rem !important;
 }
 
-/* Content Area inside Card */
+/* Questions Scroll Area: Clean Flow Without Awkward Insets */
 .questions-scroll {
-  padding: 1.75rem 2.25rem 2rem !important;
-  background: #FFFFFF !important;
+  padding: 0 !important;
+  background: transparent !important;
   overflow: visible !important;
-}
-
-@media (max-width: 768px) {
-  .step-card-head {
-    padding: 1.25rem 1.25rem 1rem !important;
-  }
-  .questions-scroll {
-    padding: 1.25rem 1.25rem 1.5rem !important;
-  }
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
 }
 
 /* Demographics Section Cards (Step 2) */
 .demographics-form {
-  gap: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+  width: 100% !important;
+  padding-bottom: 0 !important;
 }
 
 .section-card {
-  background: #FAF9F6 !important;
+  background: #FFFFFF !important;
   border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
-  border-radius: 14px !important;
-  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.02) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
   overflow: hidden !important;
-  margin-bottom: 1.25rem !important;
+  margin-bottom: 0 !important;
 }
 
 .section-header {
   display: flex !important;
   align-items: center !important;
   gap: 0.85rem !important;
-  padding: 1rem 1.5rem !important;
+  padding: 1.15rem 1.75rem !important;
   background: #FFFFFF !important;
   border-bottom: 1px solid rgba(22, 16, 87, 0.08) !important;
 }
@@ -5697,6 +5707,11 @@ html {
   letter-spacing: -0.01em !important;
 }
 
+.fields-grid {
+  padding: 1.5rem 1.75rem 1.75rem !important;
+  gap: 1.25rem !important;
+}
+
 .field-label {
   font-size: 0.85rem !important;
   font-weight: 700 !important;
@@ -5721,10 +5736,14 @@ html {
 }
 
 /* Radio Option Cards in Demographics */
+.radio-grid {
+  gap: 0.85rem !important;
+}
+
 .radio-option {
   border: 1.5px solid #E2E8F0 !important;
   border-radius: 12px !important;
-  padding: 0.8rem 1.1rem !important;
+  padding: 0.85rem 1.15rem !important;
   background: #FFFFFF !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
@@ -5747,20 +5766,25 @@ html {
 }
 
 /* Question Blocks (Step 4+) */
+.questions-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.25rem !important;
+}
+
 .q-block {
-  background: #FAFAF8 !important;
+  background: #FFFFFF !important;
   border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
-  border-radius: 14px !important;
-  padding: 1.4rem 1.65rem !important;
-  margin-bottom: 1.25rem !important;
+  border-radius: 16px !important;
+  padding: 1.5rem clamp(1.25rem, 3vw, 2.25rem) !important;
+  margin-bottom: 0 !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 2px 6px rgba(22, 16, 87, 0.02) !important;
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.03) !important;
 }
 
 .q-block:hover {
   border-color: rgba(22, 16, 87, 0.18) !important;
-  background: #FFFFFF !important;
-  box-shadow: 0 5px 16px rgba(22, 16, 87, 0.05) !important;
+  box-shadow: 0 5px 16px rgba(22, 16, 87, 0.06) !important;
 }
 
 .q-header-row {
@@ -5843,8 +5867,8 @@ html {
 .gating-block {
   background: #FFFDF5 !important;
   border: 1.5px solid #FDE68A !important;
-  border-radius: 14px !important;
-  padding: 1.4rem 1.65rem !important;
+  border-radius: 16px !important;
+  padding: 1.5rem clamp(1.25rem, 3vw, 2.25rem) !important;
 }
 
 .gating-eligibility-label {
@@ -5860,14 +5884,18 @@ html {
   margin-bottom: 0.5rem !important;
 }
 
-/* Bottom Navigation Bar */
+/* Bottom Navigation Bar Card */
 .inline-nav-bar {
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
-  padding-top: 1.5rem !important;
-  margin-top: 1.5rem !important;
-  border-top: 1px solid rgba(22, 16, 87, 0.08) !important;
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
+  padding: 1.1rem 1.75rem !important;
+  margin-top: 0.5rem !important;
+  border-top: none !important;
   gap: 1rem !important;
 }
 
@@ -5926,8 +5954,6 @@ html {
   box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
 }
 
-</style>
-
 
 /* =========================================================
    METHOD A — ORGANISATION TEXT INPUT VALIDATION
@@ -5979,3 +6005,5 @@ html {
   0% { transform: translateY(-50%) rotate(0deg); }
   100% { transform: translateY(-50%) rotate(360deg); }
 }
+
+</style>
