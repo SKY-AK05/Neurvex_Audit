@@ -102,10 +102,29 @@
 
     <!-- Main Content Area -->
     <div class="analytics-content-layout">
-      <!-- Loading State -->
-      <div v-if="loading" class="analytics-loading-card">
-        <div class="spinner"></div>
-        <span>Calculating portfolio analytics and cross-pillar benchmarks…</span>
+      <!-- Loading State: Progressive Skeleton Dashboard -->
+      <div v-if="loading" class="analytics-skeleton-wrapper" aria-busy="true">
+        <div class="analytics-loading-card">
+          <div class="spinner"></div>
+          <span>Calculating portfolio analytics and cross-pillar benchmarks…</span>
+        </div>
+
+        <div class="metrics-kpi-grid">
+          <div class="kpi-card skeleton-card" v-for="i in 4" :key="i">
+            <div class="skeleton-shimmer sk-kpi-icon"></div>
+            <div class="sk-kpi-info">
+              <div class="skeleton-shimmer sk-kpi-label"></div>
+              <div class="skeleton-shimmer sk-kpi-val"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-charts-grid">
+          <div class="chart-panel-card skeleton-chart" v-for="i in 2" :key="i">
+            <div class="skeleton-shimmer sk-chart-title"></div>
+            <div class="skeleton-shimmer sk-chart-canvas"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Error State -->
@@ -1573,4 +1592,66 @@ onBeforeUnmount(() => {
     display: none;
   }
 }
+
+/* Skeleton Loading for Analytics Dashboard */
+.analytics-skeleton-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #ece9e6 25%, #f7f6f4 50%, #ece9e6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+.sk-kpi-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.sk-kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.sk-kpi-label {
+  width: 55%;
+  height: 14px;
+  border-radius: 4px;
+}
+.sk-kpi-val {
+  width: 40%;
+  height: 24px;
+  border-radius: 4px;
+}
+.skeleton-chart {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sk-chart-title {
+  width: 40%;
+  height: 20px;
+  border-radius: 4px;
+}
+.sk-chart-canvas {
+  width: 100%;
+  height: 240px;
+  border-radius: 8px;
+}
+
 </style>

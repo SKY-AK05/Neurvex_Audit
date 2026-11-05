@@ -227,8 +227,15 @@
 
       <!-- Horizontal Quick-Picker Carousel Strip -->
       <div v-if="showTopCarousel" class="otp-carousel-strip">
-        <div v-if="loading" class="otp-carousel-loading">
-          <div v-for="i in 5" :key="i" class="otp-skeleton-pill"></div>
+        <div v-if="loading" class="otp-carousel-loading" aria-busy="true">
+          <div v-for="i in 6" :key="i" class="otp-skeleton-pill">
+            <div class="skeleton-shimmer sk-pill-monogram"></div>
+            <div class="sk-pill-text">
+              <div class="skeleton-shimmer sk-pill-title"></div>
+              <div class="skeleton-shimmer sk-pill-meta"></div>
+            </div>
+            <div class="skeleton-shimmer sk-pill-score"></div>
+          </div>
         </div>
         <div v-else-if="filteredOrgs.length === 0" class="otp-carousel-empty">
           No matching organisations
@@ -495,7 +502,69 @@
 
       <!-- RIGHT COLUMN: Active Organisation Analysis & Reporting Workspace -->
 
-      <main class="org-main-workspace" v-if="selectedOrg">
+      <!-- SKELETON WORKSPACE: Shown when initial organisations are loading and no organisation is selected yet -->
+      <main class="org-main-workspace workspace-skeleton-view" v-if="loading && !selectedOrg" aria-busy="true">
+        <!-- Skeleton Hero Card -->
+        <section class="org-hero-card skeleton-hero-wrapper">
+          <div class="org-hero-main">
+            <div class="org-hero-left">
+              <div class="skeleton-shimmer sk-hero-monogram"></div>
+              <div class="sk-hero-lines">
+                <div class="skeleton-shimmer sk-hero-tag"></div>
+                <div class="skeleton-shimmer sk-hero-title"></div>
+                <div class="skeleton-shimmer sk-hero-sub"></div>
+              </div>
+            </div>
+            <div class="org-hero-right">
+              <div class="skeleton-shimmer sk-hero-score-badge"></div>
+              <div class="sk-hero-actions">
+                <div class="skeleton-shimmer sk-hero-btn"></div>
+                <div class="skeleton-shimmer sk-hero-btn"></div>
+                <div class="skeleton-shimmer sk-hero-btn"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Skeleton Navigation Tabs -->
+        <nav class="analysis-tabs-nav skeleton-tabs-wrapper">
+          <div class="skeleton-shimmer sk-nav-tab" v-for="i in 5" :key="i"></div>
+        </nav>
+
+        <!-- Skeleton Tab Content Area -->
+        <div class="skeleton-tab-body">
+          <div class="skeleton-card-banner">
+            <div class="skeleton-shimmer sk-banner-title"></div>
+            <div class="skeleton-shimmer sk-banner-desc"></div>
+          </div>
+
+          <div class="skeleton-highlights-grid">
+            <div class="skeleton-highlight-card" v-for="i in 2" :key="i">
+              <div class="skeleton-shimmer sk-hl-header"></div>
+              <div class="skeleton-shimmer sk-hl-row" v-for="j in 3" :key="j"></div>
+            </div>
+          </div>
+
+          <div class="skeleton-pillars-grid">
+            <div class="skeleton-pillar-card" v-for="i in 8" :key="i">
+              <div class="sk-pcard-header">
+                <div class="skeleton-shimmer sk-pcard-icon"></div>
+                <div class="sk-pcard-meta">
+                  <div class="skeleton-shimmer sk-pcard-name"></div>
+                  <div class="skeleton-shimmer sk-pcard-score"></div>
+                </div>
+              </div>
+              <div class="skeleton-shimmer sk-pcard-bar"></div>
+              <div class="sk-pcard-footer">
+                <div class="skeleton-shimmer sk-pcard-badge"></div>
+                <div class="skeleton-shimmer sk-pcard-sub"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <main class="org-main-workspace" v-else-if="selectedOrg">
 
 
 
@@ -1251,14 +1320,84 @@
 
 
 
-        <!-- Loading State for Detail -->
+        <!-- Loading State for Detail: Dynamic Skeleton per Active Tab -->
+        <div v-if="loadingDetail" class="detail-loading-wrapper" aria-busy="true">
+          <div class="detail-loading-indicator">
+            <div class="spinner-pulse"></div>
+            <div class="dli-text">
+              <strong>Calculating multi-respondent weighted scores…</strong>
+              <span>Aggregating DEI segments, inclusion maturity percentiles, and 8-pillar benchmarks.</span>
+            </div>
+          </div>
 
-        <div v-if="loadingDetail" class="detail-loading-box">
+          <!-- Dynamic Tab Skeleton based on activeTab -->
+          <!-- 1. Pillars Tab Skeleton -->
+          <div v-if="activeTab === 'pillars'" class="skeleton-tab-body animate-fade">
+            <div class="skeleton-card-banner">
+              <div class="skeleton-shimmer sk-banner-title"></div>
+              <div class="skeleton-shimmer sk-banner-desc"></div>
+            </div>
+            <div class="skeleton-highlights-grid">
+              <div class="skeleton-highlight-card" v-for="i in 2" :key="i">
+                <div class="skeleton-shimmer sk-hl-header"></div>
+                <div class="skeleton-shimmer sk-hl-row" v-for="j in 3" :key="j"></div>
+              </div>
+            </div>
+            <div class="skeleton-pillars-grid">
+              <div class="skeleton-pillar-card" v-for="i in 8" :key="i">
+                <div class="sk-pcard-header">
+                  <div class="skeleton-shimmer sk-pcard-icon"></div>
+                  <div class="sk-pcard-meta">
+                    <div class="skeleton-shimmer sk-pcard-name"></div>
+                    <div class="skeleton-shimmer sk-pcard-score"></div>
+                  </div>
+                </div>
+                <div class="skeleton-shimmer sk-pcard-bar"></div>
+                <div class="sk-pcard-footer">
+                  <div class="skeleton-shimmer sk-pcard-badge"></div>
+                  <div class="skeleton-shimmer sk-pcard-sub"></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <div class="spinner"></div>
+          <!-- 2. Segments Tab Skeleton -->
+          <div v-else-if="activeTab === 'segments'" class="skeleton-tab-body animate-fade">
+            <div class="skeleton-card-banner">
+              <div class="skeleton-shimmer sk-banner-title"></div>
+              <div class="skeleton-shimmer sk-banner-desc"></div>
+            </div>
+            <div class="skeleton-segments-grid">
+              <div class="skeleton-segment-card" v-for="i in 4" :key="i">
+                <div class="skeleton-shimmer sk-seg-title"></div>
+                <div class="skeleton-shimmer sk-seg-row" v-for="j in 3" :key="j"></div>
+              </div>
+            </div>
+          </div>
 
-          <span>Calculating multi-respondent weighted scores and segment metrics…</span>
+          <!-- 3. Inputs Tab Skeleton -->
+          <div v-else-if="activeTab === 'inputs'" class="skeleton-tab-body animate-fade">
+            <div class="skeleton-table-card">
+              <div class="skeleton-shimmer sk-table-header"></div>
+              <div class="skeleton-shimmer sk-table-row" v-for="i in 8" :key="i"></div>
+            </div>
+          </div>
 
+          <!-- 4. Respondents Tab Skeleton -->
+          <div v-else-if="activeTab === 'respondents'" class="skeleton-tab-body animate-fade">
+            <div class="skeleton-table-card">
+              <div class="skeleton-shimmer sk-table-header"></div>
+              <div class="skeleton-shimmer sk-table-row" v-for="i in 8" :key="i"></div>
+            </div>
+          </div>
+
+          <!-- 5. Default / Report Tab Skeleton -->
+          <div v-else class="skeleton-tab-body animate-fade">
+            <div class="skeleton-report-card">
+              <div class="skeleton-shimmer sk-banner-title"></div>
+              <div class="skeleton-shimmer sk-table-row" v-for="i in 5" :key="i"></div>
+            </div>
+          </div>
         </div>
 
 
@@ -3522,11 +3661,24 @@
 
       </main>
 
-
+      <!-- EMPTY STATE: Shown when loading is false and no organisation is selected -->
+      <main class="org-main-workspace" v-else>
+        <div class="no-org-selected-card">
+          <div class="empty-icon-box">🏢</div>
+          <h3>Select an Organisation</h3>
+          <p>Choose an organisation from the selector above to analyze multi-respondent inclusion metrics, DEI segments, and generate executive scorecards.</p>
+          <div class="empty-actions">
+            <button class="btn btn-primary" @click="openCreateOrgModal">
+              + New Organisation
+            </button>
+            <button v-if="orgs.length > 0" class="btn btn-outline" @click="selectOrg(orgs[0])">
+              View {{ orgs[0].name }}
+            </button>
+          </div>
+        </div>
+      </main>
 
     </div>
-
-
 
     <!-- Send Direct Message Modal -->
 
@@ -12546,6 +12698,352 @@ onMounted(fetchOrgs);
   padding: 1px 5px;
   border-radius: 4px;
   flex-shrink: 0;
+}
+
+
+/* ==========================================================================
+   Comprehensive Skeleton Loading Styles for Organisations Dashboard
+   ========================================================================== */
+.otp-carousel-loading {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  padding: 2px 0;
+}
+.otp-skeleton-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  min-width: 150px;
+  max-width: 200px;
+  flex-shrink: 0;
+}
+.sk-pill-monogram {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+.sk-pill-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.sk-pill-title {
+  width: 70px;
+  height: 12px;
+  border-radius: 3px;
+}
+.sk-pill-meta {
+  width: 42px;
+  height: 9px;
+  border-radius: 3px;
+}
+.sk-pill-score {
+  width: 28px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* Workspace Skeleton */
+.workspace-skeleton-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeleton-hero-wrapper {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.sk-hero-monogram {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+.sk-hero-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 240px;
+}
+.sk-hero-tag {
+  width: 140px;
+  height: 18px;
+  border-radius: 20px;
+}
+.sk-hero-title {
+  width: 260px;
+  height: 28px;
+  border-radius: 6px;
+}
+.sk-hero-sub {
+  width: 320px;
+  height: 14px;
+  border-radius: 4px;
+}
+.sk-hero-score-badge {
+  width: 120px;
+  height: 48px;
+  border-radius: 10px;
+}
+.sk-hero-actions {
+  display: flex;
+  gap: 8px;
+}
+.sk-hero-btn {
+  width: 110px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+/* Skeleton Navigation Tabs */
+.skeleton-tabs-wrapper {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 2px;
+  border-bottom: 2px solid #E2E8F0;
+}
+.sk-nav-tab {
+  width: 140px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Skeleton Tab Content */
+.skeleton-tab-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.skeleton-card-banner {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.sk-banner-title {
+  width: 40%;
+  height: 20px;
+  border-radius: 4px;
+}
+.sk-banner-desc {
+  width: 75%;
+  height: 14px;
+  border-radius: 4px;
+}
+
+.skeleton-highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .skeleton-highlights-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.skeleton-highlight-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sk-hl-header {
+  width: 50%;
+  height: 22px;
+  border-radius: 4px;
+}
+.sk-hl-row {
+  width: 100%;
+  height: 38px;
+  border-radius: 6px;
+}
+
+.skeleton-pillars-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 22px !important;
+}
+@media (max-width: 800px) {
+  .skeleton-pillars-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+.skeleton-pillar-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sk-pcard-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.sk-pcard-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.sk-pcard-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.sk-pcard-name {
+  width: 60%;
+  height: 18px;
+  border-radius: 4px;
+}
+.sk-pcard-score {
+  width: 30%;
+  height: 13px;
+  border-radius: 4px;
+}
+.sk-pcard-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 6px;
+}
+.sk-pcard-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sk-pcard-badge {
+  width: 70px;
+  height: 22px;
+  border-radius: 12px;
+}
+.sk-pcard-sub {
+  width: 85px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+/* Detail Loading Wrapper */
+.detail-loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.detail-loading-indicator {
+  background: #EEF2FF;
+  border: 1.5px solid #C7D2FE;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.spinner-pulse {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #C7D2FE;
+  border-top-color: #4F46E5;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+.dli-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dli-text strong {
+  font-size: 0.92rem;
+  color: #1E1B4B;
+}
+.dli-text span {
+  font-size: 0.8rem;
+  color: #4338CA;
+}
+
+/* Segments & Tables Skeletons */
+.skeleton-segments-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+@media (max-width: 850px) {
+  .skeleton-segments-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.skeleton-segment-card, .skeleton-table-card, .skeleton-report-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sk-seg-title, .sk-table-header {
+  width: 45%;
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+.sk-seg-row, .sk-table-row {
+  width: 100%;
+  height: 36px;
+  border-radius: 6px;
+}
+
+/* Empty State Card */
+.no-org-selected-card {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 14px;
+  padding: 56px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 560px;
+  margin: 40px auto;
+}
+.no-org-selected-card h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1E293B;
+  margin: 0;
+}
+.no-org-selected-card p {
+  color: #64748B;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  margin: 0;
+}
+.no-org-selected-card .empty-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 </style>

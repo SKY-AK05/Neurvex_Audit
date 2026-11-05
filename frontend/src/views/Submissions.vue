@@ -35,10 +35,36 @@
         </div>
       </div>
 
-      <!-- Table Section -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading submissions...</p>
+      <!-- Table Section: Progressive Skeleton Loading -->
+      <div v-if="loading" class="submissions-skeleton-container" aria-busy="true">
+        <div class="loading-state-banner">
+          <div class="spinner"></div>
+          <p>Loading submissions...</p>
+        </div>
+        <div class="table-container desktop-table-view skeleton-table-wrap">
+          <table class="sub-table">
+            <thead>
+              <tr>
+                <th>Organization Name</th>
+                <th>Role & Function</th>
+                <th>Score</th>
+                <th>Demographics</th>
+                <th>Submitted</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="i in 8" :key="i" class="skeleton-row">
+                <td><div class="skeleton-shimmer sk-cell-org"></div></td>
+                <td><div class="skeleton-shimmer sk-cell-role"></div></td>
+                <td><div class="skeleton-shimmer sk-cell-score"></div></td>
+                <td><div class="skeleton-shimmer sk-cell-badge"></div></td>
+                <td><div class="skeleton-shimmer sk-cell-date"></div></td>
+                <td><div class="skeleton-shimmer sk-cell-btn"></div></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
       <p v-else-if="error" class="alert alert-error">{{ error }}</p>
       <template v-else>
@@ -722,4 +748,47 @@ async function downloadCurrentPage() {
     justify-content: center;
   }
 }
+
+/* Skeleton Loading for Submissions Table */
+.submissions-skeleton-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.loading-state-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  background: #EEF2FF;
+  border: 1px solid #C7D2FE;
+  border-radius: 10px;
+  color: #4338CA;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+.loading-state-banner p {
+  margin: 0;
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #ece9e6 25%, #f7f6f4 50%, #ece9e6 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.skeleton-row td {
+  padding: 16px 12px;
+}
+.sk-cell-org { width: 130px; height: 16px; }
+.sk-cell-role { width: 160px; height: 14px; }
+.sk-cell-score { width: 60px; height: 22px; border-radius: 6px; }
+.sk-cell-badge { width: 90px; height: 20px; border-radius: 12px; }
+.sk-cell-date { width: 80px; height: 14px; }
+.sk-cell-btn { width: 75px; height: 30px; border-radius: 6px; }
+
 </style>
