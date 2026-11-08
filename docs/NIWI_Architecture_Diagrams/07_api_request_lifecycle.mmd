@@ -1,0 +1,21 @@
+flowchart TD
+    ClientReq["Incoming HTTP Request"] --> NginxProxy["Nginx Reverse Proxy (Port 80/8080)"]
+    NginxProxy --> SecurityHeaders["Security Headers Injection<br/>(CSP, X-Frame-Options, HSTS)"]
+    SecurityHeaders --> SlowAPI["SlowAPI Rate Limiter<br/>(IP & Endpoint Quotas)"]
+    
+    SlowAPI -->|Quota Exceeded| HTTP429["Return HTTP 429 Too Many Requests"]
+    SlowAPI -->|Within Quota| JWKSMiddleware["JWKS Authentication Middleware"]
+    
+    JWKSMiddleware -->|Protected Route & Invalid/Missing Token| HTTP401["Return HTTP 401 Unauthorized"]
+    JWKSMiddleware -->|Public Route OR Valid Token| RouteHandler["FastAPI Route Handler & Pydantic Validation"]
+    
+    RouteHandler -->|Payload Invalid| HTTP422["Return HTTP 422 Unprocessable Entity"]
+    RouteHandler -->|Payload Valid| PoolCheckout["Database Pool Connection Checkout<br/>(Statement Timeout: 15s)"]
+    
+    PoolCheckout --> DBExecute["Execute SQL Query / Transaction"]
+    DBExecute -->|DB Failure / Timeout| Rollback["Rollback Connection & Log Error"]
+    Rollback --> HTTP500["Return HTTP 500 Internal Error"]
+    
+    DBExecute -->|Success| Commit["Commit Transaction & Return to Pool"]
+    Commit --> Serialization["Pydantic Response Serialization"]
+    Serialization --> HTTPResponse["Return HTTP 200/201/202 Response to Client"]

@@ -1,0 +1,81 @@
+erDiagram
+    ORGANIZATIONS ||--o{ ORG_SUBMISSION_LINKS : "links"
+    SUBMISSIONS ||--o{ ORG_SUBMISSION_LINKS : "belongs to"
+    ORGANIZATIONS ||--o{ ORGANIZATION_INVITATIONS : "issues"
+    ORGANIZATIONS ||--o{ ASSESSMENT_ACCESS_TOKENS : "grants"
+    RAW_SUBMISSIONS ||--o{ SERVICE_BUS_OUTBOX : "stages"
+    SERVICE_BUS_OUTBOX ||--o{ SUBMISSION_OPERATION_STATES : "tracks"
+    FORM_SECTIONS ||--o{ FORM_QUESTIONS : "contains"
+    ADMIN_USERS ||--o{ ADMIN_SESSIONS : "authenticates"
+    ORGANIZATIONS ||--o{ SUBMISSION_REASSIGNMENTS : "origin/dest"
+
+    ORGANIZATIONS {
+        uuid id PK
+        varchar name UK
+        boolean is_active
+        boolean is_deleted
+        varchar approval_status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    SUBMISSIONS {
+        uuid id PK
+        varchar email
+        varchar org_name
+        numeric overall_score
+        varchar maturity_level
+        jsonb pillar_scores
+        jsonb responses
+        timestamptz created_at
+    }
+
+    ORG_SUBMISSION_LINKS {
+        uuid org_id PK, FK
+        uuid submission_id PK, FK
+        numeric weight
+        timestamptz linked_at
+    }
+
+    RAW_SUBMISSIONS {
+        uuid submission_id PK
+        varchar idempotency_key UK
+        uuid organization_id FK
+        varchar user_id
+        varchar status
+        jsonb payload
+        timestamptz created_at
+    }
+
+    SERVICE_BUS_OUTBOX {
+        uuid id PK
+        uuid submission_id FK
+        varchar event_type
+        varchar status
+        int retry_count
+        timestamptz created_at
+    }
+
+    FORM_SECTIONS {
+        uuid id PK
+        varchar title
+        varchar pillar_id
+        int display_order
+    }
+
+    FORM_QUESTIONS {
+        uuid id PK
+        uuid section_id FK
+        varchar text
+        varchar question_type
+        jsonb options
+        int display_order
+    }
+
+    ADMIN_USERS {
+        uuid id PK
+        varchar email UK
+        varchar role
+        boolean is_active
+        timestamptz created_at
+    }

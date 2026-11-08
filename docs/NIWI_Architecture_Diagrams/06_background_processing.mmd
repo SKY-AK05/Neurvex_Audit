@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph Ingestion["API Submission"]
+        API["POST /api/submit"] -->|Atomic Commit| Outbox[("service_bus_outbox<br/>Status: staged")]
+    end
+
+    subgraph Polling["Worker Fleet"]
+        Dispatcher["Outbox Dispatcher<br/>Poll Interval: 1.0s"]
+        Dispatcher -->|SELECT FOR UPDATE SKIP LOCKED| Outbox
+        Dispatcher -->|Status: processing| Worker["Service Bus Worker"]
+    end
+
+    subgraph JobPipeline["5-Stage Execution Pipeline"]
+        Worker --> S1["1. Deterministic Scoring<br/>(Likert 1-5 to 0-20 scale)"]
+        S1 --> S2["2. DB Writeback<br/>(submissions and org_links)"]
+        S2 --> S3["3. Email Generation<br/>(Branded Executive Report)"]
+        S3 --> S4["4. Azure ACS Dispatch<br/>(Transactional Email API)"]
+        S4 --> S5["5. HubSpot CRM Sync<br/>(Asynchronous Lead Sync)"]
+    end
+
+    subgraph Recovery["Dead-Letter Recovery"]
+        S4 -.->|Transient Failure| RetryLogic["Exponential Backoff Retry<br/>(Attempts: 1 to 3)"]
+        RetryLogic -->|Exceeded Retries| DLQ[("Dead Letter Table<br/>Status: failed")]
+        DLQ -.->|Admin Replay API| Outbox
+    end
