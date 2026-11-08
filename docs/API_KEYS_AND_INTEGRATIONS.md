@@ -94,7 +94,7 @@ Every environment variable read anywhere in the NIWI repository is cataloged bel
 | `PGHOST` | PostgreSQL server hostname. | `YOUR_POSTGRES_SERVER.postgres.database.azure.com` | `app/core/config.py:58` | Required |
 | `PGPORT` | PostgreSQL TCP port. | `5432` | `app/core/config.py:59` | Required (default 5432) |
 | `PGDATABASE` | PostgreSQL database name. | `nd_audit` | `app/core/config.py:60` | Required |
-| `PGUSER` | PostgreSQL admin username. | `orchvate_admin` | `app/core/config.py:61` | Required |
+| `PGUSER` | PostgreSQL admin username. | `YOUR_POSTGRES_USER` | `app/core/config.py:61` | Required |
 | `PGPASSWORD` | PostgreSQL database password (minimum 16 chars in prod, 8 chars if Key Vault managed). | `YOUR_SECURE_DB_PASSWORD` | `app/core/config.py:62` | Required |
 | `KEY_VAULT_NAME` | Azure Key Vault resource name for production secrets retrieval. | `kv-niwi-prod` | `app/core/keyvault.py:60` | Required in Prod |
 | `REQUIRE_KEYVAULT` | Strict flag requiring Azure Key Vault; fails boot if Key Vault is down. | `true` | `app/core/config.py:27` | Optional (default false) |

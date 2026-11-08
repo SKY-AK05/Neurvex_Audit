@@ -126,7 +126,7 @@ class TestDatabaseCredentialValidation:
         """Azure Key Vault managed passwords with 8+ chars should be accepted"""
         with patch.dict(os.environ, {
             "APP_ENV": "production",
-            "PGPASSWORD": "Coffee!92",  # 9 chars, from Key Vault
+            "PGPASSWORD": "KvSecretPass!88",  # 15 chars, from Key Vault
             "KEY_VAULT_NAME": "test-vault",
             "REQUIRE_KEYVAULT": "true",
             "TESTING": "true"  # Skip actual Key Vault connection

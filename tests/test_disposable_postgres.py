@@ -23,7 +23,7 @@ class TestDatabaseSafetyGuards:
         """Guard must immediately raise RuntimeError if production Azure host is configured."""
         with pytest.raises(RuntimeError) as exc_info:
             check_test_isolation_guard(
-                host="generative-ai.postgres.database.azure.com",
+                host="sample-prod.postgres.database.azure.com",
                 dbname="nd_audit"
             )
         assert "SAFETY GUARD TRIGGERED" in str(exc_info.value)
@@ -31,7 +31,7 @@ class TestDatabaseSafetyGuards:
 
     def test_is_production_database_detector(self):
         """is_production_database accurately flags Azure PostgreSQL hostnames."""
-        assert is_production_database("generative-ai.postgres.database.azure.com") is True
+        assert is_production_database("sample-prod.postgres.database.azure.com") is True
         assert is_production_database("my-db.postgres.database.azure.com") is True
         assert is_production_database("generative-ai-server") is True
         # Non-production hosts return False

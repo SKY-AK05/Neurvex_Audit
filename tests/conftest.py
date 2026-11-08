@@ -635,7 +635,7 @@ class MockCursor:
 
         if "update organization_invitations" in sql_lower:
             if "submission_count = submission_count + 1" in sql_lower and p:
-                target_id = str(p[0])
+                target_id = str(p[0]) if isinstance(p, (list, tuple)) else str(p.get("id") or (list(p.values())[0] if p else ""))
                 seen = set()
                 for inv in self.store.invitations.values():
                     if inv.get("id") == target_id and id(inv) not in seen:
