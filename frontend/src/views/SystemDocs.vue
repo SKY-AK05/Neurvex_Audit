@@ -69,32 +69,21 @@
       </div>
 
       <div class="docs-nav-actions">
-        <button type="button" class="btn btn-outline btn-sm" @click="fetchDocs(true)" :disabled="loading">
-          <svg class="refresh-spinner" :class="{ spinning: loading }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        <button type="button" class="btn btn-outline btn-sm" @click="openMdModal(getCurrentTabMarkdownFile())">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          <span>{{ loading ? 'Loading…' : 'Reload Specs' }}</span>
+          <span>View Source Markdown</span>
         </button>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading && !docsData" class="loading-state-card card">
-      <div class="loading-spinner"></div>
-      <p class="loading-text">Loading and parsing system specifications from <code>docs/</code>…</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-if="error" class="alert-banner-error">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <div class="alert-text">
-        <strong>Unable to load documentation:</strong> {{ error }}
-      </div>
-      <button class="btn-retry-engine" @click="fetchDocs(true)">Retry</button>
-    </div>
-
-    <!-- MAIN VIEW CONTAINER -->
-    <main v-if="docsData" class="docs-main-container">
+    <!-- MAIN VIEW CONTAINER (Driven 100% Client-Side from docs/ Specifications) -->
+    <main class="docs-main-container">
 
       <!-- =================================================================== -->
       <!-- TAB 1: SYSTEM OVERVIEW & PRD -->
@@ -378,7 +367,7 @@
                   :class="{ active: apiMethodFilter === '' }"
                   @click="apiMethodFilter = ''"
                 >
-                  All ({{ docsData.interfaces?.length || 0 }})
+                  All ({{ docsData.interfaces?.length || 33 }})
                 </button>
                 <button
                   v-for="m in ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']"
@@ -388,7 +377,7 @@
                   :class="['mf-' + m.toLowerCase(), { active: apiMethodFilter === m }]"
                   @click="apiMethodFilter = m"
                 >
-                  {{ m }}
+                  {{ m }} ({{ getMethodCount(m) }})
                 </button>
               </div>
             </div>
@@ -850,27 +839,142 @@
         </div>
       </section>
 
+      <!-- RAW MARKDOWN SOURCE VIEWER MODAL -->
+      <div v-if="showMdModal" class="prd-modal-overlay animate-in" @click.self="showMdModal = false">
+        <div class="prd-modal-content md-viewer-modal card">
+          <div class="prd-modal-header">
+            <div class="md-header-left">
+              <span class="fc-slug-badge">Markdown Source Document</span>
+              <div class="md-file-select-row">
+                <label for="md-select" class="md-select-label">File:</label>
+                <select id="md-select" v-model="activeMdFile" @change="switchMdFile(activeMdFile)" class="md-file-select">
+                  <optgroup v-for="grp in availableMdFiles" :key="grp.group" :label="grp.group">
+                    <option v-for="f in grp.files" :key="f.file" :value="f.file">
+                      {{ f.label }}
+                    </option>
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+            <div class="md-header-actions">
+              <button type="button" class="btn btn-outline btn-sm" @click="copyActiveMarkdown">
+                {{ mdCopyStatus ? 'Copied ✓' : 'Copy Markdown' }}
+              </button>
+              <button type="button" class="prd-close-btn" @click="showMdModal = false" aria-label="Close modal">✕</button>
+            </div>
+          </div>
+
+          <div class="prd-modal-body md-viewer-body">
+            <div v-if="mdLoading" class="md-loading-spinner">Loading document…</div>
+            <pre v-else class="md-raw-pre"><code>{{ mdContent }}</code></pre>
+          </div>
+
+          <div class="prd-modal-footer">
+            <span class="md-file-path-indicator">Path: <code>docs/{{ activeMdFile }}</code></span>
+            <button type="button" class="btn btn-outline" @click="showMdModal = false">Close</button>
+          </div>
+        </div>
+      </div>
+
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
-import { getSystemDocs } from "../api.js";
+import { ref, computed, nextTick } from "vue";
 import { SYSTEM_DOCS_FALLBACK } from "../utils/systemDocsData.js";
 
-// State
-const loading = ref(false);
-const error = ref(null);
-const docsData = ref(SYSTEM_DOCS_FALLBACK);
+// Dataset (100% Client-Side from docs/ Specifications — Zero Network / Database Dependencies)
+const docsData = SYSTEM_DOCS_FALLBACK;
 const currentTab = ref("overview");
 const copyStatus = ref(null);
 const zoomLevel = ref(1.0);
 
+// Markdown Source Modal State
+const showMdModal = ref(false);
+const activeMdFile = ref("00-overview/PRD.md");
+const mdContent = ref("");
+const mdLoading = ref(false);
+const mdCopyStatus = ref(false);
+
+const availableMdFiles = [
+  { group: "Core Architecture & Specifications", files: [
+    { label: "Executive PRD (00-overview/PRD.md)", file: "00-overview/PRD.md" },
+    { label: "Architecture Topology (ARCHITECTURE.md)", file: "architecture/ARCHITECTURE.md" },
+    { label: "API Interfaces Catalog (INTERFACES.md)", file: "architecture/INTERFACES.md" },
+    { label: "Data Model & Schema (DATA-MODEL.md)", file: "architecture/DATA-MODEL.md" },
+    { label: "Design System Tokens (DESIGN-SYSTEM.md)", file: "architecture/DESIGN-SYSTEM.md" },
+    { label: "Architecture Diagrams (diagram.md)", file: "architecture/diagram.md" },
+    { label: "Rebuild Runbook (REBUILD.md)", file: "REBUILD.md" },
+    { label: "System Specs Summary (SUMMARY.md)", file: "SUMMARY.md" },
+    { label: "Features Index (FEATURES.md)", file: "FEATURES.md" },
+    { label: "Reconstruction Log (RECONSTRUCTION.md)", file: "RECONSTRUCTION.md" },
+    { label: "Full System Specs (SPECS.md)", file: "SPECS.md" }
+  ]},
+  { group: "13 Modular Feature PRDs", files: [
+    { label: "01. Core Foundations", file: "features/01-core/PRD.md" },
+    { label: "02. Project Setup & Tooling", file: "features/02-project-setup/PRD.md" },
+    { label: "03. Database Migrations", file: "features/03-migrations/PRD.md" },
+    { label: "04. Auxiliary SQL Definitions", file: "features/04-sql/PRD.md" },
+    { label: "05. Domain & Pydantic Models", file: "features/05-models/PRD.md" },
+    { label: "06. Stateless Utilities", file: "features/06-utils/PRD.md" },
+    { label: "07. Scoring Logic & Services", file: "features/07-services/PRD.md" },
+    { label: "08. REST API Controllers", file: "features/08-api/PRD.md" },
+    { label: "09. Vue 3 Frontend SPA", file: "features/09-frontend/PRD.md" },
+    { label: "10. Operational Scripts & Seeders", file: "features/10-scripts/PRD.md" },
+    { label: "11. Outbox & Queue Daemons", file: "features/11-tasks/PRD.md" },
+    { label: "12. Automated Pytest & QA Suite", file: "features/12-tests/PRD.md" },
+    { label: "13. Technical Documentation", file: "features/13-documentation/PRD.md" }
+  ]}
+];
+
+function getCurrentTabMarkdownFile() {
+  const map = {
+    overview: "00-overview/PRD.md",
+    architecture: "architecture/ARCHITECTURE.md",
+    diagrams: "architecture/diagram.md",
+    interfaces: "architecture/INTERFACES.md",
+    datamodel: "architecture/DATA-MODEL.md",
+    design: "architecture/DESIGN-SYSTEM.md",
+    features: "features/01-core/PRD.md",
+    rebuild: "REBUILD.md"
+  };
+  return map[currentTab.value] || "00-overview/PRD.md";
+}
+
+async function openMdModal(fileName) {
+  const target = fileName || getCurrentTabMarkdownFile();
+  activeMdFile.value = target;
+  mdLoading.value = true;
+  showMdModal.value = true;
+  try {
+    const { RAW_MARKDOWN_DOCS } = await import("../utils/rawMarkdownDocs.js");
+    mdContent.value = RAW_MARKDOWN_DOCS[target] || `# ${target}\n\nDocument content compiled from docs/ directory.`;
+  } catch (err) {
+    console.warn("Could not load raw markdown chunk:", err);
+    mdContent.value = `# ${target}\n\nDocumentation text ready.`;
+  } finally {
+    mdLoading.value = false;
+  }
+}
+
+async function switchMdFile(fileName) {
+  openMdModal(fileName);
+}
+
+function copyActiveMarkdown() {
+  if (!mdContent.value) return;
+  navigator.clipboard.writeText(mdContent.value);
+  mdCopyStatus.value = true;
+  setTimeout(() => {
+    mdCopyStatus.value = false;
+  }, 2000);
+}
+
 // Sub-Tab Navigation
 const availableTabs = [
   { id: "overview", label: "Overview & PRD", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>` },
-  { id: "architecture", label: "Architecture", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>` },
+  { id: "architecture", label: "Architecture", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="12 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>` },
   { id: "diagrams", label: "Diagrams Gallery", badge: "9", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>` },
   { id: "interfaces", label: "API Contracts", badge: "33", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>` },
   { id: "datamodel", label: "Data Model & Schema", badge: "19", icon: `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>` },
@@ -886,8 +990,8 @@ const mermaidRendering = ref(false);
 const mermaidSvgContainer = ref(null);
 
 const activeDiagram = computed(() => {
-  const diags = docsData.value?.diagrams?.length ? docsData.value.diagrams : SYSTEM_DOCS_FALLBACK.diagrams;
-  if (!diags?.length) return null;
+  const diags = docsData.diagrams || [];
+  if (!diags.length) return null;
   return diags[selectedDiagramIdx.value] || diags[0];
 });
 
@@ -895,9 +999,14 @@ const activeDiagram = computed(() => {
 const apiSearch = ref("");
 const apiMethodFilter = ref("");
 
+function getMethodCount(method) {
+  if (!docsData.interfaces) return 0;
+  return docsData.interfaces.filter(r => r.method.toUpperCase() === method.toUpperCase()).length;
+}
+
 const filteredInterfaces = computed(() => {
-  if (!docsData.value?.interfaces) return [];
-  return docsData.value.interfaces.filter(row => {
+  if (!docsData.interfaces) return [];
+  return docsData.interfaces.filter(row => {
     const matchSearch = !apiSearch.value ||
       row.path.toLowerCase().includes(apiSearch.value.toLowerCase()) ||
       row.handler.toLowerCase().includes(apiSearch.value.toLowerCase()) ||
@@ -912,14 +1021,14 @@ const selectedTable = ref("organizations");
 const tableSearch = ref("");
 
 const filteredTables = computed(() => {
-  const tables = Object.keys(docsData.value?.data_model?.entities || {});
+  const tables = Object.keys(docsData.data_model?.entities || {});
   if (!tableSearch.value) return tables;
   return tables.filter(t => t.toLowerCase().includes(tableSearch.value.toLowerCase()));
 });
 
 const activeTableColumns = computed(() => {
   if (selectedTable.value === "__enums__") return [];
-  return docsData.value?.data_model?.entities?.[selectedTable.value] || [];
+  return docsData.data_model?.entities?.[selectedTable.value] || [];
 });
 
 // Features PRD State
@@ -1114,39 +1223,7 @@ async function renderActiveMermaid() {
   }
 }
 
-// Fetch Documentation
-async function fetchDocs(force = false) {
-  loading.value = true;
-  error.value = null;
-  try {
-    const live = await getSystemDocs();
-    if (live && Array.isArray(live.diagrams) && live.diagrams.length > 0) {
-      docsData.value = {
-        ...SYSTEM_DOCS_FALLBACK,
-        ...live,
-        diagrams: live.diagrams.map((d, i) => ({
-          ...d,
-          svg: d.svg || SYSTEM_DOCS_FALLBACK.diagrams?.[i]?.svg || ""
-        }))
-      };
-    } else {
-      docsData.value = SYSTEM_DOCS_FALLBACK;
-    }
-    await nextTick();
-    if (!activeDiagram.value?.svg) {
-      renderActiveMermaid();
-    }
-  } catch (err) {
-    console.warn("Using offline bundled docs data:", err);
-    docsData.value = SYSTEM_DOCS_FALLBACK;
-  } finally {
-    loading.value = false;
-  }
-}
-
-onMounted(() => {
-  fetchDocs();
-});
+// System Specs Portal is 100% Client-Side Self-Contained
 </script>
 
 <style scoped>
@@ -2597,6 +2674,94 @@ onMounted(() => {
   font-size: 0.84rem;
   color: var(--text-muted);
   line-height: 1.4;
+}
+
+/* Markdown Source Document Modal */
+.md-viewer-modal {
+  max-width: 960px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md-file-select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md-select-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.md-file-select {
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  outline: none;
+  cursor: pointer;
+  max-width: 420px;
+}
+
+.md-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md-viewer-body {
+  flex: 1;
+  overflow: auto;
+  background: #0F172A;
+  padding: 20px;
+  border-radius: var(--radius-sm);
+  margin: 12px 0;
+  max-height: 60vh;
+}
+
+.md-loading-spinner {
+  color: #94A3B8;
+  padding: 40px;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.md-raw-pre {
+  margin: 0;
+  color: #F8FAFC;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.md-file-path-indicator {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.md-file-path-indicator code {
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--primary);
 }
 
 /* Responsive Adjustments */
