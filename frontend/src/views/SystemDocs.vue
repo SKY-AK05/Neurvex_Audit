@@ -267,10 +267,12 @@
       <!-- =================================================================== -->
       <section v-if="currentTab === 'diagrams'" class="tab-section animate-in">
         <div class="card diagram-gallery-card">
+          <!-- Top Diagram Selector Header -->
           <div class="diagram-selector-bar">
             <div class="dsb-left">
-              <span class="section-tag-kicker">INTERACTIVE ARCHITECTURE VISUALIZATIONS</span>
-              <h2 class="results-title">9 Verified Mermaid Diagrams</h2>
+              <span class="section-tag-kicker">VERIFIED SPECIFICATION VISUALIZATIONS</span>
+              <h2 class="results-title">System Architecture &amp; Sequence Flows</h2>
+              <p class="diagrams-subtext">Interactive runtime topologies, sequence lifecycles, and failure boundary contracts across 9 verified models.</p>
             </div>
 
             <!-- Selector Pills -->
@@ -283,7 +285,8 @@
                 :class="{ active: selectedDiagramIdx === idx }"
                 @click="selectDiagram(idx)"
               >
-                {{ idx + 1 }}. {{ getCleanDiagramTitle(diag.title) }}
+                <span class="diag-pill-num">{{ idx + 1 }}</span>
+                <span class="diag-pill-text">{{ getCleanDiagramTitle(diag.title) }}</span>
               </button>
             </div>
           </div>
@@ -291,13 +294,48 @@
           <!-- Active Diagram Viewer -->
           <div v-if="activeDiagram" class="active-diagram-container">
             <div class="diagram-header-strip">
-              <div>
+              <div class="dhs-left">
+                <span class="diag-meta-type">{{ currentDiagramMeta?.type || 'Architecture Model' }}</span>
                 <h3 class="diag-display-title">{{ activeDiagram.title }}</h3>
-                <span class="diag-type-badge">Mermaid &amp; SVG Specification</span>
+                <p class="diag-meta-summary">{{ currentDiagramMeta?.summary || 'Interactive architectural visualization of platform components and communication protocols.' }}</p>
               </div>
 
               <div class="diag-view-controls">
-                <!-- Zoom Controls -->
+                <!-- Mode Toggle (Interactive / Flowchart / Code) -->
+                <div class="view-toggle-group">
+                  <button
+                    type="button"
+                    class="view-btn"
+                    :class="{ active: diagViewMode === 'interactive' }"
+                    @click="diagViewMode = 'interactive'"
+                    title="Interactive Component Explorer"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                    Interactive
+                  </button>
+                  <button
+                    type="button"
+                    class="view-btn"
+                    :class="{ active: diagViewMode === 'rendered' }"
+                    @click="diagViewMode = 'rendered'"
+                    title="Flowchart Vector SVG"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                    Flowchart
+                  </button>
+                  <button
+                    type="button"
+                    class="view-btn"
+                    :class="{ active: diagViewMode === 'code' }"
+                    @click="diagViewMode = 'code'"
+                    title="Mermaid Source Code"
+                  >
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                    Code
+                  </button>
+                </div>
+
+                <!-- Zoom Controls for SVG mode -->
                 <div class="zoom-controls" v-if="diagViewMode === 'rendered'">
                   <button type="button" class="btn-zoom" @click="zoomLevel = Math.max(0.6, zoomLevel - 0.15)" title="Zoom Out">−</button>
                   <span class="zoom-val">{{ Math.round(zoomLevel * 100) }}%</span>
@@ -305,35 +343,294 @@
                   <button type="button" class="btn-zoom-reset" @click="zoomLevel = 1.0" title="Reset Zoom">Reset</button>
                 </div>
 
-                <button
-                  type="button"
-                  class="btn btn-sm"
-                  :class="diagViewMode === 'rendered' ? 'btn-primary' : 'btn-outline'"
-                  @click="diagViewMode = 'rendered'"
-                >
-                  Visual Flow
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm"
-                  :class="diagViewMode === 'code' ? 'btn-primary' : 'btn-outline'"
-                  @click="diagViewMode = 'code'"
-                >
-                  Source Code
-                </button>
                 <button type="button" class="btn btn-outline btn-sm" @click="copyCode(activeDiagram.code)">
                   {{ copyStatus === activeDiagram.id ? 'Copied ✓' : 'Copy Mermaid' }}
                 </button>
               </div>
             </div>
 
-            <!-- Visual Flow Renderer -->
-            <div v-show="diagViewMode === 'rendered'" class="diagram-render-box">
-              <div v-if="activeDiagram.svg" class="mermaid-svg-target" :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }" v-html="activeDiagram.svg"></div>
-              <div v-else ref="mermaidSvgContainer" class="mermaid-svg-target" :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }"></div>
+            <!-- MODE 1: INTERACTIVE EXPLORER -->
+            <div v-if="diagViewMode === 'interactive'" class="interactive-diagram-canvas animate-in">
+              <!-- If Diagram 1: High-Level Architecture -->
+              <div v-if="selectedDiagramIdx === 0" class="arch-topology-view">
+                <!-- Flow Preset Filter Bar -->
+                <div class="flow-preset-bar">
+                  <span class="fp-label">Active Flow Path:</span>
+                  <div class="fp-pills">
+                    <button
+                      v-for="fp in FLOW_PRESETS"
+                      :key="fp.id"
+                      type="button"
+                      class="fp-btn"
+                      :class="{ active: activeFlowPreset === fp.id }"
+                      @click="selectFlowPreset(fp.id)"
+                    >
+                      <span class="fp-icon">{{ fp.icon }}</span>
+                      <span>{{ fp.label }}</span>
+                      <span class="fp-count">{{ fp.count }}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Active Flow Explanation Banner -->
+                <div class="flow-banner">
+                  <div class="fb-left">
+                    <span class="pulse-indicator"></span>
+                    <span class="fb-text">{{ FLOW_PRESETS.find(f => f.id === activeFlowPreset)?.desc }}</span>
+                  </div>
+                  <span class="fb-badge">Click any card to inspect technical specifications</span>
+                </div>
+
+                <!-- 5-Tier Architecture Layout -->
+                <div class="arch-tiers-container">
+                  <!-- TIER 1 -->
+                  <div class="arch-tier-block">
+                    <div class="tier-label-header">
+                      <span class="tl-title">Tier 1 • Client Interfaces</span>
+                      <span class="tl-sub">Public &amp; Enterprise Portals</span>
+                    </div>
+                    <div class="tier-cards-row">
+                      <div
+                        v-for="node in filteredArchNodes.filter(n => n.category === 'client')"
+                        :key="node.id"
+                        class="card arch-comp-card"
+                        :class="{ 'card-selected': selectedNodeId === node.id }"
+                        @click="selectNode(node.id)"
+                      >
+                        <div class="acc-top">
+                          <span class="acc-badge badge-blue">{{ node.badge }}</span>
+                          <span class="status-dot-pulse">●</span>
+                        </div>
+                        <h4 class="acc-title">{{ node.name }}</h4>
+                        <div class="acc-meta">
+                          <span class="acc-pill">{{ node.tech }}</span>
+                          <span class="acc-pill pill-subtle">{{ node.protocol }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TIER 2 -->
+                  <div class="arch-tier-block">
+                    <div class="tier-label-header">
+                      <span class="tl-title">Tier 2 • Ingress &amp; Edge Proxy</span>
+                      <span class="tl-sub">TLS Termination &amp; Static Bundles</span>
+                    </div>
+                    <div class="tier-cards-row">
+                      <div
+                        v-for="node in filteredArchNodes.filter(n => n.category === 'edge')"
+                        :key="node.id"
+                        class="card arch-comp-card"
+                        :class="{ 'card-selected': selectedNodeId === node.id }"
+                        @click="selectNode(node.id)"
+                      >
+                        <div class="acc-top">
+                          <span class="acc-badge badge-green">{{ node.badge }}</span>
+                          <span class="status-dot-pulse">●</span>
+                        </div>
+                        <h4 class="acc-title">{{ node.name }}</h4>
+                        <div class="acc-meta">
+                          <span class="acc-pill">{{ node.tech }}</span>
+                          <span class="acc-pill pill-subtle">{{ node.protocol }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TIER 3 -->
+                  <div class="arch-tier-block">
+                    <div class="tier-label-header">
+                      <span class="tl-title">Tier 3 • Core Application Runtime (Container)</span>
+                      <span class="tl-sub">FastAPI Engine &amp; Vue 3 Client Bundle</span>
+                    </div>
+                    <div class="tier-cards-row">
+                      <div
+                        v-for="node in filteredArchNodes.filter(n => n.category === 'runtime')"
+                        :key="node.id"
+                        class="card arch-comp-card"
+                        :class="{ 'card-selected': selectedNodeId === node.id }"
+                        @click="selectNode(node.id)"
+                      >
+                        <div class="acc-top">
+                          <span class="acc-badge" :class="node.id === 'fastapi' ? 'badge-coral' : 'badge-green'">{{ node.badge }}</span>
+                          <span class="status-dot-pulse">●</span>
+                        </div>
+                        <h4 class="acc-title">{{ node.name }}</h4>
+                        <div class="acc-meta">
+                          <span class="acc-pill">{{ node.tech }}</span>
+                          <span class="acc-pill pill-subtle">{{ node.protocol }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TIER 4 -->
+                  <div class="arch-tier-block">
+                    <div class="tier-label-header">
+                      <span class="tl-title">Tier 4 • Background Processing Fleet</span>
+                      <span class="tl-sub">Transactional Outbox &amp; Scoring Daemon</span>
+                    </div>
+                    <div class="tier-cards-row">
+                      <div
+                        v-for="node in filteredArchNodes.filter(n => n.category === 'worker')"
+                        :key="node.id"
+                        class="card arch-comp-card"
+                        :class="{ 'card-selected': selectedNodeId === node.id }"
+                        @click="selectNode(node.id)"
+                      >
+                        <div class="acc-top">
+                          <span class="acc-badge badge-slate">{{ node.badge }}</span>
+                          <span class="status-dot-pulse">●</span>
+                        </div>
+                        <h4 class="acc-title">{{ node.name }}</h4>
+                        <div class="acc-meta">
+                          <span class="acc-pill">{{ node.tech }}</span>
+                          <span class="acc-pill pill-subtle">{{ node.protocol }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- TIER 5 -->
+                  <div class="arch-tier-block">
+                    <div class="tier-label-header">
+                      <span class="tl-title">Tier 5 • Persistence, Security &amp; Cloud Integrations</span>
+                      <span class="tl-sub">PostgreSQL, Azure Key Vault, Entra ID, ACS &amp; CRM</span>
+                    </div>
+                    <div class="tier-cards-row">
+                      <div
+                        v-for="node in filteredArchNodes.filter(n => ['database', 'security', 'integration'].includes(n.category))"
+                        :key="node.id"
+                        class="card arch-comp-card"
+                        :class="{ 'card-selected': selectedNodeId === node.id }"
+                        @click="selectNode(node.id)"
+                      >
+                        <div class="acc-top">
+                          <span class="acc-badge" :class="node.category === 'database' ? 'badge-blue' : node.category === 'security' ? 'badge-coral' : 'badge-slate'">{{ node.badge }}</span>
+                          <span class="status-dot-pulse">●</span>
+                        </div>
+                        <h4 class="acc-title">{{ node.name }}</h4>
+                        <div class="acc-meta">
+                          <span class="acc-pill">{{ node.tech }}</span>
+                          <span class="acc-pill pill-subtle">{{ node.protocol }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Node Inspector Drawer (Rendered beneath the grid) -->
+                <div v-if="selectedNode" class="card node-inspector-card animate-in">
+                  <div class="nic-header">
+                    <div>
+                      <span class="section-tag-kicker">{{ selectedNode.tier }}</span>
+                      <h3 class="nic-title">{{ selectedNode.name }}</h3>
+                      <span class="status-pill stat-pill-green">● {{ selectedNode.statusText }}</span>
+                    </div>
+                    <div class="nic-header-tags">
+                      <span class="nic-pill">{{ selectedNode.protocol }}</span>
+                      <span class="nic-pill pill-primary">{{ selectedNode.tech }}</span>
+                    </div>
+                  </div>
+
+                  <p class="nic-desc">{{ selectedNode.desc }}</p>
+
+                  <div class="nic-details-grid">
+                    <div class="nic-box" v-if="selectedNode.inbound.length">
+                      <span class="nb-lbl">Inbound Callers:</span>
+                      <div class="nb-pills">
+                        <span v-for="inb in selectedNode.inbound" :key="inb" class="conn-tag in-tag">← {{ getNodeName(inb) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="nic-box" v-if="selectedNode.outbound.length">
+                      <span class="nb-lbl">Outbound Calls:</span>
+                      <div class="nb-pills">
+                        <span v-for="outb in selectedNode.outbound" :key="outb" class="conn-tag out-tag">→ {{ getNodeName(outb) }}</span>
+                      </div>
+                    </div>
+
+                    <div class="nic-box" v-if="selectedNode.files.length">
+                      <span class="nb-lbl">Implementation Handlers:</span>
+                      <div class="nb-pills">
+                        <code v-for="f in selectedNode.files" :key="f" class="file-code-tag">{{ f }}</code>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- If Sequence / Lifecycle Diagram (Diagrams 2, 3, 5, 6, 7, 9) -->
+              <div v-else-if="currentDiagramMeta?.steps" class="sequence-lifecycle-view">
+                <div class="seq-timeline-header">
+                  <span class="section-tag-kicker">STEP-BY-STEP SEQUENCE INTERACTION</span>
+                  <h3 class="seq-title">{{ activeDiagram.title }}</h3>
+                  <p class="seq-sub">{{ currentDiagramMeta.summary }}</p>
+                </div>
+
+                <div class="seq-steps-list">
+                  <div
+                    v-for="(st, sidx) in currentDiagramMeta.steps"
+                    :key="sidx"
+                    class="card seq-step-card"
+                    :class="{ 'seq-step-active': selectedSequenceStep === sidx }"
+                    @click="selectedSequenceStep = sidx"
+                  >
+                    <div class="ssc-left">
+                      <span class="ssc-num">{{ st.num || sidx + 1 }}</span>
+                      <div class="ssc-content">
+                        <h4 class="ssc-title">{{ st.title || (st.from + ' → ' + st.to) }}</h4>
+                        <p class="ssc-desc">{{ st.desc || st.action }}</p>
+                      </div>
+                    </div>
+                    <div class="ssc-right" v-if="st.badge || st.latency">
+                      <span class="ssc-badge">{{ st.badge || st.latency }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- If Database ER Diagram (Diagram 4) -->
+              <div v-else-if="currentDiagramMeta?.entities" class="er-matrix-view">
+                <div class="seq-timeline-header">
+                  <span class="section-tag-kicker">RELATIONAL SCHEMA TOPOLOGY</span>
+                  <h3 class="seq-title">{{ activeDiagram.title }}</h3>
+                  <p class="seq-sub">{{ currentDiagramMeta.summary }}</p>
+                </div>
+
+                <div class="er-matrix-grid">
+                  <div v-for="ent in currentDiagramMeta.entities" :key="ent.name" class="card er-ent-card">
+                    <div class="eec-header">
+                      <span class="eec-icon">▦</span>
+                      <h4 class="eec-name"><code>{{ ent.name }}</code></h4>
+                      <span class="eec-badge">{{ ent.count }}</span>
+                    </div>
+                    <p class="eec-desc">{{ ent.role }}</p>
+                    <div class="eec-pk">
+                      <span class="pk-tag">PK</span> <code>{{ ent.pk }}</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <!-- Code Mode -->
+            <!-- MODE 2: FLOWCHART VECTOR SVG -->
+            <div v-show="diagViewMode === 'rendered'" class="diagram-render-box">
+              <div
+                v-if="activeDiagram.svg"
+                class="mermaid-svg-target"
+                :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }"
+                v-html="activeDiagram.svg"
+              ></div>
+              <div
+                v-else
+                ref="mermaidSvgContainer"
+                class="mermaid-svg-target"
+                :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }"
+              ></div>
+            </div>
+
+            <!-- MODE 3: MERMAID CODE -->
             <div v-show="diagViewMode === 'code'" class="diagram-code-box">
               <pre class="code-pre"><code>{{ activeDiagram.code }}</code></pre>
             </div>
@@ -883,6 +1180,7 @@
 <script setup>
 import { ref, computed, nextTick } from "vue";
 import { SYSTEM_DOCS_FALLBACK } from "../utils/systemDocsData.js";
+import { ARCHITECTURE_NODES, FLOW_PRESETS, DIAGRAM_METADATA } from "../utils/interactiveDiagramsData.js";
 
 // Dataset (100% Client-Side from docs/ Specifications — Zero Network / Database Dependencies)
 const docsData = SYSTEM_DOCS_FALLBACK;
@@ -985,7 +1283,10 @@ const availableTabs = [
 
 // Diagrams State
 const selectedDiagramIdx = ref(0);
-const diagViewMode = ref("rendered");
+const diagViewMode = ref("interactive");
+const activeFlowPreset = ref("all");
+const selectedNodeId = ref("fastapi");
+const selectedSequenceStep = ref(0);
 const mermaidRendering = ref(false);
 const mermaidSvgContainer = ref(null);
 
@@ -994,6 +1295,32 @@ const activeDiagram = computed(() => {
   if (!diags.length) return null;
   return diags[selectedDiagramIdx.value] || diags[0];
 });
+
+const currentDiagramMeta = computed(() => {
+  return DIAGRAM_METADATA[selectedDiagramIdx.value] || DIAGRAM_METADATA[0];
+});
+
+const filteredArchNodes = computed(() => {
+  if (activeFlowPreset.value === "all") return ARCHITECTURE_NODES;
+  return ARCHITECTURE_NODES.filter(n => n.flowTags.includes(activeFlowPreset.value));
+});
+
+const selectedNode = computed(() => {
+  return ARCHITECTURE_NODES.find(n => n.id === selectedNodeId.value) || ARCHITECTURE_NODES[0];
+});
+
+function selectNode(nodeId) {
+  selectedNodeId.value = nodeId;
+}
+
+function selectFlowPreset(presetId) {
+  activeFlowPreset.value = presetId;
+}
+
+function getNodeName(id) {
+  const n = ARCHITECTURE_NODES.find(node => node.id === id);
+  return n ? n.name : id;
+}
 
 // API Explorer Filter State
 const apiSearch = ref("");
@@ -1681,7 +2008,7 @@ async function renderActiveMermaid() {
 }
 
 /* ==========================================================================
-   TAB 3: MERMAID GALLERY STYLES
+   TAB 3: MERMAID GALLERY & INTERACTIVE ARCHITECTURE VISUALIZATIONS
    ========================================================================== */
 .diagram-gallery-card {
   padding: 28px;
@@ -1693,6 +2020,12 @@ async function renderActiveMermaid() {
   margin-bottom: 24px;
 }
 
+.diagrams-subtext {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
 .diag-pills-wrap {
   display: flex;
   flex-wrap: wrap;
@@ -1701,6 +2034,9 @@ async function renderActiveMermaid() {
 }
 
 .diag-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 7px 14px;
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
@@ -1709,47 +2045,633 @@ async function renderActiveMermaid() {
   font-weight: 600;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.diag-pill-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-alt);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .diag-pill-btn:hover {
   color: var(--primary);
   border-color: var(--primary);
+  background: var(--surface-alt);
 }
 
 .diag-pill-btn.active {
   background: var(--primary);
   color: #FFFFFF;
   border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.15);
+}
+
+.diag-pill-btn.active .diag-pill-num {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
 }
 
 .diagram-header-strip {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.dhs-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.diag-meta-type {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--accent);
 }
 
 .diag-display-title {
   font-family: var(--font-heading);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
   color: var(--primary);
-  margin: 0 0 4px 0;
+  margin: 0;
 }
 
-.diag-type-badge {
-  font-size: 0.75rem;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: rgba(4, 144, 124, 0.1);
-  color: var(--accent);
-  font-weight: 600;
+.diag-meta-summary {
+  font-size: 0.86rem;
+  color: var(--text-muted);
+  max-width: 650px;
+  line-height: 1.4;
+  margin-top: 4px;
 }
 
 .diag-view-controls {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Flow Preset Bar */
+.flow-preset-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.fp-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fp-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border);
+  background: #FFFFFF;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fp-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.fp-btn.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+  box-shadow: 0 2px 8px rgba(4, 144, 124, 0.25);
+}
+
+.fp-count {
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.fp-btn.active .fp-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* Flow Explanation Banner */
+.flow-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+  margin-bottom: 24px;
+}
+
+.fb-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fb-text {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.fb-badge {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Arch Tiers Container */
+.arch-tiers-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.arch-tier-block {
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.tier-label-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tl-title {
+  font-family: var(--font-heading);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.tl-sub {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.tier-cards-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+/* Arch Component Card */
+.arch-comp-card {
+  padding: 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: var(--shadow-card);
+}
+
+.arch-comp-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(4, 144, 124, 0.12);
+}
+
+.arch-comp-card.card-selected {
+  border-color: var(--accent);
+  background: rgba(4, 144, 124, 0.03);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.acc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.acc-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--primary);
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.acc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.acc-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+}
+
+.acc-pill.pill-subtle {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.status-dot-pulse {
+  color: var(--success);
+  font-size: 12px;
+}
+
+/* Node Inspector Card */
+.node-inspector-card {
+  padding: 24px;
+  border: 2px solid var(--accent);
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-top: 12px;
+}
+
+.nic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border-light);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nic-title {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--primary);
+  margin: 4px 0 6px 0;
+}
+
+.nic-header-tags {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nic-pill {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+}
+
+.nic-pill.pill-primary {
+  background: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+
+.nic-desc {
+  font-size: 0.92rem;
+  color: var(--text-main);
+  line-height: 1.55;
+  margin-bottom: 18px;
+}
+
+.nic-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  background: var(--surface-alt);
+  padding: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.nic-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nb-lbl {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.nb-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.conn-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.conn-tag.in-tag {
+  background: #E0E7FF;
+  color: #3730A3;
+}
+
+.conn-tag.out-tag {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.file-code-tag {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  padding: 2px 6px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--primary);
+}
+
+/* Sequence Lifecycle Timeline */
+.sequence-lifecycle-view {
+  padding: 10px 0;
+}
+
+.seq-timeline-header {
+  margin-bottom: 20px;
+}
+
+.seq-title {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  color: var(--primary);
+  margin: 4px 0 4px 0;
+}
+
+.seq-sub {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.seq-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seq-step-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.seq-step-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-alt);
+}
+
+.seq-step-card.seq-step-active {
+  border-color: var(--accent);
+  border-left: 4px solid var(--accent);
+  background: rgba(4, 144, 124, 0.04);
+}
+
+.ssc-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.ssc-num {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.ssc-title {
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  color: var(--primary);
+  margin: 0 0 4px 0;
+}
+
+.ssc-desc {
+  font-size: 0.86rem;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+.ssc-badge {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--accent);
+}
+
+/* ER Matrix View */
+.er-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.er-ent-card {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #FFFFFF;
+}
+
+.eec-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.eec-icon {
+  color: var(--accent);
+  font-size: 16px;
+}
+
+.eec-name {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  color: var(--primary);
+  margin: 0;
+  flex: 1;
+}
+
+.eec-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  color: var(--text-muted);
+}
+
+.eec-desc {
+  font-size: 0.85rem;
+  color: var(--text-main);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.eec-pk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Deep Styles for SVG Diagram Flowchart Mode */
+:deep(.mermaid-svg-target svg) {
+  width: 100%;
+  height: auto;
+  font-family: var(--font-body) !important;
+}
+
+:deep(.mermaid-svg-target .cluster rect) {
+  fill: #F8FAFC !important;
+  stroke: rgba(22, 16, 87, 0.25) !important;
+  stroke-width: 1.5px !important;
+  rx: 8px !important;
+  ry: 8px !important;
+}
+
+:deep(.mermaid-svg-target .cluster-label span),
+:deep(.mermaid-svg-target .cluster-label text) {
+  fill: #161057 !important;
+  color: #161057 !important;
+  font-family: var(--font-heading) !important;
+  font-weight: 700 !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+}
+
+:deep(.mermaid-svg-target .node rect),
+:deep(.mermaid-svg-target .node circle),
+:deep(.mermaid-svg-target .node ellipse),
+:deep(.mermaid-svg-target .node polygon),
+:deep(.mermaid-svg-target .node path) {
+  fill: #FFFFFF !important;
+  stroke: #161057 !important;
+  stroke-width: 1.5px !important;
+  rx: 6px !important;
+  ry: 6px !important;
+  filter: drop-shadow(0 2px 5px rgba(22, 16, 87, 0.07));
+  transition: all 0.2s ease;
+}
+
+:deep(.mermaid-svg-target .node:hover rect),
+:deep(.mermaid-svg-target .node:hover circle),
+:deep(.mermaid-svg-target .node:hover path) {
+  fill: rgba(4, 144, 124, 0.08) !important;
+  stroke: #04907C !important;
+  stroke-width: 2px !important;
+  cursor: pointer;
+}
+
+:deep(.mermaid-svg-target .node .label text),
+:deep(.mermaid-svg-target .node .label span) {
+  fill: #161057 !important;
+  color: #161057 !important;
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+:deep(.mermaid-svg-target .edgePath .path) {
+  stroke: #04907C !important;
+  stroke-width: 2px !important;
+}
+
+:deep(.mermaid-svg-target .marker path),
+:deep(.mermaid-svg-target .arrowheadPath) {
+  fill: #04907C !important;
+  stroke: #04907C !important;
+}
+
+:deep(.mermaid-svg-target .edgeLabel) {
+  background-color: #FFFFFF !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  border: 1px solid rgba(4, 144, 124, 0.25) !important;
+}
+
+:deep(.mermaid-svg-target .edgeLabel span) {
+  color: #04907C !important;
+  font-family: var(--font-mono) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
 }
 
 .zoom-controls {
@@ -1814,7 +2736,7 @@ async function renderActiveMermaid() {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 32px 20px;
-  min-height: 400px;
+  min-height: 440px;
   display: flex;
   align-items: center;
   justify-content: center;
