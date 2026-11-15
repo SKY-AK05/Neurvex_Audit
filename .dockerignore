@@ -18,9 +18,8 @@ local.settings.json
 .git/
 .gitignore
 
-# Docs
-docs/
-*.md
+# Docs (needed for Super Admin Architecture & Specs Portal)
+!docs/
 
 # Azure Functions (no longer used)
 function_app.py

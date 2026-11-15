@@ -18,6 +18,7 @@
   "dependencies": {
     "@azure/msal-browser": "^5.11.0",
     "chart.js": "^4.5.1",
+    "mermaid": "^11.17.2",
     "vue-router": "^4.6.4"
   }
 }

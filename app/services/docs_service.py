@@ -2,7 +2,23 @@ import os
 import json
 import re
 
-DOCS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "docs"))
+def find_docs_dir():
+    candidates = [
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "docs")),
+        "/app/docs",
+        os.path.abspath("docs"),
+        os.path.join(os.getcwd(), "docs"),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "docs"))
+    ]
+    for c in candidates:
+        if os.path.isdir(c) and (os.path.exists(os.path.join(c, "inventory.json")) or os.path.exists(os.path.join(c, "REBUILD.md"))):
+            return c
+    for c in candidates:
+        if os.path.isdir(c):
+            return c
+    return candidates[0]
+
+DOCS_DIR = find_docs_dir()
 
 def parse_markdown_table(text: str):
     rows = []

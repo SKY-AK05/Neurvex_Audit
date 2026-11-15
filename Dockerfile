@@ -50,6 +50,9 @@ COPY scripts/migrate.py scripts/migrate.py
 # Copy migrations SQL files
 COPY migrations/ migrations/
 
+# Copy documentation suite for Super Admin System Specs portal
+COPY docs/ docs/
+
 # Copy built Vue dist from Stage 1
 COPY --from=frontend-build /frontend/dist /app/dist
 

@@ -304,10 +304,18 @@
             <div class="diagram-header-strip">
               <div>
                 <h3 class="diag-display-title">{{ activeDiagram.title }}</h3>
-                <span class="diag-type-badge">Mermaid Specification</span>
+                <span class="diag-type-badge">Mermaid &amp; SVG Specification</span>
               </div>
 
               <div class="diag-view-controls">
+                <!-- Zoom Controls -->
+                <div class="zoom-controls" v-if="diagViewMode === 'rendered'">
+                  <button type="button" class="btn-zoom" @click="zoomLevel = Math.max(0.6, zoomLevel - 0.15)" title="Zoom Out">−</button>
+                  <span class="zoom-val">{{ Math.round(zoomLevel * 100) }}%</span>
+                  <button type="button" class="btn-zoom" @click="zoomLevel = Math.min(2.5, zoomLevel + 0.15)" title="Zoom In">+</button>
+                  <button type="button" class="btn-zoom-reset" @click="zoomLevel = 1.0" title="Reset Zoom">Reset</button>
+                </div>
+
                 <button
                   type="button"
                   class="btn btn-sm"
@@ -332,11 +340,8 @@
 
             <!-- Visual Flow Renderer -->
             <div v-show="diagViewMode === 'rendered'" class="diagram-render-box">
-              <div v-if="mermaidRendering" class="mermaid-loading">
-                <div class="loading-spinner"></div>
-                <span>Rendering diagram…</span>
-              </div>
-              <div ref="mermaidSvgContainer" class="mermaid-svg-target"></div>
+              <div v-if="activeDiagram.svg" class="mermaid-svg-target" :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }" v-html="activeDiagram.svg"></div>
+              <div v-else ref="mermaidSvgContainer" class="mermaid-svg-target" :style="{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center', transition: 'transform 0.15s ease' }"></div>
             </div>
 
             <!-- Code Mode -->
@@ -852,13 +857,15 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from "vue";
 import { getSystemDocs } from "../api.js";
+import { SYSTEM_DOCS_FALLBACK } from "../utils/systemDocsData.js";
 
 // State
-const loading = ref(true);
+const loading = ref(false);
 const error = ref(null);
-const docsData = ref(null);
+const docsData = ref(SYSTEM_DOCS_FALLBACK);
 const currentTab = ref("overview");
 const copyStatus = ref(null);
+const zoomLevel = ref(1.0);
 
 // Sub-Tab Navigation
 const availableTabs = [
@@ -879,8 +886,9 @@ const mermaidRendering = ref(false);
 const mermaidSvgContainer = ref(null);
 
 const activeDiagram = computed(() => {
-  if (!docsData.value?.diagrams?.length) return null;
-  return docsData.value.diagrams[selectedDiagramIdx.value] || docsData.value.diagrams[0];
+  const diags = docsData.value?.diagrams?.length ? docsData.value.diagrams : SYSTEM_DOCS_FALLBACK.diagrams;
+  if (!diags?.length) return null;
+  return diags[selectedDiagramIdx.value] || diags[0];
 });
 
 // API Explorer Filter State
@@ -1059,8 +1067,11 @@ function copyCode(text) {
 // Diagram Selection & Mermaid Rendering
 async function selectDiagram(idx) {
   selectedDiagramIdx.value = idx;
+  zoomLevel.value = 1.0;
   await nextTick();
-  renderActiveMermaid();
+  if (!activeDiagram.value?.svg) {
+    renderActiveMermaid();
+  }
 }
 
 async function renderActiveMermaid() {
@@ -1069,10 +1080,9 @@ async function renderActiveMermaid() {
   mermaidSvgContainer.value.innerHTML = "";
 
   try {
-    // Dynamic import of Mermaid from CDN
     let mermaid = window.mermaid;
     if (!mermaid) {
-      const module = await import("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs");
+      const module = await import("mermaid");
       mermaid = module.default;
       mermaid.initialize({
         startOnLoad: false,
@@ -1109,12 +1119,26 @@ async function fetchDocs(force = false) {
   loading.value = true;
   error.value = null;
   try {
-    docsData.value = await getSystemDocs();
+    const live = await getSystemDocs();
+    if (live && Array.isArray(live.diagrams) && live.diagrams.length > 0) {
+      docsData.value = {
+        ...SYSTEM_DOCS_FALLBACK,
+        ...live,
+        diagrams: live.diagrams.map((d, i) => ({
+          ...d,
+          svg: d.svg || SYSTEM_DOCS_FALLBACK.diagrams?.[i]?.svg || ""
+        }))
+      };
+    } else {
+      docsData.value = SYSTEM_DOCS_FALLBACK;
+    }
     await nextTick();
-    renderActiveMermaid();
+    if (!activeDiagram.value?.svg) {
+      renderActiveMermaid();
+    }
   } catch (err) {
-    console.error("Failed to load documentation:", err);
-    error.value = err.message || "Failed to load documentation from /api/admin/docs";
+    console.warn("Using offline bundled docs data:", err);
+    docsData.value = SYSTEM_DOCS_FALLBACK;
   } finally {
     loading.value = false;
   }
@@ -1649,6 +1673,63 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-alt, #F8FAFC);
+  padding: 3px 8px;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid var(--border, #E2E8F0);
+  margin-right: 6px;
+}
+
+.btn-zoom {
+  background: #FFFFFF;
+  border: 1px solid var(--border, #CBD5E1);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-main, #1E293B);
+  line-height: 1;
+  transition: all 0.15s ease;
+}
+
+.btn-zoom:hover {
+  background: var(--surface-alt, #F1F5F9);
+  border-color: var(--primary, #161057);
+}
+
+.zoom-val {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 600;
+  color: var(--text-muted, #64748B);
+  min-width: 38px;
+  text-align: center;
+}
+
+.btn-zoom-reset {
+  background: transparent;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--accent, #04907C);
+  text-decoration: underline;
+  padding: 0 4px;
+  font-weight: 600;
+}
+
+.btn-zoom-reset:hover {
+  color: var(--accent-hover, #037A69);
 }
 
 .diagram-render-box {
