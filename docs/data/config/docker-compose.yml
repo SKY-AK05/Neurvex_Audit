@@ -1,0 +1,50 @@
+version: "3.9"
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# NOTE: This docker-compose.yml manages ONLY the orchvate-audit container (port 3600)
+# 
+# The "niwi" container (port 8080) is deployed MANUALLY - see DEPLOY-NIWI.md
+# ═══════════════════════════════════════════════════════════════════════════════
+
+services:
+
+  # ── Single app container (nginx + uvicorn) ────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Optional at build time; if omitted, set ENTRA_* below and use runtime /api/auth/config
+        VITE_MSAL_CLIENT_ID: ${VITE_MSAL_CLIENT_ID:-}
+        VITE_MSAL_TENANT_ID: ${VITE_MSAL_TENANT_ID:-}
+    container_name: orchvate-audit
+    ports:
+      - "3600:80"
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Kolkata
+      # Required for admin "Sign in with Microsoft" when VITE_MSAL_* were not passed at build
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:-}
+      ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:-}
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  # ── PostgreSQL (local dev only — use Azure PostgreSQL Flexible Server in prod) ──
+  db:
+    image: postgres:16-alpine
+    container_name: orchvate-audit-db
+    environment:
+      POSTGRES_DB: nd_audit
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: localpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./create_table.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+volumes:
+  pgdata:

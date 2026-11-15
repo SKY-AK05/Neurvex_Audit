@@ -2033,3 +2033,16 @@ def get_super_admin_dashboard_endpoint(
     require_super_admin(request)
     from app.services.dashboard_service import get_dashboard_snapshot
     return get_dashboard_snapshot(force_refresh=refresh)
+
+
+# ---------------------------------------------------------------------------
+# Super Admin System Documentation & Reconstruction Specs
+# Strictly accessible only to users with the Super Admin role.
+# Returns comprehensive architectural and PRD specifications from docs/.
+# ---------------------------------------------------------------------------
+
+@router.get("/admin/docs")
+def get_super_admin_docs_endpoint(request: Request):
+    require_super_admin(request)
+    from app.services.docs_service import get_system_docs_data
+    return get_system_docs_data()

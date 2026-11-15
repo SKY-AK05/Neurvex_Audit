@@ -30,6 +30,9 @@
             <router-link v-if="isSuper" to="/admin/super-dashboard" class="top-nav-link" :class="{ active: route.path === '/admin/super-dashboard' }">
               Engine
             </router-link>
+            <router-link v-if="isSuper" to="/admin/docs" class="top-nav-link" :class="{ active: route.path.startsWith('/admin/docs') }">
+              System Specs
+            </router-link>
           </nav>
 
           <!-- Right Controls: Powered by, Notification Alerts, User Profile, Mobile Menu -->
@@ -92,6 +95,10 @@
                 <router-link v-if="isSuper" to="/admin/super-dashboard" class="profile-item" @click="profileOpen = false">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect><rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect><line x1="6" y1="6" x2="6.01" y2="6"></line><line x1="6" y1="18" x2="6.01" y2="18"></line></svg>
                   Platform Engine
+                </router-link>
+                <router-link v-if="isSuper" to="/admin/docs" class="profile-item" @click="profileOpen = false">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+                  System Specs &amp; Architecture
                 </router-link>
                 <router-link v-if="isSuper" to="/admin/users" class="profile-item" @click="profileOpen = false">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>

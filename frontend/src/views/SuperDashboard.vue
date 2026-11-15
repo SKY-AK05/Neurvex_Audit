@@ -40,6 +40,16 @@
             </svg>
             <span>{{ loading ? 'Recomputing…' : 'Force Refresh' }}</span>
           </button>
+
+          <router-link
+            to="/admin/docs"
+            class="hero-search-btn"
+            style="text-decoration: none; display: inline-flex; align-items: center; gap: 6px; background: #FFFFFF; color: var(--primary); border: 1px solid var(--border);"
+            title="Inspect System Architecture, Schemas & Feature PRDs"
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <span>System Specs →</span>
+          </router-link>
         </div>
       </div>
     </section>

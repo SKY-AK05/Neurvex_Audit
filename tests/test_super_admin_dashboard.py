@@ -186,3 +186,35 @@ def test_rate_limits_endpoint_strictly_requires_super_admin():
         res3 = client.get("/api/manage/settings/rate-limits", headers={"Authorization": "Bearer local_bypass:admin@test.com"})
         assert res3.status_code == 200
         assert res3.json()["sync_status"] == "SYNCHRONIZED"
+
+
+def test_docs_endpoint_strictly_requires_super_admin():
+    """Verify /api/admin/docs strictly rejects unauthenticated and normal admins, and returns specs to super admin."""
+    from fastapi.testclient import TestClient
+    from app.main import app
+
+    client = TestClient(app)
+
+    # 1. Unauthenticated -> 401
+    res1 = client.get("/api/admin/docs")
+    assert res1.status_code == 401
+
+    # 2. Normal Admin (role="admin") -> 403 Forbidden
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "admin"}):
+        res2 = client.get("/api/admin/docs", headers={"Authorization": "Bearer local_bypass:admin@test.com"})
+        assert res2.status_code == 403
+        assert "Super administrator privileges required" in res2.json()["detail"]
+
+    # 3. Super Admin (role="super") -> 200 OK with full parsed docs
+    with patch("app.core.authorization.get_user_from_request", return_value={"email": "admin@test.com", "role": "super"}):
+        res3 = client.get("/api/admin/docs", headers={"Authorization": "Bearer local_bypass:admin@test.com"})
+        assert res3.status_code == 200
+        data = res3.json()
+        assert "overview" in data
+        assert "interfaces" in data
+        assert "data_model" in data
+        assert "features" in data
+        assert "diagrams" in data
+        assert len(data["features"]) == 13
+        assert len(data["diagrams"]) == 9
+

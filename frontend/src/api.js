@@ -430,3 +430,10 @@ export async function getSuperAdminDashboard(forceRefresh = false) {
   });
   return handleResponse(res);
 }
+
+export async function getSystemDocs() {
+  const res = await fetch(`${API_BASE}/admin/docs`, {
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(res);
+}

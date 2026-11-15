@@ -1,0 +1,5315 @@
+{
+  "generatedWith": "reconstruct@2.29.16",
+  "generation": {
+    "mode": "preserve",
+    "level": "complex",
+    "fidelity": "embed",
+    "granularity": "coarse"
+  },
+  "repoName": "NIWI",
+  "stack": {
+    "languages": [
+      "Python",
+      "Vue",
+      "JavaScript"
+    ],
+    "primaryLanguage": "Python",
+    "frameworks": [
+      "FastAPI"
+    ],
+    "libraries": [
+      "Playwright"
+    ],
+    "packageManagers": [
+      "npm",
+      "pip"
+    ],
+    "hasTypeScript": false
+  },
+  "fileCount": 236,
+  "totalLines": 62498,
+  "files": [
+    {
+      "path": ".dockerignore",
+      "ext": "",
+      "size": 506,
+      "lines": 41,
+      "category": "other",
+      "binary": false,
+      "hash": "bd2da831849660c0"
+    },
+    {
+      "path": ".env.example",
+      "ext": ".example",
+      "size": 2039,
+      "lines": 47,
+      "category": "config",
+      "binary": false,
+      "hash": "22e224d9e9489317"
+    },
+    {
+      "path": ".github/workflows/deploy.yml",
+      "ext": ".yml",
+      "size": 1361,
+      "lines": 40,
+      "category": "data",
+      "binary": false,
+      "hash": "162cad5c01b6c8ac"
+    },
+    {
+      "path": ".gitignore",
+      "ext": "",
+      "size": 2677,
+      "lines": 122,
+      "category": "other",
+      "binary": false,
+      "hash": "7f8c90243852baaf"
+    },
+    {
+      "path": "Dockerfile",
+      "ext": "",
+      "size": 2364,
+      "lines": 72,
+      "category": "config",
+      "binary": false,
+      "hash": "7e250f63f85a7034"
+    },
+    {
+      "path": "Nexora_Technologies_100_Employee_Synthetic_Audit_Data.xlsx",
+      "ext": ".xlsx",
+      "size": 39007,
+      "lines": 0,
+      "category": "other",
+      "binary": true,
+      "hash": "cde3929aba6ea02b"
+    },
+    {
+      "path": "README.md",
+      "ext": ".md",
+      "size": 8283,
+      "lines": 173,
+      "category": "doc",
+      "binary": false,
+      "hash": "163a136e8cd1271f"
+    },
+    {
+      "path": "app/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "code",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/api/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "code",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/api/auth.py",
+      "ext": ".py",
+      "size": 107,
+      "lines": 4,
+      "category": "code",
+      "binary": false,
+      "hash": "9ee7346a75e79930"
+    },
+    {
+      "path": "app/api/drafts.py",
+      "ext": ".py",
+      "size": 7526,
+      "lines": 181,
+      "category": "code",
+      "binary": false,
+      "hash": "a80a517872d058db"
+    },
+    {
+      "path": "app/api/form_builder.py",
+      "ext": ".py",
+      "size": 12010,
+      "lines": 266,
+      "category": "code",
+      "binary": false,
+      "hash": "ced0b47b39e75c9f"
+    },
+    {
+      "path": "app/api/org.py",
+      "ext": ".py",
+      "size": 7271,
+      "lines": 178,
+      "category": "code",
+      "binary": false,
+      "hash": "475231abbf9cff18"
+    },
+    {
+      "path": "app/api/orgs.py",
+      "ext": ".py",
+      "size": 46224,
+      "lines": 1058,
+      "category": "code",
+      "binary": false,
+      "hash": "3bba09fd5a4a4f20"
+    },
+    {
+      "path": "app/api/public.py",
+      "ext": ".py",
+      "size": 8889,
+      "lines": 230,
+      "category": "code",
+      "binary": false,
+      "hash": "8fed1493eb0fbf3f"
+    },
+    {
+      "path": "app/api/routes.py",
+      "ext": ".py",
+      "size": 84349,
+      "lines": 2035,
+      "category": "code",
+      "binary": false,
+      "hash": "397e9e53dd6b0e5a"
+    },
+    {
+      "path": "app/core/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "code",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/core/authorization.py",
+      "ext": ".py",
+      "size": 5780,
+      "lines": 160,
+      "category": "code",
+      "binary": false,
+      "hash": "52a9322c14d79878"
+    },
+    {
+      "path": "app/core/config.py",
+      "ext": ".py",
+      "size": 9012,
+      "lines": 194,
+      "category": "code",
+      "binary": false,
+      "hash": "9d94cd40a397fb2b"
+    },
+    {
+      "path": "app/core/database.py",
+      "ext": ".py",
+      "size": 15367,
+      "lines": 397,
+      "category": "code",
+      "binary": false,
+      "hash": "576d8d0b669d0a0b"
+    },
+    {
+      "path": "app/core/keyvault.py",
+      "ext": ".py",
+      "size": 6577,
+      "lines": 171,
+      "category": "code",
+      "binary": false,
+      "hash": "99dfc556e2fe1728"
+    },
+    {
+      "path": "app/core/limiter.py",
+      "ext": ".py",
+      "size": 124,
+      "lines": 4,
+      "category": "code",
+      "binary": false,
+      "hash": "93e5c5d3cf4d0bad"
+    },
+    {
+      "path": "app/core/security.py",
+      "ext": ".py",
+      "size": 11013,
+      "lines": 248,
+      "category": "code",
+      "binary": false,
+      "hash": "6bcc1c5621dd3ac7"
+    },
+    {
+      "path": "app/core/service_bus.py",
+      "ext": ".py",
+      "size": 6746,
+      "lines": 183,
+      "category": "code",
+      "binary": false,
+      "hash": "63b11db3937b692d"
+    },
+    {
+      "path": "app/main.py",
+      "ext": ".py",
+      "size": 7238,
+      "lines": 180,
+      "category": "code",
+      "binary": false,
+      "hash": "51619efd1f977eb9"
+    },
+    {
+      "path": "app/models/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "schema",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/models/audit.py",
+      "ext": ".py",
+      "size": 1603,
+      "lines": 41,
+      "category": "schema",
+      "binary": false,
+      "hash": "586b7c04d7fa19d8"
+    },
+    {
+      "path": "app/models/form_builder.py",
+      "ext": ".py",
+      "size": 1033,
+      "lines": 38,
+      "category": "schema",
+      "binary": false,
+      "hash": "d73010f4ec87e4ce"
+    },
+    {
+      "path": "app/models/user.py",
+      "ext": ".py",
+      "size": 40,
+      "lines": 3,
+      "category": "schema",
+      "binary": false,
+      "hash": "279ab8cf42e91a8e"
+    },
+    {
+      "path": "app/services/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "code",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/services/ai_service.py",
+      "ext": ".py",
+      "size": 139,
+      "lines": 4,
+      "category": "code",
+      "binary": false,
+      "hash": "c7971b69892098c1"
+    },
+    {
+      "path": "app/services/audit_service.py",
+      "ext": ".py",
+      "size": 1540,
+      "lines": 47,
+      "category": "code",
+      "binary": false,
+      "hash": "98c7bf1d205cf955"
+    },
+    {
+      "path": "app/services/crm_service.py",
+      "ext": ".py",
+      "size": 10014,
+      "lines": 244,
+      "category": "code",
+      "binary": false,
+      "hash": "495313a3909ab7a7"
+    },
+    {
+      "path": "app/services/dashboard_service.py",
+      "ext": ".py",
+      "size": 13170,
+      "lines": 314,
+      "category": "code",
+      "binary": false,
+      "hash": "7f12ede5cb876e93"
+    },
+    {
+      "path": "app/services/email_policy_service.py",
+      "ext": ".py",
+      "size": 5227,
+      "lines": 187,
+      "category": "code",
+      "binary": false,
+      "hash": "76784f845a293777"
+    },
+    {
+      "path": "app/services/filter_service.py",
+      "ext": ".py",
+      "size": 16921,
+      "lines": 489,
+      "category": "code",
+      "binary": false,
+      "hash": "424066bb01b9c041"
+    },
+    {
+      "path": "app/services/org_cache_service.py",
+      "ext": ".py",
+      "size": 14216,
+      "lines": 367,
+      "category": "code",
+      "binary": false,
+      "hash": "a61e2a6561f81213"
+    },
+    {
+      "path": "app/services/org_scoring_service.py",
+      "ext": ".py",
+      "size": 9613,
+      "lines": 225,
+      "category": "code",
+      "binary": false,
+      "hash": "e22b198ce4d895c7"
+    },
+    {
+      "path": "app/services/outbox_service.py",
+      "ext": ".py",
+      "size": 15318,
+      "lines": 361,
+      "category": "code",
+      "binary": false,
+      "hash": "c8e4eb13032dbacb"
+    },
+    {
+      "path": "app/services/rate_limit_service.py",
+      "ext": ".py",
+      "size": 19021,
+      "lines": 466,
+      "category": "code",
+      "binary": false,
+      "hash": "4fc473d8d00a90d0"
+    },
+    {
+      "path": "app/services/scoring_service.py",
+      "ext": ".py",
+      "size": 37242,
+      "lines": 665,
+      "category": "code",
+      "binary": false,
+      "hash": "69f5082bb8bc27a2"
+    },
+    {
+      "path": "app/services/settings_service.py",
+      "ext": ".py",
+      "size": 24287,
+      "lines": 581,
+      "category": "code",
+      "binary": false,
+      "hash": "ac3430466012cc54"
+    },
+    {
+      "path": "app/services/token_service.py",
+      "ext": ".py",
+      "size": 14750,
+      "lines": 345,
+      "category": "code",
+      "binary": false,
+      "hash": "ca796f86b4b0bd9b"
+    },
+    {
+      "path": "app/services/user_service.py",
+      "ext": ".py",
+      "size": 4054,
+      "lines": 108,
+      "category": "code",
+      "binary": false,
+      "hash": "41a86a1c7992cb10"
+    },
+    {
+      "path": "app/services/worker_tracker.py",
+      "ext": ".py",
+      "size": 3619,
+      "lines": 91,
+      "category": "code",
+      "binary": false,
+      "hash": "160d7878a9d281d6"
+    },
+    {
+      "path": "app/tasks/job_worker.py",
+      "ext": ".py",
+      "size": 15646,
+      "lines": 370,
+      "category": "code",
+      "binary": false,
+      "hash": "f53d5c32576b9d5b"
+    },
+    {
+      "path": "app/tasks/service_bus_worker.py",
+      "ext": ".py",
+      "size": 36167,
+      "lines": 797,
+      "category": "code",
+      "binary": false,
+      "hash": "961f60bb69e8ec95"
+    },
+    {
+      "path": "app/templates/dashboard.html",
+      "ext": ".html",
+      "size": 21623,
+      "lines": 409,
+      "category": "other",
+      "binary": false,
+      "hash": "a0949e5baa50d0c6"
+    },
+    {
+      "path": "app/templates/form.html",
+      "ext": ".html",
+      "size": 32163,
+      "lines": 549,
+      "category": "other",
+      "binary": false,
+      "hash": "f474f4833f6370a4"
+    },
+    {
+      "path": "app/utils/__init__.py",
+      "ext": ".py",
+      "size": 0,
+      "lines": 0,
+      "category": "code",
+      "binary": false,
+      "hash": "e3b0c44298fc1c14"
+    },
+    {
+      "path": "app/utils/helpers.py",
+      "ext": ".py",
+      "size": 768,
+      "lines": 31,
+      "category": "code",
+      "binary": false,
+      "hash": "40833b6859a3a91b"
+    },
+    {
+      "path": "app/utils/logger.py",
+      "ext": ".py",
+      "size": 271,
+      "lines": 12,
+      "category": "code",
+      "binary": false,
+      "hash": "87b7fd491d80089a"
+    },
+    {
+      "path": "app/utils/validators.py",
+      "ext": ".py",
+      "size": 702,
+      "lines": 20,
+      "category": "code",
+      "binary": false,
+      "hash": "e92640f0a85563b1"
+    },
+    {
+      "path": "deploy.sh",
+      "ext": ".sh",
+      "size": 5882,
+      "lines": 183,
+      "category": "code",
+      "binary": false,
+      "hash": "d2f5508c7446fd72"
+    },
+    {
+      "path": "docker-compose.yml",
+      "ext": ".yml",
+      "size": 2000,
+      "lines": 50,
+      "category": "config",
+      "binary": false,
+      "hash": "3184e0421d1e1545"
+    },
+    {
+      "path": "docker-entrypoint.sh",
+      "ext": ".sh",
+      "size": 2035,
+      "lines": 54,
+      "category": "code",
+      "binary": false,
+      "hash": "13c9caea1d59470a"
+    },
+    {
+      "path": "frontend/.dockerignore",
+      "ext": "",
+      "size": 59,
+      "lines": 7,
+      "category": "other",
+      "binary": false,
+      "hash": "2214b130148ce273"
+    },
+    {
+      "path": "frontend/.env.example",
+      "ext": ".example",
+      "size": 299,
+      "lines": 9,
+      "category": "config",
+      "binary": false,
+      "hash": "2d6866e1e9479470"
+    },
+    {
+      "path": "frontend/.gitignore",
+      "ext": "",
+      "size": 312,
+      "lines": 28,
+      "category": "other",
+      "binary": false,
+      "hash": "2eb0626643d4ac5d"
+    },
+    {
+      "path": "frontend/Dockerfile",
+      "ext": "",
+      "size": 1295,
+      "lines": 36,
+      "category": "config",
+      "binary": false,
+      "hash": "ca4287684ce7cca3"
+    },
+    {
+      "path": "frontend/auth.html",
+      "ext": ".html",
+      "size": 839,
+      "lines": 21,
+      "category": "other",
+      "binary": false,
+      "hash": "cc8ec42616082fe7"
+    },
+    {
+      "path": "frontend/index.html",
+      "ext": ".html",
+      "size": 1232,
+      "lines": 17,
+      "category": "other",
+      "binary": false,
+      "hash": "d630722f095a69c3"
+    },
+    {
+      "path": "frontend/nginx.conf",
+      "ext": ".conf",
+      "size": 1689,
+      "lines": 50,
+      "category": "other",
+      "binary": false,
+      "hash": "c7235659d6df0336"
+    },
+    {
+      "path": "frontend/package.json",
+      "ext": ".json",
+      "size": 476,
+      "lines": 23,
+      "category": "config",
+      "binary": false,
+      "hash": "9bf0dc6ddd1c0197"
+    },
+    {
+      "path": "frontend/public/creative-minds.png",
+      "ext": ".png",
+      "size": 1346400,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "1db8f79d4ce528de"
+    },
+    {
+      "path": "frontend/public/email_banner.png",
+      "ext": ".png",
+      "size": 607704,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "e43f6684cd674c67"
+    },
+    {
+      "path": "frontend/public/favicon.png",
+      "ext": ".png",
+      "size": 14846,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5e666abf19662f13"
+    },
+    {
+      "path": "frontend/public/favicon.svg",
+      "ext": ".svg",
+      "size": 9522,
+      "lines": 1,
+      "category": "other",
+      "binary": false,
+      "hash": "61bc9a161de58248"
+    },
+    {
+      "path": "frontend/public/icons.svg",
+      "ext": ".svg",
+      "size": 5055,
+      "lines": 24,
+      "category": "other",
+      "binary": false,
+      "hash": "7ca2d67c9c3aebf5"
+    },
+    {
+      "path": "frontend/public/images/AI Brain Hub with Flowing Icon Streams.png",
+      "ext": ".png",
+      "size": 1719503,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "b3514ea3c24d08cd"
+    },
+    {
+      "path": "frontend/public/images/Creative Minds in Bloom.png",
+      "ext": ".png",
+      "size": 1346400,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "1db8f79d4ce528de"
+    },
+    {
+      "path": "frontend/public/images/Picture1.png",
+      "ext": ".png",
+      "size": 729382,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "8637f93a1e5ed032"
+    },
+    {
+      "path": "frontend/public/images/niwi_clipart_staggered_animation.mp4",
+      "ext": ".mp4",
+      "size": 1484178,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "55a7818c85d5eff8"
+    },
+    {
+      "path": "frontend/public/logo-dark.png",
+      "ext": ".png",
+      "size": 35076,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "77016de4a837149d"
+    },
+    {
+      "path": "frontend/public/logo-light.png",
+      "ext": ".png",
+      "size": 41269,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5a631b07b55087c6"
+    },
+    {
+      "path": "frontend/public/logo.png",
+      "ext": ".png",
+      "size": 45367,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "8d8907bb0aff65b4"
+    },
+    {
+      "path": "frontend/public/logo_orchvate.png",
+      "ext": ".png",
+      "size": 102299,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "655e160f2b186eb9"
+    },
+    {
+      "path": "frontend/public/logonew.png",
+      "ext": ".png",
+      "size": 13255,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "9cf26976246290c9"
+    },
+    {
+      "path": "frontend/public/logonew1.png",
+      "ext": ".png",
+      "size": 14846,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5e666abf19662f13"
+    },
+    {
+      "path": "frontend/public/niwi_clipart_staggered_animation.mp4",
+      "ext": ".mp4",
+      "size": 1484178,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "55a7818c85d5eff8"
+    },
+    {
+      "path": "frontend/public/niwi_video_preview.png",
+      "ext": ".png",
+      "size": 1346400,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "1db8f79d4ce528de"
+    },
+    {
+      "path": "frontend/public/niwi_why_this_matters_natural_preview.png",
+      "ext": ".png",
+      "size": 453445,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "fa5a3f4f0328fbbc"
+    },
+    {
+      "path": "frontend/public/niwi_why_this_matters_transparent_with_color_blobs.png",
+      "ext": ".png",
+      "size": 2109387,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5e07d942b58fbb87"
+    },
+    {
+      "path": "frontend/public/why-matters-illustration.png",
+      "ext": ".png",
+      "size": 1245782,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "8b273a6879594a9e"
+    },
+    {
+      "path": "frontend/src/App.vue",
+      "ext": ".vue",
+      "size": 32952,
+      "lines": 1037,
+      "category": "code",
+      "binary": false,
+      "hash": "1aa52fe389c47c35"
+    },
+    {
+      "path": "frontend/src/api.js",
+      "ext": ".js",
+      "size": 12255,
+      "lines": 432,
+      "category": "code",
+      "binary": false,
+      "hash": "1435dd90f7e86017"
+    },
+    {
+      "path": "frontend/src/assets/hero.png",
+      "ext": ".png",
+      "size": 13057,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "881ffbcaafc212e4"
+    },
+    {
+      "path": "frontend/src/authConfig.js",
+      "ext": ".js",
+      "size": 3349,
+      "lines": 96,
+      "category": "code",
+      "binary": false,
+      "hash": "211e953a3265e2a8"
+    },
+    {
+      "path": "frontend/src/components/AnimatedSelect.vue",
+      "ext": ".vue",
+      "size": 8205,
+      "lines": 373,
+      "category": "code",
+      "binary": false,
+      "hash": "f0960114afdb8ba3"
+    },
+    {
+      "path": "frontend/src/components/RichEditor.vue",
+      "ext": ".vue",
+      "size": 7087,
+      "lines": 269,
+      "category": "code",
+      "binary": false,
+      "hash": "875e4e87da1b0a8f"
+    },
+    {
+      "path": "frontend/src/components/SaveContinueButton.vue",
+      "ext": ".vue",
+      "size": 3678,
+      "lines": 97,
+      "category": "code",
+      "binary": false,
+      "hash": "91320150f5e0983b"
+    },
+    {
+      "path": "frontend/src/components/ScoreTable.vue",
+      "ext": ".vue",
+      "size": 23818,
+      "lines": 775,
+      "category": "code",
+      "binary": false,
+      "hash": "7f292a33579f275e"
+    },
+    {
+      "path": "frontend/src/components/SearchableSelect.vue",
+      "ext": ".vue",
+      "size": 10301,
+      "lines": 449,
+      "category": "code",
+      "binary": false,
+      "hash": "a8b0627f36346e71"
+    },
+    {
+      "path": "frontend/src/components/ServiceNowFilterBuilder.vue",
+      "ext": ".vue",
+      "size": 32455,
+      "lines": 1237,
+      "category": "code",
+      "binary": false,
+      "hash": "7cdbb1bbf3b501fb"
+    },
+    {
+      "path": "frontend/src/composables/useAccessibility.js",
+      "ext": ".js",
+      "size": 1889,
+      "lines": 78,
+      "category": "code",
+      "binary": false,
+      "hash": "419f8845300ddeb1"
+    },
+    {
+      "path": "frontend/src/composables/useDraftSaving.js",
+      "ext": ".js",
+      "size": 3989,
+      "lines": 127,
+      "category": "code",
+      "binary": false,
+      "hash": "aeba13eac4df26c8"
+    },
+    {
+      "path": "frontend/src/main.js",
+      "ext": ".js",
+      "size": 1188,
+      "lines": 39,
+      "category": "code",
+      "binary": false,
+      "hash": "4f76c775789b8386"
+    },
+    {
+      "path": "frontend/src/router/index.js",
+      "ext": ".js",
+      "size": 3547,
+      "lines": 65,
+      "category": "code",
+      "binary": false,
+      "hash": "0c4dc58c30c3c1a8"
+    },
+    {
+      "path": "frontend/src/style.css",
+      "ext": ".css",
+      "size": 6020,
+      "lines": 278,
+      "category": "style",
+      "binary": false,
+      "hash": "70aaef1bdacb5634"
+    },
+    {
+      "path": "frontend/src/utils/csvExport.js",
+      "ext": ".js",
+      "size": 5394,
+      "lines": 166,
+      "category": "code",
+      "binary": false,
+      "hash": "7c274aaa104b334d"
+    },
+    {
+      "path": "frontend/src/utils/datetime.js",
+      "ext": ".js",
+      "size": 2471,
+      "lines": 83,
+      "category": "code",
+      "binary": false,
+      "hash": "59111c0460b79865"
+    },
+    {
+      "path": "frontend/src/utils/defaultSections.js",
+      "ext": ".js",
+      "size": 15016,
+      "lines": 141,
+      "category": "code",
+      "binary": false,
+      "hash": "b2458a00575066c9"
+    },
+    {
+      "path": "frontend/src/utils/emailHtml.js",
+      "ext": ".js",
+      "size": 2519,
+      "lines": 92,
+      "category": "code",
+      "binary": false,
+      "hash": "9e0f73650a05f65f"
+    },
+    {
+      "path": "frontend/src/utils/geoData.js",
+      "ext": ".js",
+      "size": 3485,
+      "lines": 78,
+      "category": "code",
+      "binary": false,
+      "hash": "79f7f2ed638d9354"
+    },
+    {
+      "path": "frontend/src/views/AdminLogin.vue",
+      "ext": ".vue",
+      "size": 10028,
+      "lines": 360,
+      "category": "code",
+      "binary": false,
+      "hash": "e05c2ef63b890615"
+    },
+    {
+      "path": "frontend/src/views/Analytics.vue",
+      "ext": ".vue",
+      "size": 51653,
+      "lines": 1674,
+      "category": "code",
+      "binary": false,
+      "hash": "4101efe80a131952"
+    },
+    {
+      "path": "frontend/src/views/AuditForm.vue",
+      "ext": ".vue",
+      "size": 173737,
+      "lines": 6009,
+      "category": "code",
+      "binary": false,
+      "hash": "6c66c9ca7638c43c"
+    },
+    {
+      "path": "frontend/src/views/BookCall.vue",
+      "ext": ".vue",
+      "size": 11359,
+      "lines": 489,
+      "category": "code",
+      "binary": false,
+      "hash": "b8efccf1669c1b6b"
+    },
+    {
+      "path": "frontend/src/views/Dashboard.vue",
+      "ext": ".vue",
+      "size": 8994,
+      "lines": 277,
+      "category": "code",
+      "binary": false,
+      "hash": "8a58b1faf7d196a9"
+    },
+    {
+      "path": "frontend/src/views/FormBuilder.vue",
+      "ext": ".vue",
+      "size": 16021,
+      "lines": 444,
+      "category": "code",
+      "binary": false,
+      "hash": "bb302e1f119e2c5e"
+    },
+    {
+      "path": "frontend/src/views/OrgDashboard.vue",
+      "ext": ".vue",
+      "size": 12705,
+      "lines": 538,
+      "category": "code",
+      "binary": false,
+      "hash": "f213433e0a07ef38"
+    },
+    {
+      "path": "frontend/src/views/OrgLogin.vue",
+      "ext": ".vue",
+      "size": 6059,
+      "lines": 270,
+      "category": "code",
+      "binary": false,
+      "hash": "3f505b61128e5288"
+    },
+    {
+      "path": "frontend/src/views/OrgVerify.vue",
+      "ext": ".vue",
+      "size": 4531,
+      "lines": 203,
+      "category": "code",
+      "binary": false,
+      "hash": "c65c5a93c047793f"
+    },
+    {
+      "path": "frontend/src/views/Organisations.vue",
+      "ext": ".vue",
+      "size": 238277,
+      "lines": 13050,
+      "category": "code",
+      "binary": false,
+      "hash": "0b912eb1aaccf4ed"
+    },
+    {
+      "path": "frontend/src/views/Overview.vue",
+      "ext": ".vue",
+      "size": 70562,
+      "lines": 2440,
+      "category": "code",
+      "binary": false,
+      "hash": "f309110dd5757e3d"
+    },
+    {
+      "path": "frontend/src/views/ResumeDraft.vue",
+      "ext": ".vue",
+      "size": 4726,
+      "lines": 208,
+      "category": "code",
+      "binary": false,
+      "hash": "75b8a49dc24afe09"
+    },
+    {
+      "path": "frontend/src/views/Settings.vue",
+      "ext": ".vue",
+      "size": 25475,
+      "lines": 803,
+      "category": "code",
+      "binary": false,
+      "hash": "adbeb9be48d57bcb"
+    },
+    {
+      "path": "frontend/src/views/SubmissionDetail.vue",
+      "ext": ".vue",
+      "size": 38350,
+      "lines": 1145,
+      "category": "code",
+      "binary": false,
+      "hash": "1bfc295da6967c03"
+    },
+    {
+      "path": "frontend/src/views/Submissions.vue",
+      "ext": ".vue",
+      "size": 23759,
+      "lines": 794,
+      "category": "code",
+      "binary": false,
+      "hash": "06e71f502fdde3dc"
+    },
+    {
+      "path": "frontend/src/views/SuperDashboard.vue",
+      "ext": ".vue",
+      "size": 42829,
+      "lines": 1514,
+      "category": "code",
+      "binary": false,
+      "hash": "b361ac8f20c34190"
+    },
+    {
+      "path": "frontend/src/views/Support.vue",
+      "ext": ".vue",
+      "size": 4442,
+      "lines": 156,
+      "category": "code",
+      "binary": false,
+      "hash": "52cd8804bc31d193"
+    },
+    {
+      "path": "frontend/src/views/UserManagement.vue",
+      "ext": ".vue",
+      "size": 9201,
+      "lines": 347,
+      "category": "code",
+      "binary": false,
+      "hash": "b97325bb1fa37447"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "ext": ".json",
+      "size": 566,
+      "lines": 24,
+      "category": "config",
+      "binary": false,
+      "hash": "2fd03d39592b91cf"
+    },
+    {
+      "path": "frontend/vite.config.js",
+      "ext": ".js",
+      "size": 353,
+      "lines": 16,
+      "category": "config",
+      "binary": false,
+      "hash": "1b212ea0dfebbb1c"
+    },
+    {
+      "path": "function_app.py",
+      "ext": ".py",
+      "size": 20960,
+      "lines": 581,
+      "category": "code",
+      "binary": false,
+      "hash": "a21d3e95d732176b"
+    },
+    {
+      "path": "host.json",
+      "ext": ".json",
+      "size": 349,
+      "lines": 18,
+      "category": "data",
+      "binary": false,
+      "hash": "c917aadf06adfa14"
+    },
+    {
+      "path": "images/AI Brain Hub with Flowing Icon Streams.png",
+      "ext": ".png",
+      "size": 1719503,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "b3514ea3c24d08cd"
+    },
+    {
+      "path": "images/Clean Vector Brainstorming Meeting Illustration.png",
+      "ext": ".png",
+      "size": 1245782,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "8b273a6879594a9e"
+    },
+    {
+      "path": "images/Creative Minds in Bloom.png",
+      "ext": ".png",
+      "size": 1346400,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "1db8f79d4ce528de"
+    },
+    {
+      "path": "images/Picture1.png",
+      "ext": ".png",
+      "size": 729382,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "8637f93a1e5ed032"
+    },
+    {
+      "path": "images/logo-dark.png",
+      "ext": ".png",
+      "size": 35076,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "77016de4a837149d"
+    },
+    {
+      "path": "images/logo-light.png",
+      "ext": ".png",
+      "size": 41269,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5a631b07b55087c6"
+    },
+    {
+      "path": "images/logo.png",
+      "ext": ".png",
+      "size": 40417,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "c9f0c8a59d237663"
+    },
+    {
+      "path": "images/logo_orchvate.png",
+      "ext": ".png",
+      "size": 102299,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "655e160f2b186eb9"
+    },
+    {
+      "path": "images/logonew.png",
+      "ext": ".png",
+      "size": 13255,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "9cf26976246290c9"
+    },
+    {
+      "path": "images/logonew1.png",
+      "ext": ".png",
+      "size": 14846,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5e666abf19662f13"
+    },
+    {
+      "path": "images/niwi_clipart_staggered_animation.mp4",
+      "ext": ".mp4",
+      "size": 1484178,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "55a7818c85d5eff8"
+    },
+    {
+      "path": "images/niwi_why_this_matters_transparent_with_color_blobs.png",
+      "ext": ".png",
+      "size": 2109387,
+      "lines": 0,
+      "category": "asset",
+      "binary": true,
+      "hash": "5e07d942b58fbb87"
+    },
+    {
+      "path": "infrastructure/pgbouncer.ini",
+      "ext": ".ini",
+      "size": 339,
+      "lines": 13,
+      "category": "other",
+      "binary": false,
+      "hash": "2b2e99d1e81c053a"
+    },
+    {
+      "path": "infrastructure/userlist.txt",
+      "ext": ".txt",
+      "size": 32,
+      "lines": 1,
+      "category": "doc",
+      "binary": false,
+      "hash": "502bd00f3862eedc"
+    },
+    {
+      "path": "migrations/002_app_settings.sql",
+      "ext": ".sql",
+      "size": 851,
+      "lines": 18,
+      "category": "schema",
+      "binary": false,
+      "hash": "b5df20678e26728e"
+    },
+    {
+      "path": "migrations/003_support_email.sql",
+      "ext": ".sql",
+      "size": 406,
+      "lines": 10,
+      "category": "schema",
+      "binary": false,
+      "hash": "b7fbfca770ea9dc6"
+    },
+    {
+      "path": "migrations/004_designation.sql",
+      "ext": ".sql",
+      "size": 239,
+      "lines": 5,
+      "category": "schema",
+      "binary": false,
+      "hash": "fb0d95337dd5e13e"
+    },
+    {
+      "path": "migrations/005_rbac.sql",
+      "ext": ".sql",
+      "size": 695,
+      "lines": 20,
+      "category": "schema",
+      "binary": false,
+      "hash": "1db6ebed4db1156f"
+    },
+    {
+      "path": "migrations/006_org_scoring.sql",
+      "ext": ".sql",
+      "size": 2128,
+      "lines": 41,
+      "category": "schema",
+      "binary": false,
+      "hash": "f57f7c77fd9f2ff8"
+    },
+    {
+      "path": "migrations/007_fix_score_columns.sql",
+      "ext": ".sql",
+      "size": 1423,
+      "lines": 26,
+      "category": "schema",
+      "binary": false,
+      "hash": "b1c8340d3f6c5b59"
+    },
+    {
+      "path": "migrations/008_dynamic_forms.sql",
+      "ext": ".sql",
+      "size": 22913,
+      "lines": 266,
+      "category": "schema",
+      "binary": false,
+      "hash": "cbd5c94a6a2503f5"
+    },
+    {
+      "path": "migrations/009_question_dependencies.sql",
+      "ext": ".sql",
+      "size": 298,
+      "lines": 6,
+      "category": "schema",
+      "binary": false,
+      "hash": "8ee7032c43f761ae"
+    },
+    {
+      "path": "migrations/010_saved_filters.sql",
+      "ext": ".sql",
+      "size": 2812,
+      "lines": 62,
+      "category": "schema",
+      "binary": false,
+      "hash": "9872a015d2f10ca4"
+    },
+    {
+      "path": "migrations/011_verify_submission_id_type.sql",
+      "ext": ".sql",
+      "size": 1620,
+      "lines": 37,
+      "category": "schema",
+      "binary": false,
+      "hash": "549a98c7d3577d0a"
+    },
+    {
+      "path": "migrations/012_dual_entry_invitations.sql",
+      "ext": ".sql",
+      "size": 2308,
+      "lines": 40,
+      "category": "schema",
+      "binary": false,
+      "hash": "31e56b32ba698993"
+    },
+    {
+      "path": "migrations/013_organization_admins.sql",
+      "ext": ".sql",
+      "size": 1215,
+      "lines": 30,
+      "category": "schema",
+      "binary": false,
+      "hash": "ee85b0c362398eb3"
+    },
+    {
+      "path": "migrations/014_submission_reassignments.sql",
+      "ext": ".sql",
+      "size": 1952,
+      "lines": 44,
+      "category": "schema",
+      "binary": false,
+      "hash": "dc5987de300e1f65"
+    },
+    {
+      "path": "migrations/015_performance_jobs_and_idempotency.sql",
+      "ext": ".sql",
+      "size": 1992,
+      "lines": 39,
+      "category": "schema",
+      "binary": false,
+      "hash": "a71fe86fdd4ce09e"
+    },
+    {
+      "path": "migrations/016_service_bus_outbox.sql",
+      "ext": ".sql",
+      "size": 1786,
+      "lines": 41,
+      "category": "schema",
+      "binary": false,
+      "hash": "344af4c1c9c8fd63"
+    },
+    {
+      "path": "migrations/017_per_operation_idempotency.sql",
+      "ext": ".sql",
+      "size": 1974,
+      "lines": 39,
+      "category": "schema",
+      "binary": false,
+      "hash": "0427ee063451c656"
+    },
+    {
+      "path": "migrations/018_assessment_access_tokens.sql",
+      "ext": ".sql",
+      "size": 2079,
+      "lines": 34,
+      "category": "schema",
+      "binary": false,
+      "hash": "2f1fa84783a60ab0"
+    },
+    {
+      "path": "migrations/019_system_security_settings.sql",
+      "ext": ".sql",
+      "size": 1588,
+      "lines": 27,
+      "category": "schema",
+      "binary": false,
+      "hash": "adad24274312bd78"
+    },
+    {
+      "path": "migrations/01_remediation.sql",
+      "ext": ".sql",
+      "size": 1991,
+      "lines": 53,
+      "category": "schema",
+      "binary": false,
+      "hash": "0fe562004a29c5c8"
+    },
+    {
+      "path": "migrations/020_raw_submissions_and_dlq.sql",
+      "ext": ".sql",
+      "size": 1885,
+      "lines": 37,
+      "category": "schema",
+      "binary": false,
+      "hash": "24b35adbcbf82998"
+    },
+    {
+      "path": "migrations/021_super_admin_dashboard_and_workers.sql",
+      "ext": ".sql",
+      "size": 1458,
+      "lines": 32,
+      "category": "schema",
+      "binary": false,
+      "hash": "f01d1b8a6a17e731"
+    },
+    {
+      "path": "migrations/022_performance_indexes.sql",
+      "ext": ".sql",
+      "size": 1235,
+      "lines": 26,
+      "category": "schema",
+      "binary": false,
+      "hash": "ef9bfe28f90c9b21"
+    },
+    {
+      "path": "migrations/02_features_migration.sql",
+      "ext": ".sql",
+      "size": 1683,
+      "lines": 39,
+      "category": "schema",
+      "binary": false,
+      "hash": "a868f8f02ea8fca1"
+    },
+    {
+      "path": "nginx.conf",
+      "ext": ".conf",
+      "size": 339,
+      "lines": 7,
+      "category": "other",
+      "binary": false,
+      "hash": "6e380777df4018bf"
+    },
+    {
+      "path": "package.json",
+      "ext": ".json",
+      "size": 495,
+      "lines": 13,
+      "category": "config",
+      "binary": false,
+      "hash": "1c1a6c4de88f5c68"
+    },
+    {
+      "path": "pytest.ini",
+      "ext": ".ini",
+      "size": 55,
+      "lines": 4,
+      "category": "other",
+      "binary": false,
+      "hash": "2b8ca5ee78825647"
+    },
+    {
+      "path": "requirements.txt",
+      "ext": ".txt",
+      "size": 392,
+      "lines": 18,
+      "category": "config",
+      "binary": false,
+      "hash": "890e4d4de12942ae"
+    },
+    {
+      "path": "run_local_server.py",
+      "ext": ".py",
+      "size": 439,
+      "lines": 15,
+      "category": "code",
+      "binary": false,
+      "hash": "7e584d126ad7042d"
+    },
+    {
+      "path": "scripts/check-auth-config.sh",
+      "ext": ".sh",
+      "size": 4619,
+      "lines": 124,
+      "category": "code",
+      "binary": false,
+      "hash": "28032342be3fe94d"
+    },
+    {
+      "path": "scripts/deploy.sh",
+      "ext": ".sh",
+      "size": 3340,
+      "lines": 123,
+      "category": "code",
+      "binary": false,
+      "hash": "6676b6cb00e653a2"
+    },
+    {
+      "path": "scripts/fix-vm-env.sh",
+      "ext": ".sh",
+      "size": 1059,
+      "lines": 42,
+      "category": "code",
+      "binary": false,
+      "hash": "63aea5f94ae10795"
+    },
+    {
+      "path": "scripts/import_nexora_audit.py",
+      "ext": ".py",
+      "size": 16791,
+      "lines": 345,
+      "category": "code",
+      "binary": false,
+      "hash": "9cd8478a8669e0b5"
+    },
+    {
+      "path": "scripts/inspect_schema.py",
+      "ext": ".py",
+      "size": 548,
+      "lines": 21,
+      "category": "code",
+      "binary": false,
+      "hash": "bb3b31aa22fa336d"
+    },
+    {
+      "path": "scripts/migrate.py",
+      "ext": ".py",
+      "size": 3955,
+      "lines": 124,
+      "category": "code",
+      "binary": false,
+      "hash": "cba22e6724414a80"
+    },
+    {
+      "path": "scripts/reconcile_pipeline.py",
+      "ext": ".py",
+      "size": 7268,
+      "lines": 172,
+      "category": "code",
+      "binary": false,
+      "hash": "3f4c85c1ccd18379"
+    },
+    {
+      "path": "scripts/reconcile_runs.py",
+      "ext": ".py",
+      "size": 3086,
+      "lines": 75,
+      "category": "code",
+      "binary": false,
+      "hash": "95a8350f0fbea995"
+    },
+    {
+      "path": "scripts/run_migration.py",
+      "ext": ".py",
+      "size": 1304,
+      "lines": 50,
+      "category": "code",
+      "binary": false,
+      "hash": "f8c6d73bf189035a"
+    },
+    {
+      "path": "scripts/run_tests.py",
+      "ext": ".py",
+      "size": 1630,
+      "lines": 54,
+      "category": "code",
+      "binary": false,
+      "hash": "a140e34657bbc165"
+    },
+    {
+      "path": "scripts/seed_db.py",
+      "ext": ".py",
+      "size": 1984,
+      "lines": 44,
+      "category": "code",
+      "binary": false,
+      "hash": "c3861288883cddf6"
+    },
+    {
+      "path": "scripts/set_super.py",
+      "ext": ".py",
+      "size": 926,
+      "lines": 31,
+      "category": "code",
+      "binary": false,
+      "hash": "bd0b0bc2c062e7bb"
+    },
+    {
+      "path": "scripts/setup_db.py",
+      "ext": ".py",
+      "size": 2028,
+      "lines": 68,
+      "category": "code",
+      "binary": false,
+      "hash": "2807081a890569d1"
+    },
+    {
+      "path": "scripts/test_real_postgres_concurrency.py",
+      "ext": ".py",
+      "size": 13380,
+      "lines": 268,
+      "category": "code",
+      "binary": false,
+      "hash": "1cd7acdaf274cf08"
+    },
+    {
+      "path": "scripts/verify_import.py",
+      "ext": ".py",
+      "size": 2251,
+      "lines": 84,
+      "category": "code",
+      "binary": false,
+      "hash": "003b0f2612b404ae"
+    },
+    {
+      "path": "setup-keyvault.sh",
+      "ext": ".sh",
+      "size": 1524,
+      "lines": 56,
+      "category": "code",
+      "binary": false,
+      "hash": "77224971b2940ed3"
+    },
+    {
+      "path": "sql/01_admin_notifications.sql",
+      "ext": ".sql",
+      "size": 2463,
+      "lines": 64,
+      "category": "schema",
+      "binary": false,
+      "hash": "ca140510e142f305"
+    },
+    {
+      "path": "sql/02_support_requests.sql",
+      "ext": ".sql",
+      "size": 1866,
+      "lines": 39,
+      "category": "schema",
+      "binary": false,
+      "hash": "4305cc32177947fa"
+    },
+    {
+      "path": "sql/README.md",
+      "ext": ".md",
+      "size": 1586,
+      "lines": 49,
+      "category": "doc",
+      "binary": false,
+      "hash": "3f353d3135bb56a8"
+    },
+    {
+      "path": "sql/archive/README.md",
+      "ext": ".md",
+      "size": 2662,
+      "lines": 83,
+      "category": "doc",
+      "binary": false,
+      "hash": "9badb21e564079f5"
+    },
+    {
+      "path": "sql/archive/create_table.sql",
+      "ext": ".sql",
+      "size": 3186,
+      "lines": 79,
+      "category": "schema",
+      "binary": false,
+      "hash": "7d6b76dc0aa3d482"
+    },
+    {
+      "path": "sql/archive/fix_missing_columns.sql",
+      "ext": ".sql",
+      "size": 2089,
+      "lines": 46,
+      "category": "schema",
+      "binary": false,
+      "hash": "b8eb0471ff2a9e69"
+    },
+    {
+      "path": "sql/archive/install_all.sql",
+      "ext": ".sql",
+      "size": 4118,
+      "lines": 93,
+      "category": "schema",
+      "binary": false,
+      "hash": "ec0692c959387a2b"
+    },
+    {
+      "path": "supervisord.conf",
+      "ext": ".conf",
+      "size": 1417,
+      "lines": 61,
+      "category": "other",
+      "binary": false,
+      "hash": "049dfca44584781b"
+    },
+    {
+      "path": "test-keyvault-docker.sh",
+      "ext": ".sh",
+      "size": 4842,
+      "lines": 158,
+      "category": "code",
+      "binary": false,
+      "hash": "d019d0a758de39ba"
+    },
+    {
+      "path": "tests/conftest.py",
+      "ext": ".py",
+      "size": 37804,
+      "lines": 840,
+      "category": "test",
+      "binary": false,
+      "hash": "0517abb8ab38ecce"
+    },
+    {
+      "path": "tests/performance/README.md",
+      "ext": ".md",
+      "size": 8209,
+      "lines": 191,
+      "category": "test",
+      "binary": false,
+      "hash": "a94ea9a187d997e5"
+    },
+    {
+      "path": "tests/performance/audit_tokens.txt",
+      "ext": ".txt",
+      "size": 313,
+      "lines": 6,
+      "category": "test",
+      "binary": false,
+      "hash": "e3965d4f90e6731e"
+    },
+    {
+      "path": "tests/performance/config.js",
+      "ext": ".js",
+      "size": 16593,
+      "lines": 395,
+      "category": "test",
+      "binary": false,
+      "hash": "0bd42de55ab181a1"
+    },
+    {
+      "path": "tests/performance/metrics.js",
+      "ext": ".js",
+      "size": 3078,
+      "lines": 71,
+      "category": "test",
+      "binary": false,
+      "hash": "4ccf4b4ffd45a41a"
+    },
+    {
+      "path": "tests/performance/niwi-browser-load.js",
+      "ext": ".js",
+      "size": 5105,
+      "lines": 156,
+      "category": "test",
+      "binary": false,
+      "hash": "8550d87364e7f5bc"
+    },
+    {
+      "path": "tests/performance/niwi-smoke.js",
+      "ext": ".js",
+      "size": 6764,
+      "lines": 215,
+      "category": "test",
+      "binary": false,
+      "hash": "cbcd414dfc9f459b"
+    },
+    {
+      "path": "tests/performance/niwi-submission-load.js",
+      "ext": ".js",
+      "size": 8815,
+      "lines": 273,
+      "category": "test",
+      "binary": false,
+      "hash": "e4af95e65b544abd"
+    },
+    {
+      "path": "tests/performance/niwi-sustained-load.js",
+      "ext": ".js",
+      "size": 5036,
+      "lines": 177,
+      "category": "test",
+      "binary": false,
+      "hash": "ccce6ae2b039805c"
+    },
+    {
+      "path": "tests/performance/report-generator.js",
+      "ext": ".js",
+      "size": 9550,
+      "lines": 214,
+      "category": "test",
+      "binary": false,
+      "hash": "1994056ae5a34dca"
+    },
+    {
+      "path": "tests/performance/run-manual-workflow-tests.ps1",
+      "ext": ".ps1",
+      "size": 2867,
+      "lines": 83,
+      "category": "test",
+      "binary": false,
+      "hash": "1a40b05120138bc2"
+    },
+    {
+      "path": "tests/performance/run-token-workflow-tests.ps1",
+      "ext": ".ps1",
+      "size": 3541,
+      "lines": 106,
+      "category": "test",
+      "binary": false,
+      "hash": "33c975715d0a467e"
+    },
+    {
+      "path": "tests/performance/run-workflow-tests.ps1",
+      "ext": ".ps1",
+      "size": 5357,
+      "lines": 142,
+      "category": "test",
+      "binary": false,
+      "hash": "14539ea1b59bb2ff"
+    },
+    {
+      "path": "tests/test_api.py",
+      "ext": ".py",
+      "size": 46,
+      "lines": 3,
+      "category": "test",
+      "binary": false,
+      "hash": "4fd9e618a6b766f7"
+    },
+    {
+      "path": "tests/test_async_ingestion_e2e.py",
+      "ext": ".py",
+      "size": 5861,
+      "lines": 152,
+      "category": "test",
+      "binary": false,
+      "hash": "f2add86b47be1537"
+    },
+    {
+      "path": "tests/test_auth.py",
+      "ext": ".py",
+      "size": 49,
+      "lines": 3,
+      "category": "test",
+      "binary": false,
+      "hash": "5785d6dfd56c7127"
+    },
+    {
+      "path": "tests/test_complete_security.py",
+      "ext": ".py",
+      "size": 16162,
+      "lines": 433,
+      "category": "test",
+      "binary": false,
+      "hash": "b6c1184feb83f888"
+    },
+    {
+      "path": "tests/test_complete_submission_flow.py",
+      "ext": ".py",
+      "size": 18565,
+      "lines": 401,
+      "category": "test",
+      "binary": false,
+      "hash": "053908cf09bf10a6"
+    },
+    {
+      "path": "tests/test_concurrent_submissions.py",
+      "ext": ".py",
+      "size": 4420,
+      "lines": 116,
+      "category": "test",
+      "binary": false,
+      "hash": "85b629c754a89eb4"
+    },
+    {
+      "path": "tests/test_database_pooling.py",
+      "ext": ".py",
+      "size": 9887,
+      "lines": 304,
+      "category": "test",
+      "binary": false,
+      "hash": "3c1559deead93fce"
+    },
+    {
+      "path": "tests/test_db_mock.py",
+      "ext": ".py",
+      "size": 800,
+      "lines": 27,
+      "category": "test",
+      "binary": false,
+      "hash": "e7d8e6b1300f7e75"
+    },
+    {
+      "path": "tests/test_disposable_postgres.py",
+      "ext": ".py",
+      "size": 5377,
+      "lines": 139,
+      "category": "test",
+      "binary": false,
+      "hash": "9407b544adf7c65a"
+    },
+    {
+      "path": "tests/test_drafts.py",
+      "ext": ".py",
+      "size": 960,
+      "lines": 28,
+      "category": "test",
+      "binary": false,
+      "hash": "1b7977df6e8f8df0"
+    },
+    {
+      "path": "tests/test_e2e_secure_flow.py",
+      "ext": ".py",
+      "size": 10287,
+      "lines": 234,
+      "category": "test",
+      "binary": false,
+      "hash": "40624014ee0b3687"
+    },
+    {
+      "path": "tests/test_email_policy.py",
+      "ext": ".py",
+      "size": 4795,
+      "lines": 124,
+      "category": "test",
+      "binary": false,
+      "hash": "a00e6f4af6491c26"
+    },
+    {
+      "path": "tests/test_filter_builder.py",
+      "ext": ".py",
+      "size": 5108,
+      "lines": 143,
+      "category": "test",
+      "binary": false,
+      "hash": "f64e4334fce66207"
+    },
+    {
+      "path": "tests/test_keyvault_fail_safe.py",
+      "ext": ".py",
+      "size": 4149,
+      "lines": 83,
+      "category": "test",
+      "binary": false,
+      "hash": "9e845a3cfb8cfd10"
+    },
+    {
+      "path": "tests/test_org.py",
+      "ext": ".py",
+      "size": 417,
+      "lines": 14,
+      "category": "test",
+      "binary": false,
+      "hash": "b71ce937af3b5edd"
+    },
+    {
+      "path": "tests/test_org_authorization.py",
+      "ext": ".py",
+      "size": 6943,
+      "lines": 188,
+      "category": "test",
+      "binary": false,
+      "hash": "47f87d3341db221b"
+    },
+    {
+      "path": "tests/test_org_cache.py",
+      "ext": ".py",
+      "size": 12066,
+      "lines": 311,
+      "category": "test",
+      "binary": false,
+      "hash": "4c0ce42c114c5a25"
+    },
+    {
+      "path": "tests/test_org_lifecycle.py",
+      "ext": ".py",
+      "size": 10941,
+      "lines": 236,
+      "category": "test",
+      "binary": false,
+      "hash": "cbca487e85e9e561"
+    },
+    {
+      "path": "tests/test_p0_security_fixes.py",
+      "ext": ".py",
+      "size": 9928,
+      "lines": 236,
+      "category": "test",
+      "binary": false,
+      "hash": "4d46c5ea5e3add83"
+    },
+    {
+      "path": "tests/test_permissions_and_reliability.py",
+      "ext": ".py",
+      "size": 18858,
+      "lines": 414,
+      "category": "test",
+      "binary": false,
+      "hash": "11b1a9cf3e575f03"
+    },
+    {
+      "path": "tests/test_rate_limits.py",
+      "ext": ".py",
+      "size": 10087,
+      "lines": 260,
+      "category": "test",
+      "binary": false,
+      "hash": "52f60d4b092f9901"
+    },
+    {
+      "path": "tests/test_reliability_remediation.py",
+      "ext": ".py",
+      "size": 18641,
+      "lines": 387,
+      "category": "test",
+      "binary": false,
+      "hash": "d11049f8f668ad73"
+    },
+    {
+      "path": "tests/test_scoring.py",
+      "ext": ".py",
+      "size": 1250,
+      "lines": 31,
+      "category": "test",
+      "binary": false,
+      "hash": "0137dea17a41ecdd"
+    },
+    {
+      "path": "tests/test_scoring_regression_fixtures.py",
+      "ext": ".py",
+      "size": 7259,
+      "lines": 166,
+      "category": "test",
+      "binary": false,
+      "hash": "0ad179a84904af19"
+    },
+    {
+      "path": "tests/test_secure_tokens.py",
+      "ext": ".py",
+      "size": 15573,
+      "lines": 405,
+      "category": "test",
+      "binary": false,
+      "hash": "ef4df7bd3eac06b8"
+    },
+    {
+      "path": "tests/test_security_auth.py",
+      "ext": ".py",
+      "size": 4922,
+      "lines": 121,
+      "category": "test",
+      "binary": false,
+      "hash": "170261ce36f3f02d"
+    },
+    {
+      "path": "tests/test_service_bus_pipeline.py",
+      "ext": ".py",
+      "size": 11761,
+      "lines": 256,
+      "category": "test",
+      "binary": false,
+      "hash": "01cc7732be1d8cb2"
+    },
+    {
+      "path": "tests/test_settings.py",
+      "ext": ".py",
+      "size": 2266,
+      "lines": 60,
+      "category": "test",
+      "binary": false,
+      "hash": "812baa3e9cc3da22"
+    },
+    {
+      "path": "tests/test_super_admin_dashboard.py",
+      "ext": ".py",
+      "size": 8057,
+      "lines": 188,
+      "category": "test",
+      "binary": false,
+      "hash": "5471518c72d30ed9"
+    },
+    {
+      "path": "tests/test_v31_upgrades.py",
+      "ext": ".py",
+      "size": 10987,
+      "lines": 247,
+      "category": "test",
+      "binary": false,
+      "hash": "2613f610a073b3c1"
+    }
+  ],
+  "dependencies": [
+    {
+      "manager": "npm",
+      "manifest": "package.json",
+      "runtime": {},
+      "dev": {
+        "concurrently": "^9.2.5",
+        "playwright": "^1.64.1"
+      }
+    },
+    {
+      "manager": "pip",
+      "manifest": "requirements.txt",
+      "runtime": {
+        "fastapi": "==0.115.5",
+        "uvicorn": "==0.32.1",
+        "psycopg2-binary": "==2.9.10",
+        "azure-communication-email": "==1.0.0",
+        "python-multipart": "==0.0.12",
+        "PyJWT": "==2.8.0",
+        "cryptography": "==42.0.5",
+        "requests": "==2.31.0",
+        "slowapi": "==0.1.9",
+        "cachetools": "==5.3.3",
+        "email-validator": ">=2.1.1",
+        "azure-identity": "==1.15.0",
+        "azure-keyvault-secrets": "==4.7.0",
+        "azure-servicebus": ">=7.12.0"
+      },
+      "dev": {}
+    }
+  ],
+  "routes": [
+    {
+      "route": "/",
+      "file": "app/main.py",
+      "line": 178,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/admin/dashboard",
+      "file": "app/api/routes.py",
+      "line": 2028,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/admin/submissions/dead-lettered",
+      "file": "app/api/routes.py",
+      "line": 1852,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/admin/submissions/dead-lettered/replay-all",
+      "file": "app/api/routes.py",
+      "line": 1965,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/admin/submissions/{submission_id}/replay",
+      "file": "app/api/routes.py",
+      "line": 1897,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/auth/config",
+      "file": "app/api/routes.py",
+      "line": 1669,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/auth/verify",
+      "file": "app/api/routes.py",
+      "line": 1682,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/book-call",
+      "file": "app/api/routes.py",
+      "line": 1535,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/drafts/resume",
+      "file": "app/api/drafts.py",
+      "line": 146,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/drafts/save",
+      "file": "app/api/drafts.py",
+      "line": 95,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/form/questions/{question_id}",
+      "file": "app/api/form_builder.py",
+      "line": 250,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/form/questions/{question_id}",
+      "file": "app/api/form_builder.py",
+      "line": 221,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/form/sections",
+      "file": "app/api/form_builder.py",
+      "line": 106,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/form/sections",
+      "file": "app/api/form_builder.py",
+      "line": 136,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/form/sections/{section_id}",
+      "file": "app/api/form_builder.py",
+      "line": 182,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/form/sections/{section_id}",
+      "file": "app/api/form_builder.py",
+      "line": 157,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/form/sections/{section_id}/questions",
+      "file": "app/api/form_builder.py",
+      "line": 200,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/health",
+      "file": "app/main.py",
+      "line": 124,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/health/cache-metrics",
+      "file": "app/main.py",
+      "line": 161,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/health/pool-metrics",
+      "file": "app/main.py",
+      "line": 154,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/audit-logs",
+      "file": "app/api/routes.py",
+      "line": 1825,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs",
+      "file": "app/api/orgs.py",
+      "line": 125,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs",
+      "file": "app/api/orgs.py",
+      "line": 240,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/create",
+      "file": "app/api/orgs.py",
+      "line": 307,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/invitations/{invitation_id}",
+      "file": "app/api/orgs.py",
+      "line": 724,
+      "kind": "api",
+      "method": "PATCH"
+    },
+    {
+      "route": "/api/manage/orgs/invitations/{invitation_id}/regenerate",
+      "file": "app/api/orgs.py",
+      "line": 786,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/invitations/{invitation_id}/revoke",
+      "file": "app/api/orgs.py",
+      "line": 759,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/unlinked",
+      "file": "app/api/orgs.py",
+      "line": 322,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}",
+      "file": "app/api/orgs.py",
+      "line": 482,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}",
+      "file": "app/api/orgs.py",
+      "line": 360,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}",
+      "file": "app/api/orgs.py",
+      "line": 395,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/assessment-links",
+      "file": "app/api/orgs.py",
+      "line": 605,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/assessment-links",
+      "file": "app/api/orgs.py",
+      "line": 561,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/assessment-links/default",
+      "file": "app/api/orgs.py",
+      "line": 585,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/assessment-links/{token_id}",
+      "file": "app/api/orgs.py",
+      "line": 632,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/invitations",
+      "file": "app/api/orgs.py",
+      "line": 702,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/invitations",
+      "file": "app/api/orgs.py",
+      "line": 652,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/link",
+      "file": "app/api/orgs.py",
+      "line": 886,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/links/{submission_id}",
+      "file": "app/api/orgs.py",
+      "line": 845,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/message",
+      "file": "app/api/orgs.py",
+      "line": 966,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/report-preview",
+      "file": "app/api/orgs.py",
+      "line": 935,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/restore",
+      "file": "app/api/orgs.py",
+      "line": 526,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/orgs/{org_id}/status",
+      "file": "app/api/orgs.py",
+      "line": 444,
+      "kind": "api",
+      "method": "PATCH"
+    },
+    {
+      "route": "/api/manage/settings/rate-limits",
+      "file": "app/api/routes.py",
+      "line": 1480,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/settings/rate-limits",
+      "file": "app/api/routes.py",
+      "line": 1491,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/manage/settings/rate-limits/reset",
+      "file": "app/api/routes.py",
+      "line": 1516,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/users",
+      "file": "app/api/routes.py",
+      "line": 1706,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/manage/users",
+      "file": "app/api/routes.py",
+      "line": 1721,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/manage/users/{email}",
+      "file": "app/api/routes.py",
+      "line": 1748,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/org/dashboard",
+      "file": "app/api/org.py",
+      "line": 140,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/org/register",
+      "file": "app/api/org.py",
+      "line": 27,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/org/verify",
+      "file": "app/api/org.py",
+      "line": 67,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/public/assessment/resolve-legacy-org",
+      "file": "app/api/public.py",
+      "line": 65,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/public/assessment/resolve-link",
+      "file": "app/api/public.py",
+      "line": 46,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/public/email/validate",
+      "file": "app/api/public.py",
+      "line": 100,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/public/invitations/validate",
+      "file": "app/api/public.py",
+      "line": 150,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/public/organisations/validate",
+      "file": "app/api/public.py",
+      "line": 110,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/settings",
+      "file": "app/api/routes.py",
+      "line": 1409,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/settings",
+      "file": "app/api/routes.py",
+      "line": 1422,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/settings/delete-all-records",
+      "file": "app/api/routes.py",
+      "line": 1767,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/settings/notifications/toggle",
+      "file": "app/api/routes.py",
+      "line": 1449,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/settings/rate-limits",
+      "file": "app/api/routes.py",
+      "line": 1481,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/settings/rate-limits",
+      "file": "app/api/routes.py",
+      "line": 1492,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/settings/rate-limits/reset",
+      "file": "app/api/routes.py",
+      "line": 1517,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/submissions",
+      "file": "app/api/routes.py",
+      "line": 404,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/submissions/filter",
+      "file": "app/api/routes.py",
+      "line": 506,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/submissions/saved-filters",
+      "file": "app/api/routes.py",
+      "line": 645,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/submissions/saved-filters",
+      "file": "app/api/routes.py",
+      "line": 685,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/submissions/saved-filters/{filter_id}",
+      "file": "app/api/routes.py",
+      "line": 736,
+      "kind": "api",
+      "method": "DELETE"
+    },
+    {
+      "route": "/api/submissions/{submission_id}",
+      "file": "app/api/routes.py",
+      "line": 883,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/email",
+      "file": "app/api/routes.py",
+      "line": 1210,
+      "kind": "api",
+      "method": "PUT"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/organisation",
+      "file": "app/api/routes.py",
+      "line": 1091,
+      "kind": "api",
+      "method": "PATCH"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/regenerate-email",
+      "file": "app/api/routes.py",
+      "line": 1247,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/respondent",
+      "file": "app/api/routes.py",
+      "line": 957,
+      "kind": "api",
+      "method": "PATCH"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/scores",
+      "file": "app/api/routes.py",
+      "line": 998,
+      "kind": "api",
+      "method": "PATCH"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/send",
+      "file": "app/api/routes.py",
+      "line": 1352,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/submissions/{submission_id}/status",
+      "file": "app/api/routes.py",
+      "line": 763,
+      "kind": "api",
+      "method": "GET"
+    },
+    {
+      "route": "/api/submit",
+      "file": "app/api/routes.py",
+      "line": 129,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/api/support",
+      "file": "app/api/routes.py",
+      "line": 1630,
+      "kind": "api",
+      "method": "POST"
+    },
+    {
+      "route": "/audit",
+      "file": "app/main.py",
+      "line": 170,
+      "kind": "api",
+      "method": "GET"
+    }
+  ],
+  "i18n": null,
+  "schemas": [
+    "app/models/__init__.py",
+    "app/models/audit.py",
+    "app/models/form_builder.py",
+    "app/models/user.py",
+    "migrations/002_app_settings.sql",
+    "migrations/003_support_email.sql",
+    "migrations/004_designation.sql",
+    "migrations/005_rbac.sql",
+    "migrations/006_org_scoring.sql",
+    "migrations/007_fix_score_columns.sql",
+    "migrations/008_dynamic_forms.sql",
+    "migrations/009_question_dependencies.sql",
+    "migrations/010_saved_filters.sql",
+    "migrations/011_verify_submission_id_type.sql",
+    "migrations/012_dual_entry_invitations.sql",
+    "migrations/013_organization_admins.sql",
+    "migrations/014_submission_reassignments.sql",
+    "migrations/015_performance_jobs_and_idempotency.sql",
+    "migrations/016_service_bus_outbox.sql",
+    "migrations/017_per_operation_idempotency.sql",
+    "migrations/018_assessment_access_tokens.sql",
+    "migrations/019_system_security_settings.sql",
+    "migrations/01_remediation.sql",
+    "migrations/020_raw_submissions_and_dlq.sql",
+    "migrations/021_super_admin_dashboard_and_workers.sql",
+    "migrations/022_performance_indexes.sql",
+    "migrations/02_features_migration.sql",
+    "sql/01_admin_notifications.sql",
+    "sql/02_support_requests.sql",
+    "sql/archive/create_table.sql",
+    "sql/archive/fix_missing_columns.sql",
+    "sql/archive/install_all.sql"
+  ],
+  "configs": [
+    ".env.example",
+    "Dockerfile",
+    "docker-compose.yml",
+    "frontend/.env.example",
+    "frontend/Dockerfile",
+    "frontend/package.json",
+    "frontend/tsconfig.json",
+    "frontend/vite.config.js",
+    "package.json",
+    "requirements.txt"
+  ],
+  "docs": [
+    "README.md",
+    "infrastructure/userlist.txt",
+    "sql/README.md",
+    "sql/archive/README.md"
+  ],
+  "envVars": [
+    "ACS_CONNECTION_STRING",
+    "ACS_SENDER_ADDRESS",
+    "ACS_SENDER_NAME",
+    "APP_ENV",
+    "CORS_ORIGINS",
+    "DELETE_ALL_PASSWORD",
+    "ENABLE_DEV_BYPASS",
+    "ENABLE_EMBEDDED_WORKER",
+    "ENABLE_LEGACY_JOB_WORKER",
+    "ENABLE_SERVICE_BUS_PIPELINE",
+    "ENTRA_CLIENT_ID",
+    "ENTRA_TENANT_ID",
+    "ENVIRONMENT",
+    "FRONTEND_URL",
+    "HUBSPOT_ACCESS_TOKEN",
+    "JWT_SECRET",
+    "KEY_VAULT_NAME",
+    "NIWI_BLOCKED_EMAIL_DOMAINS",
+    "NIWI_ORG_CACHE_INVALIDATION_FILE",
+    "NIWI_RATE_LIMIT_INVALIDATION_FILE",
+    "OUTBOX_BATCH_SIZE",
+    "OUTBOX_POLL_INTERVAL",
+    "PGDATABASE",
+    "PGHOST",
+    "PGOPTIONS",
+    "PGPASSWORD",
+    "PGPORT",
+    "PGUSER",
+    "PUBLIC_VALIDATE_LIMIT",
+    "REQUIRE_KEYVAULT",
+    "SERVICE_BUS_BATCH_SIZE",
+    "SERVICE_BUS_CONCURRENCY",
+    "SERVICE_BUS_CONNECTION_STRING",
+    "SERVICE_BUS_ENABLED",
+    "SERVICE_BUS_FQDN",
+    "SERVICE_BUS_LOCK_DURATION_SECONDS",
+    "SERVICE_BUS_MAX_DELIVERY_COUNT",
+    "SERVICE_BUS_QUEUE_NAME",
+    "SERVICE_BUS_RECEIVE_WAIT_TIME",
+    "SUPPORT_EMAIL",
+    "TESTING",
+    "VITE_API_BASE",
+    "VITE_APP_URL",
+    "VITE_MSAL_CLIENT_ID",
+    "VITE_MSAL_TENANT_ID"
+  ],
+  "scripts": {
+    "dev": "concurrently --kill-others --names \"API,UI\" --prefix-colors \"cyan,green\" \".\\\\.venv\\\\Scripts\\\\uvicorn app.main:app --reload --port 8000\" \"npm run dev --prefix frontend\"",
+    "api": ".\\\\.venv\\\\Scripts\\\\uvicorn app.main:app --reload --port 8000",
+    "ui": "npm run dev --prefix frontend"
+  },
+  "features": [
+    {
+      "slug": "01-core",
+      "name": "Core",
+      "description": "Groups 16 file(s); routes: /, /audit.",
+      "kind": "feature",
+      "files": [
+        "app/__init__.py",
+        "app/core/__init__.py",
+        "app/core/authorization.py",
+        "app/core/config.py",
+        "app/core/database.py",
+        "app/core/keyvault.py",
+        "app/core/limiter.py",
+        "app/core/security.py",
+        "app/core/service_bus.py",
+        "app/main.py",
+        "deploy.sh",
+        "docker-entrypoint.sh",
+        "function_app.py",
+        "run_local_server.py",
+        "setup-keyvault.sh",
+        "test-keyvault-docker.sh"
+      ],
+      "routes": [
+        {
+          "route": "/",
+          "file": "app/main.py",
+          "line": 178,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/audit",
+          "file": "app/main.py",
+          "line": 170,
+          "kind": "api",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "slug": "02-project-setup",
+      "name": "Project Setup & Tooling",
+      "description": "10 configuration/tooling file(s): build, lint, env, CI.",
+      "kind": "project-setup",
+      "files": [
+        ".env.example",
+        "Dockerfile",
+        "docker-compose.yml",
+        "frontend/.env.example",
+        "frontend/Dockerfile",
+        "frontend/package.json",
+        "frontend/tsconfig.json",
+        "frontend/vite.config.js",
+        "package.json",
+        "requirements.txt"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "03-migrations",
+      "name": "Migrations",
+      "description": "Groups 23 file(s).",
+      "kind": "feature",
+      "files": [
+        "migrations/002_app_settings.sql",
+        "migrations/003_support_email.sql",
+        "migrations/004_designation.sql",
+        "migrations/005_rbac.sql",
+        "migrations/006_org_scoring.sql",
+        "migrations/007_fix_score_columns.sql",
+        "migrations/008_dynamic_forms.sql",
+        "migrations/009_question_dependencies.sql",
+        "migrations/010_saved_filters.sql",
+        "migrations/011_verify_submission_id_type.sql",
+        "migrations/012_dual_entry_invitations.sql",
+        "migrations/013_organization_admins.sql",
+        "migrations/014_submission_reassignments.sql",
+        "migrations/015_performance_jobs_and_idempotency.sql",
+        "migrations/016_service_bus_outbox.sql",
+        "migrations/017_per_operation_idempotency.sql",
+        "migrations/018_assessment_access_tokens.sql",
+        "migrations/019_system_security_settings.sql",
+        "migrations/01_remediation.sql",
+        "migrations/020_raw_submissions_and_dlq.sql",
+        "migrations/021_super_admin_dashboard_and_workers.sql",
+        "migrations/022_performance_indexes.sql",
+        "migrations/02_features_migration.sql"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "04-sql",
+      "name": "Sql",
+      "description": "Groups 5 file(s).",
+      "kind": "feature",
+      "files": [
+        "sql/01_admin_notifications.sql",
+        "sql/02_support_requests.sql",
+        "sql/archive/create_table.sql",
+        "sql/archive/fix_missing_columns.sql",
+        "sql/archive/install_all.sql"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "05-models",
+      "name": "Models",
+      "description": "Groups 4 file(s).",
+      "kind": "feature",
+      "files": [
+        "app/models/__init__.py",
+        "app/models/audit.py",
+        "app/models/form_builder.py",
+        "app/models/user.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "06-utils",
+      "name": "Utils",
+      "description": "Groups 4 file(s).",
+      "kind": "feature",
+      "files": [
+        "app/utils/__init__.py",
+        "app/utils/helpers.py",
+        "app/utils/logger.py",
+        "app/utils/validators.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "07-services",
+      "name": "Services",
+      "description": "Groups 16 file(s).",
+      "kind": "feature",
+      "files": [
+        "app/services/__init__.py",
+        "app/services/ai_service.py",
+        "app/services/audit_service.py",
+        "app/services/crm_service.py",
+        "app/services/dashboard_service.py",
+        "app/services/email_policy_service.py",
+        "app/services/filter_service.py",
+        "app/services/org_cache_service.py",
+        "app/services/org_scoring_service.py",
+        "app/services/outbox_service.py",
+        "app/services/rate_limit_service.py",
+        "app/services/scoring_service.py",
+        "app/services/settings_service.py",
+        "app/services/token_service.py",
+        "app/services/user_service.py",
+        "app/services/worker_tracker.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "08-api",
+      "name": "API",
+      "description": "Groups 8 file(s); routes: /api/admin/dashboard, /api/admin/submissions/dead-lettered, /api/admin/submissions/dead-lettered/replay-all, /api/admin/submissions/{submission_id}/replay, /api/auth/config, /api/auth/verify.",
+      "kind": "feature",
+      "files": [
+        "app/api/__init__.py",
+        "app/api/auth.py",
+        "app/api/drafts.py",
+        "app/api/form_builder.py",
+        "app/api/org.py",
+        "app/api/orgs.py",
+        "app/api/public.py",
+        "app/api/routes.py"
+      ],
+      "routes": [
+        {
+          "route": "/api/admin/dashboard",
+          "file": "app/api/routes.py",
+          "line": 2028,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/admin/submissions/dead-lettered",
+          "file": "app/api/routes.py",
+          "line": 1852,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/admin/submissions/dead-lettered/replay-all",
+          "file": "app/api/routes.py",
+          "line": 1965,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/admin/submissions/{submission_id}/replay",
+          "file": "app/api/routes.py",
+          "line": 1897,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/auth/config",
+          "file": "app/api/routes.py",
+          "line": 1669,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/auth/verify",
+          "file": "app/api/routes.py",
+          "line": 1682,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/book-call",
+          "file": "app/api/routes.py",
+          "line": 1535,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/drafts/resume",
+          "file": "app/api/drafts.py",
+          "line": 146,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/drafts/save",
+          "file": "app/api/drafts.py",
+          "line": 95,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/form/questions/{question_id}",
+          "file": "app/api/form_builder.py",
+          "line": 250,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/form/questions/{question_id}",
+          "file": "app/api/form_builder.py",
+          "line": 221,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/form/sections",
+          "file": "app/api/form_builder.py",
+          "line": 106,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/form/sections",
+          "file": "app/api/form_builder.py",
+          "line": 136,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/form/sections/{section_id}",
+          "file": "app/api/form_builder.py",
+          "line": 182,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/form/sections/{section_id}",
+          "file": "app/api/form_builder.py",
+          "line": 157,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/form/sections/{section_id}/questions",
+          "file": "app/api/form_builder.py",
+          "line": 200,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/health",
+          "file": "app/main.py",
+          "line": 124,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/health/cache-metrics",
+          "file": "app/main.py",
+          "line": 161,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/health/pool-metrics",
+          "file": "app/main.py",
+          "line": 154,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/audit-logs",
+          "file": "app/api/routes.py",
+          "line": 1825,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs",
+          "file": "app/api/orgs.py",
+          "line": 125,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs",
+          "file": "app/api/orgs.py",
+          "line": 240,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/create",
+          "file": "app/api/orgs.py",
+          "line": 307,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/invitations/{invitation_id}",
+          "file": "app/api/orgs.py",
+          "line": 724,
+          "kind": "api",
+          "method": "PATCH"
+        },
+        {
+          "route": "/api/manage/orgs/invitations/{invitation_id}/regenerate",
+          "file": "app/api/orgs.py",
+          "line": 786,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/invitations/{invitation_id}/revoke",
+          "file": "app/api/orgs.py",
+          "line": 759,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/unlinked",
+          "file": "app/api/orgs.py",
+          "line": 322,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}",
+          "file": "app/api/orgs.py",
+          "line": 482,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}",
+          "file": "app/api/orgs.py",
+          "line": 360,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}",
+          "file": "app/api/orgs.py",
+          "line": 395,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/assessment-links",
+          "file": "app/api/orgs.py",
+          "line": 605,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/assessment-links",
+          "file": "app/api/orgs.py",
+          "line": 561,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/assessment-links/default",
+          "file": "app/api/orgs.py",
+          "line": 585,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/assessment-links/{token_id}",
+          "file": "app/api/orgs.py",
+          "line": 632,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/invitations",
+          "file": "app/api/orgs.py",
+          "line": 702,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/invitations",
+          "file": "app/api/orgs.py",
+          "line": 652,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/link",
+          "file": "app/api/orgs.py",
+          "line": 886,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/links/{submission_id}",
+          "file": "app/api/orgs.py",
+          "line": 845,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/message",
+          "file": "app/api/orgs.py",
+          "line": 966,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/report-preview",
+          "file": "app/api/orgs.py",
+          "line": 935,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/restore",
+          "file": "app/api/orgs.py",
+          "line": 526,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/orgs/{org_id}/status",
+          "file": "app/api/orgs.py",
+          "line": 444,
+          "kind": "api",
+          "method": "PATCH"
+        },
+        {
+          "route": "/api/manage/settings/rate-limits",
+          "file": "app/api/routes.py",
+          "line": 1480,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/settings/rate-limits",
+          "file": "app/api/routes.py",
+          "line": 1491,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/manage/settings/rate-limits/reset",
+          "file": "app/api/routes.py",
+          "line": 1516,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/users",
+          "file": "app/api/routes.py",
+          "line": 1706,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/manage/users",
+          "file": "app/api/routes.py",
+          "line": 1721,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/manage/users/{email}",
+          "file": "app/api/routes.py",
+          "line": 1748,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/org/dashboard",
+          "file": "app/api/org.py",
+          "line": 140,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/org/register",
+          "file": "app/api/org.py",
+          "line": 27,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/org/verify",
+          "file": "app/api/org.py",
+          "line": 67,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/public/assessment/resolve-legacy-org",
+          "file": "app/api/public.py",
+          "line": 65,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/public/assessment/resolve-link",
+          "file": "app/api/public.py",
+          "line": 46,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/public/email/validate",
+          "file": "app/api/public.py",
+          "line": 100,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/public/invitations/validate",
+          "file": "app/api/public.py",
+          "line": 150,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/public/organisations/validate",
+          "file": "app/api/public.py",
+          "line": 110,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/settings",
+          "file": "app/api/routes.py",
+          "line": 1409,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/settings",
+          "file": "app/api/routes.py",
+          "line": 1422,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/settings/delete-all-records",
+          "file": "app/api/routes.py",
+          "line": 1767,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/settings/notifications/toggle",
+          "file": "app/api/routes.py",
+          "line": 1449,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/settings/rate-limits",
+          "file": "app/api/routes.py",
+          "line": 1481,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/settings/rate-limits",
+          "file": "app/api/routes.py",
+          "line": 1492,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/settings/rate-limits/reset",
+          "file": "app/api/routes.py",
+          "line": 1517,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/submissions",
+          "file": "app/api/routes.py",
+          "line": 404,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/submissions/filter",
+          "file": "app/api/routes.py",
+          "line": 506,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/submissions/saved-filters",
+          "file": "app/api/routes.py",
+          "line": 645,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/submissions/saved-filters",
+          "file": "app/api/routes.py",
+          "line": 685,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/submissions/saved-filters/{filter_id}",
+          "file": "app/api/routes.py",
+          "line": 736,
+          "kind": "api",
+          "method": "DELETE"
+        },
+        {
+          "route": "/api/submissions/{submission_id}",
+          "file": "app/api/routes.py",
+          "line": 883,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/email",
+          "file": "app/api/routes.py",
+          "line": 1210,
+          "kind": "api",
+          "method": "PUT"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/organisation",
+          "file": "app/api/routes.py",
+          "line": 1091,
+          "kind": "api",
+          "method": "PATCH"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/regenerate-email",
+          "file": "app/api/routes.py",
+          "line": 1247,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/respondent",
+          "file": "app/api/routes.py",
+          "line": 957,
+          "kind": "api",
+          "method": "PATCH"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/scores",
+          "file": "app/api/routes.py",
+          "line": 998,
+          "kind": "api",
+          "method": "PATCH"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/send",
+          "file": "app/api/routes.py",
+          "line": 1352,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/submissions/{submission_id}/status",
+          "file": "app/api/routes.py",
+          "line": 763,
+          "kind": "api",
+          "method": "GET"
+        },
+        {
+          "route": "/api/submit",
+          "file": "app/api/routes.py",
+          "line": 129,
+          "kind": "api",
+          "method": "POST"
+        },
+        {
+          "route": "/api/support",
+          "file": "app/api/routes.py",
+          "line": 1630,
+          "kind": "api",
+          "method": "POST"
+        }
+      ]
+    },
+    {
+      "slug": "09-frontend",
+      "name": "Frontend",
+      "description": "Groups 37 file(s).",
+      "kind": "feature",
+      "files": [
+        "frontend/src/App.vue",
+        "frontend/src/api.js",
+        "frontend/src/authConfig.js",
+        "frontend/src/components/AnimatedSelect.vue",
+        "frontend/src/components/RichEditor.vue",
+        "frontend/src/components/SaveContinueButton.vue",
+        "frontend/src/components/ScoreTable.vue",
+        "frontend/src/components/SearchableSelect.vue",
+        "frontend/src/components/ServiceNowFilterBuilder.vue",
+        "frontend/src/composables/useAccessibility.js",
+        "frontend/src/composables/useDraftSaving.js",
+        "frontend/src/main.js",
+        "frontend/src/router/index.js",
+        "frontend/src/style.css",
+        "frontend/src/utils/csvExport.js",
+        "frontend/src/utils/datetime.js",
+        "frontend/src/utils/defaultSections.js",
+        "frontend/src/utils/emailHtml.js",
+        "frontend/src/utils/geoData.js",
+        "frontend/src/views/AdminLogin.vue",
+        "frontend/src/views/Analytics.vue",
+        "frontend/src/views/AuditForm.vue",
+        "frontend/src/views/BookCall.vue",
+        "frontend/src/views/Dashboard.vue",
+        "frontend/src/views/FormBuilder.vue",
+        "frontend/src/views/OrgDashboard.vue",
+        "frontend/src/views/OrgLogin.vue",
+        "frontend/src/views/OrgVerify.vue",
+        "frontend/src/views/Organisations.vue",
+        "frontend/src/views/Overview.vue",
+        "frontend/src/views/ResumeDraft.vue",
+        "frontend/src/views/Settings.vue",
+        "frontend/src/views/SubmissionDetail.vue",
+        "frontend/src/views/Submissions.vue",
+        "frontend/src/views/SuperDashboard.vue",
+        "frontend/src/views/Support.vue",
+        "frontend/src/views/UserManagement.vue"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "10-scripts",
+      "name": "Scripts",
+      "description": "Groups 15 file(s).",
+      "kind": "feature",
+      "files": [
+        "scripts/check-auth-config.sh",
+        "scripts/deploy.sh",
+        "scripts/fix-vm-env.sh",
+        "scripts/import_nexora_audit.py",
+        "scripts/inspect_schema.py",
+        "scripts/migrate.py",
+        "scripts/reconcile_pipeline.py",
+        "scripts/reconcile_runs.py",
+        "scripts/run_migration.py",
+        "scripts/run_tests.py",
+        "scripts/seed_db.py",
+        "scripts/set_super.py",
+        "scripts/setup_db.py",
+        "scripts/test_real_postgres_concurrency.py",
+        "scripts/verify_import.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "11-tasks",
+      "name": "Tasks",
+      "description": "Groups 2 file(s).",
+      "kind": "feature",
+      "files": [
+        "app/tasks/job_worker.py",
+        "app/tasks/service_bus_worker.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "12-tests",
+      "name": "Tests",
+      "description": "Groups 43 file(s).",
+      "kind": "feature",
+      "files": [
+        "tests/conftest.py",
+        "tests/performance/README.md",
+        "tests/performance/audit_tokens.txt",
+        "tests/performance/config.js",
+        "tests/performance/metrics.js",
+        "tests/performance/niwi-browser-load.js",
+        "tests/performance/niwi-smoke.js",
+        "tests/performance/niwi-submission-load.js",
+        "tests/performance/niwi-sustained-load.js",
+        "tests/performance/report-generator.js",
+        "tests/performance/run-manual-workflow-tests.ps1",
+        "tests/performance/run-token-workflow-tests.ps1",
+        "tests/performance/run-workflow-tests.ps1",
+        "tests/test_api.py",
+        "tests/test_async_ingestion_e2e.py",
+        "tests/test_auth.py",
+        "tests/test_complete_security.py",
+        "tests/test_complete_submission_flow.py",
+        "tests/test_concurrent_submissions.py",
+        "tests/test_database_pooling.py",
+        "tests/test_db_mock.py",
+        "tests/test_disposable_postgres.py",
+        "tests/test_drafts.py",
+        "tests/test_e2e_secure_flow.py",
+        "tests/test_email_policy.py",
+        "tests/test_filter_builder.py",
+        "tests/test_keyvault_fail_safe.py",
+        "tests/test_org.py",
+        "tests/test_org_authorization.py",
+        "tests/test_org_cache.py",
+        "tests/test_org_lifecycle.py",
+        "tests/test_p0_security_fixes.py",
+        "tests/test_permissions_and_reliability.py",
+        "tests/test_rate_limits.py",
+        "tests/test_reliability_remediation.py",
+        "tests/test_scoring.py",
+        "tests/test_scoring_regression_fixtures.py",
+        "tests/test_secure_tokens.py",
+        "tests/test_security_auth.py",
+        "tests/test_service_bus_pipeline.py",
+        "tests/test_settings.py",
+        "tests/test_super_admin_dashboard.py",
+        "tests/test_v31_upgrades.py"
+      ],
+      "routes": []
+    },
+    {
+      "slug": "13-documentation",
+      "name": "Documentation",
+      "description": "4 documentation file(s).",
+      "kind": "documentation",
+      "files": [
+        "README.md",
+        "infrastructure/userlist.txt",
+        "sql/README.md",
+        "sql/archive/README.md"
+      ],
+      "routes": []
+    }
+  ],
+  "hints": {
+    "routeCandidates": [
+      "app/api/auth.py",
+      "app/api/drafts.py",
+      "app/api/form_builder.py",
+      "app/api/org.py",
+      "app/api/orgs.py",
+      "app/api/public.py",
+      "app/api/routes.py",
+      "app/main.py",
+      "app/services/org_cache_service.py",
+      "app/services/org_scoring_service.py",
+      "frontend/src/views/AdminLogin.vue",
+      "frontend/src/views/Analytics.vue",
+      "frontend/src/views/AuditForm.vue",
+      "frontend/src/views/BookCall.vue",
+      "frontend/src/views/Dashboard.vue",
+      "frontend/src/views/FormBuilder.vue",
+      "frontend/src/views/OrgDashboard.vue",
+      "frontend/src/views/OrgLogin.vue",
+      "frontend/src/views/OrgVerify.vue",
+      "frontend/src/views/Organisations.vue",
+      "frontend/src/views/Overview.vue",
+      "frontend/src/views/ResumeDraft.vue",
+      "frontend/src/views/Settings.vue",
+      "frontend/src/views/SubmissionDetail.vue",
+      "frontend/src/views/Submissions.vue",
+      "frontend/src/views/SuperDashboard.vue",
+      "frontend/src/views/Support.vue",
+      "frontend/src/views/UserManagement.vue",
+      "function_app.py",
+      "scripts/import_nexora_audit.py",
+      "tests/test_org_authorization.py",
+      "tests/test_rate_limits.py"
+    ],
+    "apiCandidates": [],
+    "schemaCandidates": [
+      "app/api/routes.py",
+      "app/models/audit.py",
+      "app/models/form_builder.py",
+      "app/models/user.py",
+      "app/services/settings_service.py",
+      "migrations/002_app_settings.sql",
+      "migrations/003_support_email.sql",
+      "migrations/004_designation.sql",
+      "migrations/005_rbac.sql",
+      "migrations/006_org_scoring.sql",
+      "migrations/007_fix_score_columns.sql",
+      "migrations/008_dynamic_forms.sql",
+      "migrations/009_question_dependencies.sql",
+      "migrations/010_saved_filters.sql",
+      "migrations/011_verify_submission_id_type.sql",
+      "migrations/012_dual_entry_invitations.sql",
+      "migrations/013_organization_admins.sql",
+      "migrations/014_submission_reassignments.sql",
+      "migrations/015_performance_jobs_and_idempotency.sql",
+      "migrations/016_service_bus_outbox.sql",
+      "migrations/017_per_operation_idempotency.sql",
+      "migrations/018_assessment_access_tokens.sql",
+      "migrations/019_system_security_settings.sql",
+      "migrations/01_remediation.sql",
+      "migrations/020_raw_submissions_and_dlq.sql",
+      "migrations/021_super_admin_dashboard_and_workers.sql",
+      "migrations/022_performance_indexes.sql",
+      "migrations/02_features_migration.sql",
+      "scripts/migrate.py",
+      "scripts/setup_db.py",
+      "sql/01_admin_notifications.sql",
+      "sql/02_support_requests.sql",
+      "sql/archive/create_table.sql",
+      "sql/archive/fix_missing_columns.sql",
+      "sql/archive/install_all.sql"
+    ],
+    "realtimeCandidates": [],
+    "authCandidates": [
+      "app/services/email_policy_service.py"
+    ],
+    "designSystemCandidates": [
+      "frontend/src/style.css"
+    ],
+    "entryPoints": []
+  },
+  "unknowns": [
+    "The data model is not structured by the engine — extract entities, fields, types, and relations from `hints.schemaCandidates` into `architecture/DATA-MODEL.md`.",
+    "Auth/middleware signals were found — read `hints.authCandidates` and record the auth rule per operation in the `architecture/INTERFACES.md` interface table's Auth column.",
+    "Design-system source files were found (Tailwind/theme configs, token modules, global CSS) — capture the visual contract (tokens with their exact values, theming, typography, components, a11y) from `hints.designSystemCandidates` in `architecture/DESIGN-SYSTEM.md`."
+  ],
+  "excludedCount": 221,
+  "excludedDirCount": 19,
+  "evidence": [
+    {
+      "id": "ev_02b1d551f030712e",
+      "kind": "route",
+      "subject": "PUT /api/manage/orgs/{org_id}/links/{submission_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 845,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_07326a90e55444cd",
+      "kind": "env",
+      "subject": "ENTRA_CLIENT_ID",
+      "source": {
+        "file": ".env.example",
+        "line": 27,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_07a6e90866db183f",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/message",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 966,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_08827321d5243fd5",
+      "kind": "route",
+      "subject": "DELETE /api/submissions/saved-filters/{filter_id}",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 736,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_0b48455de40663ca",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs/{org_id}/assessment-links",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 605,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_0ea8c0086ce0a25e",
+      "kind": "env",
+      "subject": "SUPPORT_EMAIL",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1595,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_0fd60ab36ea6d32f",
+      "kind": "route",
+      "subject": "DELETE /api/form/questions/{question_id}",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 250,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_124df38f4f98d7bf",
+      "kind": "route",
+      "subject": "POST /api/submit",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 129,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_14f3952f9207e3e5",
+      "kind": "env",
+      "subject": "PGHOST",
+      "source": {
+        "file": ".env.example",
+        "line": 2,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_1810a95ce8f5ffbf",
+      "kind": "route",
+      "subject": "POST /api/admin/submissions/{submission_id}/replay",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1897,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_1882f3dd4fea9356",
+      "kind": "route",
+      "subject": "POST /api/support",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1630,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_1a4b59d88d22ca21",
+      "kind": "route",
+      "subject": "DELETE /api/form/sections/{section_id}",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 182,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_1b4ed9f4de3d5e30",
+      "kind": "env",
+      "subject": "PGUSER",
+      "source": {
+        "file": ".env.example",
+        "line": 5,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_1d559eb40a7247a5",
+      "kind": "route",
+      "subject": "GET /api/submissions",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 404,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_24baf696295abced",
+      "kind": "route",
+      "subject": "PUT /api/settings/rate-limits",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1492,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_25c6e74c2daa0372",
+      "kind": "env",
+      "subject": "ENABLE_DEV_BYPASS",
+      "source": {
+        "file": ".env.example",
+        "line": 31,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_2761742869f13dee",
+      "kind": "route",
+      "subject": "PUT /api/form/sections/{section_id}",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 157,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_284c03118070d041",
+      "kind": "route",
+      "subject": "POST /api/public/assessment/resolve-link",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 46,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_29659b5653ff5fc2",
+      "kind": "env",
+      "subject": "VITE_APP_URL",
+      "source": {
+        "file": "frontend/.env.example",
+        "line": 2,
+        "hash": "2d6866e1e9479470"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_2bbc16aba7182681",
+      "kind": "env",
+      "subject": "SERVICE_BUS_MAX_DELIVERY_COUNT",
+      "source": {
+        "file": ".env.example",
+        "line": 44,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_2be2acae1bd29caa",
+      "kind": "route",
+      "subject": "POST /api/form/sections",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 136,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_2e13c8cff3d1287e",
+      "kind": "route",
+      "subject": "GET /api/org/dashboard",
+      "source": {
+        "file": "app/api/org.py",
+        "line": 140,
+        "hash": "475231abbf9cff18"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_2e7ed5641b42457b",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/create",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 307,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_334b4bf127acc613",
+      "kind": "env",
+      "subject": "REQUIRE_KEYVAULT",
+      "source": {
+        "file": "app/core/config.py",
+        "line": 27,
+        "hash": "9d94cd40a397fb2b"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_34aea4a6444a0079",
+      "kind": "env",
+      "subject": "OUTBOX_BATCH_SIZE",
+      "source": {
+        "file": "app/services/outbox_service.py",
+        "line": 30,
+        "hash": "c8e4eb13032dbacb"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_366887950434685a",
+      "kind": "env",
+      "subject": "ACS_CONNECTION_STRING",
+      "source": {
+        "file": ".env.example",
+        "line": 9,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_3742846691eb828d",
+      "kind": "env",
+      "subject": "ENABLE_SERVICE_BUS_PIPELINE",
+      "source": {
+        "file": "app/core/config.py",
+        "line": 172,
+        "hash": "9d94cd40a397fb2b"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_37ef60796cac9640",
+      "kind": "route",
+      "subject": "DELETE /api/manage/users/{email}",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1748,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_3e109426bec4abb1",
+      "kind": "route",
+      "subject": "PATCH /api/manage/orgs/invitations/{invitation_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 724,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_3f50cdcc9426af9c",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs/{org_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 360,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_40af7a998690e5a0",
+      "kind": "env",
+      "subject": "ENABLE_EMBEDDED_WORKER",
+      "source": {
+        "file": "app/main.py",
+        "line": 71,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_412135f3e7c1f117",
+      "kind": "env",
+      "subject": "SERVICE_BUS_LOCK_DURATION_SECONDS",
+      "source": {
+        "file": ".env.example",
+        "line": 45,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_41745c10a2108fb5",
+      "kind": "route",
+      "subject": "GET /api/org/verify",
+      "source": {
+        "file": "app/api/org.py",
+        "line": 67,
+        "hash": "475231abbf9cff18"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_4253ffec08baac5f",
+      "kind": "route",
+      "subject": "POST /api/submissions/{submission_id}/send",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1352,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_43b66f6e3a069a1b",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/assessment-links",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 561,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_46ad9cf2f64d306a",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/restore",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 526,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_49f435fbb415c414",
+      "kind": "route",
+      "subject": "PUT /api/form/questions/{question_id}",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 221,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_4ac298f3c4f8b74c",
+      "kind": "env",
+      "subject": "SERVICE_BUS_QUEUE_NAME",
+      "source": {
+        "file": ".env.example",
+        "line": 43,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_4ba84377b6854774",
+      "kind": "route",
+      "subject": "POST /api/auth/verify",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1682,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_500fde403115fdee",
+      "kind": "route",
+      "subject": "PATCH /api/submissions/{submission_id}/scores",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 998,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_539d658e0ac284da",
+      "kind": "route",
+      "subject": "GET /api/admin/dashboard",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 2028,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_56c87188f06c2170",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/assessment-links/default",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 585,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_572e37ca0c78bf51",
+      "kind": "env",
+      "subject": "NIWI_ORG_CACHE_INVALIDATION_FILE",
+      "source": {
+        "file": "app/services/org_cache_service.py",
+        "line": 47,
+        "hash": "a61e2a6561f81213"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_573e772885acfe84",
+      "kind": "route",
+      "subject": "DELETE /api/manage/orgs/{org_id}/assessment-links/{token_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 632,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_584912489390f990",
+      "kind": "route",
+      "subject": "POST /api/submissions/{submission_id}/regenerate-email",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1247,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_5c773f096177268e",
+      "kind": "env",
+      "subject": "NIWI_RATE_LIMIT_INVALIDATION_FILE",
+      "source": {
+        "file": "app/services/rate_limit_service.py",
+        "line": 61,
+        "hash": "4fc473d8d00a90d0"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_5e85d0624d3973e8",
+      "kind": "env",
+      "subject": "TESTING",
+      "source": {
+        "file": "app/core/authorization.py",
+        "line": 40,
+        "hash": "52a9322c14d79878"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_5fd66d6842132534",
+      "kind": "env",
+      "subject": "PGPASSWORD",
+      "source": {
+        "file": ".env.example",
+        "line": 6,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_6010260cddcbdd3a",
+      "kind": "route",
+      "subject": "PUT /api/settings",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1422,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_64267b051027e7bb",
+      "kind": "route",
+      "subject": "POST /api/public/organisations/validate",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 110,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_648406e5f473ca70",
+      "kind": "env",
+      "subject": "FRONTEND_URL",
+      "source": {
+        "file": ".env.example",
+        "line": 23,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_66c0e2c895700aa8",
+      "kind": "route",
+      "subject": "GET /audit",
+      "source": {
+        "file": "app/main.py",
+        "line": 170,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6a42edd70362ac7b",
+      "kind": "route",
+      "subject": "PUT /api/submissions/{submission_id}/email",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1210,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6c9a4e363a701409",
+      "kind": "route",
+      "subject": "DELETE /api/manage/orgs/{org_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 482,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6d3eb5020da25e36",
+      "kind": "env",
+      "subject": "PUBLIC_VALIDATE_LIMIT",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 111,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6d763735e8ec8092",
+      "kind": "route",
+      "subject": "POST /api/settings/rate-limits/reset",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1517,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6dcb5aab1026745c",
+      "kind": "env",
+      "subject": "PGPORT",
+      "source": {
+        "file": ".env.example",
+        "line": 3,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_6e0100c194b2bf12",
+      "kind": "env",
+      "subject": "PGOPTIONS",
+      "source": {
+        "file": "app/core/database.py",
+        "line": 172,
+        "hash": "576d8d0b669d0a0b"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6fb6a53ec9af62af",
+      "kind": "env",
+      "subject": "OUTBOX_POLL_INTERVAL",
+      "source": {
+        "file": "app/services/outbox_service.py",
+        "line": 29,
+        "hash": "c8e4eb13032dbacb"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_6fcc84388931bfc2",
+      "kind": "route",
+      "subject": "PATCH /api/submissions/{submission_id}/respondent",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 957,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7775dc0b5f708667",
+      "kind": "route",
+      "subject": "GET /api/settings/rate-limits",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1481,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_77e0e6b74f39a080",
+      "kind": "route",
+      "subject": "GET /api/manage/settings/rate-limits",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1480,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_79c0d7ea56d45daa",
+      "kind": "route",
+      "subject": "POST /api/submissions/saved-filters",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 685,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7aafe8abf0f96faa",
+      "kind": "route",
+      "subject": "POST /api/drafts/save",
+      "source": {
+        "file": "app/api/drafts.py",
+        "line": 95,
+        "hash": "a80a517872d058db"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7be29f3e322df970",
+      "kind": "env",
+      "subject": "ENVIRONMENT",
+      "source": {
+        "file": "app/core/authorization.py",
+        "line": 39,
+        "hash": "52a9322c14d79878"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7cfe96ab4cd3e95a",
+      "kind": "route",
+      "subject": "GET /api/auth/config",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1669,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7d584bfe9b0fa5b7",
+      "kind": "env",
+      "subject": "VITE_API_BASE",
+      "source": {
+        "file": "frontend/.env.example",
+        "line": 5,
+        "hash": "2d6866e1e9479470"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_7f67decd6e662efe",
+      "kind": "route",
+      "subject": "GET /",
+      "source": {
+        "file": "app/main.py",
+        "line": 178,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_7fd6ffce88a68958",
+      "kind": "env",
+      "subject": "ACS_SENDER_NAME",
+      "source": {
+        "file": ".env.example",
+        "line": 11,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_80489dda9e5969ac",
+      "kind": "env",
+      "subject": "PGDATABASE",
+      "source": {
+        "file": ".env.example",
+        "line": 4,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_85fdeee4a7a03e28",
+      "kind": "route",
+      "subject": "POST /api/settings/delete-all-records",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1767,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_878d0fa99bc55ee0",
+      "kind": "route",
+      "subject": "POST /api/public/assessment/resolve-legacy-org",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 65,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_8a5abcea59ffc59b",
+      "kind": "env",
+      "subject": "NIWI_BLOCKED_EMAIL_DOMAINS",
+      "source": {
+        "file": "app/services/email_policy_service.py",
+        "line": 110,
+        "hash": "76784f845a293777"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_8a6160d37e404544",
+      "kind": "env",
+      "subject": "ENABLE_LEGACY_JOB_WORKER",
+      "source": {
+        "file": "app/core/config.py",
+        "line": 173,
+        "hash": "9d94cd40a397fb2b"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_8bb1726be18aa4d3",
+      "kind": "route",
+      "subject": "GET /api/health/pool-metrics",
+      "source": {
+        "file": "app/main.py",
+        "line": 154,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_8e06f9a67a3440c8",
+      "kind": "route",
+      "subject": "GET /api/submissions/{submission_id}",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 883,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_909bc94e2ab4fe17",
+      "kind": "route",
+      "subject": "GET /api/submissions/{submission_id}/status",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 763,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_92b77585e59a458a",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs/{org_id}/report-preview",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 935,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_9425aae5fb87d22e",
+      "kind": "env",
+      "subject": "APP_ENV",
+      "source": {
+        "file": ".env.example",
+        "line": 16,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_98dc012508ea3423",
+      "kind": "env",
+      "subject": "VITE_MSAL_TENANT_ID",
+      "source": {
+        "file": "frontend/.env.example",
+        "line": 9,
+        "hash": "2d6866e1e9479470"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_9cc5aa564bf345eb",
+      "kind": "route",
+      "subject": "POST /api/form/sections/{section_id}/questions",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 200,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_a0c3c06bb2cbf330",
+      "kind": "route",
+      "subject": "PUT /api/manage/orgs/{org_id}",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 395,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_a3116f9073f1ec97",
+      "kind": "route",
+      "subject": "PATCH /api/submissions/{submission_id}/organisation",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1091,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_a333362b425a652c",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs/{org_id}/invitations",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 702,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_a54a8dc7af3c25f8",
+      "kind": "route",
+      "subject": "POST /api/manage/users",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1721,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_a840fbdd1c3a658c",
+      "kind": "route",
+      "subject": "GET /api/manage/audit-logs",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1825,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_af7b00336318adfb",
+      "kind": "route",
+      "subject": "PUT /api/manage/settings/rate-limits",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1491,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_b1cb9f0488a16cd9",
+      "kind": "env",
+      "subject": "JWT_SECRET",
+      "source": {
+        "file": ".env.example",
+        "line": 21,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_b41ba48f6b4dff09",
+      "kind": "env",
+      "subject": "SERVICE_BUS_FQDN",
+      "source": {
+        "file": ".env.example",
+        "line": 42,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_b650a06ec8d8bde0",
+      "kind": "route",
+      "subject": "POST /api/org/register",
+      "source": {
+        "file": "app/api/org.py",
+        "line": 27,
+        "hash": "475231abbf9cff18"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_b9b853f3c55b0678",
+      "kind": "route",
+      "subject": "GET /api/manage/users",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1706,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_bd0a68f48dcb4716",
+      "kind": "env",
+      "subject": "SERVICE_BUS_CONNECTION_STRING",
+      "source": {
+        "file": "app/core/config.py",
+        "line": 177,
+        "hash": "9d94cd40a397fb2b"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_bdf32c9bc65b518c",
+      "kind": "env",
+      "subject": "SERVICE_BUS_CONCURRENCY",
+      "source": {
+        "file": ".env.example",
+        "line": 46,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_be7c58862b4a727f",
+      "kind": "route",
+      "subject": "POST /api/submissions/filter",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 506,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_bf69409416447452",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs/unlinked",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 322,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_c0897d55581893b6",
+      "kind": "env",
+      "subject": "SERVICE_BUS_RECEIVE_WAIT_TIME",
+      "source": {
+        "file": "app/tasks/service_bus_worker.py",
+        "line": 51,
+        "hash": "961f60bb69e8ec95"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_c2f6df616e9fcc59",
+      "kind": "route",
+      "subject": "POST /api/manage/settings/rate-limits/reset",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1516,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_c301308749f20dae",
+      "kind": "route",
+      "subject": "GET /api/admin/submissions/dead-lettered",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1852,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_c538f9435593d602",
+      "kind": "env",
+      "subject": "DELETE_ALL_PASSWORD",
+      "source": {
+        "file": ".env.example",
+        "line": 24,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_c688f05f8c67d992",
+      "kind": "env",
+      "subject": "HUBSPOT_ACCESS_TOKEN",
+      "source": {
+        "file": "app/services/crm_service.py",
+        "line": 10,
+        "hash": "495313a3909ab7a7"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_cb3d90c30b5a38bf",
+      "kind": "env",
+      "subject": "SERVICE_BUS_ENABLED",
+      "source": {
+        "file": ".env.example",
+        "line": 47,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_cd6d39bb4c78925a",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 240,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_cd87d83562b42f41",
+      "kind": "route",
+      "subject": "GET /api/form/sections",
+      "source": {
+        "file": "app/api/form_builder.py",
+        "line": 106,
+        "hash": "ced0b47b39e75c9f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_ce108155d1506d4f",
+      "kind": "route",
+      "subject": "GET /api/drafts/resume",
+      "source": {
+        "file": "app/api/drafts.py",
+        "line": 146,
+        "hash": "a80a517872d058db"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_d0e78fd2b753a234",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/invitations",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 652,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_d1a0802e13119af8",
+      "kind": "route",
+      "subject": "POST /api/book-call",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1535,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_db0b5225f0bb9889",
+      "kind": "route",
+      "subject": "POST /api/public/invitations/validate",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 150,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_e47d3e466e8ccda0",
+      "kind": "route",
+      "subject": "GET /api/submissions/saved-filters",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 645,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_e49eb2e48d92295f",
+      "kind": "route",
+      "subject": "GET /api/health/cache-metrics",
+      "source": {
+        "file": "app/main.py",
+        "line": 161,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_e4a7ca42889aa24c",
+      "kind": "route",
+      "subject": "GET /api/manage/orgs",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 125,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_e6bdd6e1f789234a",
+      "kind": "env",
+      "subject": "CORS_ORIGINS",
+      "source": {
+        "file": ".env.example",
+        "line": 22,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_e8231e3113679769",
+      "kind": "env",
+      "subject": "ACS_SENDER_ADDRESS",
+      "source": {
+        "file": ".env.example",
+        "line": 10,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_e904ed273334cee2",
+      "kind": "env",
+      "subject": "KEY_VAULT_NAME",
+      "source": {
+        "file": "app/core/keyvault.py",
+        "line": 45,
+        "hash": "99dfc556e2fe1728"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_eaed800b69cf7173",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/{org_id}/link",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 886,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_eb345e4d3dbd0d7c",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/invitations/{invitation_id}/revoke",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 759,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_ee08feb873ba3cd9",
+      "kind": "env",
+      "subject": "VITE_MSAL_CLIENT_ID",
+      "source": {
+        "file": "frontend/.env.example",
+        "line": 8,
+        "hash": "2d6866e1e9479470"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_eef763f7d83df36d",
+      "kind": "env",
+      "subject": "ENTRA_TENANT_ID",
+      "source": {
+        "file": ".env.example",
+        "line": 28,
+        "hash": "22e224d9e9489317"
+      },
+      "confidence": "observed",
+      "authority": "config"
+    },
+    {
+      "id": "ev_ef45b5cdf1b4a937",
+      "kind": "route",
+      "subject": "POST /api/admin/submissions/dead-lettered/replay-all",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1965,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_f6095d1b95ba4296",
+      "kind": "route",
+      "subject": "PATCH /api/manage/orgs/{org_id}/status",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 444,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_f73b91b1015626e9",
+      "kind": "route",
+      "subject": "GET /api/health",
+      "source": {
+        "file": "app/main.py",
+        "line": 124,
+        "hash": "51619efd1f977eb9"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_f7bef6ebb816740c",
+      "kind": "route",
+      "subject": "GET /api/settings",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1409,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_f7c3fbf454887d71",
+      "kind": "env",
+      "subject": "SERVICE_BUS_BATCH_SIZE",
+      "source": {
+        "file": "app/tasks/service_bus_worker.py",
+        "line": 52,
+        "hash": "961f60bb69e8ec95"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_fd83885501b2b156",
+      "kind": "route",
+      "subject": "POST /api/manage/orgs/invitations/{invitation_id}/regenerate",
+      "source": {
+        "file": "app/api/orgs.py",
+        "line": 786,
+        "hash": "3bba09fd5a4a4f20"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_ff7c9313ddcf6048",
+      "kind": "route",
+      "subject": "POST /api/settings/notifications/toggle",
+      "source": {
+        "file": "app/api/routes.py",
+        "line": 1449,
+        "hash": "397e9e53dd6b0e5a"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    },
+    {
+      "id": "ev_fff4feab81cf9dc5",
+      "kind": "route",
+      "subject": "POST /api/public/email/validate",
+      "source": {
+        "file": "app/api/public.py",
+        "line": 100,
+        "hash": "8fed1493eb0fbf3f"
+      },
+      "confidence": "observed",
+      "authority": "source"
+    }
+  ]
+}
