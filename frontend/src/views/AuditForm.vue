@@ -6,21 +6,9 @@
       <div class="success-box">
         <div class="success-icon">✓</div>
         <h2>Assessment Successfully Submitted</h2>
-        <p style="font-size: 1.05rem; font-weight: 600; color: #047C69; margin-bottom: 0.75rem;">Your responses have been successfully recorded.</p>
+        <p class="success-lead">Your responses have been successfully recorded.</p>
         <p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p>
         <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>
-        <div v-if="asyncStatus === 'COMPLETED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; color: #2e7d32; font-weight: 500; font-size: 0.95rem;">
-          ✓ Response processed and insights recorded
-        </div>
-        <div v-else-if="asyncStatus === 'PROCESSING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; color: #1565c0; font-weight: 500; font-size: 0.95rem;">
-          ⏳ Processing assessment and calculating insights...
-        </div>
-        <div v-else-if="asyncStatus === 'DEAD_LETTERED' || asyncStatus === 'FAILED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; color: #c62828; font-weight: 500; font-size: 0.95rem;">
-          ⚠️ Submission safely stored. Processing queued for admin review.
-        </div>
-        <div v-else style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; font-weight: 500; font-size: 0.95rem;">
-          ✓ Responses recorded and queued for analysis
-        </div>
       </div>
     </div>
     <div v-else-if="isLoading && currentStep > 0" class="success-wrap">
@@ -4681,17 +4669,34 @@ html {
 .dev-btn--fresh:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
 
 /* Success */
-.success-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; background: var(--bg, #FAFAF8); }
+.success-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  background: var(--bg, #FAFAF8);
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
 .success-box {
   background: var(--c-white, #FFFFFF);
-  border-radius: 16px;
+  border-radius: 20px;
   padding: 3.5rem 3rem;
   text-align: center;
   border: 1px solid rgba(22, 16, 87, 0.08);
-  box-shadow: 0 8px 32px rgba(22, 16, 87, 0.05);
+  box-shadow: 0 12px 40px rgba(22, 16, 87, 0.06);
   max-width: 580px;
   width: 100%;
+  box-sizing: border-box;
+  margin: auto;
 }
+
 .success-icon {
   width: 64px;
   height: 64px;
@@ -4705,6 +4710,7 @@ html {
   font-weight: 700;
   margin-bottom: 1.5rem;
 }
+
 .success-box h2 {
   font-size: 1.75rem;
   font-weight: 800;
@@ -4712,13 +4718,60 @@ html {
   margin-bottom: 0.85rem;
   font-family: 'Fraunces', serif;
   letter-spacing: -0.02em;
+  line-height: 1.25;
 }
+
+.success-lead {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #047C69;
+  margin-bottom: 1rem !important;
+}
+
 .success-box p {
   color: #475569;
   line-height: 1.65;
   font-size: 0.95rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.15rem;
   font-family: var(--font-body);
+}
+
+.success-box p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+  .success-wrap {
+    padding: 1.5rem 1rem max(3.5rem, calc(env(safe-area-inset-bottom, 20px) + 2rem));
+    align-items: flex-start;
+  }
+
+  .success-box {
+    padding: 2.25rem 1.5rem;
+    border-radius: 16px;
+    margin: auto 0;
+  }
+
+  .success-icon {
+    width: 54px;
+    height: 54px;
+    font-size: 1.5rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .success-box h2 {
+    font-size: 1.45rem;
+  }
+
+  .success-lead {
+    font-size: 0.98rem;
+  }
+
+  .success-box p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+  }
 }
 
 .alert { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 0.75rem; word-break: break-word; }
