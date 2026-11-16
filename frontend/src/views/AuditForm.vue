@@ -342,7 +342,7 @@
           <!-- Inline Navigation Buttons (end of page content) -->
           <div class="inline-nav-bar">
             <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
-            <div></div>
+            <div class="step-nav-mid"></div>
             <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
           </div>
         </div>
@@ -3234,23 +3234,11 @@ async function pollSubmissionStatus(subId) {
   transform: translateY(-1px);
 }
 
-@media (max-width: 640px) {
-  .inline-nav-bar {
-    padding: 1.25rem 0 1.5rem;
-    margin-top: 1.5rem;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-  .btn-back-compact,
-  .btn-next-compact,
-  .btn-submit {
-    min-height: 48px;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.95rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
+/* Base button transitions */
+.btn-back-compact,
+.btn-next-compact,
+.btn-submit {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .step-nav-mid {
@@ -3368,72 +3356,6 @@ async function pollSubmissionStatus(subId) {
 @media (max-width: 1080px) {
   .why-matters-footer {
     padding: 1rem 2rem;
-  }
-}
-@media (max-width: 640px) {
-  .inline-nav-bar {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1.25rem 0 1.5rem;
-    margin-top: 1.5rem;
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-  .why-matters-footer {
-    padding: 0.875rem 1.5rem;
-    flex-wrap: wrap;
-  }
-  .btn-back-compact {
-    min-height: 42px;
-    padding: 0.5rem 0.95rem;
-    font-size: 0.82rem;
-  }
-  
-
-  .step-nav-mid {
-    order: 3;
-    width: 100%;
-    width: auto;
-    justify-content: center;
-  }
-
-  .btn-start-fresh {
-    min-height: 42px;
-    padding: 0.48rem 0.75rem;
-    font-size: 0.76rem;
-  }
-
-  .btn-next-compact,
-  .btn-submit {
-    min-height: 42px;
-    padding: 0.55rem 1.2rem;
-    font-size: 0.85rem;
-  }
-}
-
-@media (max-width: 380px) {
-  .inline-nav-bar {
-    gap: 0.35rem;
-  }
-
-  .btn-back-compact {
-    padding: 0.45rem 0.75rem;
-    font-size: 0.76rem;
-  }
-
-  .btn-start-fresh {
-    padding: 0.42rem 0.55rem;
-    font-size: 0.7rem;
-  }
-
-  .btn-next-compact,
-  .btn-submit {
-    padding: 0.48rem 0.95rem;
-    font-size: 0.8rem;
   }
 }
 
@@ -5952,17 +5874,35 @@ html {
 
 /* Bottom Navigation Bar Card */
 .inline-nav-bar {
-  display: flex !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
   align-items: center !important;
-  justify-content: space-between !important;
   background: #FFFFFF !important;
   border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
   border-radius: 16px !important;
   box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
   padding: 1.1rem 1.75rem !important;
-  margin-top: 0.5rem !important;
+  margin-top: 1rem !important;
   border-top: none !important;
   gap: 1rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.inline-nav-bar > :first-child {
+  justify-self: start !important;
+}
+
+.step-nav-mid,
+.inline-nav-bar > :nth-child(2) {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  justify-self: center !important;
+}
+
+.inline-nav-bar > :last-child {
+  justify-self: end !important;
 }
 
 .btn-next-compact {
@@ -5976,6 +5916,7 @@ html {
   box-shadow: 0 4px 12px rgba(22, 16, 87, 0.18) !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
+  white-space: nowrap !important;
 }
 
 .btn-next-compact:hover {
@@ -5994,6 +5935,7 @@ html {
   font-size: 0.95rem !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
+  white-space: nowrap !important;
 }
 
 .btn-back-compact:hover {
@@ -6013,11 +5955,139 @@ html {
   box-shadow: 0 4px 16px rgba(4, 144, 124, 0.3) !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
+  white-space: nowrap !important;
 }
 
 .btn-submit:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
+}
+
+.btn-start-fresh {
+  background: transparent !important;
+  border: 1px dashed rgba(22, 16, 87, 0.25) !important;
+  color: #64748B !important;
+  border-radius: 8px !important;
+  padding: 0.55rem 1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.85rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.btn-start-fresh:hover {
+  color: #161057 !important;
+  background: rgba(22, 16, 87, 0.04) !important;
+  border-style: solid !important;
+}
+
+/* =========================================================
+   RESPONSIVE MOBILE NAVIGATION BAR (max-width: 640px)
+   ========================================================= */
+@media (max-width: 640px) {
+  .inline-nav-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-areas:
+      "back next"
+      "mid  mid" !important;
+    align-items: center !important;
+    gap: 0.75rem 0.65rem !important;
+    padding: 0.85rem 1rem !important;
+    margin-top: 1rem !important;
+    border-radius: 14px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+  }
+
+  .inline-nav-bar > :first-child {
+    grid-area: back !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-self: stretch !important;
+  }
+
+  .inline-nav-bar > :last-child {
+    grid-area: next !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-self: stretch !important;
+  }
+
+  .inline-nav-bar .btn-back-compact {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .inline-nav-bar .btn-next-compact {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .inline-nav-bar .btn-submit {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+  }
+
+  .step-nav-mid {
+    grid-area: mid !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    margin-top: 0.15rem !important;
+  }
+
+  .step-nav-mid:empty {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .btn-start-fresh {
+    min-height: 38px !important;
+    padding: 0.45rem 1rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .inline-nav-bar {
+    padding: 0.75rem 0.65rem !important;
+    gap: 0.5rem !important;
+  }
+  .inline-nav-bar .btn-back-compact,
+  .inline-nav-bar .btn-next-compact,
+  .inline-nav-bar .btn-submit {
+    font-size: 0.825rem !important;
+    padding: 0.55rem 0.4rem !important;
+  }
 }
 
 .submit-error-banner {
