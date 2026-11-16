@@ -31,7 +31,7 @@
             ref="searchInputRef"
             v-model="searchQuery"
             type="text"
-            placeholder="Search country..."
+            :placeholder="searchPlaceholder || 'Search...'"
             class="search-input"
             @input="highlightIndex = 0"
             @keydown.down.prevent="onKeyDown"
@@ -82,7 +82,11 @@ const props = defineProps({
   },
   placeholder: {
     type: String,
-    default: 'Select country'
+    default: 'Select an option'
+  },
+  searchPlaceholder: {
+    type: String,
+    default: 'Search...'
   },
   error: {
     type: Boolean,
@@ -211,6 +215,10 @@ onUnmounted(() => {
 .searchable-select {
   position: relative;
   width: 100%;
+}
+
+.searchable-select.is-open {
+  z-index: 50;
 }
 
 .select-trigger {

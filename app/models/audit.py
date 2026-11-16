@@ -2,11 +2,22 @@
 audit.py — Audit submission model
 Mirrors the `submissions` table schema defined in create_table.sql.
 """
-from pydantic import BaseModel, Field, EmailStr
+import re
+from pydantic import BaseModel, Field, EmailStr, field_validator
 from typing import Optional
 
 class AuditSubmission(BaseModel):
     name: Optional[str] = Field(None, max_length=255)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v.strip():
+            cleaned = v.strip()
+            if not re.match(r"^[a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF\s'\-\.]+$", cleaned):
+                raise ValueError("Name contains invalid characters. Special characters such as @ are not allowed.")
+            return cleaned
+        return v
     designation: Optional[str] = Field(None, max_length=255)
     company_name: Optional[str] = Field(None, max_length=255)
     organization_id: Optional[str] = None

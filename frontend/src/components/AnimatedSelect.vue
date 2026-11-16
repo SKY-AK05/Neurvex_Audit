@@ -179,6 +179,10 @@ onUnmounted(() => {
   width: 100%;
 }
 
+.animated-select.is-open {
+  z-index: 50;
+}
+
 .select-trigger {
   display: flex;
   align-items: center;

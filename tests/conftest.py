@@ -41,6 +41,7 @@ class InMemoryStore:
         }
         self.organizations = {}
         self.submissions = {}
+        self.raw_submissions = {}
         self.invitations = {}
         self.drafts = {}
         self.reassignments = []
@@ -119,7 +120,116 @@ class MockCursor:
             self.rowcount = 1
             return
 
-        # 1.1 Atomic Submission CTE Query Support
+        # 1.1 Atomic Submission CTE Query Support (existing_raw or duplicate_check)
+        if "with existing_raw as" in sql_lower:
+            idemp_val = p.get("idempotency_key") if isinstance(p, dict) else None
+            sub_id = p.get("submission_id") if isinstance(p, dict) else str(uuid.uuid4())
+            payload_raw = p.get("payload") if isinstance(p, dict) else "{}"
+            payload_data = json.loads(payload_raw) if isinstance(payload_raw, str) else (payload_raw or {})
+            org_id_val = str(p.get("organization_id") or "") if isinstance(p, dict) else ""
+            now = datetime.now(timezone.utc)
+
+            # Check existing idempotency in raw_submissions or submissions
+            existing_sub = None
+            for s in self.store.raw_submissions.values():
+                if s.get("idempotency_key") == idemp_val:
+                    existing_sub = s
+                    break
+            if not existing_sub:
+                for s in self.store.submissions.values():
+                    if s.get("idempotency_key") == idemp_val:
+                        existing_sub = s
+                        break
+
+            if existing_sub:
+                created_id = None
+                existing_id = existing_sub.get("submission_id") or existing_sub.get("id")
+                existing_status = existing_sub.get("status", "RECEIVED")
+                existing_payload = existing_sub.get("payload") or existing_sub
+            else:
+                created_id = sub_id
+                existing_id = None
+                existing_status = None
+                existing_payload = None
+
+                sub_record = {
+                    "id": sub_id,
+                    "submission_id": sub_id,
+                    "name": payload_data.get("name", ""),
+                    "email": payload_data.get("email", ""),
+                    "company_name": payload_data.get("_resolved_company_name") or payload_data.get("company_name", ""),
+                    "organization_id": org_id_val,
+                    "submission_source": payload_data.get("_resolved_source") or payload_data.get("submission_source", "DIRECT"),
+                    "status": "RECEIVED",
+                    "submitted_at": now,
+                    "overall_avg": float(payload_data.get("overall_avg", 0.0) or 0.0),
+                    "overall_level": payload_data.get("overall_level", "Level 1 — Foundational"),
+                    "dimension_scores": payload_data.get("dimension_scores", "{}"),
+                    "answers": payload_data.get("answers", "{}"),
+                    "idempotency_key": idemp_val,
+                    "invitation_id": p.get("invitation_id"),
+                    "payload": payload_data,
+                }
+                for i in range(5, 45):
+                    sub_record[f"q{i}"] = payload_data.get(f"q{i}")
+                self.store.submissions[sub_id] = sub_record
+                self.store.raw_submissions[sub_id] = {
+                    "submission_id": sub_id,
+                    "idempotency_key": idemp_val,
+                    "organization_id": org_id_val,
+                    "payload": payload_data,
+                    "status": "RECEIVED",
+                    "scoring_status": "PENDING",
+                    "retry_count": 0,
+                    "created_at": now
+                }
+                outbox_id = str(uuid.uuid4())
+                self.store.service_bus_outbox[outbox_id] = {
+                    "id": outbox_id,
+                    "event_type": "SUBMISSION_CREATED",
+                    "aggregate_id": sub_id,
+                    "payload": payload_data,
+                    "status": "PENDING"
+                }
+                job_id = str(uuid.uuid4())
+                self.store.post_submit_jobs[job_id] = {
+                    "id": job_id,
+                    "submission_id": sub_id,
+                    "job_type": "email",
+                    "payload": payload_data,
+                    "attempts": 0,
+                    "max_attempts": 3,
+                    "status": "PENDING",
+                    "locked_by": None,
+                    "last_error": None
+                }
+
+                if p.get("draft_uuid"):
+                    draft_id_str = str(p.get("draft_uuid"))
+                    if draft_id_str in self.store.drafts:
+                        self.store.drafts[draft_id_str]["submitted"] = True
+
+                if p.get("invitation_id"):
+                    inv_id_str = str(p.get("invitation_id"))
+                    seen_invs = set()
+                    for inv in self.store.invitations.values():
+                        if inv.get("id") == inv_id_str and id(inv) not in seen_invs:
+                            seen_invs.add(id(inv))
+                            inv["submission_count"] = inv.get("submission_count", 0) + 1
+
+            row_tuple = (created_id, existing_id, existing_status, existing_payload)
+            if self.dict_cursor:
+                self._results = [{
+                    "created_id": created_id,
+                    "existing_id": existing_id,
+                    "existing_status": existing_status,
+                    "existing_payload": existing_payload
+                }]
+            else:
+                self._results = [row_tuple]
+            self.rowcount = 1
+            return
+
         if "with duplicate_check as" in sql_lower:
             email_val = (p.get("email") or "").strip().lower() if isinstance(p, dict) else ""
             org_id_val = str(p.get("organization_id") or "") if isinstance(p, dict) else ""
@@ -365,6 +475,18 @@ class MockCursor:
 
         # 4. Submissions
         if "insert into submissions" in sql_lower:
+            if "on conflict (id) do update" in sql_lower or ("on conflict" in sql_lower and "do update" in sql_lower):
+                sub_id = str(p.get("id")) if isinstance(p, dict) and p.get("id") else None
+                if sub_id and sub_id in self.store.submissions:
+                    if isinstance(p, dict):
+                        self.store.submissions[sub_id]["overall_avg"] = float(p.get("overall_avg", 0.0) or 0.0)
+                        self.store.submissions[sub_id]["overall_level"] = p.get("overall_level", "Developing")
+                        self.store.submissions[sub_id]["dimension_scores"] = p.get("dimension_scores", {})
+                        self.store.submissions[sub_id]["answers"] = p.get("answers", {})
+                        self.store.submissions[sub_id]["status"] = "completed"
+                        self.store.submissions[sub_id]["async_status"] = "PROCESSING"
+                    self.rowcount = 1
+                    return
             idem = p.get("idempotency_key") if isinstance(p, dict) else None
             if idem and "on conflict" in sql_lower:
                 for existing_sub in self.store.submissions.values():
@@ -372,7 +494,7 @@ class MockCursor:
                         self.rowcount = 0
                         self._results = []
                         return
-            sub_id = str(uuid.uuid4())
+            sub_id = str(p.get("id")) if isinstance(p, dict) and p.get("id") else str(uuid.uuid4())
             if isinstance(p, dict):
                 name = p.get("name", "User")
                 email = p.get("email", "user@test.com")
@@ -380,6 +502,10 @@ class MockCursor:
                 org_id = str(p.get("organization_id")) if p.get("organization_id") else None
                 source = p.get("submission_source", "DIRECT")
                 inv_id = str(p.get("invitation_id")) if p.get("invitation_id") else None
+                overall_avg = float(p.get("overall_avg", 14.5))
+                overall_level = p.get("overall_level", "Developing")
+                status = p.get("status", "pending")
+                async_status = p.get("async_status", "PROCESSING")
             elif len(p) == 1:
                 org_id = str(p[0])
                 name = "Test User"
@@ -387,6 +513,10 @@ class MockCursor:
                 company = "Test Organization Security"
                 source = "DIRECT"
                 inv_id = None
+                overall_avg = 14.5
+                overall_level = "Developing"
+                status = "pending"
+                async_status = "PROCESSING"
             elif len(p) >= 6:
                 name = p[0]
                 email = p[1]
@@ -394,6 +524,10 @@ class MockCursor:
                 org_id = str(p[5]) if p[5] else None
                 source = p[6] if len(p) > 6 else "DIRECT"
                 inv_id = None
+                overall_avg = 14.5
+                overall_level = "Developing"
+                status = "pending"
+                async_status = "PROCESSING"
             else:
                 name = "User"
                 email = "user@test.com"
@@ -401,6 +535,10 @@ class MockCursor:
                 org_id = str(p[3]) if len(p) > 3 and p[3] else None
                 source = "DIRECT"
                 inv_id = None
+                overall_avg = 14.5
+                overall_level = "Developing"
+                status = "pending"
+                async_status = "PROCESSING"
 
             sub = {
                 "id": sub_id,
@@ -409,11 +547,12 @@ class MockCursor:
                 "company_name": company,
                 "organization_id": org_id,
                 "submission_source": source,
-                "status": "pending",
+                "status": status,
+                "async_status": async_status,
                 "submitted_at": datetime.now(timezone.utc),
-                "overall_avg": 14.5,
-                "overall_level": "Developing",
-                "answers": {},
+                "overall_avg": overall_avg,
+                "overall_level": overall_level,
+                "answers": p.get("answers", {}) if isinstance(p, dict) else {},
                 "invitation_id": inv_id,
                 "idempotency_key": p.get("idempotency_key") if isinstance(p, dict) else None,
                 "email_body": p.get("email_body") if isinstance(p, dict) else None
@@ -426,7 +565,12 @@ class MockCursor:
                 self._results = [sub] if self.dict_cursor else [(sub_id,)]
             return
 
-        if "from app_settings" in sql_lower:
+        if "from form_sections" in sql_lower:
+            self._results = []
+            self.rowcount = 0
+            return
+
+        if "from app_settings" in sql_lower and "from form_sections" not in sql_lower:
             settings_dict = {
                 "id": 1,
                 "notification_email": "",
@@ -471,6 +615,21 @@ class MockCursor:
                 if s:
                     if "email_body" in sql_lower and sql_lower.strip().startswith("select email_body"):
                         self._results = [{"email_body": s.get("email_body")}] if self.dict_cursor else [(s.get("email_body"),)]
+                    elif "overall_avg" in sql_lower:
+                        res_dict = {
+                            "id": s.get("id"),
+                            "overall_avg": s.get("overall_avg", 14.5),
+                            "overall_level": s.get("overall_level", "Developing"),
+                            "status": s.get("status", "completed"),
+                            "async_status": s.get("async_status", "COMPLETED")
+                        }
+                        self._results = [res_dict] if self.dict_cursor else [(
+                            res_dict["id"],
+                            res_dict["overall_avg"],
+                            res_dict["overall_level"],
+                            res_dict["status"],
+                            res_dict["async_status"]
+                        )]
                     else:
                         self._results = [s] if self.dict_cursor else [tuple(s.values())]
             else:
@@ -479,7 +638,74 @@ class MockCursor:
             self.rowcount = len(self._results)
             return
 
-        if "update submissions set" in sql_lower:
+        if "from raw_submissions" in sql_lower:
+            sub_id = str(p[0])
+            r = self.store.raw_submissions.get(sub_id)
+            if r:
+                if "from raw_submissions r" in sql_lower:
+                    s = self.store.submissions.get(sub_id, {})
+                    res_dict = {
+                        "submission_id": r["submission_id"],
+                        "organization_id": r.get("organization_id"),
+                        "raw_status": r.get("status", "RECEIVED"),
+                        "scoring_status": r.get("scoring_status", "PENDING"),
+                        "raw_report_status": "PENDING",
+                        "raw_email_status": "PENDING",
+                        "raw_crm_status": "PENDING",
+                        "retry_count": r.get("retry_count", 0),
+                        "last_error": None,
+                        "raw_created_at": r.get("created_at"),
+                        "raw_completed_at": None,
+                        "sub_id": s.get("id"),
+                        "sub_async_status": s.get("async_status"),
+                        "sub_email_status": s.get("email_status"),
+                        "sub_crm_status": s.get("crm_status"),
+                        "sub_report_status": s.get("report_status"),
+                        "admin_notify_status": None,
+                        "hubspot_deal_id": None,
+                        "sub_submitted_at": s.get("submitted_at"),
+                        "sub_completed_at": None,
+                        "email_body": None
+                    }
+                    self._results = [res_dict] if self.dict_cursor else [tuple(res_dict.values())]
+                elif "status, idempotency_key" in sql_lower:
+                    self._results = [{"status": r["status"], "idempotency_key": r["idempotency_key"]}] if self.dict_cursor else [(r["status"], r["idempotency_key"])]
+                elif "status, scoring_status" in sql_lower:
+                    self._results = [{"status": r["status"], "scoring_status": r["scoring_status"]}] if self.dict_cursor else [(r["status"], r["scoring_status"])]
+                elif "submission_id, idempotency_key" in sql_lower:
+                    self._results = [r] if self.dict_cursor else [(r["submission_id"], r["idempotency_key"], r["organization_id"], r["payload"], r["status"], r["retry_count"])]
+                else:
+                    self._results = [r] if self.dict_cursor else [tuple(r.values())]
+            self.rowcount = len(self._results)
+            return
+
+        if "update raw_submissions" in sql_lower:
+            if "set status = 'completed'" in sql_lower:
+                sub_id = str(p[-1]) if p else ""
+                if sub_id in self.store.raw_submissions:
+                    self.store.raw_submissions[sub_id]["status"] = "COMPLETED"
+                    self.store.raw_submissions[sub_id]["scoring_status"] = "COMPLETED"
+                if sub_id in self.store.submissions:
+                    self.store.submissions[sub_id]["status"] = "COMPLETED"
+                    self.store.submissions[sub_id]["async_status"] = "COMPLETED"
+            elif "set status = 'processing'" in sql_lower:
+                sub_id = str(p[1]) if len(p) > 1 else str(p[0])
+                if sub_id in self.store.raw_submissions:
+                    self.store.raw_submissions[sub_id]["status"] = "PROCESSING"
+            self.rowcount = 1
+            return
+
+        if "from service_bus_outbox" in sql_lower:
+            if "where aggregate_id = %s" in sql_lower:
+                agg_id = str(p[0])
+                matches = [o for o in self.store.service_bus_outbox.values() if str(o.get("aggregate_id")) == agg_id]
+                if matches:
+                    m = matches[0]
+                    self._results = [{"status": m["status"], "aggregate_id": m["aggregate_id"]}] if self.dict_cursor else [(m["status"], m["aggregate_id"])]
+                self.rowcount = len(self._results)
+                return
+
+        if "update submissions" in sql_lower:
             if "email_body = %s" in sql_lower and len(p) >= 2:
                 body = p[0]
                 sub_id = str(p[1])
@@ -492,6 +718,11 @@ class MockCursor:
                 if sub_id in self.store.submissions:
                     self.store.submissions[sub_id]["organization_id"] = new_org
                     self.store.submissions[sub_id]["company_name"] = new_name
+            elif "async_status" in sql_lower:
+                sub_id = str(p[-1]) if p else ""
+                if sub_id in self.store.submissions:
+                    self.store.submissions[sub_id]["async_status"] = "COMPLETED"
+                    self.store.submissions[sub_id]["status"] = "completed"
             self.rowcount = 1
             return
 
@@ -526,6 +757,11 @@ class MockCursor:
             self.rowcount = 1
             if "returning" in sql_lower:
                 self._results = [job] if self.dict_cursor else [(job_id,)]
+            return
+
+        if "from form_sections" in sql_lower:
+            self._results = []
+            self.rowcount = 0
             return
 
         if "from post_submit_jobs" in sql_lower and sql_lower.startswith("select"):

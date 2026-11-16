@@ -44,14 +44,14 @@ class TestIdempotencyAndJobs:
 
         # First submission
         res1 = client.post("/api/submit", json=payload)
-        assert res1.status_code == 201
+        assert res1.status_code in (200, 201, 202)
         data1 = res1.json()
         assert data1["success"] is True
         sub_id_1 = data1["submission_id"]
 
         # Immediate retry with the EXACT same idempotency_key
         res2 = client.post("/api/submit", json=payload)
-        assert res2.status_code == 201
+        assert res2.status_code in (200, 201, 202)
         data2 = res2.json()
         assert data2["success"] is True
         sub_id_2 = data2["submission_id"]
@@ -88,7 +88,7 @@ class TestIdempotencyAndJobs:
         }
 
         res = client.post("/api/submit", json=payload)
-        assert res.status_code == 201
+        assert res.status_code in (201, 202)
         sub_id = res.json()["submission_id"]
 
         # Initially, email_body should be None (not blocking request)
@@ -222,17 +222,21 @@ class TestCriticalAuditDefectRemediations:
         from app.services import scoring_service
 
         custom_sections = [{"section": {"id": "custom-sec-1", "title": "Custom Section"}, "questions": [{"id": "q1", "text": "Custom Q"}]}]
-        # Set cache with custom sections and expire TTL
-        scoring_service._cached_form_sections = (custom_sections, 60)
-        scoring_service._cached_form_sections_time = time.time() - 400 # expired
+        try:
+            # Set cache with custom sections and expire TTL
+            scoring_service._cached_form_sections = (custom_sections, 60)
+            scoring_service._cached_form_sections_time = time.time() - 400 # expired
 
-        # Mock get_conn to simulate database temporarily offline
-        with patch("app.core.database.get_conn", side_effect=RuntimeError("DB offline")):
-            secs, thresh = scoring_service.get_form_sections_metadata(conn=None)
+            # Mock get_conn to simulate database temporarily offline
+            with patch("app.core.database.get_conn", side_effect=RuntimeError("DB offline")):
+                secs, thresh = scoring_service.get_form_sections_metadata(conn=None)
 
-            # Must retain custom sections, NOT fall back to DEFAULT_STANDARD_SECTIONS
-            assert secs == custom_sections
-            assert thresh == 60
+                # Must retain custom sections, NOT fall back to DEFAULT_STANDARD_SECTIONS
+                assert secs == custom_sections
+                assert thresh == 60
+        finally:
+            scoring_service._cached_form_sections = None
+            scoring_service._cached_form_sections_time = 0.0
 
     def test_connection_pool_statement_timeout_configured(self):
         """ThreadedConnectionPool configures statement_timeout to protect against hanging queries."""

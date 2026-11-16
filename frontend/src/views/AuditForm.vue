@@ -5,20 +5,21 @@
     <div v-if="submitted" class="success-wrap">
       <div class="success-box">
         <div class="success-icon">✓</div>
-        <h2>Audit Submitted</h2>
+        <h2>Assessment Successfully Submitted</h2>
+        <p style="font-size: 1.05rem; font-weight: 600; color: #047C69; margin-bottom: 0.75rem;">Your responses have been successfully recorded.</p>
         <p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p>
         <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>
-        <div v-if="asyncStatus === 'COMPLETED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e8f5e9; border-radius: 8px; color: #2e7d32; font-weight: 500; font-size: 0.95rem;">
+        <div v-if="asyncStatus === 'COMPLETED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; color: #2e7d32; font-weight: 500; font-size: 0.95rem;">
           ✓ Response processed and insights recorded
         </div>
-        <div v-else-if="asyncStatus === 'PROCESSING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e3f2fd; border-radius: 8px; color: #1565c0; font-weight: 500; font-size: 0.95rem;">
+        <div v-else-if="asyncStatus === 'PROCESSING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #e3f2fd; border: 1px solid #90caf9; border-radius: 8px; color: #1565c0; font-weight: 500; font-size: 0.95rem;">
           ⏳ Processing assessment and calculating insights...
         </div>
-        <div v-else-if="asyncStatus === 'RECEIVED' || asyncStatus === 'PENDING'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #f3e5f5; border-radius: 8px; color: #6a1b9a; font-weight: 500; font-size: 0.95rem;">
-          📥 Submission received and queued for processing
-        </div>
-        <div v-else-if="asyncStatus === 'DEAD_LETTERED' || asyncStatus === 'FAILED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #ffebee; border-radius: 8px; color: #c62828; font-weight: 500; font-size: 0.95rem;">
+        <div v-else-if="asyncStatus === 'DEAD_LETTERED' || asyncStatus === 'FAILED'" style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #ffebee; border: 1px solid #ef9a9a; border-radius: 8px; color: #c62828; font-weight: 500; font-size: 0.95rem;">
           ⚠️ Submission safely stored. Processing queued for admin review.
+        </div>
+        <div v-else style="margin-top: 1.5rem; padding: 0.75rem 1rem; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; color: #166534; font-weight: 500; font-size: 0.95rem;">
+          ✓ Responses recorded and queued for analysis
         </div>
       </div>
     </div>
@@ -173,14 +174,14 @@
                 <span class="flow-category-tag tag-purple">WHY THIS MATTERS</span>
               </div>
               <h2 class="flow-main-heading">Understanding current realities to drive change</h2>
-              <p class="flow-subtitle">NIWI helps leaders move beyond isolated initiatives and examine inclusion across the organisation.</p>
+              <p class="flow-subtitle">NIWI provides structured reflection to evaluate and advance inclusion across the organisation.</p>
             </div>
             <div class="section-1-paragraphs">
               <p class="section-text">
-                <strong>Building neuro-inclusive workplaces</strong> is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.
+                <strong>Building neuro-inclusive workplaces</strong> is about how inclusion is experienced every day — from recruitment and culture to physical workspaces and technology.
               </p>
               <p class="section-text">
-                <strong>Designed for C-suite, HR, DEI and business leaders</strong>, NIWI supports structured reflection and practical decision-making across the organisation and its wider ecosystem.
+                <strong>Designed for C-suite, HR, DEI, and business leaders</strong>, NIWI translates individual perspectives into clear, objective maturity benchmarks and practical roadmaps.
               </p>
             </div>
           </div>
@@ -192,7 +193,7 @@
                 <span class="flow-category-tag tag-teal">WHAT NIWI HELPS YOU DO</span>
               </div>
               <h2 class="flow-main-heading">From organisational insight to focused action</h2>
-              <p class="flow-subtitle">NIWI turns responses into a clear pathway for reflection, prioritisation and practical next steps.</p>
+              <p class="flow-subtitle">A clear three-step pathway from baseline awareness to systemic change.</p>
             </div>
 
             <div class="process-flow-container">
@@ -200,9 +201,9 @@
               <div class="process-flow-card card-purple">
                 <div class="flow-card-top">
                   <div class="flow-circle-badge badge-purple">01</div>
-                  <h3 class="flow-card-heading">See the<br/>Current State</h3>
+                  <h3 class="flow-card-heading">See Current State</h3>
                 </div>
-                <p class="flow-card-body">Create a shared baseline using responses that reflect what happens today.</p>
+                <p class="flow-card-body">Establish an objective baseline from authentic employee and leader experiences.</p>
                 <div class="flow-card-accent-bar bar-purple"></div>
               </div>
 
@@ -218,9 +219,9 @@
               <div class="process-flow-card card-teal">
                 <div class="flow-card-top">
                   <div class="flow-circle-badge badge-teal">02</div>
-                  <h3 class="flow-card-heading">Surface<br/>Priorities</h3>
+                  <h3 class="flow-card-heading">Surface Priorities</h3>
                 </div>
-                <p class="flow-card-body">Identify strengths, inconsistencies and areas where focused action may be needed.</p>
+                <p class="flow-card-body">Pinpoint strengths, gaps, and high-impact areas across 8 inclusion dimensions.</p>
                 <div class="flow-card-accent-bar bar-teal"></div>
               </div>
 
@@ -236,9 +237,9 @@
               <div class="process-flow-card card-amber">
                 <div class="flow-card-top">
                   <div class="flow-circle-badge badge-amber">03</div>
-                  <h3 class="flow-card-heading">Shape the<br/>Roadmap</h3>
+                  <h3 class="flow-card-heading">Shape Roadmap</h3>
                 </div>
-                <p class="flow-card-body">Use dimension-level insights to guide conversations, ownership and next steps.</p>
+                <p class="flow-card-body">Turn dimension-level insights into targeted actions, shared accountability, and progress.</p>
                 <div class="flow-card-accent-bar bar-amber"></div>
               </div>
             </div>
@@ -247,7 +248,7 @@
             <div class="info-badges-pill-bar">
               <div class="info-pill-item">
                 <span class="pill-badge-circle circle-amber">20</span>
-                <span class="pill-badge-label">About 20 minutes</span>
+                <span class="pill-badge-label">~20 minutes</span>
               </div>
               <div class="info-pill-item">
                 <span class="pill-badge-circle circle-amber">08</span>
@@ -264,10 +265,10 @@
           <div class="why-section-box section-3">
             <div class="flow-header-area">
               <div class="flow-badge-wrapper">
-                <span class="flow-category-tag tag-amber">WHY NEURO-INCLUSION MATTERS</span>
+                <span class="flow-category-tag tag-amber">KEY OUTCOMES</span>
               </div>
               <h2 class="flow-main-heading">Creating lasting impact across the organisation</h2>
-              <p class="flow-subtitle">Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day.</p>
+              <p class="flow-subtitle">Meaningful inclusion unlocks performance and fosters an environment where diverse talent excels.</p>
             </div>
             <div class="benefits-cards-grid">
               <!-- Benefit 1: Mint -->
@@ -279,7 +280,7 @@
                   </svg>
                 </div>
                 <h4 class="benefit-title">Unlocks Potential</h4>
-                <p class="benefit-text">Neuro-inclusion helps organisations tap into diverse talent, ideas, and ways of thinking, driving innovation and better decision-making.</p>
+                <p class="benefit-text">Taps into diverse problem-solving approaches, cognitive strengths, and fresh thinking.</p>
               </div>
 
               <!-- Benefit 2: Amber -->
@@ -293,7 +294,7 @@
                   </svg>
                 </div>
                 <h4 class="benefit-title">Stronger Teams</h4>
-                <p class="benefit-text">When everyone can participate fully, teams become more collaborative, engaged, and resilient.</p>
+                <p class="benefit-text">Cultivates psychological safety, collaboration, and higher employee engagement.</p>
               </div>
 
               <!-- Benefit 3: Blue -->
@@ -305,8 +306,8 @@
                     <line x1="6" y1="20" x2="6" y2="14"/>
                   </svg>
                 </div>
-                <h4 class="benefit-title">More Equitable Opportunities</h4>
-                <p class="benefit-text">It helps identify and remove barriers, ensuring fair access to opportunities across the employee lifecycle.</p>
+                <h4 class="benefit-title">Equitable Opportunities</h4>
+                <p class="benefit-text">Removes systemic barriers in hiring, performance assessment, and career progression.</p>
               </div>
 
               <!-- Benefit 4: Mint -->
@@ -318,25 +319,23 @@
                     <path d="M12 13a5 5 0 0 1-5-5"/>
                   </svg>
                 </div>
-                <h4 class="benefit-title">Lasting Impact</h4>
-                <p class="benefit-text">Neuro-inclusive practices create workplaces where everyone can thrive, leading to sustainable business growth and positive social impact.</p>
+                <h4 class="benefit-title">Sustainable Impact</h4>
+                <p class="benefit-text">Embeds neuro-inclusive practices into organizational DNA for long-term retention and growth.</p>
               </div>
             </div>
           </div>
 
-
-
           <!-- Perspective Note (Rounded Pill Banner) -->
           <div class="perspective-note-pill">
             <div class="perspective-eye-icon" aria-hidden="true">
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+              <svg width="32" height="32" viewBox="0 0 36 36" fill="none">
                 <circle cx="18" cy="18" r="16.5" stroke="#A5B4FC" stroke-width="2.2" fill="#FFFFFF"/>
                 <circle cx="21" cy="14" r="5" fill="#161057"/>
               </svg>
             </div>
             <div class="perspective-pill-content">
               <h4 class="perspective-pill-title">Every perspective adds to the picture</h4>
-              <p class="perspective-pill-desc">Views from across the organisation can help create a more complete understanding of current reality.</p>
+              <p class="perspective-pill-desc">Your candid answers help build an accurate, aggregate understanding of current workplace reality.</p>
             </div>
           </div>
 
@@ -412,8 +411,10 @@
                       v-model="form.name"
                       type="text"
                       class="field-input"
+                      :class="{ 'input-error': errors.name }"
                       placeholder="Enter your name"
                     />
+                    <span v-if="errors.name" class="error-message">{{ errors.nameMsg }}</span>
                   </div>
 
                   <div class="field-group">
@@ -501,6 +502,7 @@
                       v-model="form.country"
                       :options="countryOptions"
                       placeholder="Search and select your country"
+                      search-placeholder="Search country..."
                       :error="!!errors.country"
                       @change="onCountryChange"
                     />
@@ -509,11 +511,12 @@
 
                   <div v-if="form.country === 'India'" class="field-group">
                     <label for="demo_state_ut" class="field-label">(If India) Which State or Union Territory are you currently based in? *</label>
-                    <AnimatedSelect
+                    <SearchableSelect
                       id="demo_state_ut"
                       v-model="form.state_ut"
                       :options="[...indianStates, ...indianUTs]"
                       placeholder="Select your state / union territory"
+                      search-placeholder="Search state / union territory..."
                       :error="!!errors.state_ut"
                       @change="() => {}"
                     />
@@ -673,7 +676,7 @@
                   <!-- Consent Checkbox -->
                   <div class="consent-block">
                     <label class="consent-label">
-                      <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" />
+                      <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" :class="{ 'checkbox-error': errors.consent_given }" />
                       <span class="consent-text">I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
                     </label>
                     <span v-if="errors.consent_given" class="error-message">You must provide consent to proceed.</span>
@@ -865,8 +868,12 @@
             </div><!-- end questions-list -->
 
             <!-- Inline Navigation Buttons (at end of question content) -->
+            <div v-if="submitError" class="submit-error-banner" role="alert">
+              {{ submitError }}
+            </div>
+
             <div class="inline-nav-bar">
-              <button v-if="currentStep > 0" class="btn-back-compact" @click="currentStep--" type="button">← Back</button>
+              <button v-if="currentStep > 0" class="btn-back-compact" @click="prevStep" type="button">← Back</button>
               <div v-else></div>
 
               <div class="step-nav-mid">
@@ -1131,18 +1138,48 @@ const sectionProgressPct = computed(() => {
 });
 
 function goToStep(i) {
-  if (i <= currentStep.value) currentStep.value = i;
+  if (i <= currentStep.value) {
+    currentStep.value = i;
+    scrollToPageTop();
+  }
+}
+
+function scrollToPageTop() {
+  if (document.activeElement && typeof document.activeElement.blur === 'function') {
+    document.activeElement.blur();
+  }
+  const el = currentStep.value === 0 ? introStageRef.value : (currentStep.value === 1 ? whyMattersPageRef.value : unifiedPageRef.value);
+  if (el) {
+    el.scrollTop = 0;
+    try {
+      el.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch (e) {
+      el.scrollTop = 0;
+    }
+  }
+  if (questionsScroll.value) {
+    questionsScroll.value.scrollTop = 0;
+    try {
+      questionsScroll.value.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch (e) {}
+  }
+  window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  if (document.documentElement) document.documentElement.scrollTop = 0;
+  if (document.body) document.body.scrollTop = 0;
 }
 
 watch(currentStep, async (step) => {
   showMobileInfo.value = false;
   isDrawerVisible.value = false;
+  scrollToPageTop();
   await nextTick();
-  questionsScroll.value?.scrollTo({ top: 0, behavior: "smooth" });
+  scrollToPageTop();
+  requestAnimationFrame(scrollToPageTop);
+  setTimeout(scrollToPageTop, 50);
+  setTimeout(scrollToPageTop, 150);
 
   const el = step === 0 ? introStageRef.value : (step === 1 ? whyMattersPageRef.value : unifiedPageRef.value);
   if (el) {
-    el.scrollTop = 0;
     attachScrollObserver(el);
     checkScrollBottom(el);
     setTimeout(() => {
@@ -1435,7 +1472,14 @@ function validateStep() {
     // Why This Matters — no validation needed
   } else if (currentStep.value === 2) {
     // Tell Us About You validation - all fields on one page
-    // A. Name is optional
+    // A. Name is optional, but validate characters if provided (NIWI-014)
+    if (form.name && form.name.trim()) {
+      const nameRegex = /^[a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF\s'\-\.]+$/;
+      if (!nameRegex.test(form.name.trim())) {
+        errors.name = true;
+        errors.nameMsg = "Name contains invalid characters. Special characters such as @ are not allowed.";
+      }
+    }
 
     // B. Organization validation (Invitation vs Direct text entry)
     if (isInvitationMode.value) {
@@ -1574,8 +1618,16 @@ function scrollToError() {
 function nextStep() {
   if (validateStep()) {
     currentStep.value++;
+    scrollToPageTop();
   } else {
     scrollToError();
+  }
+}
+
+function prevStep() {
+  if (currentStep.value > 0) {
+    currentStep.value--;
+    scrollToPageTop();
   }
 }
 
@@ -2515,13 +2567,17 @@ async function pollSubmissionStatus(subId) {
 
 /* ── Compact Header with Logo, Progress, and Orchvate ── */
 .why-matters-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 2.5rem;
+  padding: 0.85rem 2.5rem;
   border-bottom: 1px solid rgba(22, 16, 87, 0.08);
   flex-shrink: 0;
   background: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(22, 16, 87, 0.04);
 }
 
 .why-header-left {
@@ -2569,23 +2625,23 @@ async function pollSubmissionStatus(subId) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 0.75rem 3rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
-  max-width: 1400px;
+  padding: 1.5rem 3rem max(5rem, calc(env(safe-area-inset-bottom, 24px) + 3.5rem));
+  max-width: 1240px;
   margin: 0 auto;
   width: 100%;
   overflow: visible;
   min-height: 0;
-  gap: 0.875rem;
+  gap: 1.5rem;
 }
 
 .why-section-box {
   background: #FFFFFF;
   border: 1px solid rgba(22, 16, 87, 0.08);
-  border-radius: 14px;
-  padding: 1.15rem 1.5rem 1.25rem;
+  border-radius: 16px;
+  padding: 1.6rem 2rem;
   text-align: left;
   width: 100%;
-  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.03);
+  box-shadow: 0 2px 10px rgba(22, 16, 87, 0.03);
 }
 
 /* Section Card Header Matching Page 1 Typography & Vibe */
@@ -2630,13 +2686,13 @@ async function pollSubmissionStatus(subId) {
 .section-1-paragraphs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.75rem;
+  gap: 2rem;
 }
 
 .section-text {
-  font-size: 0.825rem;
-  line-height: 1.6;
-  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  color: #334155;
   margin: 0;
   font-family: var(--font-body);
 }
@@ -2650,26 +2706,26 @@ async function pollSubmissionStatus(subId) {
 .section-2 {
   background: #FFFFFF;
   border: 1px solid rgba(22, 16, 87, 0.08);
-  border-radius: 14px;
-  padding: 1.1rem 1.5rem 1.25rem;
+  border-radius: 16px;
+  padding: 1.6rem 2rem;
 }
 
 .flow-header-area {
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.25rem;
   text-align: left;
 }
 
 .flow-badge-wrapper {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
 }
 
 .flow-category-tag {
   display: inline-block;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  padding: 0.22rem 0.65rem;
+  padding: 0.25rem 0.75rem;
   border-radius: 99px;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   font-family: var(--font-body);
 }
@@ -2691,18 +2747,18 @@ async function pollSubmissionStatus(subId) {
 
 .flow-main-heading {
   font-family: 'Fraunces', serif;
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 800;
   color: var(--c-primary-dark, #161057);
   letter-spacing: -0.02em;
-  line-height: 1.2;
-  margin: 0 0 0.35rem 0;
+  line-height: 1.25;
+  margin: 0 0 0.45rem 0;
 }
 
 .flow-subtitle {
-  font-size: 0.825rem;
-  line-height: 1.45;
-  color: #64748B;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #475569;
   margin: 0;
   font-family: var(--font-body);
 }
@@ -2718,7 +2774,7 @@ async function pollSubmissionStatus(subId) {
   flex: 1 1 0;
   min-width: 0;
   border-radius: 16px;
-  padding: 1.25rem 1.25rem 1.2rem;
+  padding: 1.4rem 1.35rem 1.3rem;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -2785,18 +2841,18 @@ async function pollSubmissionStatus(subId) {
 
 .flow-card-heading {
   font-family: 'Fraunces', serif;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--c-primary-dark, #161057);
-  line-height: 1.15;
+  line-height: 1.25;
   margin: 0;
   letter-spacing: -0.01em;
 }
 
 .flow-card-body {
-  font-size: 0.775rem;
-  line-height: 1.45;
-  color: #475569;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #334155;
   margin: 0;
   font-family: var(--font-body);
   flex-grow: 1;
@@ -2853,10 +2909,10 @@ async function pollSubmissionStatus(subId) {
 }
 
 .section-desc-lead {
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: 0.95rem;
+  line-height: 1.55;
   color: #475569;
-  margin: 0.35rem 0 1.1rem 0;
+  margin: 0.35rem 0 1.25rem 0;
   font-family: var(--font-body);
   text-align: left;
 }
@@ -2864,13 +2920,13 @@ async function pollSubmissionStatus(subId) {
 .benefits-cards-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 0.875rem;
+  gap: 1.15rem;
   align-items: stretch;
 }
 
 .benefit-card {
-  border-radius: 14px;
-  padding: 1.15rem 1.15rem 1.1rem;
+  border-radius: 16px;
+  padding: 1.35rem 1.25rem 1.25rem;
   text-align: left;
   display: flex;
   flex-direction: column;
@@ -2899,8 +2955,8 @@ async function pollSubmissionStatus(subId) {
 }
 
 .benefit-icon-badge {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
   background: #FFFFFF;
   display: flex;
@@ -2913,7 +2969,7 @@ async function pollSubmissionStatus(subId) {
 
 .benefit-title {
   font-family: 'Fraunces', serif;
-  font-size: 0.975rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--c-primary-dark, #161057);
   line-height: 1.25;
@@ -2922,9 +2978,9 @@ async function pollSubmissionStatus(subId) {
 }
 
 .benefit-text {
-  font-size: 0.775rem;
-  line-height: 1.5;
-  color: #475569;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: #334155;
   margin: 0;
   font-family: var(--font-body);
 }
@@ -2937,22 +2993,22 @@ async function pollSubmissionStatus(subId) {
   background: #FFFDF5;
   border: 1.5px solid #FEF3C7;
   border-radius: 9999px;
-  padding: 0.65rem 2rem;
+  padding: 0.75rem 2rem;
   width: 100%;
   max-width: 820px;
-  margin: 0.25rem auto 0;
+  margin: 0.5rem auto 0;
   box-shadow: 0 1px 3px rgba(217, 119, 6, 0.04);
 }
 
 .info-pill-item {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.75rem;
 }
 
 .pill-badge-circle {
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: #FFFFFF;
   display: inline-flex;
@@ -2960,7 +3016,7 @@ async function pollSubmissionStatus(subId) {
   justify-content: center;
   font-family: 'Fraunces', serif;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   flex-shrink: 0;
 }
 
@@ -2977,7 +3033,7 @@ async function pollSubmissionStatus(subId) {
 .pill-badge-label {
   font-family: 'Fraunces', serif;
   font-weight: 700;
-  font-size: 0.925rem;
+  font-size: 0.95rem;
   color: var(--c-primary-dark, #161057);
 }
 
@@ -2986,12 +3042,12 @@ async function pollSubmissionStatus(subId) {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.65rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   background: #F1F4FD;
   border-radius: 14px;
   text-align: left;
-  max-width: 720px;
-  margin: 0.25rem auto 0;
+  max-width: 820px;
+  margin: 0.5rem auto 0;
 }
 
 .perspective-eye-icon {
@@ -3007,7 +3063,7 @@ async function pollSubmissionStatus(subId) {
 
 .perspective-pill-title {
   font-family: 'Fraunces', serif;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 800;
   color: var(--c-primary-dark, #161057);
   margin: 0 0 0.15rem 0;
@@ -3015,8 +3071,8 @@ async function pollSubmissionStatus(subId) {
 }
 
 .perspective-pill-desc {
-  font-size: 0.735rem;
-  line-height: 1.4;
+  font-size: 0.875rem;
+  line-height: 1.5;
   color: #475569;
   margin: 0;
   font-family: var(--font-body);
@@ -3025,42 +3081,42 @@ async function pollSubmissionStatus(subId) {
 /* ── Responsive Styles for Step 1 ── */
 @media (max-width: 1080px) {
   .why-matters-content {
-    padding: 0.75rem 1.75rem max(4rem, calc(env(safe-area-inset-bottom, 24px) + 2.5rem));
-    gap: 0.75rem;
+    padding: 1rem 1.75rem max(4rem, calc(env(safe-area-inset-bottom, 24px) + 2.5rem));
+    gap: 1.15rem;
   }
   .benefits-cards-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.625rem;
+    gap: 1rem;
   }
   .flow-connector {
-    width: 24px;
+    width: 28px;
   }
   .flow-card-heading {
-    font-size: 0.95rem;
+    font-size: 1.05rem;
   }
   .flow-card-body {
-    font-size: 0.725rem;
+    font-size: 0.85rem;
   }
   .info-badges-pill-bar {
-    padding: 0.55rem 1.25rem;
+    padding: 0.65rem 1.5rem;
   }
   .pill-badge-label {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 }
 
 @media (max-width: 768px) {
   .why-matters-content {
-    padding: 0.75rem 1.25rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
+    padding: 1rem 1.25rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
     overflow: visible;
   }
   .section-1-paragraphs {
     grid-template-columns: 1fr;
-    gap: 0.625rem;
+    gap: 0.875rem;
   }
   .process-flow-container {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.875rem;
   }
   .flow-connector {
     display: none;
@@ -3070,10 +3126,10 @@ async function pollSubmissionStatus(subId) {
   }
   .info-badges-pill-bar {
     flex-direction: column;
-    gap: 0.65rem;
-    border-radius: 14px;
+    gap: 0.75rem;
+    border-radius: 16px;
     align-items: flex-start;
-    padding: 0.75rem 1.25rem;
+    padding: 0.85rem 1.25rem;
   }
 }
 
@@ -3087,19 +3143,19 @@ async function pollSubmissionStatus(subId) {
     -webkit-overflow-scrolling: touch;
   }
   .why-matters-header {
-    padding: 0.625rem 1rem;
+    padding: 0.75rem 1rem;
   }
   .why-matters-content {
-    padding: 0.875rem 1rem max(5.5rem, calc(env(safe-area-inset-bottom, 24px) + 4rem));
-    gap: 0.75rem;
+    padding: 1rem 1rem max(5.5rem, calc(env(safe-area-inset-bottom, 24px) + 4rem));
+    gap: 1rem;
     overflow: visible;
   }
   .benefits-cards-grid {
     grid-template-columns: 1fr;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
   .perspective-note-pill {
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1.15rem;
     max-width: 100%;
   }
 }
@@ -4153,16 +4209,6 @@ html {
   color: #374151;
 }
 
-.consent-checkbox {
-  margin-top: 0.125rem;
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  border: 1px solid #D1D5DB;
-  border-radius: 4px;
-  accent-color: #047C69;
-}
 
 .consent-text {
   flex: 1;
@@ -4280,23 +4326,22 @@ html {
   width: 20px;
   height: 20px;
   border-radius: 6px;
-  border: 2px solid var(--c-border);
-  background-color: var(--c-white);
+  border: 2px solid #04907C;
+  background-color: #FFFFFF;
   cursor: pointer;
   margin-top: 2px;
   flex-shrink: 0;
   position: relative;
   transition: all 0.2s ease;
-  box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 .consent-checkbox:hover {
-  border-color: var(--c-border);
-  background-color: var(--c-bg);
+  border-color: #037A69;
+  background-color: #F0FDFA;
 }
 .consent-checkbox:checked {
-  background-color: var(--c-accent);
-  border-color: var(--c-border);
-  box-shadow: 2px 2px 0 var(--c-accent-secondary);
+  background-color: #04907C;
+  border-color: #04907C;
 }
 .consent-checkbox:checked::after {
   content: "✓";
@@ -4304,13 +4349,17 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--c-accent-retro);
+  color: #FFFFFF;
   font-size: 0.85rem;
   font-weight: 900;
 }
 .consent-checkbox:focus-visible {
-  outline: 2px solid var(--c-accent);
+  outline: 2px solid #04907C;
   outline-offset: 2px;
+}
+.consent-checkbox.checkbox-error {
+  border-color: #EF4444;
+  background-color: #FEF2F2;
 }
 
 @keyframes error-shake {
@@ -5663,8 +5712,23 @@ html {
   border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
   border-radius: 16px !important;
   box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   margin-bottom: 0 !important;
+  position: relative !important;
+}
+
+.demographics-form .section-card:nth-of-type(1) {
+  z-index: 20 !important;
+}
+
+.demographics-form .section-card:nth-of-type(2) {
+  z-index: 10 !important;
+}
+
+.field-group:has(.is-open),
+.field-group:focus-within {
+  position: relative !important;
+  z-index: 40 !important;
 }
 
 .section-header {
@@ -5674,6 +5738,8 @@ html {
   padding: 1.15rem 1.75rem !important;
   background: #FFFFFF !important;
   border-bottom: 1px solid rgba(22, 16, 87, 0.08) !important;
+  border-top-left-radius: 15px !important;
+  border-top-right-radius: 15px !important;
 }
 
 .section-number {
@@ -5952,6 +6018,18 @@ html {
 .btn-submit:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
+}
+
+.submit-error-banner {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+  border: 1px solid #FCA5A5 !important;
+  border-radius: 10px !important;
+  padding: 0.85rem 1.25rem !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+  text-align: center !important;
 }
 
 

@@ -146,6 +146,21 @@ def submit(request: Request, payload: AuditSubmission, response: Response, backg
         if not email_check["eligible"]:
             raise HTTPException(status_code=400, detail=email_check.get("error", "Corporate email is required."))
 
+    # Step 1b: Prevent rapid duplicate submissions with the same email (5-minute window)
+    raw_idemp = (data.get("idempotency_key") or request.headers.get("Idempotency-Key") or "").strip()
+    if user_email and not raw_idemp:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT id FROM submissions WHERE LOWER(TRIM(email)) = LOWER(TRIM(%s)) AND submitted_at > NOW() - INTERVAL '5 minutes' LIMIT 1",
+                    (user_email,)
+                )
+                if cur.fetchone():
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="A submission with this email was recently received. Please wait 5 minutes before submitting again."
+                    )
+
     # Step 2: Organization / Token / Invitation resolution
     organization_id = None
     invitation_id = None
@@ -333,6 +348,9 @@ def submit(request: Request, payload: AuditSubmission, response: Response, backg
                 res = cur.fetchone()
 
     t_tx_end = time.perf_counter()
+    if not res:
+        logger.error("Database transaction failed to return submission result for idempotency key %s", idempotency_key)
+        raise HTTPException(status_code=500, detail="Database transaction failed to return submission result")
     created_id, existing_id, existing_status, existing_payload = res
 
     if existing_id:

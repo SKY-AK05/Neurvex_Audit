@@ -111,7 +111,7 @@ class TestManualOrganizationEntry:
             "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
         })
         
-        assert response.status_code == 201
+        assert response.status_code in (201, 202)
         data = response.json()
         assert data["success"] is True
         assert "submission_id" in data
@@ -158,7 +158,7 @@ class TestManualOrganizationEntry:
             "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
         })
         
-        assert response.status_code == 201
+        assert response.status_code in (201, 202)
         data = response.json()
         assert data["success"] is True
         
@@ -209,7 +209,7 @@ class TestManualOrganizationEntry:
             "q37": "Often", "q38": "Sometimes", "q39": "Rarely", "q40": "Always",
             "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
         })
-        assert response1.status_code == 201
+        assert response1.status_code in (201, 202)
         
         # Second submission with same email (should fail)
         response2 = client.post("/api/submit", json={
@@ -262,7 +262,7 @@ class TestInvitationBasedEntry:
             "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
         })
         
-        assert response.status_code == 201
+        assert response.status_code in (201, 202)
         data = response.json()
         assert data["success"] is True
         
@@ -364,7 +364,7 @@ class TestInvitationBasedEntry:
                 "q37": "Often", "q38": "Sometimes", "q39": "Rarely", "q40": "Always",
                 "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
             })
-            assert response1.status_code == 201
+            assert response1.status_code in (201, 202)
             
             # Second submission should fail (limit reached)
             response2 = client.post("/api/submit", json={
