@@ -3568,14 +3568,24 @@
 
                 <div class="invc-link-row">
                   <div class="invc-link-display">
-                    <code class="invc-link-code">{{ window.location.origin }}{{ inv.assessment_url || (inv.token ? ('/audit?t=' + inv.token) : '/audit') }}</code>
+                    <code v-if="inv.assessment_url || inv.token" class="invc-link-code">{{ baseUrl }}{{ inv.assessment_url || ('/audit?t=' + inv.token) }}</code>
+                    <span v-else style="font-size: 0.8rem; color: #6b7280; font-style: italic;">Opaque token hash only — click Regenerate to obtain active link</span>
                   </div>
                   <button
+                    v-if="inv.assessment_url || inv.token"
                     class="btn btn-sm btn-outline"
-                    @click="copyText(`${window.location.origin}${inv.assessment_url || (inv.token ? ('/audit?t=' + inv.token) : '/audit')}`)"
+                    @click="copyText(`${baseUrl}${inv.assessment_url || ('/audit?t=' + inv.token)}`)"
                     title="Copy invitation link"
                   >
                     📋 Copy
+                  </button>
+                  <button
+                    v-else
+                    class="btn btn-sm btn-outline"
+                    @click="regenerateInvitation(inv.id)"
+                    title="Regenerate invitation link"
+                  >
+                    🔄 Regenerate
                   </button>
                 </div>
 
@@ -3845,6 +3855,7 @@ import {
 
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
 
 
 

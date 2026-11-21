@@ -154,19 +154,14 @@ def list_orgs(include_deleted: bool = Query(False)):
                 """)
                 orgs = [_serialize_row(dict(r)) for r in cur.fetchall()]
 
-                # 2. Batch fetch all linked submissions to eliminate N+1 query loop
+                # 2. Batch fetch minimal columns for scoring (eliminates 30MB payload & statement timeout)
                 cur.execute("""
                     SELECT
-                        s.*,
                         osl.org_id,
-                        osl.weight, osl.linked_by, osl.linked_at,
-                        s.submission_source,
-                        s.invitation_id,
-                        oi.invitation_name
+                        s.overall_avg,
+                        osl.weight
                     FROM org_submission_links osl
                     JOIN submissions s ON s.id = osl.submission_id
-                    LEFT JOIN organization_invitations oi ON oi.id = s.invitation_id
-                    ORDER BY s.submitted_at ASC
                 """)
                 all_links = cur.fetchall()
                 links_by_org = defaultdict(list)
@@ -646,14 +641,14 @@ async def revoke_org_assessment_link(org_id: UUID, token_id: UUID, request: Requ
 
 
 # ---------------------------------------------------------------------------
-# INVITATIONS MANAGEMENT
+# INVITATIONS MANAGEMENT & ASSESSMENT LINKS RECONCILIATION
 # ---------------------------------------------------------------------------
 
 @router.post("/{org_id}/invitations")
 async def create_invitation(org_id: UUID, body: CreateInvitationRequest, request: Request):
     """
     Generate a reusable invitation link with a cryptographically secure token (32+ bytes).
-    Store only the SHA-256 hash. Return raw token only once.
+    Stores both in organization_invitations and assessment_access_tokens with preserved token.
     """
     oid = str(org_id)
     admin_email = getattr(request.state, "admin_email", "unknown")
@@ -678,6 +673,7 @@ async def create_invitation(org_id: UUID, body: CreateInvitationRequest, request
 
                     inv_name = (body.invitation_name or "").strip() or f"{org['name']} Assessment Link"
 
+                    # 1. Insert into organization_invitations
                     cur.execute("""
                         INSERT INTO organization_invitations (
                             organization_id, token_hash, invitation_name, created_by,
@@ -688,9 +684,22 @@ async def create_invitation(org_id: UUID, body: CreateInvitationRequest, request
                     """, (oid, token_hash, inv_name, admin_email, body.expires_at, body.max_submissions))
                     row = cur.fetchone()
 
+                    # 2. Also insert into assessment_access_tokens to preserve raw token for dashboard display & copying
+                    try:
+                        cur.execute("""
+                            INSERT INTO assessment_access_tokens (
+                                organisation_id, token_hash, token, name, is_default, created_by, expires_at
+                            ) VALUES (%s, %s, %s, %s, FALSE, %s, %s)
+                            ON CONFLICT (token_hash) DO UPDATE SET token = EXCLUDED.token
+                        """, (oid, token_hash, raw_token, inv_name, admin_email, body.expires_at))
+                    except Exception as aat_err:
+                        logger.warning("Assessment token sync skipped: %s", aat_err)
+
         res = _serialize_row(dict(row))
         res["raw_token"] = raw_token
-        res["invite_url"] = f"/invite/{raw_token}"
+        res["token"] = raw_token
+        res["assessment_url"] = f"/audit?t={raw_token}"
+        res["invite_url"] = f"/audit?t={raw_token}"
         return res
     except HTTPException:
         raise
@@ -701,21 +710,91 @@ async def create_invitation(org_id: UUID, body: CreateInvitationRequest, request
 
 @router.get("/{org_id}/invitations")
 async def list_invitations(org_id: UUID):
-    """List all invitations for an organisation."""
+    """
+    List all invitations and assessment links for an organisation.
+    Reconciles assessment_access_tokens and organization_invitations into a unified response.
+    """
     oid = str(org_id)
     try:
         with get_db_connection() as conn:
             with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                # 1. Assessment access tokens (with preserved raw tokens)
                 cur.execute("""
-                    SELECT id, organization_id, invitation_name, created_by, created_at,
-                           expires_at, is_active, max_submissions, submission_count,
-                           revoked_at, revoked_by
-                    FROM organization_invitations
-                    WHERE organization_id = %s
-                    ORDER BY created_at DESC
+                    SELECT 
+                        aat.id,
+                        aat.organisation_id AS organization_id,
+                        aat.name AS invitation_name,
+                        aat.created_by,
+                        aat.created_at,
+                        aat.expires_at,
+                        (aat.revoked_at IS NULL AND (aat.expires_at IS NULL OR aat.expires_at > NOW())) AS is_active,
+                        NULL::integer AS max_submissions,
+                        (SELECT COUNT(*) FROM submissions s WHERE s.access_token_id = aat.id) AS submission_count,
+                        aat.revoked_at,
+                        aat.revoked_by,
+                        aat.token,
+                        aat.token_hash,
+                        aat.is_default
+                    FROM assessment_access_tokens aat
+                    WHERE aat.organisation_id = %s
+                    ORDER BY aat.is_default DESC, aat.created_at DESC
                 """, (oid,))
-                rows = [_serialize_row(dict(r)) for r in cur.fetchall()]
-        return rows
+                aat_rows = cur.fetchall()
+
+                # 2. Organization invitations
+                cur.execute("""
+                    SELECT 
+                        oi.id,
+                        oi.organization_id,
+                        oi.invitation_name,
+                        oi.created_by,
+                        oi.created_at,
+                        oi.expires_at,
+                        oi.is_active,
+                        oi.max_submissions,
+                        oi.submission_count,
+                        oi.revoked_at,
+                        oi.revoked_by,
+                        oi.token_hash
+                    FROM organization_invitations oi
+                    WHERE oi.organization_id = %s
+                    ORDER BY oi.created_at DESC
+                """, (oid,))
+                oi_rows = cur.fetchall()
+
+                # Merge by token_hash
+                merged = []
+                seen_hashes = set()
+
+                for r in aat_rows:
+                    item = _serialize_row(dict(r))
+                    th = item.get("token_hash")
+                    if th:
+                        seen_hashes.add(th)
+                    if item.get("token"):
+                        item["assessment_url"] = f"/audit?t={item['token']}"
+                        item["invite_url"] = f"/audit?t={item['token']}"
+                    # Check if matching oi exists to enrich max_submissions / submission_count
+                    for oi in oi_rows:
+                        if oi.get("token_hash") == th:
+                            if oi.get("max_submissions") is not None:
+                                item["max_submissions"] = oi["max_submissions"]
+                            item["submission_count"] = max(item.get("submission_count") or 0, oi.get("submission_count") or 0)
+                            break
+                    merged.append(item)
+
+                for oi in oi_rows:
+                    th = oi.get("token_hash")
+                    if th and th in seen_hashes:
+                        continue
+                    item = _serialize_row(dict(oi))
+                    item["token"] = None
+                    item["assessment_url"] = None
+                    item["invite_url"] = None
+                    item["is_default"] = False
+                    merged.append(item)
+
+        return merged
     except Exception as e:
         logger.error("list_invitations failed: %s", e)
         raise HTTPException(status_code=500, detail=str(e))
@@ -746,6 +825,23 @@ async def update_invitation(invitation_id: UUID, body: UpdateInvitationRequest):
                     ))
                     row = cur.fetchone()
                     if not row:
+                        # Try updating assessment_access_tokens
+                        cur.execute("""
+                            UPDATE assessment_access_tokens
+                            SET name = COALESCE(%s, name),
+                                expires_at = %s
+                            WHERE id = %s
+                            RETURNING id, organisation_id AS organization_id, name AS invitation_name,
+                                      created_by, created_at, expires_at,
+                                      (revoked_at IS NULL AND (expires_at IS NULL OR expires_at > NOW())) AS is_active,
+                                      revoked_at, revoked_by
+                        """, (
+                            body.invitation_name.strip() if body.invitation_name else None,
+                            body.expires_at,
+                            inv_id
+                        ))
+                        row = cur.fetchone()
+                    if not row:
                         raise HTTPException(status_code=404, detail="Invitation not found")
 
         return _serialize_row(dict(row))
@@ -758,7 +854,7 @@ async def update_invitation(invitation_id: UUID, body: UpdateInvitationRequest):
 
 @router.post("/invitations/{invitation_id}/revoke")
 async def revoke_invitation(invitation_id: UUID, request: Request):
-    """Revoke an active invitation link immediately."""
+    """Revoke an active invitation or assessment link immediately across both systems."""
     inv_id = str(invitation_id)
     admin_email = getattr(request.state, "admin_email", "unknown")
 
@@ -772,8 +868,29 @@ async def revoke_invitation(invitation_id: UUID, request: Request):
                         WHERE id = %s
                         RETURNING id
                     """, (admin_email, inv_id))
-                    if cur.rowcount == 0:
-                        raise HTTPException(status_code=404, detail="Invitation not found")
+                    if cur.rowcount > 0:
+                        try:
+                            cur.execute("""
+                                UPDATE assessment_access_tokens
+                                SET revoked_at = NOW(), revoked_by = %s
+                                WHERE (id = %s OR token_hash IN (SELECT token_hash FROM organization_invitations WHERE id = %s))
+                                  AND revoked_at IS NULL
+                            """, (admin_email, inv_id, inv_id))
+                        except Exception:
+                            pass
+                        return {"success": True, "message": "Invitation revoked successfully"}
+
+                    # Check in assessment_access_tokens
+                    cur.execute("""
+                        UPDATE assessment_access_tokens
+                        SET revoked_at = NOW(), revoked_by = %s
+                        WHERE id = %s AND revoked_at IS NULL
+                        RETURNING id
+                    """, (admin_email, inv_id))
+                    if cur.rowcount > 0:
+                        return {"success": True, "message": "Invitation revoked successfully"}
+
+                    raise HTTPException(status_code=404, detail="Invitation not found")
 
         return {"success": True, "message": "Invitation revoked successfully"}
     except HTTPException:
@@ -787,7 +904,7 @@ async def revoke_invitation(invitation_id: UUID, request: Request):
 async def regenerate_invitation(invitation_id: UUID, request: Request):
     """
     Revoke the existing invitation and generate a fresh token with identical settings.
-    Returns the new raw token and link.
+    Stores new token across both systems and returns the new raw token and link.
     """
     inv_id = str(invitation_id)
     admin_email = getattr(request.state, "admin_email", "unknown")
@@ -799,16 +916,53 @@ async def regenerate_invitation(invitation_id: UUID, request: Request):
         with get_db_connection() as conn:
             with conn:
                 with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                    # 1. Look up in organization_invitations
                     cur.execute("""
                         UPDATE organization_invitations
                         SET is_active = FALSE, revoked_at = NOW(), revoked_by = %s
                         WHERE id = %s
-                        RETURNING organization_id, invitation_name, expires_at, max_submissions
+                        RETURNING organization_id, invitation_name, expires_at, max_submissions, token_hash
                     """, (admin_email, inv_id))
                     old_inv = cur.fetchone()
-                    if not old_inv:
-                        raise HTTPException(status_code=404, detail="Invitation not found")
 
+                    org_id = None
+                    inv_name = None
+                    expires_at = None
+                    max_sub = None
+
+                    if old_inv:
+                        org_id = str(old_inv["organization_id"])
+                        inv_name = old_inv["invitation_name"]
+                        expires_at = old_inv["expires_at"]
+                        max_sub = old_inv["max_submissions"]
+                        if old_inv.get("token_hash"):
+                            cur.execute("""
+                                UPDATE assessment_access_tokens
+                                SET revoked_at = NOW(), revoked_by = %s
+                                WHERE token_hash = %s AND revoked_at IS NULL
+                            """, (admin_email, old_inv["token_hash"]))
+                    else:
+                        # 2. Look up in assessment_access_tokens
+                        cur.execute("""
+                            UPDATE assessment_access_tokens
+                            SET revoked_at = NOW(), revoked_by = %s
+                            WHERE id = %s AND revoked_at IS NULL
+                            RETURNING organisation_id, name, expires_at, token_hash
+                        """, (admin_email, inv_id))
+                        old_aat = cur.fetchone()
+                        if not old_aat:
+                            raise HTTPException(status_code=404, detail="Invitation not found")
+                        org_id = str(old_aat["organisation_id"])
+                        inv_name = old_aat["name"]
+                        expires_at = old_aat["expires_at"]
+                        if old_aat.get("token_hash"):
+                            cur.execute("""
+                                UPDATE organization_invitations
+                                SET is_active = FALSE, revoked_at = NOW(), revoked_by = %s
+                                WHERE token_hash = %s
+                            """, (admin_email, old_aat["token_hash"]))
+
+                    # Create in organization_invitations
                     cur.execute("""
                         INSERT INTO organization_invitations (
                             organization_id, token_hash, invitation_name, created_by,
@@ -817,18 +971,30 @@ async def regenerate_invitation(invitation_id: UUID, request: Request):
                         RETURNING id, organization_id, invitation_name, created_by, created_at,
                                   expires_at, is_active, max_submissions, submission_count
                     """, (
-                        old_inv["organization_id"],
+                        org_id,
                         new_token_hash,
-                        old_inv["invitation_name"],
+                        inv_name,
                         admin_email,
-                        old_inv["expires_at"],
-                        old_inv["max_submissions"]
+                        expires_at,
+                        max_sub
                     ))
                     new_row = cur.fetchone()
 
+                    # Create in assessment_access_tokens with preserved token
+                    try:
+                        cur.execute("""
+                            INSERT INTO assessment_access_tokens (
+                                organisation_id, token_hash, token, name, is_default, created_by, expires_at
+                            ) VALUES (%s, %s, %s, %s, FALSE, %s, %s)
+                        """, (org_id, new_token_hash, new_raw_token, inv_name, admin_email, expires_at))
+                    except Exception as aat_err:
+                        logger.warning("Assessment token sync skipped on regenerate: %s", aat_err)
+
         res = _serialize_row(dict(new_row))
         res["raw_token"] = new_raw_token
-        res["invite_url"] = f"/invite/{new_raw_token}"
+        res["token"] = new_raw_token
+        res["assessment_url"] = f"/audit?t={new_raw_token}"
+        res["invite_url"] = f"/audit?t={new_raw_token}"
         return res
     except HTTPException:
         raise
