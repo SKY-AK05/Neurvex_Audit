@@ -913,6 +913,7 @@
               <div v-else></div>
 
               <div class="step-nav-mid">
+                <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
                 <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
               </div>
 
@@ -922,7 +923,7 @@
                 @click="nextStep"
                 type="button"
               >
-                {{ currentStep === 3 ? 'Start Audit →' : (currentStep === visibleSections.length + 3 ? 'Next: Suggestions →' : 'Next →') }}
+                {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
               </button>
               <button
                 v-else
@@ -1367,6 +1368,13 @@ watch([() => form.role, () => form.function], () => {
 const allQuestionFields = computed(() => sections.value.flatMap(s => s.questions.map(q => q.field)));
 
 const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useDraftSaving(form, currentStep);
+
+async function handleManualSave() {
+  if (!form.email || !form.email.trim()) {
+    throw new Error("Please enter your email address on the 'Tell Us About You' page before saving your draft.");
+  }
+  return await syncToBackend();
+}
 
 onMounted(async () => {
   setupWelcomeAnimation();
@@ -6326,6 +6334,17 @@ html {
     display: none !important;
     margin: 0 !important;
     padding: 0 !important;
+  }
+
+  .step-nav-mid .save-continue-container {
+    display: inline-flex !important;
+  }
+
+  .step-nav-mid .save-continue-container :deep(.btn-save-draft) {
+    min-height: 38px !important;
+    padding: 0.45rem 0.9rem !important;
+    font-size: 0.8rem !important;
+    border-radius: 8px !important;
   }
 
   .btn-start-fresh {

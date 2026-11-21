@@ -1,27 +1,33 @@
 <template>
   <div class="save-continue-container">
-    <button type="button" class="btn btn-green" @click="handleSave" :disabled="loading">
-      <span v-if="loading">Saving...</span>
-      <span v-else>
-        <span class="btn-text-desktop">Save and Continue Later</span>
-        <span class="btn-text-mobile">Save Draft</span>
+    <button type="button" class="btn-save-draft" @click="handleSave" :disabled="loading">
+      <span v-if="loading" class="btn-loading-state">
+        <span class="spinner-dot"></span> Saving…
+      </span>
+      <span v-else class="btn-content">
+        <span class="btn-icon">💾</span>
+        <span class="btn-text-desktop">Save Draft</span>
+        <span class="btn-text-mobile">Save</span>
       </span>
     </button>
 
     <!-- Modal dialog for resume url -->
     <div v-if="showModal" class="save-modal-overlay" @click="showModal = false">
       <div class="save-modal-card" @click.stop>
-        <h3>Audit Saved!</h3>
-        <p>You can close this tab and resume your audit anytime within the next 2 days (48 hours) using the link below:</p>
+        <div class="modal-badge-icon">✓</div>
+        <h3>Audit Progress Saved!</h3>
+        <p>You can close this tab and resume your audit anytime within the next <strong>2 days (48 hours)</strong> using your secure link:</p>
         
         <div class="link-box">
-          <input type="text" readonly :value="url" ref="linkInput" />
-          <button @click="copyLink" class="btn btn-primary">
-            {{ copied ? "Copied!" : "Copy Link" }}
+          <input type="text" readonly :value="url" ref="linkInput" @click="$event.target.select()" />
+          <button @click="copyLink" class="btn-copy-link" type="button">
+            {{ copied ? "Copied! ✓" : "Copy Link" }}
           </button>
         </div>
 
-        <button @click="showModal = false" class="btn btn-secondary close-btn">Done</button>
+        <p class="modal-hint">We recommend copying or bookmarking this link to return right where you left off.</p>
+
+        <button @click="showModal = false" class="btn-modal-done" type="button">Done</button>
       </div>
     </div>
   </div>
@@ -47,7 +53,7 @@ async function handleSave() {
     url.value = resumeUrl;
     showModal.value = true;
   } catch (e) {
-    alert("Could not save progress. Please ensure you filled in your name and email on step 1.");
+    alert(e.message || "Could not save progress. Please ensure your email is entered.");
   } finally {
     loading.value = false;
   }
@@ -65,41 +71,227 @@ function copyLink() {
 </script>
 
 <style scoped>
-.save-continue-container { display: inline-block; }
-.save-continue-container .btn-green {
-  background: var(--c-white); color: var(--c-primary-dark); border: 2px solid var(--c-primary-dark); border-radius: 99px;
-  padding: 0.65rem 1.4rem; font-size: 0.875rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
-  font-family: 'Fraunces', serif; box-shadow: 3px 3px 0 var(--c-primary-dark);
-  display: inline-flex; align-items: center; gap: 0.4rem;
+.save-continue-container {
+  display: inline-flex;
+  align-items: center;
 }
-.save-continue-container .btn-green:hover:not(:disabled) { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--c-primary-dark); }
-.save-continue-container .btn-green:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
-.btn-text-mobile { display: none; }
+
+.btn-save-draft {
+  background: #FFFFFF;
+  color: var(--c-primary-dark, #161057);
+  border: 1.5px solid rgba(22, 16, 87, 0.20);
+  border-radius: 99px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(22, 16, 87, 0.05);
+}
+
+.btn-save-draft:hover:not(:disabled) {
+  background: rgba(4, 144, 124, 0.08);
+  border-color: #04907C;
+  color: #04907C;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(4, 144, 124, 0.15);
+}
+
+.btn-save-draft:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-icon {
+  font-size: 0.85rem;
+}
+
+.btn-loading-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #04907C;
+}
+
+.spinner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #04907C;
+  animation: pulseDot 1s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.btn-text-mobile {
+  display: none;
+}
+
 @media (max-width: 600px) {
-  .btn-text-desktop { display: none; }
-  .btn-text-mobile { display: inline; }
+  .btn-text-desktop {
+    display: none;
+  }
+  .btn-text-mobile {
+    display: inline;
+  }
+  .btn-save-draft {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+  }
 }
+
+/* Modal dialog */
 .save-modal-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(22, 16, 87, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
   padding: 1rem;
 }
+
 .save-modal-card {
-  background: white; padding: 2rem; border-radius: 16px; border: 2px solid var(--c-primary-dark);
-  box-shadow: 4px 4px 0 var(--c-primary-dark); max-width: 500px; width: 100%; text-align: center;
+  background: #FFFFFF;
+  padding: 2.25rem 2rem 1.75rem;
+  border-radius: 20px;
+  border: 1px solid rgba(22, 16, 87, 0.10);
+  box-shadow: 0 20px 40px rgba(22, 16, 87, 0.16);
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-badge-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(4, 144, 124, 0.12);
+  color: #04907C;
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.save-modal-card h3 {
+  font-family: 'Fraunces', serif;
+  font-size: 1.35rem;
+  margin: 0 0 0.5rem;
+  color: var(--c-primary-dark, #161057);
+}
+
+.save-modal-card p {
+  font-size: 0.9rem;
+  color: #475569;
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.link-box {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  width: 100%;
   box-sizing: border-box;
 }
-.save-modal-card h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem; color: var(--c-primary-dark); }
-.save-modal-card p { font-size: 0.9rem; color: #666; margin-bottom: 1.5rem; line-height: 1.5; }
-.link-box { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; width: 100%; box-sizing: border-box; }
+
 .link-box input {
-  flex: 1; min-width: 0; padding: 0.6rem 0.8rem; border: 2px solid var(--c-primary-dark); border-radius: 8px; font-size: 0.85rem; background: #fff; color: #333;
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  background: #F8FAFC;
+  color: #1E293B;
+  outline: none;
 }
-.close-btn { margin-top: 1rem; width: 100%; }
+
+.link-box input:focus {
+  border-color: #04907C;
+  background: #FFFFFF;
+}
+
+.btn-copy-link {
+  background: #04907C;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 10px;
+  padding: 0.65rem 1.15rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-copy-link:hover {
+  background: #037363;
+}
+
+.modal-hint {
+  font-size: 0.78rem !important;
+  color: #94A3B8 !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.btn-modal-done {
+  background: #F1F5F9;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  border-radius: 10px;
+  padding: 0.65rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+
+.btn-modal-done:hover {
+  background: #E2E8F0;
+}
+
 @media (max-width: 500px) {
-  .save-modal-card { padding: 1.5rem 1rem; margin: 0.5rem; }
-  .link-box { flex-direction: column; }
-  .link-box input { width: 100%; box-sizing: border-box; }
-  .link-box button { width: 100%; }
+  .save-modal-card {
+    padding: 1.5rem 1.15rem;
+  }
+  .link-box {
+    flex-direction: column;
+  }
+  .link-box input, .btn-copy-link {
+    width: 100%;
+    box-sizing: border-box;
+  }
 }
 </style>
