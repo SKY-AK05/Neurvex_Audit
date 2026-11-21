@@ -5,7 +5,6 @@
         <span class="spinner-dot"></span> Saving…
       </span>
       <span v-else class="btn-content">
-        <span class="btn-icon">💾</span>
         <span class="btn-text-desktop">Save Draft</span>
         <span class="btn-text-mobile">Save</span>
       </span>
@@ -21,7 +20,7 @@
         <div class="link-box">
           <input type="text" readonly :value="url" ref="linkInput" @click="$event.target.select()" />
           <button @click="copyLink" class="btn-copy-link" type="button">
-            {{ copied ? "Copied! ✓" : "Copy Link" }}
+            {{ copied ? "Copied!" : "Copy Link" }}
           </button>
         </div>
 

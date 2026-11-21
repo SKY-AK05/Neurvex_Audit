@@ -13,7 +13,8 @@
           <p>Thank you for sharing your perspective for <strong>{{ form.company_name }}</strong>. Every response helps build a more complete, authentic picture of workplace neuro-inclusion.</p>
           <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of collective findings and key insights will also be shared with everyone who participated.</p>
           <div class="success-confidential-note">
-            <span class="lock-icon">🔒</span> Your individual responses remain strictly confidential and are aggregated into overall organizational insights.
+            <svg class="lock-svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            Your individual responses remain strictly confidential and are aggregated into overall organizational insights.
           </div>
         </template>
 
@@ -1154,7 +1155,7 @@ const currentPanel = computed(() => {
   if (currentStep.value === 3) return step0Panel; // reuse welcome panel on instructions screen
   if (currentStep.value === feedbackStepIndex.value) {
     return {
-      icon: "💬",
+      icon: "✦",
       tag: "Final Step • Optional",
       title: "Suggestions & Feedback",
       summary: "Your voice matters. Share any additional observations, insights, or suggestions to help build a more comprehensive and actionable inclusion roadmap.",
