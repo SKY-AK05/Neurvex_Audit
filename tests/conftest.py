@@ -442,10 +442,10 @@ class MockCursor:
             return
 
         if "from organizations" in sql_lower and sql_lower.startswith("select"):
-            if "where lower(trim(name)) =" in sql_lower:
+            if "where lower(trim(name)) =" in sql_lower or "where name =" in sql_lower:
                 name_q = p[0].strip().lower()
-                matches = [o for o in self.store.organizations.values() if o["name"].strip().lower() == name_q and not o["is_deleted"]]
-                self._results = matches if self.dict_cursor else [(m["id"], m["name"], m["approval_status"], m["is_active"]) for m in matches]
+                matches = [o for o in self.store.organizations.values() if o["name"].strip().lower() == name_q and not o.get("is_deleted")]
+                self._results = matches if self.dict_cursor else [(m["id"], m["name"], m.get("approval_status", "approved"), m.get("is_active", True)) for m in matches]
             elif "where idempotency_key = %s" in sql_lower:
                 key_q = p[0] if p else ""
                 matches = [s for s in self.store.submissions.values() if s.get("idempotency_key") == key_q]

@@ -166,7 +166,7 @@ def refresh_org_cache(conn=None) -> bool:
                 "name": r["name"],
                 "is_active": bool(r["is_active"]),
                 "is_deleted": bool(r["is_deleted"]),
-                "approval_status": str(r["approval_status"]).lower() if r["approval_status"] else "approved",
+                "approval_status": str(r.get("approval_status") or "approved").lower(),
                 "updated_at": r.get("updated_at"),
             }
             norm_name = normalize_org_name(entry["name"])
