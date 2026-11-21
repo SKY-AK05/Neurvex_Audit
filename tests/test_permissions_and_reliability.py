@@ -322,6 +322,7 @@ class TestSimplifiedOrgCreation:
 
         with patch("app.api.routes.calculate_scores", return_value=mock_scores), \
              patch("app.api.routes.notify_admin_new_submission", return_value=True), \
+             patch("app.api.routes.get_organisation_by_name", return_value=(None, "MISS")), \
              patch("app.api.routes.get_db_connection") as mock_get_conn:
             mock_conn = MagicMock()
             mock_cur = MagicMock()
@@ -329,13 +330,14 @@ class TestSimplifiedOrgCreation:
             mock_conn.cursor.return_value.__enter__.return_value = mock_cur
 
             mock_cur.fetchone.side_effect = [
-                None,  # Org not found on initial lookup
-                ("55555555-5555-5555-5555-555555555555", "Fresh Startup Inc"),  # Insert new org returning id, name
-                ("sub-uuid-1234", "55555555-5555-5555-5555-555555555555", False, False),  # Submission CTE returning row
+                None,  # 1. Duplicate check (no prior submission within window)
+                None,  # 2. Org lookup in organizations table (org not found)
+                ("55555555-5555-5555-5555-555555555555", "Fresh Startup Inc"),  # 3. Org insert returning id, name
+                ("sub-uuid-1234", None, None, None),  # 4. Submission CTE returning created_id
             ]
 
             res = client.post("/api/submit", json=payload)
-            assert res.status_code == 201
+            assert res.status_code == 202
             assert res.json()["success"] is True
 
             executed_sqls = [call[0][0] for call in mock_cur.execute.call_args_list]
