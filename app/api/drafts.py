@@ -41,7 +41,7 @@ def send_resume_email(email: str, name: str, company_name: str, resume_url: str)
     plain = (
         f"Hi {name},\n\n"
         f"Your progress on the NeuroMark Inclusion Audit for {company_name} has been saved.\n\n"
-        f"You can resume your audit anytime within the next 7 days by clicking the link below:\n"
+        f"You can resume your audit anytime within the next 2 days (48 hours) by clicking the link below:\n"
         f"{resume_url}\n\n"
         f"Best regards,\n"
         f"The Orchvate Team\n"
@@ -65,7 +65,7 @@ def send_resume_email(email: str, name: str, company_name: str, resume_url: str)
     <h2>Audit Progress Saved</h2>
     <p>Hi {name or 'there'},</p>
     <p>Your progress on the NeuroMark Inclusion Audit for <strong>{company_name}</strong> has been saved.</p>
-    <p>You can resume your audit anytime within the next 7 days by clicking the button below:</p>
+    <p>You can resume your audit anytime within the next 2 days (48 hours) by clicking the button below:</p>
     <p style="text-align: center;">
       <a href="{resume_url}" class="btn">Resume Audit &rarr;</a>
     </p>
@@ -98,6 +98,13 @@ async def save_draft(payload: SaveDraftPayload, request: Request, background_tas
         with get_db_connection() as conn:
             with conn:
                 with conn.cursor() as cur:
+                    # Clean up expired drafts (older than 2 days)
+                    cur.execute("""
+                        DELETE FROM draft_submissions
+                        WHERE (submitted = FALSE AND updated_at < NOW() - INTERVAL '2 days')
+                           OR (submitted = TRUE AND updated_at < NOW() - INTERVAL '7 days')
+                    """)
+
                     if payload.draft_id:
                         cur.execute("SELECT submitted, email FROM draft_submissions WHERE id = %s", (str(payload.draft_id),))
                         row = cur.fetchone()
@@ -133,7 +140,8 @@ async def save_draft(payload: SaveDraftPayload, request: Request, background_tas
         logger.error(f"Error saving draft: {e}")
         raise HTTPException(status_code=500, detail="Database save failed.")
 
-    exp = datetime.now(timezone.utc) + timedelta(days=7)
+    # Enforce 2-day (48-hour) resume token limit
+    exp = datetime.now(timezone.utc) + timedelta(days=2)
     token = jwt.encode({"draft_id": str(draft_id), "exp": exp}, JWT_SECRET, algorithm="HS256")
     
     resume_url = f"{FRONTEND_URL}/resume?token={token}"
@@ -166,7 +174,7 @@ async def resume_draft(token: str):
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT email, company_name, form_state, current_step, submitted 
+                    SELECT email, company_name, form_state, current_step, submitted, updated_at 
                     FROM draft_submissions WHERE id = %s
                 """, (draft_id,))
                 row = cur.fetchone()
@@ -177,9 +185,16 @@ async def resume_draft(token: str):
     if not row:
         raise HTTPException(status_code=404, detail="Draft not found.")
     
-    email, company_name, form_state, current_step, submitted = row
+    email, company_name, form_state, current_step, submitted, updated_at = row
     if submitted:
         raise HTTPException(status_code=400, detail="This draft has already been submitted.")
+
+    # Strictly enforce 2-day limit on the stored draft record
+    if updated_at:
+        now = datetime.now(timezone.utc)
+        u_utc = updated_at.replace(tzinfo=timezone.utc) if updated_at.tzinfo is None else updated_at
+        if now - u_utc > timedelta(days=2):
+            raise HTTPException(status_code=401, detail="This draft has expired (2-day limit).")
 
     return {
         "email": email,

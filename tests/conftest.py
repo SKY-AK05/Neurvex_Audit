@@ -919,6 +919,22 @@ class MockCursor:
             return
 
         # 7. Draft Submissions
+        if "delete from draft_submissions" in sql_lower:
+            cutoff_2d = datetime.now(timezone.utc) - timedelta(days=2)
+            cutoff_7d = datetime.now(timezone.utc) - timedelta(days=7)
+            to_delete = []
+            for did, d in self.store.drafts.items():
+                u_at = d.get("updated_at")
+                if u_at:
+                    if not d.get("submitted") and u_at < cutoff_2d:
+                        to_delete.append(did)
+                    elif d.get("submitted") and u_at < cutoff_7d:
+                        to_delete.append(did)
+            for did in to_delete:
+                del self.store.drafts[did]
+            self.rowcount = len(to_delete)
+            return
+
         if "insert into draft_submissions" in sql_lower:
             draft_id = str(uuid.uuid4())
             email = p[0] if len(p) > 0 else ""
@@ -930,13 +946,16 @@ class MockCursor:
                     form_state = json.loads(form_state)
                 except Exception:
                     pass
+            now = datetime.now(timezone.utc)
             draft = {
                 "id": draft_id,
                 "email": email,
                 "company_name": company,
                 "form_state": form_state,
                 "current_step": current_step,
-                "submitted": False
+                "submitted": False,
+                "created_at": now,
+                "updated_at": now
             }
             self.store.drafts[draft_id] = draft
             self.rowcount = 1
@@ -953,15 +972,17 @@ class MockCursor:
                 elif "select submitted from" in sql_lower:
                     self._results = [{"submitted": d["submitted"]}] if self.dict_cursor else [(d["submitted"],)]
                 else:
-                    self._results = [d] if self.dict_cursor else [(d["email"], d["company_name"], d["form_state"], d["current_step"], d["submitted"])]
+                    self._results = [d] if self.dict_cursor else [(d["email"], d["company_name"], d["form_state"], d["current_step"], d["submitted"], d.get("updated_at"))]
             self.rowcount = len(self._results)
             return
 
         if "update draft_submissions" in sql_lower:
+            now = datetime.now(timezone.utc)
             if "submitted = true" in sql_lower and p:
                 draft_id = str(p[0])
                 if draft_id in self.store.drafts:
                     self.store.drafts[draft_id]["submitted"] = True
+                    self.store.drafts[draft_id]["updated_at"] = now
             elif "email = %s" in sql_lower and p:
                 draft_id = str(p[4]) if len(p) > 4 else ""
                 if draft_id in self.store.drafts:
@@ -972,6 +993,7 @@ class MockCursor:
                     except Exception:
                         self.store.drafts[draft_id]["form_state"] = p[2]
                     self.store.drafts[draft_id]["current_step"] = p[3]
+                    self.store.drafts[draft_id]["updated_at"] = now
             self.rowcount = 1
             if "returning" in sql_lower:
                 self._results = [{"id": draft_id}] if self.dict_cursor else [(draft_id,)]

@@ -12,7 +12,7 @@
     <div v-if="showModal" class="save-modal-overlay" @click="showModal = false">
       <div class="save-modal-card" @click.stop>
         <h3>Audit Saved!</h3>
-        <p>You can close this tab and resume your audit anytime within the next 7 days using the link below:</p>
+        <p>You can close this tab and resume your audit anytime within the next 2 days (48 hours) using the link below:</p>
         
         <div class="link-box">
           <input type="text" readonly :value="url" ref="linkInput" />
@@ -82,16 +82,24 @@ function copyLink() {
 .save-modal-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000;
+  padding: 1rem;
 }
 .save-modal-card {
   background: white; padding: 2rem; border-radius: 16px; border: 2px solid var(--c-primary-dark);
-  box-shadow: 4px 4px 0 var(--c-primary-dark); max-width: 500px; width: 90%; text-align: center;
+  box-shadow: 4px 4px 0 var(--c-primary-dark); max-width: 500px; width: 100%; text-align: center;
+  box-sizing: border-box;
 }
 .save-modal-card h3 { font-family: 'Playfair Display', serif; font-size: 1.5rem; margin-bottom: 0.75rem; color: var(--c-primary-dark); }
 .save-modal-card p { font-size: 0.9rem; color: #666; margin-bottom: 1.5rem; line-height: 1.5; }
-.link-box { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; }
+.link-box { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; width: 100%; box-sizing: border-box; }
 .link-box input {
-  flex: 1; padding: 0.6rem 0.8rem; border: 2px solid var(--c-primary-dark); border-radius: 8px; font-size: 0.85rem; background: #fff; color: #333;
+  flex: 1; min-width: 0; padding: 0.6rem 0.8rem; border: 2px solid var(--c-primary-dark); border-radius: 8px; font-size: 0.85rem; background: #fff; color: #333;
 }
 .close-btn { margin-top: 1rem; width: 100%; }
+@media (max-width: 500px) {
+  .save-modal-card { padding: 1.5rem 1rem; margin: 0.5rem; }
+  .link-box { flex-direction: column; }
+  .link-box input { width: 100%; box-sizing: border-box; }
+  .link-box button { width: 100%; }
+}
 </style>
