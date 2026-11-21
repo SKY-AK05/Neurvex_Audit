@@ -99,11 +99,20 @@ async def save_draft(payload: SaveDraftPayload, request: Request, background_tas
             with conn:
                 with conn.cursor() as cur:
                     if payload.draft_id:
-                        cur.execute("SELECT submitted FROM draft_submissions WHERE id = %s", (str(payload.draft_id),))
+                        cur.execute("SELECT submitted, email FROM draft_submissions WHERE id = %s", (str(payload.draft_id),))
                         row = cur.fetchone()
-                        if row and row[0]:
+                        if not row:
+                            raise HTTPException(status_code=404, detail="Draft not found.")
+                        if row[0]:
                             raise HTTPException(status_code=400, detail="This draft has already been submitted.")
                         
+                        existing_owner_email = row[1]
+                        if existing_owner_email and existing_owner_email.lower().strip() != payload.email.lower().strip():
+                            raise HTTPException(
+                                status_code=403,
+                                detail="Forbidden: You do not have permission to modify this draft."
+                            )
+
                         cur.execute("""
                             UPDATE draft_submissions
                             SET email = %s, company_name = %s, form_state = %s, current_step = %s, updated_at = NOW()

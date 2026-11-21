@@ -8,6 +8,7 @@ from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, HTTPException, Request, Depends
 
 from app.core.database import get_db_connection
+from app.core.limiter import limiter
 from app.services.settings_service import send_acs_email, get_sender_for_send
 
 router = APIRouter(prefix="/org", tags=["Organizations"])
@@ -25,7 +26,8 @@ def create_magic_link_token(email: str, company_name: str) -> str:
     return jwt.encode({"email": email.lower(), "company_name": company_name, "exp": exp, "type": "magic_link"}, JWT_SECRET, algorithm="HS256")
 
 @router.post("/register")
-async def register_or_login_org(payload: RegisterPayload):
+@limiter.limit("5/minute; 20/hour")
+async def register_or_login_org(request: Request, payload: RegisterPayload):
     email = payload.email.lower()
     company_name = payload.company_name
     

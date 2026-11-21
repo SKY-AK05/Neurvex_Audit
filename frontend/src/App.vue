@@ -332,8 +332,10 @@ async function onBellClick() {
 async function logout() {
   // Clear app session
   sessionStorage.removeItem("nd_auth");
+  sessionStorage.removeItem("nd_auth_token");
   sessionStorage.removeItem("nd_user_name");
   sessionStorage.removeItem("nd_role");
+  sessionStorage.removeItem("niwi_overview_cache");
 
   // Clear MSAL cache locally only — do NOT call logoutRedirect/logoutPopup
   // as that signs the user out of ALL Microsoft apps in the browser

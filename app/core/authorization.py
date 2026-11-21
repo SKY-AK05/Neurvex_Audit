@@ -63,9 +63,10 @@ def get_user_from_request(request: Request) -> dict:
         finally:
             conn.close()
     
-    # Production / standard JWT decode
+    # Production / standard JWT decode — strictly verify signature via Microsoft JWKS
     try:
-        payload = jwt.decode(token, options={"verify_signature": False})
+        from app.core.security import verify_jwt
+        payload = verify_jwt(token)
         email = (
             payload.get("preferred_username")
             or payload.get("email")

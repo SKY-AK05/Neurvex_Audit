@@ -653,7 +653,7 @@ class MockCursor:
                         "raw_email_status": "PENDING",
                         "raw_crm_status": "PENDING",
                         "retry_count": r.get("retry_count", 0),
-                        "last_error": None,
+                        "last_error": r.get("last_error"),
                         "raw_created_at": r.get("created_at"),
                         "raw_completed_at": None,
                         "sub_id": s.get("id"),
@@ -662,7 +662,7 @@ class MockCursor:
                         "sub_crm_status": s.get("crm_status"),
                         "sub_report_status": s.get("report_status"),
                         "admin_notify_status": None,
-                        "hubspot_deal_id": None,
+                        "hubspot_deal_id": s.get("hubspot_deal_id"),
                         "sub_submitted_at": s.get("submitted_at"),
                         "sub_completed_at": None,
                         "email_body": None
@@ -948,7 +948,9 @@ class MockCursor:
             draft_id = str(p[0]) if p else ""
             d = self.store.drafts.get(draft_id)
             if d:
-                if "select submitted from" in sql_lower:
+                if "select submitted, email from" in sql_lower:
+                    self._results = [{"submitted": d["submitted"], "email": d["email"]}] if self.dict_cursor else [(d["submitted"], d["email"])]
+                elif "select submitted from" in sql_lower:
                     self._results = [{"submitted": d["submitted"]}] if self.dict_cursor else [(d["submitted"],)]
                 else:
                     self._results = [d] if self.dict_cursor else [(d["email"], d["company_name"], d["form_state"], d["current_step"], d["submitted"])]

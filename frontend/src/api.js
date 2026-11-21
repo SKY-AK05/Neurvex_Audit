@@ -22,6 +22,7 @@ async function handleResponse(res) {
     sessionStorage.removeItem("nd_auth_token");
     sessionStorage.removeItem("nd_user_name");
     sessionStorage.removeItem("nd_role");
+    sessionStorage.removeItem("niwi_overview_cache");
     window.location.href = "/portal";
     throw new Error("Session expired. Please log in again.");
   }

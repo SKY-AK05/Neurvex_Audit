@@ -872,8 +872,15 @@ async def get_submission_status(request: Request, submission_id: str):
             raise HTTPException(status_code=404, detail="Submission not found")
 
         auth_header = request.headers.get("Authorization")
+        is_admin = False
         if auth_header and auth_header.startswith("Bearer "):
             token = auth_header.split(" ")[1]
+            try:
+                user = get_user_from_request(request)
+                if user and user.get("role") in ("admin", "super"):
+                    is_admin = True
+            except Exception:
+                pass
             try:
                 token_payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
                 if token_payload.get("role") == "org_member":
@@ -884,20 +891,24 @@ async def get_submission_status(request: Request, submission_id: str):
             except jwt.PyJWTError:
                 pass
 
-        eff_status = row.get("raw_status") or row.get("sub_async_status") or "RECEIVED"
-        rep_status = row.get("sub_report_status") or row.get("raw_report_status") or ("GENERATED" if row.get("email_body") else "PENDING")
+        eff_status = row.get("raw_status") or row.get("sub_async_status") or row.get("async_status") or row.get("status") or "RECEIVED"
+        rep_status = row.get("sub_report_status") or row.get("raw_report_status") or row.get("report_status") or ("GENERATED" if row.get("email_body") else "PENDING")
+
+        raw_err = row.get("last_error")
+        sanitized_error = raw_err if is_admin else ("Processing error occurred. Contact support if this persists." if raw_err else None)
+        hubspot_deal = row.get("hubspot_deal_id") if is_admin else None
 
         return {
-            "submission_id": str(row.get("submission_id") or row.get("sub_id")),
+            "submission_id": str(row.get("submission_id") or row.get("sub_id") or row.get("id") or sub_id),
             "status": eff_status,
-            "scoring_status": row.get("scoring_status") or ("COMPLETED" if row.get("sub_id") else "PENDING"),
-            "email_status": row.get("sub_email_status") or row.get("raw_email_status") or "PENDING",
-            "crm_status": row.get("sub_crm_status") or row.get("raw_crm_status") or "PENDING",
+            "scoring_status": row.get("scoring_status") or ("COMPLETED" if (row.get("sub_id") or row.get("id")) else "PENDING"),
+            "email_status": row.get("sub_email_status") or row.get("raw_email_status") or row.get("email_status") or "PENDING",
+            "crm_status": row.get("sub_crm_status") or row.get("raw_crm_status") or row.get("crm_status") or "PENDING",
             "report_status": rep_status,
             "admin_notify_status": row.get("admin_notify_status") or "PENDING",
-            "hubspot_deal_id": row.get("hubspot_deal_id"),
+            "hubspot_deal_id": hubspot_deal,
             "retry_count": row.get("retry_count") or 0,
-            "last_error": row.get("last_error"),
+            "last_error": sanitized_error,
             "submitted_at": to_iso_utc(row.get("raw_created_at") or row.get("sub_submitted_at")),
             "completed_at": to_iso_utc(row.get("raw_completed_at") or row.get("sub_completed_at"))
         }
