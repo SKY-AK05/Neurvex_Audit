@@ -1294,7 +1294,7 @@
 
             Invitations &amp; Links
 
-            <span v-if="invitations.length" class="tab-count-pill">{{ invitations.length }}</span>
+            <span v-if="invitations.length || selectedOrg?.active_invitations_count" class="tab-count-pill">{{ invitations.length || selectedOrg?.active_invitations_count }}</span>
 
           </button>
 
@@ -5116,17 +5116,16 @@ async function selectOrg(org) {
   report.error = '';
 
   report.success = '';
-
+  invitations.value = [];
   msgPanel.open = false;
 
   await fetchDetail(org);
 
-  initReportForm();
-
-  if (!org.is_virtual) {
-
+  // Progressive on-demand loading: Only fetch tab-specific assets if that tab is currently active
+  if (activeTab.value === 'report') {
+    initReportForm();
+  } else if (activeTab.value === 'invitations' && !org.is_virtual) {
     fetchInvitations(org.id);
-
   }
 
 }
@@ -5168,9 +5167,13 @@ function initReportForm() {
 
 
 watch(() => activeTab.value, (tab) => {
-
-  if (tab === 'report') initReportForm();
-
+  if (tab === 'report') {
+    initReportForm();
+  } else if (tab === 'invitations') {
+    if (selectedOrg.value && !selectedOrg.value.is_virtual && invitations.value.length === 0) {
+      fetchInvitations(selectedOrg.value.id);
+    }
+  }
 });
 
 
