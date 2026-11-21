@@ -579,186 +579,6 @@ const stats = ref({
   weekSent: 0,
 });
 
-// Rich mock submissions dataset matching the reference image format
-const MOCK_SUBMISSIONS = [
-  {
-    id: "sub-goog-01",
-    company_name: "Google",
-    name: "Alex Vance",
-    designation: "Product Designer",
-    email: "alex.vance@google.com",
-    contact_number: "+1 206 555-0142",
-    location: "Seattle, WA, USA",
-    sector: "Technology & Software",
-    status: "sent",
-    overall_avg: "17.4",
-    overall_level: "Leading",
-    lc_score: "19",
-    ro_score: "18",
-    we_score: "17",
-    be_score: "18",
-    tm_score: "16",
-    ca_score: "17",
-    pc_score: "16",
-    sp_score: "18",
-    submitted_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-meta-02",
-    company_name: "Meta, Facebook",
-    name: "Jordan Hayes",
-    designation: "UX Designer",
-    email: "jhayes@meta.com",
-    contact_number: "+1 212 555-0188",
-    location: "New York, NY, USA",
-    sector: "Technology & Software",
-    status: "pending",
-    overall_avg: "14.2",
-    overall_level: "Maturing",
-    lc_score: "15",
-    ro_score: "14",
-    we_score: "14",
-    be_score: "15",
-    tm_score: "13",
-    ca_score: "14",
-    pc_score: "14",
-    sp_score: "14",
-    submitted_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-msft-03",
-    company_name: "Microsoft",
-    name: "Morgan Chen",
-    designation: "Interaction Designer",
-    email: "m.chen@microsoft.com",
-    contact_number: "+1 425 555-0199",
-    location: "Seattle, WA, USA",
-    sector: "Technology & Software",
-    status: "sent",
-    overall_avg: "16.8",
-    overall_level: "Leading",
-    lc_score: "18",
-    ro_score: "17",
-    we_score: "16",
-    be_score: "17",
-    tm_score: "16",
-    ca_score: "17",
-    pc_score: "17",
-    sp_score: "16",
-    submitted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-tcs-04",
-    company_name: "Tata Consultancy Services",
-    name: "Priya Sharma",
-    designation: "Head of Talent & Culture",
-    email: "priya.sharma@tcs.com",
-    contact_number: "+91 80 4123 5678",
-    location: "Bengaluru, KA, India",
-    sector: "Enterprise Consulting",
-    status: "pending",
-    overall_avg: "15.1",
-    overall_level: "Maturing",
-    lc_score: "16",
-    ro_score: "15",
-    we_score: "15",
-    be_score: "14",
-    tm_score: "15",
-    ca_score: "16",
-    pc_score: "15",
-    sp_score: "15",
-    submitted_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-apple-05",
-    company_name: "Apple Inc.",
-    name: "Marcus Miller",
-    designation: "Accessibility Experience Lead",
-    email: "mmiller@apple.com",
-    contact_number: "+1 408 555-0112",
-    location: "Cupertino, CA, USA",
-    sector: "Technology & Software",
-    status: "sent",
-    overall_avg: "18.2",
-    overall_level: "Leading",
-    lc_score: "19",
-    ro_score: "18",
-    we_score: "18",
-    be_score: "19",
-    tm_score: "17",
-    ca_score: "18",
-    pc_score: "18",
-    sp_score: "19",
-    submitted_at: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-jpm-06",
-    company_name: "JPMorgan Chase",
-    name: "Elena Rostova",
-    designation: "VP, Global Inclusion",
-    email: "elena.rostova@jpmchase.com",
-    contact_number: "+1 212 555-0177",
-    location: "New York, NY, USA",
-    sector: "Finance & Banking",
-    status: "pending",
-    overall_avg: "11.6",
-    overall_level: "Developing",
-    lc_score: "12",
-    ro_score: "11",
-    we_score: "12",
-    be_score: "11",
-    tm_score: "10",
-    ca_score: "12",
-    pc_score: "11",
-    sp_score: "13",
-    submitted_at: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-spotify-07",
-    company_name: "Spotify",
-    name: "Lukas Lindqvist",
-    designation: "Diversity & Belonging Specialist",
-    email: "lukas.l@spotify.com",
-    contact_number: "+46 8 555 019",
-    location: "Stockholm, Sweden",
-    sector: "Retail & Media",
-    status: "sent",
-    overall_avg: "16.1",
-    overall_level: "Leading",
-    lc_score: "17",
-    ro_score: "16",
-    we_score: "16",
-    be_score: "16",
-    tm_score: "15",
-    ca_score: "17",
-    pc_score: "16",
-    sp_score: "16",
-    submitted_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "sub-nov-08",
-    company_name: "Novartis Healthcare",
-    name: "Claire Dubois",
-    designation: "Director of Workplace Wellness",
-    email: "c.dubois@novartis.com",
-    contact_number: "+41 61 555 010",
-    location: "Basel, Switzerland",
-    sector: "Healthcare & Pharma",
-    status: "sent",
-    overall_avg: "13.9",
-    overall_level: "Maturing",
-    lc_score: "14",
-    ro_score: "14",
-    we_score: "14",
-    be_score: "13",
-    tm_score: "14",
-    ca_score: "14",
-    pc_score: "13",
-    sp_score: "15",
-    submitted_at: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
 // Submissions counts
 const countPending = computed(() => allSubmissions.value.filter(s => s.status === "pending").length);
 const countSent = computed(() => allSubmissions.value.filter(s => s.status === "sent").length);
@@ -1055,35 +875,59 @@ function downloadReport() {
   }
 }
 
+function computeKpiStats(subsList) {
+  if (!subsList || !subsList.length) {
+    return { total: 0, pending: 0, sent: 0, avgScore: "0", weekNew: 0, weekPrev: 0, weekSent: 0 };
+  }
+  const startOfWeek = startOfISTWeek();
+  const startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const thisWeek = subsList.filter(s => new Date(s.submitted_at) >= startOfWeek);
+  const lastWeek = subsList.filter(
+    s => new Date(s.submitted_at) >= startOfLastWeek && new Date(s.submitted_at) < startOfWeek
+  );
+
+  const avg = (subsList.reduce((a, s) => a + parseFloat(s.overall_avg || 0), 0) / subsList.length).toFixed(1);
+
+  return {
+    total: subsList.length,
+    pending: subsList.filter(s => s.status === "pending").length,
+    sent: subsList.filter(s => s.status === "sent").length,
+    avgScore: avg,
+    weekNew: thisWeek.length,
+    weekPrev: lastWeek.length,
+    weekSent: thisWeek.filter(s => s.status === "sent").length,
+  };
+}
+
 onMounted(async () => {
+  // Stale-While-Revalidate: hydrate from session storage immediately for 0ms tab navigation
+  try {
+    const rawCache = sessionStorage.getItem("niwi_overview_cache");
+    if (rawCache) {
+      const parsed = JSON.parse(rawCache);
+      if (parsed.timestamp && Date.now() - parsed.timestamp < 60000 && Array.isArray(parsed.data) && parsed.data.length > 0) {
+        allSubmissions.value = parsed.data;
+        stats.value = computeKpiStats(parsed.data);
+        loading.value = false;
+      }
+    }
+  } catch (_) {}
+
   try {
     const subs = await getSubmissions();
     allSubmissions.value = subs || [];
-
-    const startOfWeek = startOfISTWeek();
-    const startOfLastWeek = new Date(startOfWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    const subsList = allSubmissions.value;
-    const thisWeek = subsList.filter(s => new Date(s.submitted_at) >= startOfWeek);
-    const lastWeek = subsList.filter(
-      s => new Date(s.submitted_at) >= startOfLastWeek && new Date(s.submitted_at) < startOfWeek
-    );
-
-    const avg = subsList.length
-      ? (subsList.reduce((a, s) => a + parseFloat(s.overall_avg || 0), 0) / subsList.length).toFixed(1)
-      : "0";
-
-    stats.value = {
-      total: subsList.length,
-      pending: subsList.filter(s => s.status === "pending").length,
-      sent: subsList.filter(s => s.status === "sent").length,
-      avgScore: avg,
-      weekNew: thisWeek.length,
-      weekPrev: lastWeek.length,
-      weekSent: thisWeek.filter(s => s.status === "sent").length,
-    };
+    stats.value = computeKpiStats(allSubmissions.value);
+    try {
+      sessionStorage.setItem("niwi_overview_cache", JSON.stringify({
+        timestamp: Date.now(),
+        data: allSubmissions.value,
+      }));
+    } catch (_) {}
   } catch (e) {
-    allSubmissions.value = [];
+    if (!allSubmissions.value.length) {
+      allSubmissions.value = [];
+    }
   } finally {
     loading.value = false;
   }
