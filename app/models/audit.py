@@ -47,6 +47,10 @@ class AuditSubmission(BaseModel):
     has_physical_workspace: Optional[str] = Field(None, pattern="^(Yes|No|)$")
     has_suppliers: Optional[str] = Field(None, pattern="^(Yes|No|)$")
 
+    # Optional suggestions / feedback
+    suggestions: Optional[str] = None
+    feedback: Optional[str] = None
+
     # We will capture any additional questions dynamically
     class Config:
         extra = "allow"

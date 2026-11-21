@@ -6,9 +6,27 @@
       <div class="success-box">
         <div class="success-icon">✓</div>
         <h2>Assessment Successfully Submitted</h2>
-        <p class="success-lead">Your responses have been successfully recorded.</p>
-        <p>Thank you for sharing your perspective. Every response helps build a more complete picture.</p>
-        <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of the collective findings and key insights will also be shared with everyone who participated.</p>
+
+        <!-- Pathway 2: Invitation Mode (Employee filling for organization) -->
+        <template v-if="isInvitationMode">
+          <p class="success-lead">Your responses have been successfully recorded.</p>
+          <p>Thank you for sharing your perspective for <strong>{{ form.company_name }}</strong>. Every response helps build a more complete, authentic picture of workplace neuro-inclusion.</p>
+          <p>Once all NIWI responses have been brought together, the Leadership team will receive a consolidated organizational report. A snapshot of collective findings and key insights will also be shared with everyone who participated.</p>
+          <div class="success-confidential-note">
+            <span class="lock-icon">🔒</span> Your individual responses remain strictly confidential and are aggregated into overall organizational insights.
+          </div>
+        </template>
+
+        <!-- Pathway 1: Direct Public Assessment (Self/Organization submission) -->
+        <template v-else>
+          <p class="success-lead">Your organization's assessment has been successfully recorded.</p>
+          <p>Thank you for completing the NeuroMark Inclusion Workplace Index (NIWI) for <strong>{{ form.company_name || 'your organization' }}</strong>.</p>
+          <p>Our team is currently reviewing your assessment data. Once our review and scoring analysis are complete, your detailed inclusion maturity scores, dimension breakdown, and actionable recommendations will be shared directly with you over email at <strong>{{ form.email }}</strong>.</p>
+          <div class="success-actions">
+            <a href="/" class="btn-success-action">Return to Home</a>
+            <a href="https://orchvate.com" target="_blank" rel="noopener" class="btn-success-action btn-outline">Explore Orchvate Solutions &rarr;</a>
+          </div>
+        </template>
       </div>
     </div>
     <div v-else-if="isLoading && currentStep > 0" class="success-wrap">
@@ -365,17 +383,24 @@
                   <span class="step-tag-dot"></span>
                   GETTING STARTED • STEP 01
                 </div>
+                <div v-else-if="currentStep === feedbackStepIndex" class="step-tag tag-purple">
+                  <span class="step-tag-dot"></span>
+                  FINAL STEP • OPTIONAL
+                </div>
                 <div v-else class="step-tag tag-teal">
                   <span class="step-tag-dot"></span>
                   DIMENSION {{ currentStep - 3 }} OF {{ visibleSections.length }}
                 </div>
               </div>
               <div class="step-head-row">
-                <h1 class="h1-navy" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentSection?.title || '') }}</h1>
-                <p v-if="currentStep > 3" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
+                <h1 class="h1-navy" @click="onLogoClick">{{ currentStep === 2 ? 'Tell Us About You' : (currentStep === feedbackStepIndex ? 'Any Suggestions or Thoughts?' : (currentSection?.title || '')) }}</h1>
+                <p v-if="currentStep > 3 && currentStep !== feedbackStepIndex" class="step-sub step-sub-inline">Select the answer that best reflects your organisation's current position.</p>
               </div>
               <p v-if="currentStep === 2" class="step-sub">
                 The following demographic questions help us understand how neuro-inclusion experiences may vary across groups. Your responses will be analyzed in aggregate and treated confidentially.
+              </p>
+              <p v-if="currentStep === feedbackStepIndex" class="step-sub">
+                Before submitting, please feel free to share any thoughts, workplace observations, or suggestions you have. This step is completely optional.
               </p>
             </div>
 
@@ -787,6 +812,29 @@
               </div>
             </div>
 
+            <!-- Optional Suggestions & Feedback Step -->
+            <div v-else-if="currentStep === feedbackStepIndex" class="feedback-form">
+              <div class="feedback-card">
+                <label for="user_suggestions" class="feedback-label">
+                  Your Suggestions or Feedback <span class="optional-label">(Optional)</span>
+                </label>
+                <p class="feedback-hint">
+                  Is there anything specific you would like to tell us about your organisation's neuro-inclusion practices, your workplace experiences, or ideas for improvement?
+                </p>
+                <textarea
+                  id="user_suggestions"
+                  v-model="form.suggestions"
+                  class="feedback-textarea"
+                  placeholder="Share any thoughts, observations, or suggestions here..."
+                  maxlength="1500"
+                  rows="6"
+                ></textarea>
+                <div class="feedback-char-count">
+                  {{ (form.suggestions || '').length }} / 1500 characters
+                </div>
+              </div>
+            </div>
+
             <!-- Section questions (step 3+) -->
             <div v-else class="questions-list">
               <div v-if="currentSection.liner" class="section-liner">
@@ -869,12 +917,12 @@
               </div>
 
               <button
-                v-if="currentStep < visibleSections.length + 3"
+                v-if="currentStep < feedbackStepIndex"
                 class="btn-next-compact"
                 @click="nextStep"
                 type="button"
               >
-                {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
+                {{ currentStep === 3 ? 'Start Audit →' : (currentStep === visibleSections.length + 3 ? 'Next: Suggestions →' : 'Next →') }}
               </button>
               <button
                 v-else
@@ -1065,8 +1113,14 @@ const isLoading = ref(false);
 
 const visibleSections = computed(() => sections.value);
 
-const totalSteps = computed(() => visibleSections.value.length + 4);
-const currentSection = computed(() => visibleSections.value[currentStep.value - 4]);
+const feedbackStepIndex = computed(() => visibleSections.value.length + 4);
+const totalSteps = computed(() => visibleSections.value.length + 5);
+const currentSection = computed(() => {
+  if (currentStep.value >= 4 && currentStep.value < feedbackStepIndex.value) {
+    return visibleSections.value[currentStep.value - 4];
+  }
+  return null;
+});
 const progressPct    = computed(() => ((currentStep.value) / (totalSteps.value - 1)) * 100);
 
 const progressSteps = computed(() => [
@@ -1079,6 +1133,7 @@ const progressSteps = computed(() => [
     short: s.title,
     label: s.title,
   })),
+  { id: "suggestions", short: "Suggestions", label: "Suggestions & Feedback" }
 ]);
 
 const progressPhase = computed(() => {
@@ -1086,6 +1141,7 @@ const progressPhase = computed(() => {
   if (currentStep.value === 1) return "Why This Matters";
   if (currentStep.value === 2) return "Tell Us About You";
   if (currentStep.value === 3) return "Before You Begin";
+  if (currentStep.value === feedbackStepIndex.value) return "Suggestions & Feedback (Optional)";
   if (!currentSection.value) return "";
   return `Section ${currentStep.value - 3} — ${currentSection.value.title}`;
 });
@@ -1095,6 +1151,21 @@ const currentPanel = computed(() => {
   if (currentStep.value === 1) return step0Panel; // why this matters reuses welcome panel
   if (currentStep.value === 2) return step0Panel;
   if (currentStep.value === 3) return step0Panel; // reuse welcome panel on instructions screen
+  if (currentStep.value === feedbackStepIndex.value) {
+    return {
+      icon: "💬",
+      tag: "Final Step • Optional",
+      title: "Suggestions & Feedback",
+      summary: "Your voice matters. Share any additional observations, insights, or suggestions to help build a more comprehensive and actionable inclusion roadmap.",
+      why: "Qualitative insights often highlight practical barriers or innovative initiatives that structured questions may not capture.",
+      points: [
+        "Completely optional and confidential",
+        "Helps tailor actionable recommendations",
+        "Enriches the organization's collective intelligence"
+      ],
+      tip: "Feel free to highlight specific practices, workplace adjustments, or ideas for improving neuro-inclusion in your workplace."
+    };
+  }
   const s = currentSection.value;
   if (!s) return {};
   return {
@@ -1201,6 +1272,7 @@ const form = reactive({
   designation: "",
   has_physical_workspace: "",
   has_suppliers: "",
+  suggestions: "",
   ...Object.fromEntries(DEFAULT_SECTIONS.flatMap(s => s.questions.map(q => [q.field, ""])))
 });
 
@@ -1565,6 +1637,9 @@ function validateStep() {
     }
   } else if (currentStep.value === 3) {
     // Instructions screen ("Before you begin") — no validation needed
+  } else if (currentStep.value === feedbackStepIndex.value) {
+    // Suggestions & feedback screen is completely optional — no validation needed
+    return true;
   } else {
     const section = currentSection.value;
 
@@ -4740,6 +4815,135 @@ html {
 
 .success-box p:last-child {
   margin-bottom: 0;
+}
+
+.success-confidential-note {
+  margin-top: 1.5rem;
+  padding: 0.85rem 1.25rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #64748B;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1.45;
+}
+
+.success-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.btn-success-action {
+  background: var(--c-primary-dark, #161057);
+  color: #FFFFFF !important;
+  padding: 0.75rem 1.6rem;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border: 2px solid var(--c-primary-dark, #161057);
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-success-action:hover {
+  background: #04907C;
+  border-color: #04907C;
+  transform: translateY(-2px);
+}
+
+.btn-success-action.btn-outline {
+  background: transparent;
+  color: var(--c-primary-dark, #161057) !important;
+  border: 2px solid var(--c-primary-dark, #161057);
+}
+
+.btn-success-action.btn-outline:hover {
+  background: rgba(22, 16, 87, 0.05);
+  color: var(--c-primary-dark, #161057) !important;
+}
+
+/* Feedback Form (Final Step) */
+.feedback-form {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+}
+
+.feedback-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(22, 16, 87, 0.08);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03);
+}
+
+.feedback-label {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--c-primary-dark, #161057);
+  margin-bottom: 0.5rem;
+  font-family: 'Fraunces', serif;
+}
+
+.feedback-hint {
+  font-size: 0.9rem;
+  color: #64748B;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.feedback-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
+  border: 2px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #1E293B;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 140px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  background: #FDFDFD;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: #04907C;
+  box-shadow: 0 0 0 3px rgba(4, 144, 124, 0.12);
+  background: #FFFFFF;
+}
+
+.feedback-char-count {
+  text-align: right;
+  font-size: 0.8rem;
+  color: #94A3B8;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+  .feedback-card {
+    padding: 1.25rem 1rem;
+  }
+  .success-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-success-action {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
 }
 
 @media (max-width: 640px) {

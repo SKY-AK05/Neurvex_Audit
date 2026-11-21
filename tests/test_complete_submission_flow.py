@@ -134,6 +134,38 @@ class TestManualOrganizationEntry:
         finally:
             conn.close()
     
+    def test_submission_with_optional_suggestions(self, test_org):
+        """Submission with optional suggestions should succeed and store suggestions"""
+        test_email = f"suggestions.{uuid.uuid4()}@test.com"
+        suggestion_text = "Please consider adding more neurodivergent sensory accommodation options in future revisions."
+        
+        response = client.post("/api/submit", json={
+            "name": "Alex Taylor",
+            "email": test_email,
+            "company_name": "Integration Test Org",
+            "organization_id": test_org,
+            "designation": "Staff Engineer",
+            "consent_given": True,
+            "has_physical_workspace": "Yes",
+            "has_suppliers": "Yes",
+            "suggestions": suggestion_text,
+            "q5": "Often", "q6": "Sometimes", "q7": "Rarely", "q8": "Always",
+            "q9": "Often", "q10": "Sometimes", "q11": "Rarely", "q12": "Always",
+            "q13": "Often", "q14": "Sometimes", "q15": "Rarely", "q16": "Always",
+            "q17": "Often", "q18": "Sometimes", "q19": "Rarely", "q20": "Always",
+            "q21": "Often", "q22": "Sometimes", "q23": "Rarely", "q24": "Always",
+            "q25": "Often", "q26": "Sometimes", "q27": "Rarely", "q28": "Always",
+            "q29": "Often", "q30": "Sometimes", "q31": "Rarely", "q32": "Always",
+            "q33": "Often", "q34": "Sometimes", "q35": "Rarely", "q36": "Always",
+            "q37": "Often", "q38": "Sometimes", "q39": "Rarely", "q40": "Always",
+            "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
+        })
+        
+        assert response.status_code in (201, 202)
+        data = response.json()
+        assert data["success"] is True
+        assert "submission_id" in data
+    
     def test_submission_creates_new_pending_org(self):
         """Submission with new company name should create pending org"""
         new_company = f"New Company {uuid.uuid4()}"
