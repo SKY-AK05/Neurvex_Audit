@@ -184,6 +184,113 @@ class TestManualOrganizationEntry:
             conn.commit()
         finally:
             conn.close()
+
+    def test_submission_with_soft_deleted_org_reactivates(self):
+        """Direct submission with previously soft-deleted org reactivates and succeeds"""
+        company_name = f"Reactivate Corp {uuid.uuid4()}"
+        conn = get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    INSERT INTO organizations (name, is_active, is_deleted, approval_status)
+                    VALUES (%s, FALSE, TRUE, 'approved')
+                    RETURNING id
+                """, (company_name,))
+                del_org_id = str(cur.fetchone()["id"])
+            conn.commit()
+
+            response = client.post("/api/submit", json={
+                "name": "Alex Vance",
+                "email": f"alex.{uuid.uuid4()}@test.com",
+                "company_name": company_name,
+                "designation": "Lead",
+                "consent_given": True,
+                "has_physical_workspace": "Yes",
+                "has_suppliers": "Yes",
+                "q5": "Often", "q6": "Sometimes", "q7": "Rarely", "q8": "Always",
+                "q9": "Often", "q10": "Sometimes", "q11": "Rarely", "q12": "Always",
+                "q13": "Often", "q14": "Sometimes", "q15": "Rarely", "q16": "Always",
+                "q17": "Often", "q18": "Sometimes", "q19": "Rarely", "q20": "Always",
+                "q21": "Often", "q22": "Sometimes", "q23": "Rarely", "q24": "Always",
+                "q25": "Often", "q26": "Sometimes", "q27": "Rarely", "q28": "Always",
+                "q29": "Often", "q30": "Sometimes", "q31": "Rarely", "q32": "Always",
+                "q33": "Often", "q34": "Sometimes", "q35": "Rarely", "q36": "Always",
+                "q37": "Often", "q38": "Sometimes", "q39": "Rarely", "q40": "Always",
+                "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
+            })
+            assert response.status_code in (201, 202)
+            data = response.json()
+            assert data["success"] is True
+
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT id, is_active, is_deleted, approval_status FROM organizations WHERE id = %s", (del_org_id,))
+                reactivated_org = cur.fetchone()
+                assert reactivated_org is not None
+                assert reactivated_org["is_active"] is True
+                assert reactivated_org["is_deleted"] is False
+                assert reactivated_org["approval_status"] == "approved"
+
+                cur.execute("DELETE FROM submissions WHERE organization_id = %s", (del_org_id,))
+                cur.execute("DELETE FROM organizations WHERE id = %s", (del_org_id,))
+            conn.commit()
+        finally:
+            conn.close()
+
+    def test_submission_with_duplicate_active_and_deleted_picks_active(self):
+        """Direct submission when both active and deleted org exist binds to active org"""
+        base_name = f"Duplicate Corp {uuid.uuid4()}"
+        conn = get_conn()
+        try:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("""
+                    INSERT INTO organizations (name, is_active, is_deleted, approval_status)
+                    VALUES (%s, TRUE, FALSE, 'approved')
+                    RETURNING id
+                """, (base_name,))
+                active_id = str(cur.fetchone()["id"])
+
+                cur.execute("""
+                    INSERT INTO organizations (name, is_active, is_deleted, approval_status)
+                    VALUES (%s, FALSE, TRUE, 'approved')
+                    RETURNING id
+                """, (base_name.lower(),))
+                deleted_id = str(cur.fetchone()["id"])
+            conn.commit()
+
+            response = client.post("/api/submit", json={
+                "name": "Gordon Freeman",
+                "email": f"gordon.{uuid.uuid4()}@test.com",
+                "company_name": base_name,
+                "designation": "Scientist",
+                "consent_given": True,
+                "has_physical_workspace": "Yes",
+                "has_suppliers": "Yes",
+                "q5": "Often", "q6": "Sometimes", "q7": "Rarely", "q8": "Always",
+                "q9": "Often", "q10": "Sometimes", "q11": "Rarely", "q12": "Always",
+                "q13": "Often", "q14": "Sometimes", "q15": "Rarely", "q16": "Always",
+                "q17": "Often", "q18": "Sometimes", "q19": "Rarely", "q20": "Always",
+                "q21": "Often", "q22": "Sometimes", "q23": "Rarely", "q24": "Always",
+                "q25": "Often", "q26": "Sometimes", "q27": "Rarely", "q28": "Always",
+                "q29": "Often", "q30": "Sometimes", "q31": "Rarely", "q32": "Always",
+                "q33": "Often", "q34": "Sometimes", "q35": "Rarely", "q36": "Always",
+                "q37": "Often", "q38": "Sometimes", "q39": "Rarely", "q40": "Always",
+                "q41": "Often", "q42": "Sometimes", "q43": "Rarely", "q44": "Always",
+            })
+            assert response.status_code in (201, 202)
+            data = response.json()
+            assert data["success"] is True
+
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute("SELECT organization_id FROM submissions WHERE id = %s", (data["submission_id"],))
+                sub = cur.fetchone()
+                assert sub is not None
+                assert str(sub["organization_id"]) == active_id
+
+                cur.execute("DELETE FROM submissions WHERE id = %s", (data["submission_id"],))
+                cur.execute("DELETE FROM organizations WHERE id IN (%s, %s)", (active_id, deleted_id))
+            conn.commit()
+        finally:
+            conn.close()
     
     def test_duplicate_email_prevention(self, test_org):
         """Duplicate submissions within 5 minutes should be rejected"""

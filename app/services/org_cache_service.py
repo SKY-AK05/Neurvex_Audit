@@ -60,6 +60,40 @@ def normalize_org_name(name: str) -> str:
     return " ".join(name.strip().lower().split())
 
 
+def _should_replace_named_entry(existing: Optional[dict[str, Any]], candidate: dict[str, Any]) -> bool:
+    """
+    Determines whether a candidate organization should replace an existing named entry in cache.
+    Always prioritizes:
+    1. is_deleted == False over True
+    2. is_active == True over False
+    3. approval_status == 'approved' over pending/rejected
+    4. more recent updated_at
+    """
+    if not existing:
+        return True
+    
+    existing_score = (
+        1 if existing.get("is_deleted") else 0,
+        0 if existing.get("is_active") else 1,
+        0 if existing.get("approval_status") == "approved" else 1,
+    )
+    candidate_score = (
+        1 if candidate.get("is_deleted") else 0,
+        0 if candidate.get("is_active") else 1,
+        0 if candidate.get("approval_status") == "approved" else 1,
+    )
+    if candidate_score < existing_score:
+        return True
+    if candidate_score > existing_score:
+        return False
+    
+    cand_updated = candidate.get("updated_at")
+    exist_updated = existing.get("updated_at")
+    if cand_updated and exist_updated:
+        return cand_updated > exist_updated
+    return bool(cand_updated and not exist_updated)
+
+
 def _touch_invalidation_file() -> None:
     """Updates the mtime of the invalidation file so other workers detect the change."""
     global _last_seen_invalidation_mtime_ns
@@ -114,6 +148,9 @@ def refresh_org_cache(conn=None) -> bool:
                 cur.execute("""
                     SELECT id, name, is_active, is_deleted, approval_status, updated_at
                     FROM organizations
+                    ORDER BY is_deleted ASC, is_active DESC,
+                             CASE WHEN approval_status = 'approved' THEN 0 ELSE 1 END ASC,
+                             updated_at DESC NULLS LAST
                 """)
                 return cur.fetchall()
 
@@ -134,7 +171,8 @@ def refresh_org_cache(conn=None) -> bool:
             }
             norm_name = normalize_org_name(entry["name"])
             if norm_name:
-                new_by_name[norm_name] = entry
+                if norm_name not in new_by_name or _should_replace_named_entry(new_by_name[norm_name], entry):
+                    new_by_name[norm_name] = entry
             new_by_id[entry["id"]] = entry
 
         duration_ms = (time.perf_counter() - t0) * 1000.0
@@ -217,6 +255,10 @@ def get_organisation_by_name(name: str) -> tuple[Optional[dict[str, Any]], str]:
                     SELECT id, name, is_active, is_deleted, approval_status, updated_at
                     FROM organizations
                     WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s))
+                    ORDER BY is_deleted ASC, is_active DESC,
+                             CASE WHEN approval_status = 'approved' THEN 0 ELSE 1 END ASC,
+                             updated_at DESC NULLS LAST
+                    LIMIT 1
                 """, (name.strip(),))
                 row = cur.fetchone()
 
@@ -230,8 +272,9 @@ def get_organisation_by_name(name: str) -> tuple[Optional[dict[str, Any]], str]:
                 "updated_at": row.get("updated_at"),
             }
             with _lock:
-                _orgs_by_normalized_name[normalized] = entry
                 _orgs_by_id[entry["id"]] = entry
+                if normalized not in _orgs_by_normalized_name or _should_replace_named_entry(_orgs_by_normalized_name.get(normalized), entry):
+                    _orgs_by_normalized_name[normalized] = entry
                 _negative_cache.pop(normalized, None)
             logger.info("DB fallback resolved org '%s' in %.2f ms", entry["name"], (time.perf_counter() - t0) * 1000.0)
             return entry, "DB_HIT"
@@ -284,7 +327,7 @@ def get_organisation_by_id(org_id: str | UUID) -> tuple[Optional[dict[str, Any]]
             norm_name = normalize_org_name(entry["name"])
             with _lock:
                 _orgs_by_id[entry["id"]] = entry
-                if norm_name:
+                if norm_name and (norm_name not in _orgs_by_normalized_name or _should_replace_named_entry(_orgs_by_normalized_name.get(norm_name), entry)):
                     _orgs_by_normalized_name[norm_name] = entry
             return entry, "DB_HIT"
         return None, "DB_MISS"

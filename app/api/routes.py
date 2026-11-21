@@ -209,10 +209,7 @@ def submit(request: Request, payload: AuditSubmission, response: Response, backg
         elif resolved_company_name:
             clean_name = " ".join(resolved_company_name.split())
             org, _ = get_organisation_by_name(clean_name)
-            if org:
-                eligible, err = is_org_eligible(org)
-                if not eligible:
-                    raise HTTPException(status_code=400, detail=err or "Organisation is inactive.")
+            if org and is_org_eligible(org)[0]:
                 organization_id = str(org["id"])
                 resolved_company_name = org["name"]
             else:
@@ -225,12 +222,30 @@ def submit(request: Request, payload: AuditSubmission, response: Response, backg
                             )
                             org_cur.execute("""
                                 SELECT id, name FROM organizations 
-                                WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND is_deleted = FALSE
+                                WHERE LOWER(TRIM(name)) = LOWER(TRIM(%s)) AND is_deleted = FALSE AND is_active = TRUE
+                                ORDER BY CASE WHEN approval_status = 'approved' THEN 0 ELSE 1 END ASC, updated_at DESC NULLS LAST
+                                LIMIT 1
                             """, (clean_name,))
                             org_row = org_cur.fetchone()
                             if org_row:
                                 organization_id = str(org_row[0])
                                 resolved_company_name = org_row[1]
+                            elif org:
+                                # Reactivate existing inactive or soft-deleted organisation for direct public submission
+                                org_cur.execute("""
+                                    UPDATE organizations
+                                    SET is_active = TRUE, is_deleted = FALSE, approval_status = 'approved', updated_at = NOW()
+                                    WHERE id = %s
+                                    RETURNING id, name
+                                """, (org["id"],))
+                                updated_row = org_cur.fetchone()
+                                if updated_row:
+                                    organization_id = str(updated_row[0])
+                                    resolved_company_name = updated_row[1]
+                                try:
+                                    invalidate_org_cache()
+                                except Exception:
+                                    pass
                             else:
                                 org_cur.execute("""
                                     INSERT INTO organizations (name, is_active, is_deleted, approval_status)

@@ -1347,12 +1347,14 @@ onMounted(async () => {
           // Wipe ?org= parameter so org identifier is never exposed in URL bar
           window.history.replaceState({}, '', '/audit');
           form.company_name = decodedOrg;
-          isOrgFromLink.value = true;
+          isOrgFromLink.value = false;
+          isInvitationMode.value = false;
         }
       } catch (err) {
         window.history.replaceState({}, '', '/audit');
         form.company_name = decodedOrg;
-        isOrgFromLink.value = true;
+        isOrgFromLink.value = false;
+        isInvitationMode.value = false;
       } finally {
         invitationLoading.value = false;
       }
