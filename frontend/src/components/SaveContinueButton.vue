@@ -80,17 +80,20 @@ function copyLink() {
   color: var(--c-primary-dark, #161057);
   border: 1.5px solid rgba(22, 16, 87, 0.20);
   border-radius: 99px;
-  padding: 0.55rem 1.15rem;
-  font-size: 0.85rem;
+  padding: 0.65rem 1.4rem;
+  min-height: 44px;
+  font-size: 0.925rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(22, 16, 87, 0.05);
+  box-sizing: border-box;
 }
 
 .btn-save-draft:hover:not(:disabled) {

@@ -3275,7 +3275,6 @@ async function pollSubmissionStatus(subId) {
 
 .inline-nav-bar > :last-child {
   flex: 0 0 auto !important;
-  margin-left: auto !important;
 }
 
 .scroll-bottom-clearance {
