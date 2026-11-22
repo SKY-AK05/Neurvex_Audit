@@ -463,11 +463,9 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   flex: 1;
   width: 100%;
   min-width: 0;
-  height: 100vh;
-  height: 100dvh;
-  max-height: 100vh;
-  max-height: 100dvh;
-  overflow: hidden;
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: transparent;

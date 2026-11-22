@@ -352,6 +352,8 @@
             <div class="step-nav-mid"></div>
             <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
           </div>
+          <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
+          <div class="scroll-bottom-clearance" aria-hidden="true"></div>
         </div>
       </div>
 
@@ -936,6 +938,8 @@
                 {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
               </button>
             </div>
+            <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
+            <div class="scroll-bottom-clearance" aria-hidden="true"></div>
             </div><!-- end questions-scroll -->
           </div><!-- end unified-card -->
         </div><!-- end unified-content -->
@@ -6151,11 +6155,27 @@ html {
   box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
   padding: 1.1rem 1.75rem !important;
   margin-top: 1.5rem !important;
-  margin-bottom: 3.5rem !important;
+  margin-bottom: 1.5rem !important;
   border-top: none !important;
   gap: 1rem !important;
   width: 100% !important;
   box-sizing: border-box !important;
+}
+
+/* Explicit scroll clearance spacer to guarantee navigation buttons are never cut off */
+.scroll-bottom-clearance {
+  width: 100% !important;
+  height: 4.5rem !important;
+  min-height: 4.5rem !important;
+  flex-shrink: 0 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 640px) {
+  .scroll-bottom-clearance {
+    height: 5.5rem !important;
+    min-height: 5.5rem !important;
+  }
 }
 
 .inline-nav-bar > :first-child {
