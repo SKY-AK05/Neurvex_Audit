@@ -453,6 +453,7 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
 #app-shell {
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
@@ -464,12 +465,12 @@ h1, h2, h3, .brand-name, .stat-value, .page-header h1,
   width: 100%;
   min-width: 0;
   height: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: transparent;
   padding: 0;
+  overflow: hidden;
 }
 
 /* Main area */

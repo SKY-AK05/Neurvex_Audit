@@ -1858,6 +1858,7 @@ async function pollSubmissionStatus(subId) {
   flex: 1;
   width: 100%;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
   background: transparent;
@@ -1882,6 +1883,7 @@ async function pollSubmissionStatus(subId) {
   display: flex; flex-direction: column;
   flex: 1; width: 100%;
   height: 100%;
+  max-height: 100%;
   min-height: 0;
   overflow: hidden;
 }
@@ -2637,8 +2639,7 @@ async function pollSubmissionStatus(subId) {
   width: 100%;
   flex: 1;
   height: 100%;
-  max-height: 100vh;
-  max-height: 100dvh;
+  max-height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -3219,8 +3220,7 @@ async function pollSubmissionStatus(subId) {
 @media (max-width: 640px) {
   .why-matters-page {
     height: 100%;
-    max-height: 100vh;
-    max-height: 100dvh;
+    max-height: 100%;
     flex: 1;
     min-height: 0;
     overflow: hidden !important;
@@ -5790,9 +5790,9 @@ html {
 .unified-page {
   background: var(--bg, #FAFAF8) !important;
   width: 100% !important;
+  flex: 1 !important;
   height: 100% !important;
-  max-height: 100vh !important;
-  max-height: 100dvh !important;
+  max-height: 100% !important;
   min-height: 0 !important;
   overflow: hidden !important;
   display: flex !important;
@@ -6176,8 +6176,8 @@ html {
   max-width: 1240px !important;
   margin: 0 auto !important;
   padding: 0 clamp(1rem, 3.5vw, 3rem) !important;
-  display: grid !important;
-  grid-template-columns: auto 1fr auto !important;
+  display: flex !important;
+  justify-content: space-between !important;
   align-items: center !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -6185,15 +6185,14 @@ html {
 }
 
 .docked-footer-inner > :first-child {
-  justify-self: start !important;
+  flex: 0 0 auto !important;
 }
 
-.docked-footer-inner .step-nav-mid,
-.docked-footer-inner > :nth-child(2) {
+.docked-footer-inner .step-nav-mid {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
-  justify-self: center !important;
+  flex: 1 1 auto !important;
 }
 
 .docked-footer-inner .step-nav-mid:empty {
@@ -6201,7 +6200,8 @@ html {
 }
 
 .docked-footer-inner > :last-child {
-  justify-self: end !important;
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
 }
 
 .btn-next-compact {
@@ -6231,8 +6231,8 @@ html {
 
 .btn-back-compact {
   background: #F8FAFC !important;
-  border: 1.5px solid #E2E8F0 !important;
-  color: #475569 !important;
+  border: 1.5px solid #CBD5E1 !important;
+  color: #334155 !important;
   border-radius: 99px !important;
   padding: 0.65rem 1.4rem !important;
   font-weight: 600 !important;
@@ -6250,7 +6250,7 @@ html {
 .btn-back-compact:hover {
   border-color: #94A3B8 !important;
   background: #F1F5F9 !important;
-  color: #1E293B !important;
+  color: #0F172A !important;
 }
 
 .btn-submit {
