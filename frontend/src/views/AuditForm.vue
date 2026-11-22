@@ -6150,7 +6150,8 @@ html {
   border-radius: 16px !important;
   box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
   padding: 1.1rem 1.75rem !important;
-  margin-top: 1rem !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 3.5rem !important;
   border-top: none !important;
   gap: 1rem !important;
   width: 100% !important;
