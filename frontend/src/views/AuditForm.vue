@@ -157,8 +157,6 @@
         v-else-if="currentStep === 1"
         key="step-1"
         class="why-matters-page"
-        ref="whyMattersPageRef"
-        @scroll="onPageScroll"
       >
         <!-- Compact Top Header with Logo and Progress -->
         <header class="why-matters-header">
@@ -172,8 +170,12 @@
           </div>
         </header>
 
-        <!-- Three Section Layout -->
-        <div class="why-matters-content">
+        <!-- Three Section Layout (Scrollable Body) -->
+        <div
+          class="why-matters-content"
+          ref="whyMattersPageRef"
+          @scroll="onPageScroll"
+        >
           <!-- Section 1: Why This Matters (Full Width) -->
           <div class="why-section-box section-1">
             <div class="flow-header-area">
@@ -345,16 +347,16 @@
               <p class="perspective-pill-desc">Your candid answers help build an accurate, aggregate understanding of current workplace reality.</p>
             </div>
           </div>
+        </div>
 
-          <!-- Inline Navigation Buttons (end of page content) -->
-          <div class="inline-nav-bar">
+        <!-- Docked Bottom Navigation Bar (Sticks to footer, never floats across content) -->
+        <footer class="app-docked-footer">
+          <div class="docked-footer-inner">
             <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
             <div class="step-nav-mid"></div>
             <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
           </div>
-          <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
-          <div class="scroll-bottom-clearance" aria-hidden="true"></div>
-        </div>
+        </footer>
       </div>
 
       <!-- Step content (Step 2+) with Consistent Header/Footer -->
@@ -362,8 +364,6 @@
         v-else
         key="step-other"
         class="unified-page"
-        ref="unifiedPageRef"
-        @scroll="onPageScroll"
       >
         <!-- Top Header -->
         <header class="why-matters-header">
@@ -377,8 +377,12 @@
           </div>
         </header>
 
-        <!-- Main Content Area -->
-        <div class="unified-content">
+        <!-- Main Content Area (Scrollable Body) -->
+        <div
+          class="unified-content"
+          ref="unifiedPageRef"
+          @scroll="onPageScroll"
+        >
           <div class="unified-card">
             <div v-if="currentStep !== 3" class="step-card-head">
               <div class="step-head-meta">
@@ -906,43 +910,44 @@
               </template>
             </div><!-- end questions-list -->
 
-            <!-- Inline Navigation Buttons (at end of question content) -->
+            <!-- Submit Error Banner -->
             <div v-if="submitError" class="submit-error-banner" role="alert">
               {{ submitError }}
             </div>
-
-            <div class="inline-nav-bar">
-              <button v-if="currentStep > 0" class="btn-back-compact" @click="prevStep" type="button">← Back</button>
-              <div v-else></div>
-
-              <div class="step-nav-mid">
-                <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
-                <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-              </div>
-
-              <button
-                v-if="currentStep < feedbackStepIndex"
-                class="btn-next-compact"
-                @click="nextStep"
-                type="button"
-              >
-                {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
-              </button>
-              <button
-                v-else
-                class="btn-submit"
-                @click="submit"
-                :disabled="submitting"
-                type="button"
-              >
-                {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
-              </button>
-            </div>
-            <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
-            <div class="scroll-bottom-clearance" aria-hidden="true"></div>
             </div><!-- end questions-scroll -->
           </div><!-- end unified-card -->
         </div><!-- end unified-content -->
+
+        <!-- Docked Bottom Navigation Bar -->
+        <footer class="app-docked-footer">
+          <div class="docked-footer-inner">
+            <button v-if="currentStep > 0" class="btn-back-compact" @click="prevStep" type="button">← Back</button>
+            <div v-else></div>
+
+            <div class="step-nav-mid">
+              <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
+              <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
+            </div>
+
+            <button
+              v-if="currentStep < feedbackStepIndex"
+              class="btn-next-compact"
+              @click="nextStep"
+              type="button"
+            >
+              {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
+            </button>
+            <button
+              v-else
+              class="btn-submit"
+              @click="submit"
+              :disabled="submitting"
+              type="button"
+            >
+              {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
+            </button>
+          </div>
+        </footer>
       </div><!-- end unified-page -->
 
       </transition>
@@ -2632,22 +2637,19 @@ async function pollSubmissionStatus(subId) {
   width: 100%;
   flex: 1;
   height: 100%;
-  max-height: 100%;
+  max-height: 100vh;
+  max-height: 100dvh;
   min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--bg, #FAFAF8);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden !important;
 }
 
 /* ── Compact Header with Logo, Progress, and Orchvate ── */
 .why-matters-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  position: relative;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2698,18 +2700,22 @@ async function pollSubmissionStatus(subId) {
   width: auto;
 }
 
-/* ── Three Horizontal Sections Layout (One after another) ── */
+/* ── Three Horizontal Sections Layout (Scrollable Body) ── */
 .why-matters-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 3rem max(5rem, calc(env(safe-area-inset-bottom, 24px) + 3.5rem));
+  padding: 1.5rem 3rem 2.5rem;
   max-width: 1240px;
   margin: 0 auto;
   width: 100%;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   min-height: 0;
   gap: 1.5rem;
+  box-sizing: border-box;
 }
 
 .why-section-box {
@@ -3159,7 +3165,7 @@ async function pollSubmissionStatus(subId) {
 /* ── Responsive Styles for Step 1 ── */
 @media (max-width: 1080px) {
   .why-matters-content {
-    padding: 1rem 1.75rem max(4rem, calc(env(safe-area-inset-bottom, 24px) + 2.5rem));
+    padding: 1rem 1.75rem 2rem;
     gap: 1.15rem;
   }
   .benefits-cards-grid {
@@ -3185,8 +3191,7 @@ async function pollSubmissionStatus(subId) {
 
 @media (max-width: 768px) {
   .why-matters-content {
-    padding: 1rem 1.25rem max(4.5rem, calc(env(safe-area-inset-bottom, 24px) + 3rem));
-    overflow: visible;
+    padding: 1rem 1.25rem 2rem;
   }
   .section-1-paragraphs {
     grid-template-columns: 1fr;
@@ -3214,19 +3219,20 @@ async function pollSubmissionStatus(subId) {
 @media (max-width: 640px) {
   .why-matters-page {
     height: 100%;
-    max-height: 100%;
+    max-height: 100vh;
+    max-height: 100dvh;
     flex: 1;
     min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: hidden !important;
   }
   .why-matters-header {
     padding: 0.75rem 1rem;
   }
   .why-matters-content {
-    padding: 1rem 1rem max(5.5rem, calc(env(safe-area-inset-bottom, 24px) + 4rem));
+    padding: 1rem 1rem 2rem;
     gap: 1rem;
-    overflow: visible;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
   .benefits-cards-grid {
     grid-template-columns: 1fr;
@@ -5784,22 +5790,29 @@ html {
 .unified-page {
   background: var(--bg, #FAFAF8) !important;
   width: 100% !important;
-  min-height: 100% !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
+  height: 100% !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
 }
 
 .unified-content {
   flex: 1 !important;
+  min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  padding: 1.25rem clamp(16px, 3.5vw, 48px) 3rem !important;
+  padding: 1.25rem clamp(16px, 3.5vw, 48px) 2.5rem !important;
   max-width: 1440px !important;
   margin: 0 auto !important;
   width: 100% !important;
   box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
   gap: 1.25rem !important;
 }
 
@@ -6144,53 +6157,50 @@ html {
   margin-bottom: 0.5rem !important;
 }
 
-/* Bottom Navigation Bar Card */
-.inline-nav-bar {
-  display: grid !important;
-  grid-template-columns: auto 1fr auto !important;
-  align-items: center !important;
-  background: #FFFFFF !important;
-  border: 1.5px solid rgba(22, 16, 87, 0.08) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 4px 16px rgba(22, 16, 87, 0.03) !important;
-  padding: 1.1rem 1.75rem !important;
-  margin-top: 1.5rem !important;
-  margin-bottom: 1.5rem !important;
-  border-top: none !important;
-  gap: 1rem !important;
+/* =========================================================
+   DOCKED APPLICATION BOTTOM NAVIGATION FOOTER
+   ========================================================= */
+.app-docked-footer {
+  flex-shrink: 0 !important;
   width: 100% !important;
+  background: #FFFFFF !important;
+  border-top: 1px solid rgba(22, 16, 87, 0.09) !important;
+  box-shadow: 0 -4px 16px rgba(22, 16, 87, 0.04) !important;
+  z-index: 100 !important;
+  padding: 0.85rem 0 !important;
+  padding-bottom: max(0.85rem, env(safe-area-inset-bottom, 0.85rem)) !important;
   box-sizing: border-box !important;
 }
 
-/* Explicit scroll clearance spacer to guarantee navigation buttons are never cut off */
-.scroll-bottom-clearance {
+.docked-footer-inner {
+  max-width: 1240px !important;
+  margin: 0 auto !important;
+  padding: 0 clamp(1rem, 3.5vw, 3rem) !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr auto !important;
+  align-items: center !important;
   width: 100% !important;
-  height: 4.5rem !important;
-  min-height: 4.5rem !important;
-  flex-shrink: 0 !important;
-  pointer-events: none !important;
+  box-sizing: border-box !important;
+  gap: 1rem !important;
 }
 
-@media (max-width: 640px) {
-  .scroll-bottom-clearance {
-    height: 5.5rem !important;
-    min-height: 5.5rem !important;
-  }
-}
-
-.inline-nav-bar > :first-child {
+.docked-footer-inner > :first-child {
   justify-self: start !important;
 }
 
-.step-nav-mid,
-.inline-nav-bar > :nth-child(2) {
+.docked-footer-inner .step-nav-mid,
+.docked-footer-inner > :nth-child(2) {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
   justify-self: center !important;
 }
 
-.inline-nav-bar > :last-child {
+.docked-footer-inner .step-nav-mid:empty {
+  display: none !important;
+}
+
+.docked-footer-inner > :last-child {
   justify-self: end !important;
 }
 
@@ -6198,18 +6208,23 @@ html {
   background: #161057 !important;
   color: #FFFFFF !important;
   border: none !important;
-  border-radius: 10px !important;
-  padding: 0.75rem 2rem !important;
-  font-size: 0.95rem !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 1.75rem !important;
+  font-size: 0.925rem !important;
   font-weight: 700 !important;
   box-shadow: 0 4px 12px rgba(22, 16, 87, 0.18) !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
   white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 42px !important;
+  box-sizing: border-box !important;
 }
 
 .btn-next-compact:hover {
-  background: #241B7A !important;
+  background: #0D0A35 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 16px rgba(22, 16, 87, 0.25) !important;
 }
@@ -6218,13 +6233,18 @@ html {
   background: #F8FAFC !important;
   border: 1.5px solid #E2E8F0 !important;
   color: #475569 !important;
-  border-radius: 10px !important;
-  padding: 0.75rem 1.4rem !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 1.4rem !important;
   font-weight: 600 !important;
-  font-size: 0.95rem !important;
+  font-size: 0.925rem !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
   white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 42px !important;
+  box-sizing: border-box !important;
 }
 
 .btn-back-compact:hover {
@@ -6237,19 +6257,29 @@ html {
   background: linear-gradient(135deg, #04907C 0%, #037A69 100%) !important;
   color: #FFFFFF !important;
   border: none !important;
-  border-radius: 10px !important;
-  padding: 0.85rem 2.4rem !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 2rem !important;
   font-weight: 700 !important;
-  font-size: 1rem !important;
+  font-size: 0.95rem !important;
   box-shadow: 0 4px 16px rgba(4, 144, 124, 0.3) !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
   white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 42px !important;
+  box-sizing: border-box !important;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
   transform: translateY(-1px) !important;
   box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
+}
+
+.btn-submit:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
 }
 
 .btn-start-fresh {
@@ -6257,7 +6287,7 @@ html {
   border: 1px dashed rgba(22, 16, 87, 0.25) !important;
   color: #64748B !important;
   border-radius: 8px !important;
-  padding: 0.55rem 1rem !important;
+  padding: 0.5rem 0.9rem !important;
   font-weight: 600 !important;
   font-size: 0.85rem !important;
   cursor: pointer !important;
@@ -6272,78 +6302,39 @@ html {
 }
 
 /* =========================================================
-   RESPONSIVE MOBILE NAVIGATION BAR (max-width: 640px)
+   RESPONSIVE MOBILE DOCKED FOOTER (max-width: 640px)
    ========================================================= */
 @media (max-width: 640px) {
-  .inline-nav-bar {
+  .app-docked-footer {
+    padding: 0.65rem 0 !important;
+    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
+  }
+
+  .docked-footer-inner {
+    padding: 0 0.85rem !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-areas:
       "back next"
       "mid  mid" !important;
     align-items: center !important;
-    gap: 0.75rem 0.65rem !important;
-    padding: 0.85rem 1rem !important;
-    margin-top: 1rem !important;
-    border-radius: 14px !important;
-    box-sizing: border-box !important;
+    gap: 0.65rem !important;
     width: 100% !important;
   }
 
-  .inline-nav-bar > :first-child {
+  .docked-footer-inner > :first-child {
     grid-area: back !important;
     width: 100% !important;
     display: flex !important;
-    justify-self: stretch !important;
   }
 
-  .inline-nav-bar > :last-child {
+  .docked-footer-inner > :last-child {
     grid-area: next !important;
     width: 100% !important;
     display: flex !important;
-    justify-self: stretch !important;
   }
 
-  .inline-nav-bar .btn-back-compact {
-    width: 100% !important;
-    min-height: 46px !important;
-    padding: 0.65rem 0.75rem !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    justify-content: center !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    border-radius: 10px !important;
-    box-sizing: border-box !important;
-  }
-
-  .inline-nav-bar .btn-next-compact {
-    width: 100% !important;
-    min-height: 46px !important;
-    padding: 0.65rem 0.75rem !important;
-    font-size: 0.9rem !important;
-    font-weight: 700 !important;
-    justify-content: center !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    border-radius: 10px !important;
-    box-sizing: border-box !important;
-  }
-
-  .inline-nav-bar .btn-submit {
-    width: 100% !important;
-    min-height: 46px !important;
-    padding: 0.65rem 0.75rem !important;
-    font-size: 0.9rem !important;
-    font-weight: 700 !important;
-    justify-content: center !important;
-    text-align: center !important;
-    white-space: nowrap !important;
-    border-radius: 10px !important;
-    box-sizing: border-box !important;
-  }
-
-  .step-nav-mid {
+  .docked-footer-inner .step-nav-mid {
     grid-area: mid !important;
     width: 100% !important;
     display: flex !important;
@@ -6352,24 +6343,36 @@ html {
     margin-top: 0.15rem !important;
   }
 
-  .step-nav-mid:empty {
+  .docked-footer-inner .step-nav-mid:empty {
     display: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
   }
 
-  .step-nav-mid .save-continue-container {
+  .docked-footer-inner .btn-back-compact,
+  .docked-footer-inner .btn-next-compact,
+  .docked-footer-inner .btn-submit {
+    width: 100% !important;
+    min-height: 46px !important;
+    padding: 0.65rem 0.75rem !important;
+    font-size: 0.9rem !important;
+    border-radius: 12px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    box-sizing: border-box !important;
+  }
+
+  .docked-footer-inner .step-nav-mid .save-continue-container {
     display: inline-flex !important;
   }
 
-  .step-nav-mid .save-continue-container :deep(.btn-save-draft) {
+  .docked-footer-inner .step-nav-mid .save-continue-container :deep(.btn-save-draft) {
     min-height: 38px !important;
     padding: 0.45rem 0.9rem !important;
     font-size: 0.8rem !important;
     border-radius: 8px !important;
   }
 
-  .btn-start-fresh {
+  .docked-footer-inner .btn-start-fresh {
     min-height: 38px !important;
     padding: 0.45rem 1rem !important;
     font-size: 0.8rem !important;
@@ -6378,13 +6381,13 @@ html {
 }
 
 @media (max-width: 380px) {
-  .inline-nav-bar {
-    padding: 0.75rem 0.65rem !important;
-    gap: 0.5rem !important;
+  .docked-footer-inner {
+    padding: 0 0.5rem !important;
+    gap: 0.4rem !important;
   }
-  .inline-nav-bar .btn-back-compact,
-  .inline-nav-bar .btn-next-compact,
-  .inline-nav-bar .btn-submit {
+  .docked-footer-inner .btn-back-compact,
+  .docked-footer-inner .btn-next-compact,
+  .docked-footer-inner .btn-submit {
     font-size: 0.825rem !important;
     padding: 0.55rem 0.4rem !important;
   }
