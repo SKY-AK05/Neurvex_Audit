@@ -2715,7 +2715,7 @@ async function pollSubmissionStatus(subId) {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
-  gap: 1.25rem;
+  gap: 0.85rem;
   box-sizing: border-box;
 }
 
@@ -3250,8 +3250,8 @@ async function pollSubmissionStatus(subId) {
   justify-content: space-between !important;
   align-items: center !important;
   gap: 1rem !important;
-  padding: 1.1rem 0 1rem !important;
-  margin-top: 0.5rem !important;
+  padding: 0.75rem 0 0.75rem !important;
+  margin-top: 0 !important;
   border-top: 1.5px solid rgba(22, 16, 87, 0.10) !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -5857,7 +5857,7 @@ html {
   overflow-x: hidden !important;
   scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
-  gap: 1.25rem !important;
+  gap: 0.75rem !important;
 }
 
 /* Card Container (Clean flow like Why This Matters) */
