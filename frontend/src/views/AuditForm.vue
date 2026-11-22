@@ -347,16 +347,16 @@
               <p class="perspective-pill-desc">Your candid answers help build an accurate, aggregate understanding of current workplace reality.</p>
             </div>
           </div>
-        </div>
 
-        <!-- Docked Bottom Navigation Bar (Sticks to footer, never floats across content) -->
-        <footer class="app-docked-footer">
-          <div class="docked-footer-inner">
+          <!-- Inline Navigation Buttons (visible once user scrolls down to bottom) -->
+          <div class="inline-nav-bar">
             <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
             <div class="step-nav-mid"></div>
             <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
           </div>
-        </footer>
+          <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
+          <div class="scroll-bottom-clearance" aria-hidden="true"></div>
+        </div>
       </div>
 
       <!-- Step content (Step 2+) with Consistent Header/Footer -->
@@ -914,40 +914,40 @@
             <div v-if="submitError" class="submit-error-banner" role="alert">
               {{ submitError }}
             </div>
+
+            <!-- Inline Navigation Buttons (at end of question content, visible once user scrolls down) -->
+            <div class="inline-nav-bar">
+              <button v-if="currentStep > 0" class="btn-back-compact" @click="prevStep" type="button">← Back</button>
+              <div v-else></div>
+
+              <div class="step-nav-mid">
+                <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
+                <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
+              </div>
+
+              <button
+                v-if="currentStep < feedbackStepIndex"
+                class="btn-next-compact"
+                @click="nextStep"
+                type="button"
+              >
+                {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
+              </button>
+              <button
+                v-else
+                class="btn-submit"
+                @click="submit"
+                :disabled="submitting"
+                type="button"
+              >
+                {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
+              </button>
+            </div>
+            <!-- Explicit scroll clearance spacer to ensure buttons are never truncated -->
+            <div class="scroll-bottom-clearance" aria-hidden="true"></div>
             </div><!-- end questions-scroll -->
           </div><!-- end unified-card -->
         </div><!-- end unified-content -->
-
-        <!-- Docked Bottom Navigation Bar -->
-        <footer class="app-docked-footer">
-          <div class="docked-footer-inner">
-            <button v-if="currentStep > 0" class="btn-back-compact" @click="prevStep" type="button">← Back</button>
-            <div v-else></div>
-
-            <div class="step-nav-mid">
-              <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
-              <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
-            </div>
-
-            <button
-              v-if="currentStep < feedbackStepIndex"
-              class="btn-next-compact"
-              @click="nextStep"
-              type="button"
-            >
-              {{ currentStep === 3 ? 'Start Audit →' : 'Next →' }}
-            </button>
-            <button
-              v-else
-              class="btn-submit"
-              @click="submit"
-              :disabled="submitting"
-              type="button"
-            >
-              {{ submitting ? 'Submitting…' : 'Submit Audit ✓' }}
-            </button>
-          </div>
-        </footer>
       </div><!-- end unified-page -->
 
       </transition>
@@ -3244,78 +3244,123 @@ async function pollSubmissionStatus(subId) {
   }
 }
 
-/* ── Inline Navigation Bar (at end of question content) ── */
+/* ── Inline Navigation Bar (at end of question content, visible once user scrolls down) ── */
 .inline-nav-bar {
-  display: flex;
-  justify-content: space-between;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.75rem 0 2rem;
-  margin-top: 2rem;
-  border-top: 1px solid rgba(22, 16, 87, 0.10);
-  width: 100%;
-  box-sizing: border-box;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  padding: 1.75rem 0 1.25rem !important;
+  margin-top: 2rem !important;
+  border-top: 1.5px solid rgba(22, 16, 87, 0.10) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .inline-nav-bar > :first-child {
-  justify-self: start;
+  flex: 0 0 auto !important;
 }
 
-.step-nav-mid,
-.inline-nav-bar > :nth-child(2) {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  justify-self: center;
-  width: auto;
+.inline-nav-bar .step-nav-mid {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+  flex: 1 1 auto !important;
+}
+
+.inline-nav-bar .step-nav-mid:empty {
+  display: none !important;
 }
 
 .inline-nav-bar > :last-child {
-  justify-self: end;
+  flex: 0 0 auto !important;
+  margin-left: auto !important;
 }
 
+.scroll-bottom-clearance {
+  height: 4rem !important;
+  width: 100% !important;
+  flex-shrink: 0 !important;
+}
+
+.inline-nav-bar .btn-back-compact,
 .btn-back-compact {
-  background: transparent;
-  border: 1.5px solid rgba(22, 16, 87, 0.15);
-  border: 1.5px solid rgba(22, 16, 87, 0.18);
-  border-radius: 99px;
-  padding: 0.55rem 1.35rem;
-  font-size: 0.85rem;
-  padding: 0.6rem 1.4rem;
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  color: var(--c-primary-dark, #161057);
-  font-family: var(--font-body);
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.22) !important;
+  color: var(--c-primary-dark, #161057) !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 1.6rem !important;
+  font-size: 0.925rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
 }
 
+.inline-nav-bar .btn-back-compact:hover,
 .btn-back-compact:hover {
-  background: rgba(22, 16, 87, 0.05);
+  background: rgba(22, 16, 87, 0.05) !important;
+  border-color: var(--c-primary-dark, #161057) !important;
+  transform: translateY(-1px) !important;
 }
 
+.inline-nav-bar .btn-next-compact,
 .btn-next-compact {
-  background: var(--c-primary-dark, #161057);
-  color: #FFFFFF;
-  border: none;
-  border-radius: 99px;
-  padding: 0.55rem 1.5rem;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: var(--font-body);
-  box-shadow: 0 2px 8px rgba(22, 16, 87, 0.2);
+  background: #161057 !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 1.85rem !important;
+  font-size: 0.925rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.22) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
 }
 
+.inline-nav-bar .btn-next-compact:hover,
 .btn-next-compact:hover {
-  background: #0f0a42;
-  transform: translateY(-1px);
+  background: #0D0A35 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(22, 16, 87, 0.32) !important;
+}
+
+.inline-nav-bar .btn-submit,
+.btn-submit {
+  background: linear-gradient(135deg, #04907C 0%, #037A69 100%) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 2rem !important;
+  font-weight: 700 !important;
+  font-size: 0.95rem !important;
+  box-shadow: 0 4px 16px rgba(4, 144, 124, 0.3) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+}
+
+.inline-nav-bar .btn-submit:hover:not(:disabled),
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 20px rgba(4, 144, 124, 0.4) !important;
 }
 
 /* Base button transitions */
@@ -6302,39 +6347,36 @@ html {
 }
 
 /* =========================================================
-   RESPONSIVE MOBILE DOCKED FOOTER (max-width: 640px)
+   RESPONSIVE MOBILE NAVIGATION (max-width: 640px)
    ========================================================= */
 @media (max-width: 640px) {
-  .app-docked-footer {
-    padding: 0.65rem 0 !important;
-    padding-bottom: max(0.65rem, env(safe-area-inset-bottom, 0.65rem)) !important;
-  }
-
-  .docked-footer-inner {
-    padding: 0 0.85rem !important;
+  .inline-nav-bar {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-areas:
       "back next"
       "mid  mid" !important;
     align-items: center !important;
-    gap: 0.65rem !important;
+    gap: 0.75rem !important;
+    padding: 1.25rem 0 1rem !important;
+    margin-top: 1.5rem !important;
     width: 100% !important;
   }
 
-  .docked-footer-inner > :first-child {
+  .inline-nav-bar > :first-child {
     grid-area: back !important;
     width: 100% !important;
     display: flex !important;
   }
 
-  .docked-footer-inner > :last-child {
+  .inline-nav-bar > :last-child {
     grid-area: next !important;
     width: 100% !important;
     display: flex !important;
+    margin-left: 0 !important;
   }
 
-  .docked-footer-inner .step-nav-mid {
+  .inline-nav-bar .step-nav-mid {
     grid-area: mid !important;
     width: 100% !important;
     display: flex !important;
@@ -6343,13 +6385,13 @@ html {
     margin-top: 0.15rem !important;
   }
 
-  .docked-footer-inner .step-nav-mid:empty {
+  .inline-nav-bar .step-nav-mid:empty {
     display: none !important;
   }
 
-  .docked-footer-inner .btn-back-compact,
-  .docked-footer-inner .btn-next-compact,
-  .docked-footer-inner .btn-submit {
+  .inline-nav-bar .btn-back-compact,
+  .inline-nav-bar .btn-next-compact,
+  .inline-nav-bar .btn-submit {
     width: 100% !important;
     min-height: 46px !important;
     padding: 0.65rem 0.75rem !important;
@@ -6361,33 +6403,37 @@ html {
     box-sizing: border-box !important;
   }
 
-  .docked-footer-inner .step-nav-mid .save-continue-container {
+  .inline-nav-bar .step-nav-mid .save-continue-container {
     display: inline-flex !important;
   }
 
-  .docked-footer-inner .step-nav-mid .save-continue-container :deep(.btn-save-draft) {
+  .inline-nav-bar .step-nav-mid .save-continue-container :deep(.btn-save-draft) {
     min-height: 38px !important;
     padding: 0.45rem 0.9rem !important;
     font-size: 0.8rem !important;
     border-radius: 8px !important;
   }
 
-  .docked-footer-inner .btn-start-fresh {
+  .inline-nav-bar .btn-start-fresh {
     min-height: 38px !important;
     padding: 0.45rem 1rem !important;
     font-size: 0.8rem !important;
     border-radius: 8px !important;
   }
+
+  .scroll-bottom-clearance {
+    height: 3.5rem !important;
+  }
 }
 
 @media (max-width: 380px) {
-  .docked-footer-inner {
-    padding: 0 0.5rem !important;
-    gap: 0.4rem !important;
+  .inline-nav-bar {
+    padding: 1rem 0 0.75rem !important;
+    gap: 0.5rem !important;
   }
-  .docked-footer-inner .btn-back-compact,
-  .docked-footer-inner .btn-next-compact,
-  .docked-footer-inner .btn-submit {
+  .inline-nav-bar .btn-back-compact,
+  .inline-nav-bar .btn-next-compact,
+  .inline-nav-bar .btn-submit {
     font-size: 0.825rem !important;
     padding: 0.55rem 0.4rem !important;
   }
