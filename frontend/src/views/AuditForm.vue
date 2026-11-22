@@ -2706,7 +2706,7 @@ async function pollSubmissionStatus(subId) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 3rem 2.5rem;
+  padding: 1.5rem 3rem 0;
   max-width: 1240px;
   margin: 0 auto;
   width: 100%;
@@ -2715,7 +2715,7 @@ async function pollSubmissionStatus(subId) {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   min-height: 0;
-  gap: 1.5rem;
+  gap: 1.25rem;
   box-sizing: border-box;
 }
 
@@ -3250,8 +3250,8 @@ async function pollSubmissionStatus(subId) {
   justify-content: space-between !important;
   align-items: center !important;
   gap: 1rem !important;
-  padding: 1.75rem 0 1.25rem !important;
-  margin-top: 2rem !important;
+  padding: 1.1rem 0 1rem !important;
+  margin-top: 0.5rem !important;
   border-top: 1.5px solid rgba(22, 16, 87, 0.10) !important;
   width: 100% !important;
   box-sizing: border-box !important;
@@ -3279,7 +3279,7 @@ async function pollSubmissionStatus(subId) {
 }
 
 .scroll-bottom-clearance {
-  height: 4rem !important;
+  height: 1.5rem !important;
   width: 100% !important;
   flex-shrink: 0 !important;
 }
@@ -5849,7 +5849,7 @@ html {
   min-height: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  padding: 1.25rem clamp(16px, 3.5vw, 48px) 2.5rem !important;
+  padding: 1.25rem clamp(16px, 3.5vw, 48px) 0 !important;
   max-width: 1440px !important;
   margin: 0 auto !important;
   width: 100% !important;
@@ -6358,8 +6358,8 @@ html {
       "mid  mid" !important;
     align-items: center !important;
     gap: 0.75rem !important;
-    padding: 1.25rem 0 1rem !important;
-    margin-top: 1.5rem !important;
+    padding: 1rem 0 1rem !important;
+    margin-top: 0.5rem !important;
     width: 100% !important;
   }
 
@@ -6422,7 +6422,7 @@ html {
   }
 
   .scroll-bottom-clearance {
-    height: 3.5rem !important;
+    height: 1rem !important;
   }
 }
 
