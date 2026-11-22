@@ -345,14 +345,16 @@
               <p class="perspective-pill-desc">Your candid answers help build an accurate, aggregate understanding of current workplace reality.</p>
             </div>
           </div>
+        </div>
 
-          <!-- Inline Navigation Buttons (end of page content) -->
-          <div class="inline-nav-bar">
+        <!-- Sticky Bottom Navigation Footer (Always Visible) -->
+        <footer class="why-matters-sticky-footer">
+          <div class="why-footer-inner">
             <button class="btn-back-compact" @click="currentStep = 0" type="button">← Back</button>
             <div class="step-nav-mid"></div>
             <button class="btn-next-compact" @click="nextStep" type="button">Let's Begin →</button>
           </div>
-        </div>
+        </footer>
       </div>
 
       <!-- Step content (Step 2+) with Consistent Header/Footer -->
@@ -2699,13 +2701,96 @@ async function pollSubmissionStatus(subId) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 3rem max(5rem, calc(env(safe-area-inset-bottom, 24px) + 3.5rem));
+  padding: 1.5rem 3rem 3rem;
   max-width: 1240px;
   margin: 0 auto;
   width: 100%;
   overflow: visible;
   min-height: 0;
   gap: 1.5rem;
+}
+
+/* ── Sticky Bottom Navigation Footer (Always Visible on Step 1) ── */
+.why-matters-sticky-footer {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: rgba(250, 250, 248, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1.5px solid rgba(22, 16, 87, 0.08);
+  padding: 0.85rem 2.5rem;
+  z-index: 100;
+  box-shadow: 0 -4px 20px rgba(22, 16, 87, 0.06);
+  flex-shrink: 0;
+  margin-top: auto;
+  box-sizing: border-box;
+}
+
+.why-footer-inner {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.why-footer-inner .btn-back-compact {
+  background: #FFFFFF !important;
+  border: 1.5px solid rgba(22, 16, 87, 0.18) !important;
+  color: var(--c-primary-dark, #161057) !important;
+  border-radius: 99px !important;
+  padding: 0.6rem 1.6rem !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.why-footer-inner .btn-back-compact:hover {
+  background: rgba(22, 16, 87, 0.05) !important;
+  transform: translateY(-1px) !important;
+}
+
+.why-footer-inner .btn-next-compact {
+  background: var(--c-primary-dark, #161057) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: 99px !important;
+  padding: 0.65rem 1.85rem !important;
+  font-size: 0.92rem !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(22, 16, 87, 0.22) !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.why-footer-inner .btn-next-compact:hover {
+  background: #0F0A42 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 18px rgba(22, 16, 87, 0.3) !important;
+}
+
+@media (max-width: 768px) {
+  .why-matters-sticky-footer {
+    padding: 0.75rem 1.25rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .why-footer-inner .btn-back-compact,
+  .why-footer-inner .btn-next-compact {
+    min-height: 44px;
+    padding: 0.6rem 1.25rem !important;
+    font-size: 0.85rem !important;
+  }
 }
 
 .why-section-box {
