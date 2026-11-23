@@ -279,7 +279,7 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
     logger.info("Started background job worker [%s]", worker_id)
 
     last_reclaim = 0.0
-    last_reminder_check = 0.0
+    last_reminder_check = -870.0  # Runs initial draft reminder check within 30s of startup
 
     while _worker_running:
         try:
@@ -294,7 +294,9 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
             if loop_now - last_reminder_check > 900:
                 try:
                     from app.api.drafts import process_draft_reminders
-                    await asyncio.to_thread(process_draft_reminders)
+                    sent_count = await asyncio.to_thread(process_draft_reminders)
+                    if sent_count > 0:
+                        logger.info("Draft reminder worker successfully dispatched %d reminder email(s)", sent_count)
                 except Exception as ex:
                     logger.warning("Error running periodic draft reminders: %s", ex)
                 last_reminder_check = loop_now

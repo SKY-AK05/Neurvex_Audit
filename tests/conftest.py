@@ -964,6 +964,20 @@ class MockCursor:
             return
 
         if "from draft_submissions" in sql_lower and sql_lower.startswith("select"):
+            if "reminder_sent_at is null" in sql_lower:
+                candidates = []
+                now = datetime.now(timezone.utc)
+                cutoff_48h = now - timedelta(hours=48)
+                cutoff_30d = now - timedelta(days=30)
+                for did, d in self.store.drafts.items():
+                    u_at = d.get("updated_at") or now
+                    if not d.get("submitted") and d.get("email") and not d.get("reminder_sent_at"):
+                        if u_at <= cutoff_48h and u_at >= cutoff_30d:
+                            candidates.append((did, d["email"], d.get("company_name", ""), d.get("form_state", {})))
+                self._results = candidates
+                self.rowcount = len(candidates)
+                return
+
             draft_id = str(p[0]) if p else ""
             d = self.store.drafts.get(draft_id)
             if d:
@@ -978,6 +992,21 @@ class MockCursor:
 
         if "update draft_submissions" in sql_lower:
             now = datetime.now(timezone.utc)
+            if "reminder_sent_at = now()" in sql_lower and p:
+                draft_id = str(p[0])
+                if draft_id in self.store.drafts:
+                    self.store.drafts[draft_id]["reminder_sent_at"] = now
+                    self.store.drafts[draft_id]["reminder_count"] = self.store.drafts[draft_id].get("reminder_count", 0) + 1
+                self.rowcount = 1
+                return
+            if "submitted = true" in sql_lower and "exists" in sql_lower:
+                for did, d in self.store.drafts.items():
+                    d_email = (d.get("email") or "").lower().strip()
+                    for s in self.store.submissions.values():
+                        if (s.get("email") or "").lower().strip() == d_email:
+                            d["submitted"] = True
+                self.rowcount = 1
+                return
             if "submitted = true" in sql_lower and p:
                 draft_id = str(p[0])
                 if draft_id in self.store.drafts:

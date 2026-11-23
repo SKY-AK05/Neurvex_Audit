@@ -1,8 +1,18 @@
 <template>
   <div class="save-continue-container">
-    <button type="button" class="btn-save-draft" @click="handleSave" :disabled="loading">
+    <button
+      type="button"
+      class="btn-save-draft"
+      :class="{ 'is-saved': savedJustNow }"
+      @click="handleSave"
+      :disabled="loading"
+      title="Save your assessment progress"
+    >
       <span v-if="loading" class="btn-loading-state">
         <span class="spinner-dot"></span> Saving…
+      </span>
+      <span v-else-if="savedJustNow" class="btn-saved-state">
+        <span class="btn-saved-check">✓</span> Saved
       </span>
       <span v-else class="btn-content">
         <span class="btn-text-desktop">Save Draft</span>
@@ -10,63 +20,70 @@
       </span>
     </button>
 
-    <!-- Modal dialog for resume url -->
-    <div v-if="showModal" class="save-modal-overlay" @click="showModal = false">
-      <div class="save-modal-card" @click.stop>
-        <div class="modal-badge-icon">✓</div>
-        <h3>Assessment Progress Saved!</h3>
-        <p>You can close this tab and resume your assessment anytime within the next <strong>30 days</strong> using your secure link:</p>
-        
-        <div class="link-box">
-          <input type="text" readonly :value="url" ref="linkInput" @click="$event.target.select()" />
-          <button @click="copyLink" class="btn-copy-link" type="button">
-            {{ copied ? "Copied!" : "Copy Link" }}
-          </button>
+    <!-- Fading Toast Notification (Teleported to body to float smoothly above all layers) -->
+    <Teleport to="body">
+      <Transition name="toast-fade">
+        <div
+          v-if="toastMessage"
+          class="save-toast-banner"
+          :class="toastType"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="toast-content">
+            <span v-if="toastType === 'success'" class="toast-icon-check">✓</span>
+            <span v-else class="toast-icon-warn">!</span>
+            <span class="toast-text">{{ toastMessage }}</span>
+          </div>
         </div>
-
-        <p class="modal-hint">We recommend copying or bookmarking this link to return right where you left off.</p>
-
-        <button @click="showModal = false" class="btn-modal-done" type="button">Done</button>
-      </div>
-    </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onUnmounted } from "vue";
 
 const props = defineProps({
   onSave: { type: Function, required: true }
 });
 
 const loading = ref(false);
-const showModal = ref(false);
-const url = ref("");
-const copied = ref(false);
-const linkInput = ref(null);
+const savedJustNow = ref(false);
+const toastMessage = ref("");
+const toastType = ref("success"); // 'success' | 'warn'
+let toastTimer = null;
+
+function showToast(message, type = "success", durationMs = 2600) {
+  if (toastTimer) clearTimeout(toastTimer);
+  toastMessage.value = message;
+  toastType.value = type;
+  toastTimer = setTimeout(() => {
+    toastMessage.value = "";
+  }, durationMs);
+}
 
 async function handleSave() {
+  if (loading.value) return;
   loading.value = true;
   try {
-    const resumeUrl = await props.onSave();
-    url.value = resumeUrl;
-    showModal.value = true;
+    await props.onSave();
+    savedJustNow.value = true;
+    showToast("Draft saved successfully", "success", 2600);
+    setTimeout(() => {
+      savedJustNow.value = false;
+    }, 2400);
   } catch (e) {
-    alert(e.message || "Could not save progress. Please ensure your email is entered.");
+    const errorMsg = e.message || "Please enter your email to save your draft progress.";
+    showToast(errorMsg, "warn", 3500);
   } finally {
     loading.value = false;
   }
 }
 
-function copyLink() {
-  if (linkInput.value) {
-    linkInput.value.select();
-    navigator.clipboard.writeText(url.value).then(() => {
-      copied.value = true;
-      setTimeout(() => { copied.value = false; }, 2000);
-    });
-  }
-}
+onUnmounted(() => {
+  if (toastTimer) clearTimeout(toastTimer);
+});
 </script>
 
 <style scoped>
@@ -104,6 +121,12 @@ function copyLink() {
   box-shadow: 0 3px 8px rgba(4, 144, 124, 0.15);
 }
 
+.btn-save-draft.is-saved {
+  background: rgba(0, 144, 112, 0.10);
+  border-color: #009070;
+  color: #009070;
+}
+
 .btn-save-draft:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -116,8 +139,17 @@ function copyLink() {
   gap: 0.35rem;
 }
 
-.btn-icon {
-  font-size: 0.85rem;
+.btn-saved-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #009070;
+  font-weight: 600;
+}
+
+.btn-saved-check {
+  font-size: 0.95rem;
+  font-weight: 700;
 }
 
 .btn-loading-state {
@@ -156,144 +188,106 @@ function copyLink() {
     font-size: 0.8rem;
   }
 }
+</style>
 
-/* Modal dialog */
-.save-modal-overlay {
+<!-- Unscoped styles for Teleported toast notification -->
+<style>
+.save-toast-banner {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(22, 16, 87, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  justify-content: center;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100000;
+  display: inline-flex;
   align-items: center;
-  z-index: 9999;
-  padding: 1rem;
-}
-
-.save-modal-card {
-  background: #FFFFFF;
-  padding: 2.25rem 2rem 1.75rem;
-  border-radius: 20px;
-  border: 1px solid rgba(22, 16, 87, 0.10);
-  box-shadow: 0 20px 40px rgba(22, 16, 87, 0.16);
-  max-width: 480px;
-  width: 100%;
-  text-align: center;
-  box-sizing: border-box;
-  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalPop {
-  from { opacity: 0; transform: scale(0.95) translateY(8px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-badge-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(4, 144, 124, 0.12);
-  color: #04907C;
-  font-size: 1.5rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem;
-}
-
-.save-modal-card h3 {
-  font-family: 'Fraunces', serif;
-  font-size: 1.35rem;
-  margin: 0 0 0.5rem;
-  color: var(--c-primary-dark, #161057);
-}
-
-.save-modal-card p {
+  padding: 0.75rem 1.4rem;
+  border-radius: 99px;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   font-size: 0.9rem;
-  color: #475569;
-  margin: 0 0 1.25rem;
-  line-height: 1.5;
-}
-
-.link-box {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.link-box input {
-  flex: 1;
-  min-width: 0;
-  padding: 0.65rem 0.85rem;
-  border: 1.5px solid #CBD5E1;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  background: #F8FAFC;
-  color: #1E293B;
-  outline: none;
-}
-
-.link-box input:focus {
-  border-color: #04907C;
-  background: #FFFFFF;
-}
-
-.btn-copy-link {
-  background: #04907C;
-  color: #FFFFFF;
-  border: none;
-  border-radius: 10px;
-  padding: 0.65rem 1.15rem;
-  font-weight: 700;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.15s ease;
-  white-space: nowrap;
-}
-
-.btn-copy-link:hover {
-  background: #037363;
-}
-
-.modal-hint {
-  font-size: 0.78rem !important;
-  color: #94A3B8 !important;
-  margin-bottom: 1.25rem !important;
-}
-
-.btn-modal-done {
-  background: #F1F5F9;
-  color: #334155;
-  border: 1px solid #CBD5E1;
-  border-radius: 10px;
-  padding: 0.65rem 1.5rem;
   font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  font-size: 0.9rem;
-  transition: background 0.15s ease;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  user-select: none;
+  box-shadow: 0 12px 30px -4px rgba(18, 0, 80, 0.32), 0 4px 10px rgba(0, 0, 0, 0.08);
 }
 
-.btn-modal-done:hover {
-  background: #E2E8F0;
+.save-toast-banner.success {
+  background: #120050;
+  color: #FFFFFF;
+  border: 1px solid rgba(200, 243, 29, 0.35);
 }
 
-@media (max-width: 500px) {
-  .save-modal-card {
-    padding: 1.5rem 1.15rem;
-  }
-  .link-box {
-    flex-direction: column;
-  }
-  .link-box input, .btn-copy-link {
-    width: 100%;
-    box-sizing: border-box;
+.save-toast-banner.warn {
+  background: #4A1515;
+  color: #FFFFFF;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.toast-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.toast-icon-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #009070;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.toast-icon-warn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #EF4444;
+  color: #FFFFFF;
+  font-size: 0.75rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.toast-text {
+  line-height: 1.3;
+}
+
+/* Smooth fade and slide animation */
+.toast-fade-enter-active {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-fade-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toast-fade-enter-from {
+  opacity: 0;
+  transform: translate(-50%, 16px) scale(0.94);
+}
+
+.toast-fade-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -8px) scale(0.96);
+}
+
+@media (max-width: 600px) {
+  .save-toast-banner {
+    bottom: 24px;
+    width: calc(100% - 32px);
+    max-width: 360px;
+    justify-content: center;
+    padding: 0.7rem 1.1rem;
+    font-size: 0.85rem;
   }
 }
 </style>

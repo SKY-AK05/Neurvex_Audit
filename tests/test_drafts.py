@@ -153,3 +153,59 @@ def test_submitted_draft_cannot_be_resumed():
     response = client.get(f"/api/drafts/resume?token={token}")
     assert response.status_code == 400
     assert "already been submitted" in response.json().get("detail", "")
+
+
+def test_render_draft_email_styling():
+    """Verify that Orchvate brand colors, typography and 30-day resume link are present."""
+    from app.api.drafts import render_draft_email
+
+    subject, html, plain = render_draft_email(
+        is_reminder=True,
+        name="Sarah Connor",
+        company_name="Cyberdyne Systems",
+        resume_url="https://niwi.orchvate.in/resume?token=sample123"
+    )
+
+    assert "Reminder: Continue your NIWI Self-Assessment — Cyberdyne Systems" in subject
+    # Orchvate brand styling tokens
+    assert "#120050" in html  # Orchvate Navy
+    assert "#009070" in html  # Orchvate Teal CTA
+    assert "DM Sans" in html
+    assert "Sarah Connor" in html
+    assert "Cyberdyne Systems" in html
+    assert "https://niwi.orchvate.in/resume?token=sample123" in html
+    assert "30 Days" in html
+    assert "https://niwi.orchvate.in/resume?token=sample123" in plain
+
+
+def test_process_draft_reminders_worker():
+    """Verify draft reminder worker detects incomplete drafts >48h and dispatches reminders."""
+    from app.api.drafts import process_draft_reminders
+
+    MEM_STORE.reset()
+    draft_id = str(uuid.uuid4())
+    # Created/updated 50 hours ago (within 30 days, >48 hours)
+    old_timestamp = datetime.now(timezone.utc) - timedelta(hours=50)
+    MEM_STORE.drafts[draft_id] = {
+        "id": draft_id,
+        "email": "incomplete-user@company.com",
+        "company_name": "Acme Industries",
+        "form_state": {"name": "Alex", "q5": "Yes"},
+        "current_step": 4,
+        "submitted": False,
+        "created_at": old_timestamp,
+        "updated_at": old_timestamp,
+        "reminder_sent_at": None,
+        "reminder_count": 0
+    }
+
+    # Execute worker reminder processing
+    sent_count = process_draft_reminders()
+    assert sent_count == 1
+    assert MEM_STORE.drafts[draft_id]["reminder_sent_at"] is not None
+    assert MEM_STORE.drafts[draft_id]["reminder_count"] == 1
+
+    # Second run should not duplicate reminders for already-reminded draft
+    second_run_count = process_draft_reminders()
+    assert second_run_count == 0
+

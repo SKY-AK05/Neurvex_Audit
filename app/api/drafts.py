@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import html as html_module
 from datetime import datetime, timezone, timedelta
 from uuid import UUID
 import jwt
@@ -24,6 +25,205 @@ class SaveDraftPayload(BaseModel):
     current_step: int
     send_email: bool = False
 
+def _e(val: Any) -> str:
+    return html_module.escape(str(val or ""))
+
+def render_draft_email(
+    *,
+    is_reminder: bool,
+    name: str,
+    company_name: str,
+    resume_url: str
+) -> tuple[str, str, str]:
+    """
+    Renders an accessible, brand-aligned email matching Orchvate's design tokens:
+    Navy #120050, Deep Purple #1E1A4A, Soft Purple #AFA9EC, Teal #009070, Lime #C8F31D.
+    Returns (subject, html_content, plain_text).
+    """
+    safe_name = _e(name or "there")
+    safe_company = _e(company_name or "your organisation")
+    safe_url = _e(resume_url)
+    display_company = str(company_name or "Your Organisation").strip()
+
+    if is_reminder:
+        subject = f"Reminder: Continue your NIWI Self-Assessment — {display_company}"
+        eyebrow = "ORCHVATE · NEURO-INCLUSIVE WORKPLACE INDEX"
+        heading = "Continue Your NIWI Assessment"
+        intro_lead = f"You recently started the Neuro-Inclusive Workplace Index (NIWI) self-assessment for <strong>{safe_company}</strong>."
+        intro_body = "We've safely saved all of your responses so you can pick up exactly where you left off without having to start over."
+        cta_text = "Resume Assessment &rarr;"
+        preheader = f"Continue your saved NIWI assessment for {safe_company}. Progress is preserved for 30 days."
+    else:
+        subject = f"Resume your NIWI Self-Assessment — {display_company}"
+        eyebrow = "ORCHVATE · NEURO-INCLUSIVE WORKPLACE INDEX"
+        heading = "Assessment Progress Saved"
+        intro_lead = f"Your progress on the Neuro-Inclusive Workplace Index (NIWI) self-assessment for <strong>{safe_company}</strong> has been saved."
+        intro_body = "You can return to your assessment anytime within the next 30 days using your secure resumption link."
+        cta_text = "Resume Assessment &rarr;"
+        preheader = f"Your NIWI assessment progress for {safe_company} has been saved."
+
+    plain_text = (
+        f"Hi {name or 'there'},\n\n"
+        f"{intro_lead.replace('<strong>', '').replace('</strong>', '')}\n"
+        f"{intro_body}\n\n"
+        f"When you're ready to continue, click the secure link below to pick up right where you left off:\n"
+        f"{resume_url}\n\n"
+        f"Key Details:\n"
+        f"• Saved for 30 days from your last edit.\n"
+        f"• Your answers reload automatically upon opening the link.\n"
+        f"• Takes just 5–10 minutes to complete.\n\n"
+        f"Best regards,\n"
+        f"The Orchvate Team\n"
+        f"https://www.orchvate.com\n"
+    )
+
+    html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{_e(subject)}</title>
+  <!--[if mso]>
+  <noscript>
+  <xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap');
+    body {{ margin: 0; padding: 0; background-color: #F5F2EB; font-family: 'DM Sans', Arial, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }}
+    table {{ border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }}
+    img {{ border: 0; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; display: block; }}
+    a {{ color: #009070; text-decoration: none; }}
+    @media only screen and (max-width: 620px) {{
+      .email-wrapper {{ width: 100% !important; }}
+      .header-cell {{ padding: 28px 24px 24px !important; }}
+      .body-cell {{ padding: 24px 20px 20px !important; }}
+      .footer-cell {{ padding: 20px 20px !important; }}
+    }}
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#F5F2EB;">
+  <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">
+    {_e(preheader)} &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  </div>
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#F5F2EB;">
+    <tr>
+      <td align="center" style="padding: 32px 16px 48px;">
+        <table class="email-wrapper" width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;">
+          
+          <!-- Top Branded Header -->
+          <tr>
+            <td class="header-cell" style="background:#120050;border-radius:16px 16px 0 0;padding:34px 40px 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td>
+                    <p style="margin:0 0 10px;font-family:'DM Sans',Arial,sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;color:#AFA9EC;text-transform:uppercase;">
+                      {eyebrow}
+                    </p>
+                    <h1 style="margin:0 0 6px;font-family:'DM Serif Display',Georgia,serif;font-size:26px;font-weight:400;color:#FFFFFF;line-height:1.2;">
+                      {heading}
+                    </h1>
+                    <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#AFA9EC;">
+                      {safe_company} &nbsp;·&nbsp; 30-Day Saved Progress
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Main Body Card -->
+          <tr>
+            <td class="body-cell" style="background:#FFFFFF;border-left:1px solid #E2DDD4;border-right:1px solid #E2DDD4;padding:32px 40px 28px;">
+              <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;color:#1E1A4A;line-height:1.6;">
+                Dear <strong>{safe_name}</strong>,
+              </p>
+              <p style="margin:0 0 16px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#475569;line-height:1.65;">
+                {intro_lead}
+              </p>
+              <p style="margin:0 0 24px;font-family:'DM Sans',Arial,sans-serif;font-size:14px;color:#475569;line-height:1.65;">
+                {intro_body}
+              </p>
+
+              <!-- Progress Status Card -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F9F8FF;border:1px solid #E2DDD4;border-left:4px solid #009070;border-radius:10px;margin-bottom:28px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+                      <tr>
+                        <td>
+                          <p style="margin:0 0 4px;font-family:'DM Sans',Arial,sans-serif;font-size:11px;font-weight:700;color:#120050;text-transform:uppercase;letter-spacing:0.06em;">
+                            Assessment Progress
+                          </p>
+                          <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#334155;line-height:1.5;">
+                            All completed answers are safely preserved and will automatically reload.
+                          </p>
+                        </td>
+                        <td width="115" align="right" valign="top">
+                          <span style="display:inline-block;background:#EEEDFE;color:#120050;font-family:'DM Sans',Arial,sans-serif;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;white-space:nowrap;">
+                            Valid for 30 Days
+                          </span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:20px 0 28px;">
+                <tr>
+                  <td align="center">
+                    <a href="{safe_url}" target="_blank" style="display:inline-block;background-color:#009070;color:#FFFFFF !important;text-decoration:none;padding:14px 34px;border-radius:99px;font-family:'DM Sans',Arial,sans-serif;font-size:15px;font-weight:700;letter-spacing:0.02em;box-shadow:0 4px 14px rgba(0,144,112,0.25);">
+                      {cta_text}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Direct URL Fallback -->
+              <p style="margin:0 0 6px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#94A3B8;text-align:center;">
+                Or copy and paste this secure link into your browser:
+              </p>
+              <p style="margin:0 0 24px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;text-align:center;word-break:break-all;">
+                <a href="{safe_url}" style="color:#009070;text-decoration:underline;">{safe_url}</a>
+              </p>
+
+              <!-- Confidentiality & Guidance Note -->
+              <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#F4F2F0;border-radius:8px;">
+                <tr>
+                  <td style="padding:12px 16px;">
+                    <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#555;line-height:1.55;">
+                      <strong style="color:#120050;">Quick &amp; Confidential:</strong> Completing the assessment takes approximately 5–10 minutes. Upon completion, an instant multi-pillar inclusion reflection is generated for your organization.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td class="footer-cell" style="background:#FFFFFF;border-radius:0 0 16px 16px;border-left:1px solid #E2DDD4;border-right:1px solid #E2DDD4;border-bottom:1px solid #E2DDD4;padding:26px 40px;text-align:center;">
+              <p style="margin:0 0 6px;font-family:'DM Sans',Arial,sans-serif;font-size:12px;color:#64748B;">
+                Powered by <strong>Orchvate</strong> · Neuro-Inclusive Workplace Index
+              </p>
+              <p style="margin:0;font-family:'DM Sans',Arial,sans-serif;font-size:11px;color:#94A3B8;line-height:1.5;">
+                If you already submitted this assessment or received this email by error, you can safely disregard this message.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    return subject, html_content, plain_text
+
 def send_resume_email(email: str, name: str, company_name: str, resume_url: str):
     try:
         with get_db_connection() as conn:
@@ -38,46 +238,12 @@ def send_resume_email(email: str, name: str, company_name: str, resume_url: str)
         logger.error("No sender address configured for resume draft email")
         return
 
-    subject = f"Resume your NIWI Self-Assessment — {company_name}"
-    plain = (
-        f"Hi {name},\n\n"
-        f"Your progress on the Neuro-Inclusive Workplace Index (NIWI) self-assessment for {company_name} has been saved.\n\n"
-        f"You can resume your assessment anytime within the next 30 days by clicking the link below:\n"
-        f"{resume_url}\n\n"
-        f"Best regards,\n"
-        f"The Orchvate Team\n"
+    subject, html, plain = render_draft_email(
+        is_reminder=False,
+        name=name,
+        company_name=company_name,
+        resume_url=resume_url
     )
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body {{ font-family: 'Inter', sans-serif; background-color: #F5F2EB; color: #120050; padding: 2rem; margin: 0; }}
-    .card {{ background-color: #FFFFFF; border: 2px solid #120050; border-radius: 12px; padding: 2.5rem; max-width: 500px; margin: 0 auto; box-shadow: 4px 4px 0 #009070; }}
-    h2 {{ font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #120050; margin-top: 0; margin-bottom: 1rem; }}
-    p {{ font-size: 0.95rem; line-height: 1.6; color: #555; margin-bottom: 1.5rem; }}
-    .btn {{ display: inline-block; background-color: #120050; color: #FFFFFF !important; text-decoration: none; padding: 0.8rem 1.8rem; border-radius: 99px; font-weight: bold; border: 2px solid #120050; font-family: 'Playfair Display', serif; box-shadow: 3px 3px 0 #C8F31D; margin-top: 0.5rem; }}
-    .btn:hover {{ background-color: #009070; border-color: #009070; box-shadow: 3px 3px 0 #120050; }}
-    .footer {{ font-size: 0.8rem; color: #aaa; margin-top: 2rem; text-align: center; border-top: 1px solid #E2DDD4; padding-top: 1rem; }}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>Assessment Progress Saved</h2>
-    <p>Hi {name or 'there'},</p>
-    <p>Your progress on the Neuro-Inclusive Workplace Index (NIWI) for <strong>{company_name}</strong> has been saved.</p>
-    <p>You can resume your assessment anytime within the next 30 days by clicking the button below:</p>
-    <p style="text-align: center;">
-      <a href="{resume_url}" class="btn">Resume Assessment &rarr;</a>
-    </p>
-    <p>Or copy and paste this link into your browser:<br>
-    <a href="{resume_url}" style="color: #009070;">{resume_url}</a></p>
-    <div class="footer">
-      <p>Powered by Orchvate</p>
-    </div>
-  </div>
-</body>
-</html>"""
 
     try:
         send_acs_email(
@@ -107,47 +273,12 @@ def send_reminder_email(email: str, name: str, company_name: str, resume_url: st
         logger.error("No sender address configured for reminder email")
         return
 
-    subject = f"Reminder: Continue your NIWI Self-Assessment — {company_name}"
-    plain = (
-        f"Hi {name},\n\n"
-        f"You recently started the Neuro-Inclusive Workplace Index (NIWI) self-assessment for {company_name}.\n\n"
-        f"Your progress has been saved. When you're ready, click the link below to pick up right where you left off:\n"
-        f"{resume_url}\n\n"
-        f"Your saved responses will remain accessible for 30 days.\n\n"
-        f"Best regards,\n"
-        f"The Orchvate Team\n"
+    subject, html, plain = render_draft_email(
+        is_reminder=True,
+        name=name,
+        company_name=company_name,
+        resume_url=resume_url
     )
-    
-    html = f"""<!DOCTYPE html>
-<html>
-<head>
-  <style>
-    body {{ font-family: 'Inter', sans-serif; background-color: #F5F2EB; color: #120050; padding: 2rem; margin: 0; }}
-    .card {{ background-color: #FFFFFF; border: 2px solid #120050; border-radius: 12px; padding: 2.5rem; max-width: 500px; margin: 0 auto; box-shadow: 4px 4px 0 #009070; }}
-    h2 {{ font-family: 'Playfair Display', serif; font-size: 1.6rem; color: #120050; margin-top: 0; margin-bottom: 1rem; }}
-    p {{ font-size: 0.95rem; line-height: 1.6; color: #555; margin-bottom: 1.5rem; }}
-    .btn {{ display: inline-block; background-color: #120050; color: #FFFFFF !important; text-decoration: none; padding: 0.8rem 1.8rem; border-radius: 99px; font-weight: bold; border: 2px solid #120050; font-family: 'Playfair Display', serif; box-shadow: 3px 3px 0 #C8F31D; margin-top: 0.5rem; }}
-    .btn:hover {{ background-color: #009070; border-color: #009070; box-shadow: 3px 3px 0 #120050; }}
-    .footer {{ font-size: 0.8rem; color: #aaa; margin-top: 2rem; text-align: center; border-top: 1px solid #E2DDD4; padding-top: 1rem; }}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>Continue Your NIWI Assessment</h2>
-    <p>Hi {name or 'there'},</p>
-    <p>You recently started the Neuro-Inclusive Workplace Index (NIWI) self-assessment for <strong>{company_name}</strong>.</p>
-    <p>Your progress is saved! You can pick up right where you left off anytime within the next 30 days by clicking below:</p>
-    <p style="text-align: center;">
-      <a href="{resume_url}" class="btn">Resume Assessment &rarr;</a>
-    </p>
-    <p>Or paste this link into your browser:<br>
-    <a href="{resume_url}" style="color: #009070;">{resume_url}</a></p>
-    <div class="footer">
-      <p>Powered by Orchvate</p>
-    </div>
-  </div>
-</body>
-</html>"""
 
     try:
         send_acs_email(
@@ -278,28 +409,49 @@ async def resume_draft(token: str):
         "draft_id": draft_id
     }
 
-def process_draft_reminders(limit: int = 20) -> int:
+def process_draft_reminders(limit: int = 50, hours_threshold: Optional[int] = None) -> int:
     """
-    Finds incomplete drafts (submitted = FALSE) older than 48 hours that haven't received a reminder.
-    Dispatches a reminder email with a 30-day resume link and marks reminder_sent_at.
+    Finds incomplete drafts (submitted = FALSE) older than hours_threshold (default 48 hours)
+    that haven't received a reminder.
+    Dispatches a branded Orchvate reminder email with a 30-day resume link and marks reminder_sent_at.
     """
+    if hours_threshold is None:
+        try:
+            hours_threshold = int(os.environ.get("DRAFT_REMINDER_HOURS", "48"))
+        except (ValueError, TypeError):
+            hours_threshold = 48
+
     sent_count = 0
     try:
         with get_db_connection() as conn:
             with conn:
                 with conn.cursor() as cur:
+                    # 1. Reconcile with submissions: if user completed the audit elsewhere, mark submitted
+                    cur.execute("""
+                        UPDATE draft_submissions d
+                        SET submitted = TRUE
+                        WHERE d.submitted = FALSE
+                          AND EXISTS (
+                              SELECT 1 FROM submissions s
+                              WHERE LOWER(TRIM(s.email)) = LOWER(TRIM(d.email))
+                                AND s.created_at >= d.created_at
+                          )
+                    """)
+
+                    # 2. Select eligible drafts needing reminders
                     cur.execute("""
                         SELECT id, email, company_name, form_state
                         FROM draft_submissions
                         WHERE submitted = FALSE
                           AND email IS NOT NULL
-                          AND email != ''
-                          AND updated_at <= NOW() - INTERVAL '48 hours'
+                          AND TRIM(email) != ''
+                          AND updated_at <= NOW() - (%s || ' hours')::interval
                           AND updated_at >= NOW() - INTERVAL '30 days'
                           AND reminder_sent_at IS NULL
+                        ORDER BY updated_at ASC
                         LIMIT %s
                         FOR UPDATE SKIP LOCKED
-                    """, (limit,))
+                    """, (hours_threshold, limit))
                     candidates = cur.fetchall()
                     for row in candidates:
                         draft_id, email, company_name, form_state = row
@@ -322,7 +474,7 @@ def process_draft_reminders(limit: int = 20) -> int:
                             WHERE id = %s
                         """, (str(draft_id),))
                         sent_count += 1
-                        logger.info("Sent draft reminder email to %s (draft: %s)", email, draft_id)
+                        logger.info("Sent draft reminder email to %s (company: %s, draft: %s)", email, company_name, draft_id)
     except Exception as e:
         logger.error(f"Error processing draft reminders: {e}")
     return sent_count
