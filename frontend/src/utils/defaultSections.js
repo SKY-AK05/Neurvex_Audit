@@ -47,7 +47,7 @@ export const DEFAULT_SECTIONS = [
     questions: [
       { field: "q15", short: "Lifecycle Adjustments", text: "Workplace adjustments are available and accessible at all stages of the employee lifecycle (e.g., recruitment, onboarding, day-to-day work, progression, and transitions)." },
       { field: "q16", short: "Clear Adjustment Pathways", text: "There are clear, well-communicated pathways for employees to request adjustments or access support, and this information is easy to find and understand across the organisation." },
-      { field: "q17", short: "Manager & HR Training", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement appropriate workplace adjustments confidently and consistently." },
+      { field: "q17", short: "Manager & HR Training", text: "Managers, HR, and people teams receive training on neurodiversity and are equipped to identify, discuss, and implement workplace adjustments tailored to individual needs." },
       { field: "q18", short: "Built-In Inclusive Practices", text: "Where possible, inclusive practices are built into standard ways of working (e.g., flexible communication, clear documentation, meeting norms), reducing the need for individuals to request adjustments." },
       { field: "q19", short: "Regular Policy Review", text: "Adjustment policies and processes are regularly reviewed, using employee and manager feedback as well as data (where available) to assess effectiveness and improve over time." },
     ],
@@ -60,7 +60,7 @@ export const DEFAULT_SECTIONS = [
     why: "Environmental design is often overlooked in DEI work, yet it directly impacts productivity and whether people feel safe at work.",
     points: ["Quiet spaces", "Sensory-aware design", "Personalisation"],
     tip: "Walk through your office at peak hours — notice noise levels, lighting glare, and whether escape routes feel obvious.",
-    gatingQuestion: "Does your organisation have physical workplace environments (e.g., offices, facilities, or on-site workspaces)?",
+    gatingQuestion: "Does your organisation provide or manage physical workplace environments where employees regularly work (e.g., offices, facilities, or on-site workspaces)?",
     gatingField: "has_physical_workspace",
     naAllowed: true,
     questions: [
@@ -68,7 +68,7 @@ export const DEFAULT_SECTIONS = [
       { field: "q21", short: "Sensory Impact Consideration", text: "We consider sensory impact in environmental decisions (e.g., lighting, noise, colours, materials, odours) and take steps to minimise common stressors." },
       { field: "q22", short: "Varied Workspaces", text: "Employees have access to different types of workspaces (e.g., quiet, low-stimulation, collaborative), rather than a one-size-fits-all environment." },
       { field: "q23", short: "Quiet & Low-Stimulation Spaces", text: "There are designated quiet or low-stimulation spaces available for employees to focus, take breaks, or regulate when needed." },
-      { field: "q24", short: "Hybrid & Remote Balance", text: "Hybrid or remote work is not treated as the primary solution for inclusion; we also address barriers within the physical workplace and consider individual needs across different work settings." },
+      { field: "q24", short: "Hybrid & Remote Balance", text: "Our organisation addresses sensory barriers within physical workplaces rather than relying on remote or hybrid work as the primary solution for inclusion." },
     ],
   },
   {
@@ -80,7 +80,7 @@ export const DEFAULT_SECTIONS = [
     points: ["Fair appraisals", "Equal development access", "Retention insight"],
     tip: "Review whether performance criteria reward only one style of communication or collaboration.",
     questions: [
-      { field: "q25", short: "Inclusive Leadership Training", text: "Managers and team leads are trained in inclusive leadership and are expected to apply these practices in their day-to-day management." },
+      { field: "q25", short: "Inclusive Leadership Training", text: "Managers and team leads are trained on inclusive leadership practices and apply them in their day-to-day management." },
       { field: "q26", short: "Structured Feedback", text: "Managers provide regular, structured feedback that is specific, evidence-based, and balanced (recognising strengths as well as areas for development)." },
       { field: "q27", short: "Wellbeing & Coaching Support", text: "Employees have access to appropriate support (e.g., coaching, wellbeing resources, or specialist support where needed) to help them work effectively and build on their strengths." },
       { field: "q28", short: "Accessible Learning & Development", text: "Learning and development opportunities are designed to be accessible and inclusive by default (e.g., clear content, flexible formats, self-paced options, inclusive assessments)." },
@@ -97,10 +97,10 @@ export const DEFAULT_SECTIONS = [
     tip: "Agendas sent 24 hours ahead and recordings of key meetings are simple wins with wide impact.",
     questions: [
       { field: "q30", short: "Neuro-Inclusive Communication", text: "Employees are trained to communicate in neuro-inclusive ways, including understanding different communication styles and how to adapt for internal and external audiences." },
-      { field: "q31", short: "Clear & Structured Communication", text: "Organisational communications are typically clear, concise, and well-structured (e.g., use of plain language, bullet points, logical flow), reducing ambiguity and cognitive load." },
+      { field: "q31", short: "Clear & Structured Communication", text: "Instructions, expectations, feedback and deadlines are communicated clearly, consistently and in a structured way to reduce ambiguity and support different information-processing needs." },
       { field: "q32", short: "Accessible Formats", text: "Information is available in accessible formats where needed (e.g., transcripts, captions, recordings, screen reader compatibility), and accessibility features are actively supported and encouraged." },
       { field: "q33", short: "Inclusive Language", text: "We use inclusive, respectful language when communicating about neurodiversity, and aim to frame differences in a strengths-based and non-stigmatising way." },
-      { field: "q34", short: "Feedback & Improvement", text: "Employees and external stakeholders can give feedback on communication and accessibility, and there are clear mechanisms to review and improve based on that input." },
+      { field: "q34", short: "Feedback & Improvement", text: "Our organisation has structured mechanisms to collect, review and act on feedback from employees and external stakeholders on communication and accessibility." },
     ],
   },
   {
@@ -112,7 +112,7 @@ export const DEFAULT_SECTIONS = [
     points: ["User-centred design", "Accessible digital products", "Trained support teams"],
     tip: "Involve neurodivergent users in usability testing early — you'll catch issues that compliance checklists miss.",
     questions: [
-      { field: "q35", short: "Neuro-Inclusive Design", text: "Products, services, and communication channels (e.g., websites, platforms, social media, physical materials) are designed using clear, structured, and neuro-inclusive formats." },
+      { field: "q35", short: "Neuro-Inclusive Design", text: "The organisation applies clear, structured and neuro-inclusive design principles across all its products, services and customer communication channels, including websites, digital platforms, social media and physical materials." },
       { field: "q36", short: "Multiple Contact Channels", text: "Customers are able to engage through a range of contact methods (e.g., email, phone, webchat, written communication), allowing them to choose what works best for them." },
       { field: "q37", short: "Sensory-Aware Environments", text: "Physical customer environments are designed or adapted to reduce sensory overload where possible (e.g., managing noise, lighting, crowding, and visual stimuli).", allowNA: true },
       { field: "q38", short: "Staff Neurodiversity Training", text: "Employees involved in product design and customer service are trained in neurodiversity awareness and inclusive practices." },
@@ -127,7 +127,7 @@ export const DEFAULT_SECTIONS = [
     why: "Supplier standards extend your values outward and help build an ecosystem where neurodiversity-led businesses can thrive.",
     points: ["Procurement criteria", "Contract expectations", "Supply chain collaboration"],
     tip: "Start by adding one inclusion question to your standard RFP template — small steps scale over time.",
-    gatingQuestion: "Does your organisation have recurring engagement with external vendors, consultants, or partners?",
+    gatingQuestion: "Does your organisation engage with external suppliers?",
     gatingField: "has_suppliers",
     naAllowed: true,
     questions: [

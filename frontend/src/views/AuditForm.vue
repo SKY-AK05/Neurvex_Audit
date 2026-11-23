@@ -93,7 +93,10 @@
 
             <!-- Phase 4: Staggered Descriptions -->
             <p class="hero-desc anim-hero-p1">
-              Neuro-inclusion in the workplace is an emerging priority. Approximately 15% of people are neurodivergent (e.g., autistic, dyslexic, ADHD), bringing diverse perspectives and strengths such as creativity, innovation, and attention to detail.
+              An estimated 15–20% of people are neurodivergent, including people with autism, ADHD, dyslexia and other neurological differences.
+            </p>
+            <p class="hero-source-citation">
+              Source: Doyle, N. (2020), British Medical Bulletin.
             </p>
 
             <p class="hero-desc anim-hero-p2">
@@ -695,7 +698,7 @@
                   <div class="question-block">
                     <label class="field-label">Do you identify as neurodivergent? *</label>
                     <p class="question-helper">
-                      Neurodivergent may include ADHD, autism, dyslexia, dyspraxia, and other cognitive or neurological differences.
+                      Neurodivergent may include ADHD, autism, dyslexia, dyspraxia, and other cognitive or neurological differences, whether formally diagnosed or self-identified.
                     </p>
                     <div class="radio-grid" :class="{ 'has-error': errors.is_neurodivergent }">
                       <label
@@ -720,9 +723,9 @@
 
                   <!-- Underrepresented / Marginalized -->
                   <div class="question-block">
-                    <label class="field-label">Do you identify as belonging to an underrepresented or historically marginalized community? *</label>
+                    <label class="field-label">Do you identify as belonging to a community that has historically experienced underrepresentation or exclusion? *</label>
                     <p class="question-helper">
-                      This may include economic, ethnic, religious, caste-based, LGBTQIA+, or other communities that have historically experienced exclusion or underrepresentation.
+                      This may relate to socioeconomic background, ethnicity, religion, caste, sexual orientation, gender identity, or other aspects of identity or background.
                     </p>
                     <div class="radio-grid radio-grid-compact" :class="{ 'has-error': errors.is_marginalized }">
                       <label
@@ -749,7 +752,7 @@
                   <div class="consent-block">
                     <label class="consent-label">
                       <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" :class="{ 'checkbox-error': errors.consent_given }" />
-                      <span class="consent-text">I consent to the collection and processing of my organisational data in accordance with the <a href="https://www.orchvate.com/Privacy_Policy.html" target="_blank" rel="noopener noreferrer" class="consent-privacy-link" @click.stop>Privacy Policy</a>. *</span>
+                      <span class="consent-text">I consent to the collection and processing of the information I provide as part of the NIWI assessment, in accordance with the <a href="https://www.orchvate.com/Privacy_Policy.html" target="_blank" rel="noopener noreferrer" class="consent-privacy-link" @click.stop>Privacy Policy</a>. *</span>
                     </label>
                     <span v-if="errors.consent_given" class="error-message">You must provide consent to proceed.</span>
                   </div>
@@ -815,12 +818,25 @@
 
                   <!-- Example response options box -->
                   <div class="instr-example-box">
-                    <span class="instr-example-label">Example response options</span>
-                    <div class="instr-example-options">
-                      <span class="instr-example-opt opt-yes">Yes</span>
-                      <span class="instr-example-opt opt-partially">Partially</span>
-                      <span class="instr-example-opt opt-no">No</span>
-                      <span class="instr-example-opt opt-not-sure">Not Sure</span>
+                    <span class="instr-example-label">How to respond</span>
+                    <p class="instr-respond-sub">For each statement, select the option that best reflects your organisation today:</p>
+                    <div class="instr-criteria-list">
+                      <div class="instr-criteria-item">
+                        <span class="instr-opt-badge opt-yes">Yes</span>
+                        <span class="instr-criteria-desc">All or most aspects are consistently in place.</span>
+                      </div>
+                      <div class="instr-criteria-item">
+                        <span class="instr-opt-badge opt-partially">Partially</span>
+                        <span class="instr-criteria-desc">Some aspects are in place, or they are not consistently applied.</span>
+                      </div>
+                      <div class="instr-criteria-item">
+                        <span class="instr-opt-badge opt-no">No</span>
+                        <span class="instr-criteria-desc">Few or none of the aspects are in place.</span>
+                      </div>
+                      <div class="instr-criteria-item">
+                        <span class="instr-opt-badge opt-not-sure">Not sure</span>
+                        <span class="instr-criteria-desc">I don't have enough visibility to assess this.</span>
+                      </div>
                     </div>
                     <div class="instr-privacy-note">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -902,7 +918,7 @@
 
               <!-- Supplier definition banner for Section 8 -->
               <div v-if="currentSection.id === 'sp'" class="supplier-definition-banner">
-                <strong>Suppliers</strong> refer to any external individuals or organisations your organisation engages with, including consultants, freelancers, technology providers, agencies, partners, service providers and contractors.
+                <strong>Suppliers</strong> refer to external individuals or organisations that provide products or services to your organisation, including consultants, freelancers, technology providers, agencies, service providers and contractors.
               </div>
 
               <!-- Leading gating question (Sections 4 & 8) -->
@@ -1163,7 +1179,7 @@ const step0Panel = {
   icon: "✦",
   tag: "Welcome",
   title: "Neuro-Inclusive Workplace Index (NIWI) Self-Assessment",
-  summary: "Neuro-inclusion in the workplace is an emerging priority, with ~15% of people being neurodivergent (e.g., autistic, dyslexic, ADHD) and bringing valuable strengths such as creativity, innovation, and attention to detail.",
+  summary: "An estimated 15–20% of people are neurodivergent, including people with autism, ADHD, dyslexia and other neurological differences.",
   why: "The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neuro-inclusion. It covers key segments across the employee lifecycle and customer experience, providing a holistic view of current practices.\n\nNIWI is not a ranking tool, but a reflection-based index to help organisations understand where they are in their neuro-inclusion journey.",
   points: [
     "Building neuro-inclusive workplaces is not just about policy, but about how inclusion is experienced every day. Understanding current realities is the first step towards creating meaningful and sustainable change.",
@@ -2189,6 +2205,14 @@ async function pollSubmissionStatus(subId) {
   color: #374151;
   margin: 0 0 0.875rem 0;
   font-family: var(--font-body);
+}
+
+.hero-source-citation {
+  font-size: 0.8125rem;
+  color: #64748B;
+  margin: -0.4rem 0 1rem 0;
+  line-height: 1.45;
+  font-style: normal;
 }
 
 .hero-desc:last-of-type {
@@ -5748,53 +5772,71 @@ html {
   font-size: 0.75rem;
   font-weight: 600;
   color: #64748B;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.45rem;
   letter-spacing: 0.01em;
 }
 
-.instr-example-options {
-  display: flex;
-  gap: 0.4rem;
-  flex-wrap: nowrap;
-  margin-bottom: 0.9rem;
-  justify-content: space-between;
+.instr-respond-sub {
+  font-size: 0.8125rem;
+  color: #475569;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
 }
 
-.instr-example-opt {
-  font-size: 0.78rem;
-  font-weight: 600;
-  padding: 0.32rem 0.65rem;
+.instr-criteria-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.instr-criteria-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.instr-opt-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.18rem 0.6rem;
   border-radius: 99px;
   border: 1.5px solid;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  flex: 1;
+  min-width: 66px;
+  text-align: center;
+  flex-shrink: 0;
+  display: inline-block;
+  line-height: 1.3;
 }
 
-.instr-example-opt.opt-yes {
+.instr-opt-badge.opt-yes {
   background: #F0FDF4;
   border-color: #86EFAC;
   color: #166534;
 }
 
-.instr-example-opt.opt-partially {
+.instr-opt-badge.opt-partially {
   background: #FFFBEB;
   border-color: #FCD34D;
   color: #92400E;
 }
 
-.instr-example-opt.opt-no {
+.instr-opt-badge.opt-no {
   background: #FEF2F2;
   border-color: #FCA5A5;
   color: #991B1B;
 }
 
-.instr-example-opt.opt-not-sure {
+.instr-opt-badge.opt-not-sure {
   background: #F5F3FF;
   border-color: #C4B5FD;
   color: #5B21B6;
+}
+
+.instr-criteria-desc {
+  font-size: 0.8125rem;
+  color: #334155;
+  line-height: 1.35;
 }
 
 .instr-privacy-note {
