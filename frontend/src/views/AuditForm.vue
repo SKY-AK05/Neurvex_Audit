@@ -93,11 +93,14 @@
 
             <!-- Phase 4: Staggered Descriptions -->
             <p class="hero-desc anim-hero-p1">
-              Neuro-inclusion in the workplace is an emerging priority. Approximately 15% of people are neurodivergent (e.g., autistic, dyslexic, ADHD), bringing diverse perspectives and valuable strengths such as creativity, innovation, and attention to detail.
+              Neuro-inclusion in the workplace is an emerging priority. Approximately 15% of people are neurodivergent (e.g., autistic, dyslexic, ADHD), bringing diverse perspectives and strengths such as creativity, innovation, and attention to detail.
             </p>
 
             <p class="hero-desc anim-hero-p2">
-              The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to help C-suite, HR, and DEI leaders understand and strengthen their organisation's approach to neuro-inclusion. It covers key segments across the employee lifecycle, customer experience and wider ecosystem, providing a holistic view of current practices.
+              The Neuro-Inclusive Workplace Index (NIWI) is a structured self-assessment designed to capture perspectives from across the organisation on its neuroinclusive practices and workplace experience.
+            </p>
+            <p class="hero-desc anim-hero-p2">
+              The collated findings help leaders, HR and DEI teams understand what is working well and identify opportunities to strengthen neuroinclusion across the organisation.
             </p>
 
             <div class="hero-highlight-box anim-hero-p3">
@@ -202,7 +205,7 @@
                 <span class="flow-category-tag tag-teal">WHAT NIWI HELPS YOU DO</span>
               </div>
               <h2 class="flow-main-heading">From organisational insight to focused action</h2>
-              <p class="flow-subtitle">A clear three-step pathway from baseline awareness to systemic change.</p>
+              <p class="flow-subtitle">NIWI provides an organisational snapshot of strengths, priority areas and actionable insights across 8 dimensions, through a three-step pathway from understanding the current state to driving systemic change.</p>
             </div>
 
             <div class="process-flow-container">
@@ -265,7 +268,7 @@
               </div>
               <div class="info-pill-item">
                 <span class="pill-badge-circle circle-red">01</span>
-                <span class="pill-badge-label">One organisational snapshot</span>
+                <span class="pill-badge-label">Multiple perspectives. One organisational snapshot</span>
               </div>
             </div>
           </div>
@@ -377,6 +380,28 @@
           </div>
         </header>
 
+        <!-- Assessment Progress Line & Indicator along the top -->
+        <div v-if="currentStep >= 2 && currentStep <= feedbackStepIndex" class="assessment-progress-wrapper" role="progressbar" :aria-valuenow="progressPercent" aria-valuemin="0" aria-valuemax="100">
+          <div class="assessment-progress-track">
+            <div class="assessment-progress-fill" :style="{ width: progressPercent + '%' }"></div>
+          </div>
+          <div class="assessment-progress-meta">
+            <div class="assessment-progress-left">
+              <span class="assessment-progress-step-tag" v-if="currentStep >= 4 && currentStep < feedbackStepIndex">
+                Dimension {{ currentStep - 3 }} of {{ visibleSections.length }}
+              </span>
+              <span class="assessment-progress-text">
+                <strong>{{ answeredQuestionsCount }}</strong> of {{ totalAssessmentQuestions }} questions answered
+                <span class="remaining-tag" v-if="remainingQuestionsCount > 0">({{ remainingQuestionsCount }} remaining)</span>
+                <span class="remaining-tag completed" v-else>— All questions answered!</span>
+              </span>
+            </div>
+            <div class="assessment-progress-right">
+              <span class="assessment-progress-badge">{{ progressPercent }}% Complete</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Main Content Area (Scrollable Body) -->
         <div
           class="unified-content"
@@ -409,6 +434,12 @@
               <p v-if="currentStep === feedbackStepIndex" class="step-sub">
                 Before submitting, please feel free to share any thoughts, workplace observations, or suggestions you have. This step is completely optional.
               </p>
+            </div>
+
+            <!-- Draft Restored Banner -->
+            <div v-if="draftRestored && currentStep >= 2" class="draft-restored-banner">
+              <span>✓ Restored your in-progress assessment.</span>
+              <button type="button" class="btn-banner-dismiss" @click="draftRestored = false">Dismiss</button>
             </div>
 
             <div ref="questionsScroll" class="questions-scroll">
@@ -697,7 +728,7 @@
                   <div class="consent-block">
                     <label class="consent-label">
                       <input type="checkbox" id="gdpr_consent" v-model="form.consent_given" class="consent-checkbox" :class="{ 'checkbox-error': errors.consent_given }" />
-                      <span class="consent-text">I consent to the collection and processing of my organisational data in accordance with the Privacy Policy. *</span>
+                      <span class="consent-text">I consent to the collection and processing of my organisational data in accordance with the <a href="https://www.orchvate.com/Privacy_Policy.html" target="_blank" rel="noopener noreferrer" class="consent-privacy-link" @click.stop>Privacy Policy</a>. *</span>
                     </label>
                     <span v-if="errors.consent_given" class="error-message">You must provide consent to proceed.</span>
                   </div>
@@ -921,6 +952,9 @@
               <div v-else></div>
 
               <div class="step-nav-mid">
+                <span v-if="autoSaveStatusText" class="auto-save-status-indicator" :class="saveStatus">
+                  {{ autoSaveStatusText }}
+                </span>
                 <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
                 <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
               </div>
@@ -1312,7 +1346,7 @@ const functionOptions = [
 
 const roleOptions = [
   "Individual Contributor / Team Member",
-  "People Manager/Supervisor",
+  "People Manager / Team Lead / Supervisor",
   "Head of Function/Director",
   "Executive / Senior Leadership (C-Suite, Business Unit Head, VP)"
 ];
@@ -1377,13 +1411,44 @@ watch([() => form.role, () => form.function], () => {
 
 const allQuestionFields = computed(() => sections.value.flatMap(s => s.questions.map(q => q.field)));
 
-const { isSaving, syncToBackend, restoreLocalDraft, clearDraft, draftId } = useDraftSaving(form, currentStep);
+const totalAssessmentQuestions = computed(() => allQuestionFields.value.length || 40);
+
+const answeredQuestionsCount = computed(() => {
+  return allQuestionFields.value.filter(field => form[field] && form[field].toString().trim() !== "").length;
+});
+
+const remainingQuestionsCount = computed(() => {
+  return Math.max(0, totalAssessmentQuestions.value - answeredQuestionsCount.value);
+});
+
+const progressPercent = computed(() => {
+  if (!totalAssessmentQuestions.value) return 0;
+  return Math.min(100, Math.round((answeredQuestionsCount.value / totalAssessmentQuestions.value) * 100));
+});
+
+const {
+  isSaving,
+  saveError,
+  saveStatus,
+  syncToBackend,
+  restoreLocalDraft,
+  clearDraft,
+  draftId,
+  draftRestored
+} = useDraftSaving(form, currentStep);
+
+const autoSaveStatusText = computed(() => {
+  if (isSaving.value) return "Saving...";
+  if (saveStatus.value === "saved") return "Saved ✓";
+  if (saveStatus.value === "error") return "Sync failed";
+  return "";
+});
 
 async function handleManualSave() {
   if (!form.email || !form.email.trim()) {
     throw new Error("Please enter your email address on the 'Tell Us About You' page before saving your draft.");
   }
-  return await syncToBackend();
+  return await syncToBackend(true);
 }
 
 onMounted(async () => {
@@ -1759,7 +1824,7 @@ function autoFillTestData() {
   form.contact_number = "+44 7700 900000";
   form.function = "HR / People";
   form.function_other = "";
-  form.role = "People Manager/Supervisor";
+  form.role = "People Manager / Team Lead / Supervisor";
   form.country = "India";
   form.state_ut = "Maharashtra";
   form.gender = "Woman";
@@ -1768,7 +1833,7 @@ function autoFillTestData() {
   form.is_neurodivergent = "Yes";
   form.is_marginalized = "No";
   form.consent_given = true;
-  form.designation = "People Manager/Supervisor - HR / People";
+  form.designation = "People Manager / Team Lead / Supervisor - HR / People";
 
   // Gating questions — randomly Yes or No
   form.has_physical_workspace = rand(["Yes", "No"]);
@@ -2659,6 +2724,153 @@ async function pollSubmissionStatus(subId) {
   flex-shrink: 0;
   background: #FFFFFF;
   box-shadow: 0 1px 4px rgba(22, 16, 87, 0.04);
+}
+
+/* ── Assessment Top Progress Bar & Indicator ── */
+.assessment-progress-wrapper {
+  position: relative;
+  z-index: 45;
+  background: #FFFFFF;
+  border-bottom: 1px solid rgba(22, 16, 87, 0.08);
+  flex-shrink: 0;
+}
+
+.assessment-progress-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(22, 16, 87, 0.08);
+  overflow: hidden;
+}
+
+.assessment-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #009070 0%, #10B981 70%, #C8F31D 100%);
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.assessment-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 2.5rem;
+  background: #FCFBF9;
+  font-size: 0.8125rem;
+  color: #555;
+}
+
+.assessment-progress-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.assessment-progress-step-tag {
+  background: rgba(22, 16, 87, 0.07);
+  color: #120050;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+.assessment-progress-text {
+  color: #4B5563;
+  font-size: 0.8125rem;
+}
+
+.assessment-progress-text strong {
+  color: #120050;
+  font-weight: 700;
+}
+
+.remaining-tag {
+  color: #6B7280;
+  margin-left: 0.25rem;
+}
+
+.remaining-tag.completed {
+  color: #009070;
+  font-weight: 600;
+}
+
+.assessment-progress-badge {
+  background: #E6F5F1;
+  color: #009070;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  border: 1px solid rgba(0, 144, 112, 0.2);
+}
+
+/* ── Auto-save status and draft restore banner ── */
+.auto-save-status-indicator {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #009070;
+  padding: 0.25rem 0.65rem;
+  border-radius: 99px;
+  background: rgba(0, 144, 112, 0.08);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+}
+
+.auto-save-status-indicator.saving {
+  color: #120050;
+  background: rgba(18, 0, 80, 0.06);
+}
+
+.auto-save-status-indicator.error {
+  color: #DC2626;
+  background: #FEF2F2;
+}
+
+.draft-restored-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #E6F5F1;
+  border: 1px solid rgba(0, 144, 112, 0.25);
+  color: #007055;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.btn-banner-dismiss {
+  background: transparent;
+  border: none;
+  color: #007055;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.consent-privacy-link {
+  color: #009070;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: color 0.2s ease;
+}
+
+.consent-privacy-link:hover {
+  color: #120050;
+}
+
+@media (max-width: 768px) {
+  .assessment-progress-meta {
+    padding: 0.45rem 1rem;
+    font-size: 0.75rem;
+  }
+  .assessment-progress-step-tag {
+    display: none;
+  }
 }
 
 .why-header-left {

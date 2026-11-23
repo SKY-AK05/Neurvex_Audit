@@ -279,6 +279,7 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
     logger.info("Started background job worker [%s]", worker_id)
 
     last_reclaim = 0.0
+    last_reminder_check = 0.0
 
     while _worker_running:
         try:
@@ -288,6 +289,15 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
                 await asyncio.to_thread(reclaim_stranded_jobs)
                 await asyncio.to_thread(drain_legacy_email_dlq)
                 last_reclaim = loop_now
+
+            # Every 15 minutes, check for incomplete draft reminders
+            if loop_now - last_reminder_check > 900:
+                try:
+                    from app.api.drafts import process_draft_reminders
+                    await asyncio.to_thread(process_draft_reminders)
+                except Exception as ex:
+                    logger.warning("Error running periodic draft reminders: %s", ex)
+                last_reminder_check = loop_now
 
             # Claim next job
             job = await asyncio.to_thread(claim_next_job, worker_id)

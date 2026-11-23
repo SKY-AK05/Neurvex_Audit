@@ -56,6 +56,7 @@ onMounted(async () => {
       draftId: data.draft_id,
     }));
     localStorage.setItem("nd_draft_id", data.draft_id);
+    localStorage.setItem("nd_saved_at", String(Date.now()));
     localStorage.setItem("nd_resume_ready", "1");
     localStorage.setItem("nd_resume_at", String(Date.now()));
 

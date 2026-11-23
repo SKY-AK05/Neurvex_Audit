@@ -130,6 +130,7 @@ ALLOWED_FILTER_FIELDS = {
         "label": "Role Level",
         "options": [
             "Individual Contributor / Team Member",
+            "People Manager / Team Lead / Supervisor",
             "People Manager/Supervisor",
             "Head of Function/Director",
             "VP / Senior Leader",

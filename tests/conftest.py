@@ -920,13 +920,13 @@ class MockCursor:
 
         # 7. Draft Submissions
         if "delete from draft_submissions" in sql_lower:
-            cutoff_2d = datetime.now(timezone.utc) - timedelta(days=2)
+            cutoff_30d = datetime.now(timezone.utc) - timedelta(days=30)
             cutoff_7d = datetime.now(timezone.utc) - timedelta(days=7)
             to_delete = []
             for did, d in self.store.drafts.items():
                 u_at = d.get("updated_at")
                 if u_at:
-                    if not d.get("submitted") and u_at < cutoff_2d:
+                    if not d.get("submitted") and u_at < cutoff_30d:
                         to_delete.append(did)
                     elif d.get("submitted") and u_at < cutoff_7d:
                         to_delete.append(did)

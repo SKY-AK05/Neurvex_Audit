@@ -14,8 +14,8 @@
     <div v-if="showModal" class="save-modal-overlay" @click="showModal = false">
       <div class="save-modal-card" @click.stop>
         <div class="modal-badge-icon">✓</div>
-        <h3>Audit Progress Saved!</h3>
-        <p>You can close this tab and resume your audit anytime within the next <strong>2 days (48 hours)</strong> using your secure link:</p>
+        <h3>Assessment Progress Saved!</h3>
+        <p>You can close this tab and resume your assessment anytime within the next <strong>30 days</strong> using your secure link:</p>
         
         <div class="link-box">
           <input type="text" readonly :value="url" ref="linkInput" @click="$event.target.select()" />

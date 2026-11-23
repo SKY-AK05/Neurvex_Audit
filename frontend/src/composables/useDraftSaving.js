@@ -1,60 +1,55 @@
 import { ref, watch, onUnmounted } from "vue";
 
-const RESUME_SESSION_MS = 30 * 60 * 1000; // 30 minutes
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const DEBOUNCE_SYNC_MS = 2500; // 2.5s debounce
 
 export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
   const isSaving = ref(false);
   const saveError = ref("");
+  const saveStatus = ref("idle"); // 'idle' | 'saving' | 'saved' | 'error'
   const resumeUrl = ref("");
   const draftId = ref(localStorage.getItem("nd_draft_id") || null);
+  const draftRestored = ref(false);
 
-  // Restore from LocalStorage — ONLY if the user arrived via a resume link.
-  //
-  // Flow:
-  //   Fresh visit  → wipe any leftover draft, form starts blank.
-  //   Resume link  → ResumeDraft.vue sets "nd_resume_ready" + "nd_resume_at" timestamp,
-  //                  we restore the draft and start a 30-minute session window.
-  //   After 30 min → draft is treated as expired; next load starts blank.
-  //   Start Fresh  → call clearDraft() which wipes everything immediately.
+  let debounceTimer = null;
+  let resetStatusTimer = null;
+
+  // Restore from LocalStorage:
+  // 1. If arriving via resume token link, state is restored.
+  // 2. If returning to same browser session within 30 days, progress is seamlessly restored.
   function restoreLocalDraft() {
-    const resumeReady = localStorage.getItem("nd_resume_ready");
-
-    if (!resumeReady) {
-      // Fresh visit — wipe any leftover draft so the form is always blank
-      localStorage.removeItem("nd_draft_state");
-      localStorage.removeItem("nd_draft_id");
-      localStorage.removeItem("nd_resume_at");
-      return;
-    }
-
-    // Check 30-minute session window
-    const resumedAt = parseInt(localStorage.getItem("nd_resume_at") || "0", 10);
-    const expired = Date.now() - resumedAt > RESUME_SESSION_MS;
-
-    // Consume the flag immediately (single-use regardless of expiry)
-    localStorage.removeItem("nd_resume_ready");
-
-    if (expired) {
-      localStorage.removeItem("nd_draft_state");
-      localStorage.removeItem("nd_draft_id");
-      localStorage.removeItem("nd_resume_at");
-      return;
-    }
-
     const saved = localStorage.getItem("nd_draft_state");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        Object.assign(formData, parsed.formData);
-        currentStep.value = parsed.currentStep;
-        if (parsed.draftId) draftId.value = parsed.draftId;
-      } catch (e) {
-        console.error("Failed to parse local draft", e);
-      }
+    if (!saved) return false;
+
+    const savedAt = parseInt(localStorage.getItem("nd_saved_at") || "0", 10);
+    const isExpired = savedAt > 0 && (Date.now() - savedAt > THIRTY_DAYS_MS);
+
+    if (isExpired) {
+      clearDraft();
+      return false;
     }
+
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.formData) {
+        Object.assign(formData, parsed.formData);
+        if (typeof parsed.currentStep === "number" && parsed.currentStep > 0) {
+          currentStep.value = parsed.currentStep;
+        }
+        if (parsed.draftId) {
+          draftId.value = parsed.draftId;
+        }
+        draftRestored.value = true;
+        localStorage.removeItem("nd_resume_ready");
+        return true;
+      }
+    } catch (e) {
+      console.error("Failed to parse local draft", e);
+    }
+    return false;
   }
 
-  // Auto-save to LocalStorage (includes draftId so it survives page reloads within session)
+  // Auto-save to LocalStorage
   function saveToLocal() {
     const payload = {
       formData: { ...formData },
@@ -62,22 +57,32 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
       draftId: draftId.value,
     };
     localStorage.setItem("nd_draft_state", JSON.stringify(payload));
+    localStorage.setItem("nd_saved_at", String(Date.now()));
   }
 
   // Sync to Backend
-  async function syncToBackend() {
+  async function syncToBackend(sendEmail = false) {
+    const email = (formData.email || "").trim();
+    if (!email) {
+      saveToLocal();
+      return "";
+    }
+
     isSaving.value = true;
+    saveStatus.value = "saving";
     saveError.value = "";
+
     try {
       const response = await fetch(`${API_BASE}/drafts/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           draft_id: draftId.value || null,
-          email: formData.email,
-          company_name: formData.company_name,
+          email: email,
+          company_name: formData.company_name || "Assessment",
           form_state: formData,
-          current_step: currentStep.value
+          current_step: currentStep.value,
+          send_email: sendEmail
         })
       });
       const data = await response.json();
@@ -86,12 +91,33 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
       draftId.value = data.draft_id;
       localStorage.setItem("nd_draft_id", data.draft_id);
       resumeUrl.value = data.resume_url;
+      saveStatus.value = "saved";
+
+      if (resetStatusTimer) clearTimeout(resetStatusTimer);
+      resetStatusTimer = setTimeout(() => {
+        saveStatus.value = "idle";
+      }, 4000);
+
       return data.resume_url;
     } catch (e) {
       saveError.value = e.message;
-      throw e;
+      saveStatus.value = "error";
+      if (sendEmail) throw e;
+      return "";
     } finally {
       isSaving.value = false;
+    }
+  }
+
+  // Debounced auto-save handler
+  function triggerAutoSave() {
+    saveToLocal();
+
+    if (formData.email && formData.email.trim()) {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        syncToBackend(false);
+      }, DEBOUNCE_SYNC_MS);
     }
   }
 
@@ -100,25 +126,41 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     localStorage.removeItem("nd_draft_id");
     localStorage.removeItem("nd_resume_ready");
     localStorage.removeItem("nd_resume_at");
+    localStorage.removeItem("nd_saved_at");
     draftId.value = null;
     resumeUrl.value = "";
+    draftRestored.value = false;
+    saveStatus.value = "idle";
   }
 
-  // 30s auto-save to localStorage
-  const localInterval = setInterval(saveToLocal, 30000);
+  // Watch for step changes: flush save immediately
+  watch(currentStep, () => {
+    saveToLocal();
+    if (formData.email && formData.email.trim()) {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      syncToBackend(false);
+    }
+  });
 
-  // Also save on every form/step change
-  watch([formData, currentStep], saveToLocal, { deep: true });
+  // Watch for form changes: debounced sync
+  watch(formData, triggerAutoSave, { deep: true });
+
+  // 30s background heartbeat
+  const localInterval = setInterval(saveToLocal, 30000);
 
   onUnmounted(() => {
     clearInterval(localInterval);
+    if (debounceTimer) clearTimeout(debounceTimer);
+    if (resetStatusTimer) clearTimeout(resetStatusTimer);
   });
 
   return {
     isSaving,
     saveError,
+    saveStatus,
     resumeUrl,
     draftId,
+    draftRestored,
     restoreLocalDraft,
     saveToLocal,
     syncToBackend,

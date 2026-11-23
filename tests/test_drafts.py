@@ -1,10 +1,10 @@
 """
 test_drafts.py — Unit and integration tests for the Draft Saving and Resuming system.
 Verifies:
-1. Save and resume draft within valid 2-day (48-hour) window.
-2. Token expiration after 2 days (48 hours) returns 401.
-3. Database record expiration after 2 days (48 hours) returns 401.
-4. Auto-cleanup purges drafts older than 2 days upon new save operations.
+1. Save and resume draft within valid 30-day window.
+2. Token expiration after 30 days returns 401.
+3. Database record expiration after 30 days returns 401.
+4. Auto-cleanup purges drafts older than 30 days upon new save operations.
 5. Already submitted drafts cannot be resumed or overwritten.
 6. Draft ownership validation (IDOR/BOLA protection) rejects unauthorized email modifications with 403.
 """
@@ -21,7 +21,7 @@ client = TestClient(app)
 
 
 def test_save_and_resume_draft():
-    """Standard flow: saving a draft and resuming with a valid 2-day token succeeds."""
+    """Standard flow: saving a draft and resuming with a valid 30-day token succeeds."""
     MEM_STORE.reset()
     payload = {
         "email": "org-test@company.com",
@@ -39,11 +39,11 @@ def test_save_and_resume_draft():
     token = data["resume_url"].split("token=")[1]
     decoded = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
     assert "exp" in decoded
-    # Verify exp is set to ~2 days (between 47h and 49h from now)
+    # Verify exp is set to ~30 days (between 29 and 31 days from now)
     exp_dt = datetime.fromtimestamp(decoded["exp"], tz=timezone.utc)
     now = datetime.now(timezone.utc)
     time_diff = exp_dt - now
-    assert timedelta(hours=47) <= time_diff <= timedelta(hours=49)
+    assert timedelta(days=29) <= time_diff <= timedelta(days=31)
 
     # Resume draft
     res_response = client.get(f"/api/drafts/resume?token={token}")
@@ -55,11 +55,11 @@ def test_save_and_resume_draft():
     assert res_data["current_step"] == 2
 
 
-def test_draft_token_expired_after_2_days():
-    """A resume link whose token expired (>2 days) is rejected with 401."""
+def test_draft_token_expired_after_30_days():
+    """A resume link whose token expired (>30 days) is rejected with 401."""
     MEM_STORE.reset()
     draft_id = str(uuid.uuid4())
-    # Expired token (created 3 days ago)
+    # Expired token (created 31 days ago)
     exp = datetime.now(timezone.utc) - timedelta(days=1)
     expired_token = jwt.encode({"draft_id": draft_id, "exp": exp}, JWT_SECRET, algorithm="HS256")
 
@@ -68,11 +68,11 @@ def test_draft_token_expired_after_2_days():
     assert "expired" in response.json().get("detail", "").lower()
 
 
-def test_draft_database_record_expired_after_2_days():
-    """A draft whose database record is older than 2 days is rejected with 401."""
+def test_draft_database_record_expired_after_30_days():
+    """A draft whose database record is older than 30 days is rejected with 401."""
     MEM_STORE.reset()
     draft_id = str(uuid.uuid4())
-    old_timestamp = datetime.now(timezone.utc) - timedelta(days=3)
+    old_timestamp = datetime.now(timezone.utc) - timedelta(days=31)
     MEM_STORE.drafts[draft_id] = {
         "id": draft_id,
         "email": "stale@company.com",
@@ -93,14 +93,14 @@ def test_draft_database_record_expired_after_2_days():
 
     response = client.get(f"/api/drafts/resume?token={fresh_token}")
     assert response.status_code == 401
-    assert "2-day limit" in response.json().get("detail", "")
+    assert "30-day limit" in response.json().get("detail", "")
 
 
 def test_draft_auto_cleanup_purges_stale_records():
-    """Calling POST /api/drafts/save automatically cleans up drafts older than 2 days."""
+    """Calling POST /api/drafts/save automatically cleans up drafts older than 30 days."""
     MEM_STORE.reset()
     stale_draft_id = str(uuid.uuid4())
-    old_timestamp = datetime.now(timezone.utc) - timedelta(days=3)
+    old_timestamp = datetime.now(timezone.utc) - timedelta(days=32)
     MEM_STORE.drafts[stale_draft_id] = {
         "id": stale_draft_id,
         "email": "cleanup@company.com",
@@ -114,7 +114,7 @@ def test_draft_auto_cleanup_purges_stale_records():
 
     assert stale_draft_id in MEM_STORE.drafts
 
-    # Saving any new draft triggers the automatic 2-day cleanup query
+    # Saving any new draft triggers the automatic 30-day cleanup query
     new_payload = {
         "email": "newuser@company.com",
         "company_name": "New Corp",
