@@ -1,12 +1,12 @@
 import { ref, watch, onUnmounted } from "vue";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const DEBOUNCE_SYNC_MS = 2500; // 2.5s debounce
+const DEBOUNCE_SYNC_MS = 1000; // 1s responsive debounce
 
 export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
   const isSaving = ref(false);
   const saveError = ref("");
-  const saveStatus = ref("idle"); // 'idle' | 'saving' | 'saved' | 'error'
+  const saveStatus = ref("saved"); // 'idle' | 'saving' | 'saved' | 'error'
   const resumeUrl = ref("");
   const draftId = ref(localStorage.getItem("nd_draft_id") || null);
   const draftRestored = ref(false);
@@ -14,9 +14,6 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
   let debounceTimer = null;
   let resetStatusTimer = null;
 
-  // Restore from LocalStorage:
-  // 1. If arriving via resume token link, state is restored.
-  // 2. If returning to same browser session within 30 days, progress is seamlessly restored.
   function restoreLocalDraft() {
     const saved = localStorage.getItem("nd_draft_state");
     if (!saved) return false;
@@ -40,6 +37,7 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
           draftId.value = parsed.draftId;
         }
         draftRestored.value = true;
+        saveStatus.value = "saved";
         localStorage.removeItem("nd_resume_ready");
         return true;
       }
@@ -49,7 +47,6 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     return false;
   }
 
-  // Auto-save to LocalStorage
   function saveToLocal() {
     const payload = {
       formData: { ...formData },
@@ -60,11 +57,12 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     localStorage.setItem("nd_saved_at", String(Date.now()));
   }
 
-  // Sync to Backend
   async function syncToBackend(sendEmail = false) {
     const email = (formData.email || "").trim();
     if (!email) {
       saveToLocal();
+      isSaving.value = false;
+      saveStatus.value = "saved";
       return "";
     }
 
@@ -92,12 +90,6 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
       localStorage.setItem("nd_draft_id", data.draft_id);
       resumeUrl.value = data.resume_url;
       saveStatus.value = "saved";
-
-      if (resetStatusTimer) clearTimeout(resetStatusTimer);
-      resetStatusTimer = setTimeout(() => {
-        saveStatus.value = "idle";
-      }, 4000);
-
       return data.resume_url;
     } catch (e) {
       saveError.value = e.message;
@@ -109,16 +101,22 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     }
   }
 
-  // Debounced auto-save handler
+  // As user types or changes an answer: immediately shows loading/saving, then flips to saved
   function triggerAutoSave() {
     saveToLocal();
+    isSaving.value = true;
+    saveStatus.value = "saving";
 
-    if (formData.email && formData.email.trim()) {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => {
-        syncToBackend(false);
-      }, DEBOUNCE_SYNC_MS);
-    }
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(async () => {
+      if (formData.email && formData.email.trim()) {
+        await syncToBackend(false);
+      } else {
+        // Saved locally to browser cache
+        isSaving.value = false;
+        saveStatus.value = "saved";
+      }
+    }, DEBOUNCE_SYNC_MS);
   }
 
   function clearDraft() {
@@ -130,7 +128,7 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     draftId.value = null;
     resumeUrl.value = "";
     draftRestored.value = false;
-    saveStatus.value = "idle";
+    saveStatus.value = "saved";
   }
 
   // Watch for step changes: flush save immediately
@@ -142,10 +140,9 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     }
   });
 
-  // Watch for form changes: debounced sync
+  // Watch for form changes: trigger auto-save (loads and saves as user types)
   watch(formData, triggerAutoSave, { deep: true });
 
-  // 30s background heartbeat
   const localInterval = setInterval(saveToLocal, 30000);
 
   onUnmounted(() => {

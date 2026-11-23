@@ -375,6 +375,33 @@
             <span class="why-niwi-text">Neuro-Inclusive<br/>Workplace Index</span>
           </div>
           <div class="why-header-right">
+            <!-- Save status before Orchvate logo (as user types it loads and saves) -->
+            <div v-if="currentStep >= 2" class="header-save-indicator" :class="saveStatus" title="Assessment responses are automatically saved as you type">
+              <template v-if="isSaving">
+                <span class="save-spinner-icon" aria-hidden="true"></span>
+                <span class="save-status-text">Saving…</span>
+              </template>
+              <template v-else-if="saveStatus === 'saved'">
+                <svg class="save-cloud-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path>
+                  <polyline points="9 13 12 16 16 11"></polyline>
+                </svg>
+                <span class="save-status-text">Saved</span>
+              </template>
+              <template v-else-if="saveStatus === 'error'">
+                <span class="save-status-text error">Sync failed</span>
+              </template>
+              <template v-else>
+                <svg class="save-cloud-icon idle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"></path>
+                  <polyline points="9 13 12 16 16 11"></polyline>
+                </svg>
+                <span class="save-status-text idle">Saved</span>
+              </template>
+            </div>
+
+            <div v-if="currentStep >= 2" class="header-save-divider" aria-hidden="true"></div>
+
             <span class="powered-by-label">POWERED BY</span>
             <img src="/logo_orchvate.png" alt="Orchvate" class="orchvate-logo-compact" />
           </div>
@@ -434,12 +461,6 @@
               <p v-if="currentStep === feedbackStepIndex" class="step-sub">
                 Before submitting, please feel free to share any thoughts, workplace observations, or suggestions you have. This step is completely optional.
               </p>
-            </div>
-
-            <!-- Draft Restored Banner -->
-            <div v-if="draftRestored && currentStep >= 2" class="draft-restored-banner">
-              <span>✓ Restored your in-progress assessment.</span>
-              <button type="button" class="btn-banner-dismiss" @click="draftRestored = false">Dismiss</button>
             </div>
 
             <div ref="questionsScroll" class="questions-scroll">
@@ -952,9 +973,6 @@
               <div v-else></div>
 
               <div class="step-nav-mid">
-                <span v-if="autoSaveStatusText" class="auto-save-status-indicator" :class="saveStatus">
-                  {{ autoSaveStatusText }}
-                </span>
                 <SaveContinueButton v-if="currentStep >= 2" :onSave="handleManualSave" />
                 <button v-if="currentStep > 3" class="btn-start-fresh" @click="startFresh" type="button">↺ Start Fresh</button>
               </div>
@@ -1436,13 +1454,6 @@ const {
   draftId,
   draftRestored
 } = useDraftSaving(form, currentStep);
-
-const autoSaveStatusText = computed(() => {
-  if (isSaving.value) return "Saving...";
-  if (saveStatus.value === "saved") return "Saved ✓";
-  if (saveStatus.value === "error") return "Sync failed";
-  return "";
-});
 
 async function handleManualSave() {
   if (!form.email || !form.email.trim()) {
@@ -2804,52 +2815,79 @@ async function pollSubmissionStatus(subId) {
   border: 1px solid rgba(0, 144, 112, 0.2);
 }
 
-/* ── Auto-save status and draft restore banner ── */
-.auto-save-status-indicator {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #009070;
-  padding: 0.25rem 0.65rem;
-  border-radius: 99px;
-  background: rgba(0, 144, 112, 0.08);
+/* ── Header Save Indicator (Before Orchvate logo) ── */
+.header-save-indicator {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  transition: all 0.2s ease;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #009070;
+  padding: 0.2rem 0.6rem;
+  border-radius: 99px;
+  background: rgba(0, 144, 112, 0.08);
+  border: 1px solid rgba(0, 144, 112, 0.18);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
-.auto-save-status-indicator.saving {
+.header-save-indicator.saving {
   color: #120050;
   background: rgba(18, 0, 80, 0.06);
+  border-color: rgba(18, 0, 80, 0.15);
 }
 
-.auto-save-status-indicator.error {
+.header-save-indicator.error {
   color: #DC2626;
   background: #FEF2F2;
+  border-color: rgba(220, 38, 38, 0.2);
 }
 
-.draft-restored-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #E6F5F1;
-  border: 1px solid rgba(0, 144, 112, 0.25);
-  color: #007055;
-  font-size: 0.85rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
+.save-spinner-icon {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(18, 0, 80, 0.2);
+  border-top-color: #120050;
+  border-radius: 50%;
+  animation: save-spin 0.6s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
-.btn-banner-dismiss {
-  background: transparent;
-  border: none;
-  color: #007055;
-  font-size: 0.75rem;
+@keyframes save-spin {
+  to { transform: rotate(360deg); }
+}
+
+.save-cloud-icon {
+  color: #009070;
+  flex-shrink: 0;
+}
+
+.save-cloud-icon.idle {
+  color: #059669;
+  opacity: 0.85;
+}
+
+.save-status-text {
+  font-size: 0.775rem;
   font-weight: 600;
-  cursor: pointer;
-  text-decoration: underline;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.save-status-text.error {
+  color: #DC2626;
+}
+
+.save-status-text.idle {
+  color: #059669;
+}
+
+.header-save-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(22, 16, 87, 0.14);
+  margin: 0 0.15rem;
 }
 
 .consent-privacy-link {
@@ -2896,7 +2934,7 @@ async function pollSubmissionStatus(subId) {
 .why-header-right {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.65rem;
 }
 
 .powered-by-label {
