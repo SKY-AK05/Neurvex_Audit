@@ -8,15 +8,19 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
   const saveError = ref("");
   const saveStatus = ref("saved"); // 'idle' | 'saving' | 'saved' | 'error'
   const resumeUrl = ref("");
-  const draftId = ref(localStorage.getItem("nd_draft_id") || null);
+  const draftId = ref(null);
   const draftRestored = ref(false);
+  let lastSyncedEmail = "";
 
   let debounceTimer = null;
   let resetStatusTimer = null;
 
   function restoreLocalDraft() {
     const saved = localStorage.getItem("nd_draft_state");
-    if (!saved) return false;
+    if (!saved) {
+      clearDraft();
+      return false;
+    }
 
     const savedAt = parseInt(localStorage.getItem("nd_saved_at") || "0", 10);
     const isExpired = savedAt > 0 && (Date.now() - savedAt > THIRTY_DAYS_MS);
@@ -36,8 +40,12 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
         if (parsed.draftId) {
           draftId.value = parsed.draftId;
         }
+        if (parsed.formData && parsed.formData.email) {
+          lastSyncedEmail = parsed.formData.email.trim().toLowerCase();
+        }
         draftRestored.value = true;
         saveStatus.value = "saved";
+        saveError.value = "";
         localStorage.removeItem("nd_resume_ready");
         return true;
       }
@@ -66,6 +74,12 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
       return "";
     }
 
+    // If user edited their email since last sync, existing draftId belonged to the previous email
+    if (lastSyncedEmail && email.toLowerCase() !== lastSyncedEmail) {
+      draftId.value = null;
+      localStorage.removeItem("nd_draft_id");
+    }
+
     isSaving.value = true;
     saveStatus.value = "saving";
     saveError.value = "";
@@ -84,12 +98,48 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
         })
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || "Failed to save draft.");
+      if (!response.ok) {
+        // Self-heal: If 403 Forbidden (ownership mismatch) or 404 Not Found (stale/deleted draft),
+        // disassociate the stale draft_id, clear it from localStorage, and retry once to create a fresh draft under the current email.
+        if ((response.status === 403 || response.status === 404) && draftId.value) {
+          console.warn(`Draft ${draftId.value} rejected (${response.status}: ${data.detail}). Creating fresh draft for ${email}.`);
+          draftId.value = null;
+          localStorage.removeItem("nd_draft_id");
+
+          const retryRes = await fetch(`${API_BASE}/drafts/save`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              draft_id: null,
+              email: email,
+              company_name: formData.company_name || "Assessment",
+              form_state: formData,
+              current_step: currentStep.value,
+              send_email: sendEmail
+            })
+          });
+          const retryData = await retryRes.json();
+          if (!retryRes.ok) throw new Error(retryData.detail || "Failed to save draft.");
+
+          draftId.value = retryData.draft_id;
+          localStorage.setItem("nd_draft_id", retryData.draft_id);
+          resumeUrl.value = retryData.resume_url;
+          saveStatus.value = "saved";
+          saveError.value = "";
+          lastSyncedEmail = email.toLowerCase();
+          saveToLocal();
+          return retryData.resume_url;
+        }
+        throw new Error(data.detail || "Failed to save draft.");
+      }
 
       draftId.value = data.draft_id;
       localStorage.setItem("nd_draft_id", data.draft_id);
       resumeUrl.value = data.resume_url;
       saveStatus.value = "saved";
+      saveError.value = "";
+      lastSyncedEmail = email.toLowerCase();
+      saveToLocal();
       return data.resume_url;
     } catch (e) {
       saveError.value = e.message;
@@ -129,6 +179,8 @@ export function useDraftSaving(formData, currentStep, API_BASE = "/api") {
     resumeUrl.value = "";
     draftRestored.value = false;
     saveStatus.value = "saved";
+    saveError.value = "";
+    lastSyncedEmail = "";
   }
 
   // Watch for step changes: flush save immediately
