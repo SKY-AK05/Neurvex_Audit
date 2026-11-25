@@ -1584,7 +1584,11 @@ onMounted(async () => {
     console.warn("Error loading sections from API, using default sections", e);
   } finally {
     isLoading.value = false;
-    restoreLocalDraft();
+    const restored = restoreLocalDraft();
+    if (restored && (form.t || form.invitation_token)) {
+      isInvitationMode.value = true;
+      isOrgFromLink.value = true;
+    }
     nextTick(() => {
       const el = currentStep.value === 1 ? whyMattersPageRef.value : unifiedPageRef.value;
       if (el) {

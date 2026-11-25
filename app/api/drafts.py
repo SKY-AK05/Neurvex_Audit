@@ -409,17 +409,33 @@ async def resume_draft(token: str):
         "draft_id": draft_id
     }
 
-def process_draft_reminders(limit: int = 50, hours_threshold: Optional[int] = None) -> int:
+def process_draft_reminders(
+    limit: int = 50,
+    hours_threshold: Optional[int] = None,
+    minutes_threshold: Optional[int] = None
+) -> int:
     """
-    Finds incomplete drafts (submitted = FALSE) older than hours_threshold (default 48 hours)
+    Finds incomplete drafts (submitted = FALSE) older than threshold (default 2 hours)
     that haven't received a reminder.
     Dispatches a branded Orchvate reminder email with a 30-day resume link and marks reminder_sent_at.
     """
-    if hours_threshold is None:
-        try:
-            hours_threshold = int(os.environ.get("DRAFT_REMINDER_HOURS", "48"))
-        except (ValueError, TypeError):
-            hours_threshold = 48
+    if minutes_threshold is None:
+        env_minutes = os.environ.get("DRAFT_REMINDER_MINUTES")
+        if env_minutes is not None:
+            try:
+                minutes_threshold = int(env_minutes)
+            except (ValueError, TypeError):
+                minutes_threshold = None
+
+    if minutes_threshold is not None:
+        interval_minutes = max(1, minutes_threshold)
+    else:
+        if hours_threshold is None:
+            try:
+                hours_threshold = int(os.environ.get("DRAFT_REMINDER_HOURS", "2"))
+            except (ValueError, TypeError):
+                hours_threshold = 2
+        interval_minutes = max(1, hours_threshold * 60)
 
     sent_count = 0
     try:
@@ -438,20 +454,20 @@ def process_draft_reminders(limit: int = 50, hours_threshold: Optional[int] = No
                           )
                     """)
 
-                    # 2. Select eligible drafts needing reminders
+                    # 2. Select eligible drafts needing reminders (older than interval_minutes, within 30 days)
                     cur.execute("""
                         SELECT id, email, company_name, form_state
                         FROM draft_submissions
                         WHERE submitted = FALSE
                           AND email IS NOT NULL
                           AND TRIM(email) != ''
-                          AND updated_at <= NOW() - (%s || ' hours')::interval
+                          AND updated_at <= NOW() - (%s || ' minutes')::interval
                           AND updated_at >= NOW() - INTERVAL '30 days'
                           AND reminder_sent_at IS NULL
                         ORDER BY updated_at ASC
                         LIMIT %s
                         FOR UPDATE SKIP LOCKED
-                    """, (hours_threshold, limit))
+                    """, (interval_minutes, limit))
                     candidates = cur.fetchall()
                     for row in candidates:
                         draft_id, email, company_name, form_state = row

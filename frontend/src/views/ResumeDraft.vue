@@ -60,7 +60,14 @@ onMounted(async () => {
     localStorage.setItem("nd_resume_ready", "1");
     localStorage.setItem("nd_resume_at", String(Date.now()));
 
-    router.push("/");
+    const query = {};
+    if (data.form_state?.t) {
+      query.t = data.form_state.t;
+    } else if (data.form_state?.invitation_token) {
+      query.t = data.form_state.invitation_token;
+    }
+
+    router.push({ path: "/", query });
   } catch (e) {
     error.value = e.message;
   } finally {

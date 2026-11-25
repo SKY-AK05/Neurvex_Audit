@@ -179,13 +179,13 @@ def test_render_draft_email_styling():
 
 
 def test_process_draft_reminders_worker():
-    """Verify draft reminder worker detects incomplete drafts >48h and dispatches reminders."""
+    """Verify draft reminder worker detects incomplete drafts >2h and dispatches reminders."""
     from app.api.drafts import process_draft_reminders
 
     MEM_STORE.reset()
     draft_id = str(uuid.uuid4())
-    # Created/updated 50 hours ago (within 30 days, >48 hours)
-    old_timestamp = datetime.now(timezone.utc) - timedelta(hours=50)
+    # Created/updated 2.5 hours ago (within 30 days, >2 hours)
+    old_timestamp = datetime.now(timezone.utc) - timedelta(hours=2, minutes=30)
     MEM_STORE.drafts[draft_id] = {
         "id": draft_id,
         "email": "incomplete-user@company.com",
@@ -199,7 +199,7 @@ def test_process_draft_reminders_worker():
         "reminder_count": 0
     }
 
-    # Execute worker reminder processing
+    # Execute worker reminder processing (default 2 hours)
     sent_count = process_draft_reminders()
     assert sent_count == 1
     assert MEM_STORE.drafts[draft_id]["reminder_sent_at"] is not None
@@ -208,4 +208,65 @@ def test_process_draft_reminders_worker():
     # Second run should not duplicate reminders for already-reminded draft
     second_run_count = process_draft_reminders()
     assert second_run_count == 0
+
+
+def test_process_draft_reminders_with_minutes_threshold():
+    """Verify rapid testing flow using minutes threshold (e.g. 5 minutes)."""
+    from app.api.drafts import process_draft_reminders
+
+    MEM_STORE.reset()
+    draft_id = str(uuid.uuid4())
+    # Updated 10 minutes ago
+    recent_timestamp = datetime.now(timezone.utc) - timedelta(minutes=10)
+    MEM_STORE.drafts[draft_id] = {
+        "id": draft_id,
+        "email": "fast-test@company.com",
+        "company_name": "Rapid Test Corp",
+        "form_state": {"name": "Fast User", "q5": "Yes"},
+        "current_step": 3,
+        "submitted": False,
+        "created_at": recent_timestamp,
+        "updated_at": recent_timestamp,
+        "reminder_sent_at": None,
+        "reminder_count": 0
+    }
+
+    # Threshold set to 5 minutes: should pick up draft updated 10m ago
+    sent_count = process_draft_reminders(minutes_threshold=5)
+    assert sent_count == 1
+    assert MEM_STORE.drafts[draft_id]["reminder_sent_at"] is not None
+
+
+def test_draft_preserves_embedded_org_link_token():
+    """Verify that drafts created via an embedded org link preserve the org token across save & resume."""
+    MEM_STORE.reset()
+    org_token = "SECURE_ORG_INVITE_TOKEN_123"
+    payload = {
+        "email": "employee@clientorg.com",
+        "company_name": "Client Organization Inc",
+        "form_state": {
+            "name": "Jane Doe",
+            "company_name": "Client Organization Inc",
+            "t": org_token,
+            "invitation_token": org_token,
+            "q5": "Yes",
+            "q6": "Partially"
+        },
+        "current_step": 3
+    }
+    # Save draft with embedded org token
+    save_res = client.post("/api/drafts/save", json=payload)
+    assert save_res.status_code == 200
+    save_data = save_res.json()
+    token = save_data["resume_url"].split("token=")[1]
+
+    # Resume draft
+    resume_res = client.get(f"/api/drafts/resume?token={token}")
+    assert resume_res.status_code == 200
+    res_data = resume_res.json()
+    assert res_data["company_name"] == "Client Organization Inc"
+    assert res_data["form_state"]["t"] == org_token
+    assert res_data["form_state"]["invitation_token"] == org_token
+    assert res_data["form_state"]["company_name"] == "Client Organization Inc"
+
 

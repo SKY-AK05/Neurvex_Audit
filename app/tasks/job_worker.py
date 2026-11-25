@@ -290,8 +290,8 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
                 await asyncio.to_thread(drain_legacy_email_dlq)
                 last_reclaim = loop_now
 
-            # Every 15 minutes, check for incomplete draft reminders
-            if loop_now - last_reminder_check > 900:
+            # Every 5 minutes (300s), check for incomplete draft reminders
+            if loop_now - last_reminder_check > 300:
                 try:
                     from app.api.drafts import process_draft_reminders
                     sent_count = await asyncio.to_thread(process_draft_reminders)

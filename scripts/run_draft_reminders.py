@@ -16,7 +16,8 @@ from app.api.drafts import process_draft_reminders
 
 def main():
     parser = argparse.ArgumentParser(description="Process NIWI incomplete draft reminders")
-    parser.add_argument("--hours", type=int, default=None, help="Inactivity threshold in hours (default: 48 or DRAFT_REMINDER_HOURS env)")
+    parser.add_argument("--hours", type=int, default=None, help="Inactivity threshold in hours (default: 2 or DRAFT_REMINDER_HOURS env)")
+    parser.add_argument("--minutes", type=int, default=None, help="Inactivity threshold in minutes (e.g. for testing or rapid reminders)")
     parser.add_argument("--limit", type=int, default=50, help="Max reminders to dispatch per run")
     args = parser.parse_args()
 
@@ -25,7 +26,7 @@ def main():
     except Exception as e:
         logger.warning("Could not pre-init DB pool: %s", e)
 
-    count = process_draft_reminders(limit=args.limit, hours_threshold=args.hours)
+    count = process_draft_reminders(limit=args.limit, hours_threshold=args.hours, minutes_threshold=args.minutes)
     logger.info("Draft reminder process complete. Sent: %d", count)
     print(f"Sent {count} draft reminder(s).")
 
