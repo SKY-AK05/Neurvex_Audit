@@ -431,10 +431,19 @@ def process_draft_reminders(
         interval_minutes = max(1, minutes_threshold)
     else:
         if hours_threshold is None:
-            try:
-                hours_threshold = int(os.environ.get("DRAFT_REMINDER_HOURS", "2"))
-            except (ValueError, TypeError):
-                hours_threshold = 2
+            env_hours = os.environ.get("DRAFT_REMINDER_HOURS")
+            if env_hours is not None:
+                try:
+                    hours_threshold = int(env_hours)
+                except (ValueError, TypeError):
+                    hours_threshold = None
+            if hours_threshold is None:
+                try:
+                    from app.services.settings_service import get_settings
+                    db_settings = get_settings()
+                    hours_threshold = int(db_settings.get("draft_reminder_hours", 2))
+                except Exception:
+                    hours_threshold = 2
         interval_minutes = max(1, hours_threshold * 60)
 
     sent_count = 0

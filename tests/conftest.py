@@ -53,8 +53,15 @@ class InMemoryStore:
             "sender_address": "test@orchvate.in",
             "notifications_enabled": False,
             "support_email": "support@orchvate.in",
-            "low_visibility_threshold": 50
+            "low_visibility_threshold": 50,
+            "draft_reminder_hours": 2
         }
+        try:
+            import app.services.settings_service
+            app.services.settings_service._settings_cache = None
+            app.services.settings_service._settings_cache_time = 0.0
+        except Exception:
+            pass
         self.audit_logs = []
         self.post_submit_jobs = {}
         self.service_bus_outbox = {}
@@ -581,12 +588,26 @@ class MockCursor:
                 "crm_sync_enabled": False,
                 "hubspot_api_key": "",
                 "support_email": "support@orchvate.in",
-                "low_visibility_threshold": 50
+                "low_visibility_threshold": 50,
+                "draft_reminder_hours": 2
             }
             if "crm_sync_enabled" in sql_lower and "notification_email" not in sql_lower:
                 self._results = [{"crm_sync_enabled": False}] if self.dict_cursor else [(False,)]
             elif "notification_email" in sql_lower:
-                self._results = [settings_dict] if self.dict_cursor else [("", "", False, "NIWI Team", "test@orchvate.in")]
+                full_tuple = (
+                    settings_dict["sender_name"],
+                    settings_dict["sender_address"],
+                    settings_dict["notification_email"],
+                    settings_dict["notification_cc_email"],
+                    settings_dict["notifications_enabled"],
+                    settings_dict["support_email"],
+                    None,
+                    settings_dict["crm_sync_enabled"],
+                    settings_dict["hubspot_api_key"],
+                    settings_dict["low_visibility_threshold"],
+                    settings_dict["draft_reminder_hours"]
+                )
+                self._results = [settings_dict] if self.dict_cursor else [full_tuple]
             else:
                 self._results = [settings_dict] if self.dict_cursor else [tuple(settings_dict.values())]
             self.rowcount = 1

@@ -71,6 +71,29 @@
       </div>
 
       <div v-if="isSuperAdmin" class="card">
+        <h2>Draft &amp; Incomplete Assessment Reminders</h2>
+        <p class="card-hint">
+          Configure how long an incomplete assessment can remain untouched before an automated reminder email is dispatched to the respondent.
+        </p>
+        <div class="fields-row">
+          <div class="field" style="max-width: 320px;">
+            <label for="draft-reminder-hours">Draft Reminder Inactivity Delay (Hours)</label>
+            <input
+              id="draft-reminder-hours"
+              v-model.number="form.draft_reminder_hours"
+              type="number"
+              min="1"
+              max="720"
+              step="1"
+            />
+            <p style="font-size: 0.75rem; color: #888; margin-top: 0.3rem;">
+              Default: 2 hours. Incomplete assessments will trigger a reminder email after being inactive for this time.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="isSuperAdmin" class="card">
         <div class="card-header-flex">
           <div>
             <h2>Security &amp; Traffic Management</h2>
@@ -298,6 +321,7 @@ const form = reactive({
   notifications_enabled: false,
   support_email: "",
   low_visibility_threshold: 50,
+  draft_reminder_hours: 2,
 });
 
 // Security & Traffic Management: Rate Limits State
@@ -462,6 +486,7 @@ onMounted(async () => {
     form.notifications_enabled = !!data.notifications_enabled;
     form.support_email = data.support_email || "";
     form.low_visibility_threshold = data.low_visibility_threshold !== undefined ? data.low_visibility_threshold : 50;
+    form.draft_reminder_hours = data.draft_reminder_hours !== undefined ? data.draft_reminder_hours : 2;
   } catch (e) {
     loadError.value = e.message;
   } finally {
@@ -503,6 +528,7 @@ async function save() {
     form.notifications_enabled = data.notifications_enabled;
     form.support_email = data.support_email || "";
     form.low_visibility_threshold = data.low_visibility_threshold;
+    form.draft_reminder_hours = data.draft_reminder_hours !== undefined ? data.draft_reminder_hours : 2;
     window.dispatchEvent(new CustomEvent("settings-updated", { detail: data }));
     msgType.value = "success";
     msg.value = "Settings saved.";

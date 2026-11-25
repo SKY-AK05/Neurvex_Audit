@@ -58,3 +58,56 @@ def test_get_settings_table_exists():
     assert settings["crm_sync_enabled"] is False
     assert settings["hubspot_api_key"] == ""
     assert settings["low_visibility_threshold"] == 50
+    assert settings["draft_reminder_hours"] == 2
+
+
+def test_update_draft_reminder_hours():
+    import app.services.settings_service
+    app.services.settings_service._settings_cache = None
+    app.services.settings_service._app_settings_table_exists = True
+
+    mock_cur = MagicMock()
+    # 1. get_settings calls _fetch
+    # 2. update_settings execute runs
+    # 3. get_settings after update calls _fetch
+    mock_cur.fetchone.side_effect = [
+        (
+            "Orchvate",
+            "info@orchvate.com",
+            "admin@orchvate.com",
+            "",
+            False,
+            "support@orchvate.com",
+            None,
+            False,
+            "",
+            50,
+            2
+        ),
+        (
+            "Orchvate",
+            "info@orchvate.com",
+            "admin@orchvate.com",
+            "",
+            False,
+            "support@orchvate.com",
+            None,
+            False,
+            "",
+            50,
+            6
+        )
+    ]
+
+    res = update_settings(mock_cur, {"draft_reminder_hours": 6})
+    assert res["draft_reminder_hours"] == 6
+    # Verify execute called UPDATE with 6
+    update_call_args = [call for call in mock_cur.execute.call_args_list if "UPDATE app_settings SET" in call[0][0]]
+    assert len(update_call_args) == 1
+    params = update_call_args[0][0][1]
+    assert params[9] == 6  # draft_reminder_hours param
+
+    # Invalidate cache for subsequent tests
+    app.services.settings_service._settings_cache = None
+    app.services.settings_service._settings_cache_time = 0.0
+
