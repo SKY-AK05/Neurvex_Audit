@@ -279,7 +279,8 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
     logger.info("Started background job worker [%s]", worker_id)
 
     last_reclaim = 0.0
-    last_reminder_check = -870.0  # Runs initial draft reminder check within 30s of startup
+    last_reminder_check = -60.0
+    reminder_check_interval = int(os.environ.get("DRAFT_REMINDER_CHECK_INTERVAL", "30"))
 
     while _worker_running:
         try:
@@ -290,8 +291,8 @@ async def run_job_worker(worker_id: str = "worker-1", poll_interval: float = 2.0
                 await asyncio.to_thread(drain_legacy_email_dlq)
                 last_reclaim = loop_now
 
-            # Every 5 minutes (300s), check for incomplete draft reminders
-            if loop_now - last_reminder_check > 300:
+            # Periodically check for incomplete draft reminders (default every 30s)
+            if loop_now - last_reminder_check > reminder_check_interval:
                 try:
                     from app.api.drafts import process_draft_reminders
                     sent_count = await asyncio.to_thread(process_draft_reminders)

@@ -63,6 +63,8 @@ def ensure_settings_table(cur):
                     hubspot_api_key         TEXT NOT NULL DEFAULT '',
                     low_visibility_threshold INT NOT NULL DEFAULT 50,
                     draft_reminder_hours    INT NOT NULL DEFAULT 2,
+                    draft_reminder_value    INT NOT NULL DEFAULT 2,
+                    draft_reminder_unit     VARCHAR(10) NOT NULL DEFAULT 'hours',
                     updated_at              TIMESTAMP DEFAULT NOW()
                 );
                 """
@@ -75,6 +77,8 @@ def ensure_settings_table(cur):
             ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS hubspot_api_key TEXT NOT NULL DEFAULT '';
             ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS low_visibility_threshold INT NOT NULL DEFAULT 50;
             ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS draft_reminder_hours INT NOT NULL DEFAULT 2;
+            ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS draft_reminder_value INT NOT NULL DEFAULT 2;
+            ALTER TABLE app_settings ADD COLUMN IF NOT EXISTS draft_reminder_unit VARCHAR(10) NOT NULL DEFAULT 'hours';
             """
         )
         _app_settings_table_exists = True
@@ -115,7 +119,7 @@ def get_settings(cur=None) -> dict:
                 """
                 SELECT sender_name, sender_address, notification_email, notification_cc_email,
                        notifications_enabled, support_email, updated_at, crm_sync_enabled, hubspot_api_key,
-                       low_visibility_threshold, draft_reminder_hours
+                       low_visibility_threshold, draft_reminder_hours, draft_reminder_value, draft_reminder_unit
                 FROM app_settings WHERE id = 1
                 """
             )
@@ -155,7 +159,9 @@ def get_settings(cur=None) -> dict:
                 "crm_sync_enabled": False,
                 "hubspot_api_key": "",
                 "low_visibility_threshold": 50,
-                "draft_reminder_hours": 2
+                "draft_reminder_hours": 2,
+                "draft_reminder_value": 2,
+                "draft_reminder_unit": "hours"
             }
             _settings_cache_time = now
             return _settings_cache
@@ -171,7 +177,9 @@ def get_settings(cur=None) -> dict:
             "crm_sync_enabled": bool(row[7]),
             "hubspot_api_key": row[8] or "",
             "low_visibility_threshold": int(row[9]) if row[9] is not None else 50,
-            "draft_reminder_hours": int(row[10]) if len(row) > 10 and row[10] is not None else 2
+            "draft_reminder_hours": int(row[10]) if len(row) > 10 and row[10] is not None else 2,
+            "draft_reminder_value": int(row[11]) if len(row) > 11 and row[11] is not None else (int(row[10]) if len(row) > 10 and row[10] is not None else 2),
+            "draft_reminder_unit": str(row[12]) if len(row) > 12 and row[12] else "hours"
         }
         _settings_cache_time = now
         return _settings_cache
@@ -215,10 +223,31 @@ def update_settings(cur, data: dict) -> dict:
     low_visibility_threshold = (
         int(data.get("low_visibility_threshold")) if "low_visibility_threshold" in data else current["low_visibility_threshold"]
     )
-    draft_reminder_hours = (
-        int(data.get("draft_reminder_hours")) if "draft_reminder_hours" in data and data.get("draft_reminder_hours") is not None else current.get("draft_reminder_hours", 2)
-    )
-    if draft_reminder_hours < 1:
+    raw_unit = str(data.get("draft_reminder_unit") or current.get("draft_reminder_unit", "hours")).lower().strip()
+    draft_reminder_unit = raw_unit if raw_unit in ("seconds", "minutes", "hours") else "hours"
+
+    if "draft_reminder_value" in data and data.get("draft_reminder_value") is not None:
+        try:
+            draft_reminder_value = max(1, int(data.get("draft_reminder_value")))
+        except (ValueError, TypeError):
+            draft_reminder_value = 2
+    elif "draft_reminder_hours" in data and data.get("draft_reminder_hours") is not None:
+        try:
+            draft_reminder_value = max(1, int(data.get("draft_reminder_hours")))
+        except (ValueError, TypeError):
+            draft_reminder_value = 2
+        draft_reminder_unit = "hours"
+    else:
+        draft_reminder_value = current.get("draft_reminder_value", current.get("draft_reminder_hours", 2))
+
+    # Synchronize draft_reminder_hours for backward compatibility
+    if draft_reminder_unit == "hours":
+        draft_reminder_hours = draft_reminder_value
+    elif draft_reminder_unit == "minutes":
+        draft_reminder_hours = max(1, round(draft_reminder_value / 60))
+    elif draft_reminder_unit == "seconds":
+        draft_reminder_hours = max(1, round(draft_reminder_value / 3600))
+    else:
         draft_reminder_hours = 2
 
     cur.execute(
@@ -234,10 +263,25 @@ def update_settings(cur, data: dict) -> dict:
             hubspot_api_key = %s,
             low_visibility_threshold = %s,
             draft_reminder_hours = %s,
+            draft_reminder_value = %s,
+            draft_reminder_unit = %s,
             updated_at = NOW()
         WHERE id = 1
         """,
-        (sender_name, sender_address, notification_email, notification_cc_email, notifications_enabled, support_email, crm_sync_enabled, hubspot_api_key, low_visibility_threshold, draft_reminder_hours),
+        (
+            sender_name,
+            sender_address,
+            notification_email,
+            notification_cc_email,
+            notifications_enabled,
+            support_email,
+            crm_sync_enabled,
+            hubspot_api_key,
+            low_visibility_threshold,
+            draft_reminder_hours,
+            draft_reminder_value,
+            draft_reminder_unit,
+        ),
     )
     with _settings_lock:
         _settings_cache = None

@@ -59,6 +59,8 @@ def test_get_settings_table_exists():
     assert settings["hubspot_api_key"] == ""
     assert settings["low_visibility_threshold"] == 50
     assert settings["draft_reminder_hours"] == 2
+    assert settings["draft_reminder_value"] == 2
+    assert settings["draft_reminder_unit"] == "hours"
 
 
 def test_update_draft_reminder_hours():
@@ -82,7 +84,9 @@ def test_update_draft_reminder_hours():
             False,
             "",
             50,
-            2
+            2,
+            2,
+            "hours"
         ),
         (
             "Orchvate",
@@ -95,19 +99,78 @@ def test_update_draft_reminder_hours():
             False,
             "",
             50,
-            6
+            6,
+            6,
+            "hours"
         )
     ]
 
     res = update_settings(mock_cur, {"draft_reminder_hours": 6})
     assert res["draft_reminder_hours"] == 6
+    assert res["draft_reminder_value"] == 6
+    assert res["draft_reminder_unit"] == "hours"
     # Verify execute called UPDATE with 6
     update_call_args = [call for call in mock_cur.execute.call_args_list if "UPDATE app_settings SET" in call[0][0]]
     assert len(update_call_args) == 1
     params = update_call_args[0][0][1]
-    assert params[9] == 6  # draft_reminder_hours param
+    assert params[9] == 6   # draft_reminder_hours param
+    assert params[10] == 6  # draft_reminder_value param
+    assert params[11] == "hours"  # draft_reminder_unit param
 
     # Invalidate cache for subsequent tests
+    app.services.settings_service._settings_cache = None
+    app.services.settings_service._settings_cache_time = 0.0
+
+
+def test_update_draft_reminder_seconds_and_minutes():
+    import app.services.settings_service
+    app.services.settings_service._settings_cache = None
+    app.services.settings_service._app_settings_table_exists = True
+
+    mock_cur = MagicMock()
+    mock_cur.fetchone.side_effect = [
+        (
+            "Orchvate",
+            "info@orchvate.com",
+            "admin@orchvate.com",
+            "",
+            False,
+            "support@orchvate.com",
+            None,
+            False,
+            "",
+            50,
+            2,
+            2,
+            "hours"
+        ),
+        (
+            "Orchvate",
+            "info@orchvate.com",
+            "admin@orchvate.com",
+            "",
+            False,
+            "support@orchvate.com",
+            None,
+            False,
+            "",
+            50,
+            1,
+            45,
+            "seconds"
+        )
+    ]
+
+    res = update_settings(mock_cur, {"draft_reminder_value": 45, "draft_reminder_unit": "seconds"})
+    assert res["draft_reminder_value"] == 45
+    assert res["draft_reminder_unit"] == "seconds"
+
+    update_call_args = [call for call in mock_cur.execute.call_args_list if "UPDATE app_settings SET" in call[0][0]]
+    assert len(update_call_args) == 1
+    params = update_call_args[0][0][1]
+    assert params[10] == 45  # draft_reminder_value param
+    assert params[11] == "seconds"  # draft_reminder_unit param
+
     app.services.settings_service._settings_cache = None
     app.services.settings_service._settings_cache_time = 0.0
 

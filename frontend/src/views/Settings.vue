@@ -75,22 +75,33 @@
         <p class="card-hint">
           Configure how long an incomplete assessment can remain untouched before an automated reminder email is dispatched to the respondent.
         </p>
-        <div class="fields-row">
-          <div class="field" style="max-width: 320px;">
-            <label for="draft-reminder-hours">Draft Reminder Inactivity Delay (Hours)</label>
+        <div class="fields-row" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+          <div class="field" style="width: 200px;">
+            <label for="draft-reminder-value">Inactivity Delay</label>
             <input
-              id="draft-reminder-hours"
-              v-model.number="form.draft_reminder_hours"
+              id="draft-reminder-value"
+              v-model.number="form.draft_reminder_value"
               type="number"
               min="1"
-              max="720"
               step="1"
+              required
             />
-            <p style="font-size: 0.75rem; color: #888; margin-top: 0.3rem;">
-              Default: 2 hours. Incomplete assessments will trigger a reminder email after being inactive for this time.
-            </p>
+          </div>
+          <div class="field" style="width: 160px;">
+            <label for="draft-reminder-unit">Time Unit</label>
+            <select
+              id="draft-reminder-unit"
+              v-model="form.draft_reminder_unit"
+            >
+              <option value="seconds">Seconds</option>
+              <option value="minutes">Minutes</option>
+              <option value="hours">Hours</option>
+            </select>
           </div>
         </div>
+        <p class="field-help" style="margin-top: 0.5rem;">
+          Default: 2 hours. Incomplete assessments will trigger a reminder email after being inactive for {{ form.draft_reminder_value || 0 }} {{ form.draft_reminder_unit || 'hours' }}.
+        </p>
       </div>
 
       <div v-if="isSuperAdmin" class="card">
@@ -322,6 +333,8 @@ const form = reactive({
   support_email: "",
   low_visibility_threshold: 50,
   draft_reminder_hours: 2,
+  draft_reminder_value: 2,
+  draft_reminder_unit: "hours",
 });
 
 // Security & Traffic Management: Rate Limits State
@@ -487,6 +500,8 @@ onMounted(async () => {
     form.support_email = data.support_email || "";
     form.low_visibility_threshold = data.low_visibility_threshold !== undefined ? data.low_visibility_threshold : 50;
     form.draft_reminder_hours = data.draft_reminder_hours !== undefined ? data.draft_reminder_hours : 2;
+    form.draft_reminder_value = data.draft_reminder_value !== undefined ? data.draft_reminder_value : form.draft_reminder_hours;
+    form.draft_reminder_unit = data.draft_reminder_unit || "hours";
   } catch (e) {
     loadError.value = e.message;
   } finally {
@@ -529,6 +544,8 @@ async function save() {
     form.support_email = data.support_email || "";
     form.low_visibility_threshold = data.low_visibility_threshold;
     form.draft_reminder_hours = data.draft_reminder_hours !== undefined ? data.draft_reminder_hours : 2;
+    form.draft_reminder_value = data.draft_reminder_value !== undefined ? data.draft_reminder_value : form.draft_reminder_hours;
+    form.draft_reminder_unit = data.draft_reminder_unit || "hours";
     window.dispatchEvent(new CustomEvent("settings-updated", { detail: data }));
     msgType.value = "success";
     msg.value = "Settings saved.";

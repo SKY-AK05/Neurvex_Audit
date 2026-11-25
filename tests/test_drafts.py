@@ -237,6 +237,33 @@ def test_process_draft_reminders_with_minutes_threshold():
     assert MEM_STORE.drafts[draft_id]["reminder_sent_at"] is not None
 
 
+def test_process_draft_reminders_with_seconds_threshold():
+    """Verify rapid testing flow using seconds threshold (e.g. 30 seconds)."""
+    from app.api.drafts import process_draft_reminders
+
+    MEM_STORE.reset()
+    draft_id = str(uuid.uuid4())
+    # Updated 60 seconds ago
+    recent_timestamp = datetime.now(timezone.utc) - timedelta(seconds=60)
+    MEM_STORE.drafts[draft_id] = {
+        "id": draft_id,
+        "email": "seconds-test@company.com",
+        "company_name": "Seconds Test Corp",
+        "form_state": {"name": "Seconds User", "q5": "Yes"},
+        "current_step": 3,
+        "submitted": False,
+        "created_at": recent_timestamp,
+        "updated_at": recent_timestamp,
+        "reminder_sent_at": None,
+        "reminder_count": 0
+    }
+
+    # Threshold set to 30 seconds: should pick up draft updated 60s ago
+    sent_count = process_draft_reminders(seconds_threshold=30)
+    assert sent_count == 1
+    assert MEM_STORE.drafts[draft_id]["reminder_sent_at"] is not None
+
+
 def test_draft_preserves_embedded_org_link_token():
     """Verify that drafts created via an embedded org link preserve the org token across save & resume."""
     MEM_STORE.reset()

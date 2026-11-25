@@ -54,7 +54,9 @@ class InMemoryStore:
             "notifications_enabled": False,
             "support_email": "support@orchvate.in",
             "low_visibility_threshold": 50,
-            "draft_reminder_hours": 2
+            "draft_reminder_hours": 2,
+            "draft_reminder_value": 2,
+            "draft_reminder_unit": "hours"
         }
         try:
             import app.services.settings_service
@@ -589,7 +591,9 @@ class MockCursor:
                 "hubspot_api_key": "",
                 "support_email": "support@orchvate.in",
                 "low_visibility_threshold": 50,
-                "draft_reminder_hours": 2
+                "draft_reminder_hours": 2,
+                "draft_reminder_value": 2,
+                "draft_reminder_unit": "hours"
             }
             if "crm_sync_enabled" in sql_lower and "notification_email" not in sql_lower:
                 self._results = [{"crm_sync_enabled": False}] if self.dict_cursor else [(False,)]
@@ -605,7 +609,9 @@ class MockCursor:
                     settings_dict["crm_sync_enabled"],
                     settings_dict["hubspot_api_key"],
                     settings_dict["low_visibility_threshold"],
-                    settings_dict["draft_reminder_hours"]
+                    settings_dict["draft_reminder_hours"],
+                    settings_dict["draft_reminder_value"],
+                    settings_dict["draft_reminder_unit"]
                 )
                 self._results = [settings_dict] if self.dict_cursor else [full_tuple]
             else:
@@ -990,7 +996,12 @@ class MockCursor:
                 now = datetime.now(timezone.utc)
                 if p and len(p) > 0:
                     val = int(p[0])
-                    cutoff = now - timedelta(minutes=val) if "minutes" in sql_lower else now - timedelta(hours=val)
+                    if "seconds" in sql_lower:
+                        cutoff = now - timedelta(seconds=val)
+                    elif "minutes" in sql_lower:
+                        cutoff = now - timedelta(minutes=val)
+                    else:
+                        cutoff = now - timedelta(hours=val)
                 else:
                     cutoff = now - timedelta(hours=2)
                 cutoff_30d = now - timedelta(days=30)
